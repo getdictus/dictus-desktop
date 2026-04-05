@@ -28,7 +28,9 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. A build produces no updater artifact pointing to the upstream cjpais/Handy releases endpoint
   4. The Windows build configuration contains no reference to the upstream maintainer's signing identity
   5. Cargo.toml metadata (name, description, default-run) describes Dictus Desktop, not Handy
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 01-01-PLAN.md — Set Dictus identity in tauri.conf.json and Cargo.toml
 
 ### Phase 2: Visual Rebrand
 **Goal**: Every user-visible surface reads and looks like Dictus Desktop across all supported platforms and all four locales
@@ -59,6 +61,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Bundle Identity | 0/TBD | Not started | - |
+| 1. Bundle Identity | 0/1 | Not started | - |
 | 2. Visual Rebrand | 0/TBD | Not started | - |
 | 3. Documentation and Cleanup | 0/TBD | Not started | - |
