@@ -1,10 +1,11 @@
 [package]
 name = "handy"
-version = "0.8.2"
-description = "Handy"
-authors = ["cjpais"]
+version = "0.1.0"
+description = "Dictus Desktop — open-source speech-to-text for your desktop"
+authors = ["Dictus", "cjpais"]
 edition = "2021"
 license = "MIT"
+repository = "https://github.com/dictus-desktop/dictus-desktop"
 default-run = "handy"
 
 [profile.dev]
