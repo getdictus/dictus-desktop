@@ -9,11 +9,11 @@ Requirements for Milestone V1 "Dictus Desktop Foundation". Each maps to roadmap 
 
 ### Bundle Identity
 
-- [ ] **BNDL-01**: productName changé en "Dictus" dans tauri.conf.json
-- [ ] **BNDL-02**: identifier changé en "com.dictus.desktop"
-- [ ] **BNDL-03**: Cargo.toml metadata mis à jour (name, description, default-run, lib.name)
-- [ ] **BNDL-04**: Auto-updater endpoint désactivé ou mis à jour (plus de référence upstream Handy)
-- [ ] **BNDL-05**: Références de code signing upstream supprimées
+- [x] **BNDL-01**: productName changé en "Dictus" dans tauri.conf.json
+- [x] **BNDL-02**: identifier changé en "com.dictus.desktop"
+- [x] **BNDL-03**: Cargo.toml metadata mis à jour (name, description, default-run, lib.name)
+- [x] **BNDL-04**: Auto-updater endpoint désactivé ou mis à jour (plus de référence upstream Handy)
+- [x] **BNDL-05**: Références de code signing upstream supprimées
 
 ### Visual Rebrand
 
@@ -84,11 +84,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BNDL-01 | Phase 1 | Pending |
-| BNDL-02 | Phase 1 | Pending |
-| BNDL-03 | Phase 1 | Pending |
-| BNDL-04 | Phase 1 | Pending |
-| BNDL-05 | Phase 1 | Pending |
+| BNDL-01 | Phase 1 | Complete |
+| BNDL-02 | Phase 1 | Complete |
+| BNDL-03 | Phase 1 | Complete |
+| BNDL-04 | Phase 1 | Complete |
+| BNDL-05 | Phase 1 | Complete |
 | VISU-01 | Phase 2 | Pending |
 | VISU-02 | Phase 2 | Pending |
 | VISU-03 | Phase 2 | Pending |
