@@ -84,30 +84,30 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BNDL-01 | — | Pending |
-| BNDL-02 | — | Pending |
-| BNDL-03 | — | Pending |
-| BNDL-04 | — | Pending |
-| BNDL-05 | — | Pending |
-| VISU-01 | — | Pending |
-| VISU-02 | — | Pending |
-| VISU-03 | — | Pending |
-| VISU-04 | — | Pending |
-| VISU-05 | — | Pending |
-| VISU-06 | — | Pending |
-| VISU-07 | — | Pending |
-| VISU-08 | — | Pending |
-| ONBR-01 | — | Pending |
-| LANG-01 | — | Pending |
-| DOCS-01 | — | Pending |
-| DOCS-02 | — | Pending |
-| DOCS-03 | — | Pending |
+| BNDL-01 | Phase 1 | Pending |
+| BNDL-02 | Phase 1 | Pending |
+| BNDL-03 | Phase 1 | Pending |
+| BNDL-04 | Phase 1 | Pending |
+| BNDL-05 | Phase 1 | Pending |
+| VISU-01 | Phase 2 | Pending |
+| VISU-02 | Phase 2 | Pending |
+| VISU-03 | Phase 2 | Pending |
+| VISU-04 | Phase 2 | Pending |
+| VISU-05 | Phase 2 | Pending |
+| VISU-06 | Phase 2 | Pending |
+| VISU-07 | Phase 2 | Pending |
+| VISU-08 | Phase 2 | Pending |
+| ONBR-01 | Phase 2 | Pending |
+| LANG-01 | Phase 2 | Pending |
+| DOCS-01 | Phase 3 | Pending |
+| DOCS-02 | Phase 3 | Pending |
+| DOCS-03 | Phase 3 | Pending |
 
 **Coverage:**
 - v1 requirements: 18 total
-- Mapped to phases: 0
-- Unmapped: 18 ⚠️
+- Mapped to phases: 18
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-05*
-*Last updated: 2026-04-05 after initial definition*
+*Last updated: 2026-04-05 after roadmap creation*
