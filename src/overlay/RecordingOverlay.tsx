@@ -13,12 +13,64 @@ import { getLanguageDirection } from "@/lib/utils/rtl";
 
 type OverlayState = "recording" | "transcribing" | "processing";
 
+const BAR_COUNT = 18;
+
+function interpolateLevels(source: number[], barCount: number): number[] {
+  if (source.length === 0) return Array(barCount).fill(0);
+  return Array.from({ length: barCount }, (_, index) => {
+    const position = index / Math.max(barCount - 1, 1);
+    const arrayIndex = position * (source.length - 1);
+    const lower = Math.floor(arrayIndex);
+    const upper = Math.min(lower + 1, source.length - 1);
+    const fraction = arrayIndex - lower;
+    const value = source[lower] * (1 - fraction) + source[upper] * fraction;
+    return value < 0.05 ? 0 : Math.min(Math.max(value, 0), 1);
+  });
+}
+
+function tickLevels(current: number[], targets: number[]): number[] {
+  return current.map((prev, i) => {
+    const target = targets[i] ?? 0;
+    let next: number;
+    if (target > prev) {
+      next = prev + (target - prev) * 0.3; // rise: smooth
+    } else {
+      next = target + (prev - target) * 0.85; // fall: decay
+    }
+    return next < 0.005 ? 0 : next;
+  });
+}
+
+function processingEnergy(
+  index: number,
+  barCount: number,
+  phase: number,
+): number {
+  const normalizedIndex = index / Math.max(barCount - 1, 1);
+  const sineValue = Math.sin(2 * Math.PI * (normalizedIndex + phase));
+  return 0.2 + 0.25 * (sineValue + 1.0);
+}
+
+function getBarColor(index: number, barCount: number): string {
+  const center = (barCount - 1) / 2;
+  const distanceFromCenter = Math.abs(index - center) / center;
+  if (distanceFromCenter < 0.4) {
+    return "#6BA3FF"; // blue gradient — inner 40%
+  }
+  const opacity = (1.0 - distanceFromCenter) * 0.9 + 0.15;
+  return `rgba(255,255,255,${opacity.toFixed(2)})`;
+}
+
 const RecordingOverlay: React.FC = () => {
   const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(false);
   const [state, setState] = useState<OverlayState>("recording");
-  const [levels, setLevels] = useState<number[]>(Array(16).fill(0));
-  const smoothedLevelsRef = useRef<number[]>(Array(16).fill(0));
+  const [levels, setLevels] = useState<number[]>(Array(BAR_COUNT).fill(0));
+  const smoothedLevelsRef = useRef<number[]>(Array(BAR_COUNT).fill(0));
+  const targetLevelsRef = useRef<number[]>(Array(BAR_COUNT).fill(0));
+  const phaseRef = useRef<number>(0);
+  const rafIdRef = useRef<number>(0);
+  const lastTimeRef = useRef<number>(0);
   const direction = getLanguageDirection(i18n.language);
 
   useEffect(() => {
@@ -29,26 +81,23 @@ const RecordingOverlay: React.FC = () => {
         await syncLanguageFromSettings();
         const overlayState = event.payload as OverlayState;
         setState(overlayState);
+        // Reset animation state on show
+        phaseRef.current = 0;
+        smoothedLevelsRef.current = Array(BAR_COUNT).fill(0);
+        targetLevelsRef.current = Array(BAR_COUNT).fill(0);
         setIsVisible(true);
       });
 
       // Listen for hide-overlay event from Rust
       const unlistenHide = await listen("hide-overlay", () => {
+        cancelAnimationFrame(rafIdRef.current);
         setIsVisible(false);
       });
 
-      // Listen for mic-level updates
+      // Listen for mic-level updates — store interpolated targets
       const unlistenLevel = await listen<number[]>("mic-level", (event) => {
-        const newLevels = event.payload as number[];
-
-        // Apply smoothing to reduce jitter
-        const smoothed = smoothedLevelsRef.current.map((prev, i) => {
-          const target = newLevels[i] || 0;
-          return prev * 0.7 + target * 0.3; // Smooth transition
-        });
-
-        smoothedLevelsRef.current = smoothed;
-        setLevels(smoothed.slice(0, 9));
+        const raw = event.payload as number[];
+        targetLevelsRef.current = interpolateLevels(raw, BAR_COUNT);
       });
 
       // Cleanup function
@@ -62,9 +111,45 @@ const RecordingOverlay: React.FC = () => {
     setupEventListeners();
   }, []);
 
+  // Animation loop — runs when visible
+  useEffect(() => {
+    if (!isVisible) return;
+
+    const animate = (timestamp: number) => {
+      const dt = lastTimeRef.current
+        ? (timestamp - lastTimeRef.current) / 1000
+        : 1 / 60;
+      lastTimeRef.current = timestamp;
+
+      let targets: number[];
+      if (state === "recording") {
+        targets = targetLevelsRef.current;
+      } else {
+        // transcribing or processing: sine wave animation
+        phaseRef.current += dt * 0.5;
+        targets = Array.from({ length: BAR_COUNT }, (_, i) =>
+          processingEnergy(i, BAR_COUNT, phaseRef.current),
+        );
+      }
+
+      smoothedLevelsRef.current = tickLevels(
+        smoothedLevelsRef.current,
+        targets,
+      );
+      setLevels([...smoothedLevelsRef.current]);
+      rafIdRef.current = requestAnimationFrame(animate);
+    };
+
+    rafIdRef.current = requestAnimationFrame(animate);
+    return () => {
+      cancelAnimationFrame(rafIdRef.current);
+      lastTimeRef.current = 0;
+    };
+  }, [isVisible, state]);
+
   const getIcon = () => {
     if (state === "recording") {
-      return <MicrophoneIcon />;
+      return <MicrophoneIcon color="#EF4444" />;
     } else {
       return <TranscriptionIcon />;
     }
@@ -78,23 +163,19 @@ const RecordingOverlay: React.FC = () => {
       <div className="overlay-left">{getIcon()}</div>
 
       <div className="overlay-middle">
-        {state === "recording" && (
+        {(state === "recording" || state === "transcribing") && (
           <div className="bars-container">
             {levels.map((v, i) => (
               <div
                 key={i}
                 className="bar"
                 style={{
-                  height: `${Math.min(20, 4 + Math.pow(v, 0.7) * 16)}px`, // Cap at 20px max height
-                  transition: "height 60ms ease-out, opacity 120ms ease-out",
-                  opacity: Math.max(0.2, v * 1.7), // Minimum opacity for visibility
+                  height: `${Math.max(3, v * 36)}px`,
+                  backgroundColor: getBarColor(i, BAR_COUNT),
                 }}
               />
             ))}
           </div>
-        )}
-        {state === "transcribing" && (
-          <div className="transcribing-text">{t("overlay.transcribing")}</div>
         )}
         {state === "processing" && (
           <div className="transcribing-text">{t("overlay.processing")}</div>
