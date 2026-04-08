@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 02-visual-rebrand/02-04-PLAN.md
-last_updated: "2026-04-08T12:21:32.142Z"
+stopped_at: Completed 02-visual-rebrand/02-05-PLAN.md
+last_updated: "2026-04-08T13:58:35.681Z"
 last_activity: 2026-04-05 — Roadmap created, phases derived from requirements
 progress:
   total_phases: 3
   completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 6
+  completed_plans: 6
   percent: 0
 ---
 
@@ -55,6 +55,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02-visual-rebrand P01 | 10min | 2 tasks | 55 files |
 | Phase 02-visual-rebrand P03 | 8 | 2 tasks | 4 files |
 | Phase 02-visual-rebrand P04 | 15min | 2 tasks | 2 files |
+| Phase 02-visual-rebrand P05 | 25min | 2 tasks | 16 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,8 @@ Recent decisions affecting current work:
 - [Phase 02-visual-rebrand]: --color-logo-primary name preserved (not renamed) to maintain bg-logo-primary/80 Tailwind utility in Sidebar.tsx
 - [Phase 02-visual-rebrand]: Out-of-scope locales (pl, sv, he, ja, it, cs, ru, pt, zh, uk, zh-TW, ar, bg, de, ko, tr) contain Handy references — deferred, not listed in plan 02-03 files_modified scope
 - [Phase 02-visual-rebrand]: Visual verification of overlay deferred: binary name conflict (Handy) blocks accessibility permissions in dev environment; will verify post-binary-rename in phase 03
+- [Phase 02-visual-rebrand]: Dictus kept as Latin-script proper noun in all 16 locales including RTL (Hebrew, Arabic) and CJK scripts
+- [Phase 02-visual-rebrand]: appLanguage.description Auto clarification phrased naturally in each target language per LANG-01
 
 ### Pending Todos
 
@@ -90,6 +93,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-08T12:21:25.400Z
-Stopped at: Completed 02-visual-rebrand/02-04-PLAN.md
+Last session: 2026-04-08T13:58:35.679Z
+Stopped at: Completed 02-visual-rebrand/02-05-PLAN.md
 Resume file: None
