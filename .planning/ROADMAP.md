@@ -30,7 +30,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   5. Cargo.toml metadata (name, description, default-run) describes Dictus Desktop, not Handy
 **Plans:** 1/1 plans complete
 Plans:
-- [ ] 01-01-PLAN.md — Set Dictus identity in tauri.conf.json and Cargo.toml
+- [x] 01-01-PLAN.md — Set Dictus identity in tauri.conf.json and Cargo.toml
 
 ### Phase 2: Visual Rebrand
 **Goal**: Every user-visible surface reads and looks like Dictus Desktop across all supported platforms and all four locales
@@ -42,7 +42,12 @@ Plans:
   3. The app renders Dictus brand colors (blue palette) throughout — no Handy pink/rose palette visible
   4. A first-run user sees onboarding with Dictus name, logo, and tone — no Handy references
   5. The force language control presents "Auto / Français / English" choices clearly and the selected behavior is consistent with the label
-**Plans**: TBD
+**Plans:** 4 plans
+Plans:
+- [ ] 02-01-PLAN.md — Generate Dictus platform icons and swap design tokens from pink to blue
+- [ ] 02-02-PLAN.md — Create DictusLogo and DictusWaveformIcon, replace in Sidebar and Onboarding
+- [ ] 02-03-PLAN.md — Replace all Handy references in i18n locale files (en, es, fr, vi)
+- [ ] 02-04-PLAN.md — Redesign recording overlay with 18-bar waveform and iOS-style animations
 
 ### Phase 3: Documentation and Cleanup
 **Goal**: External documentation presents Dictus Desktop as a first-class product, internal developer docs contain no Handy references, and the in-app About panel reflects the Dictus identity
@@ -62,5 +67,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Bundle Identity | 1/1 | Complete   | 2026-04-05 |
-| 2. Visual Rebrand | 0/TBD | Not started | - |
+| 2. Visual Rebrand | 0/4 | Planning complete | - |
 | 3. Documentation and Cleanup | 0/TBD | Not started | - |
