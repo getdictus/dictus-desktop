@@ -18,8 +18,8 @@ Requirements for Milestone V1 "Dictus Desktop Foundation". Each maps to roadmap 
 ### Visual Rebrand
 
 - [ ] **VISU-01**: Icône app Dictus générée pour toutes les plateformes (via tauri icon)
-- [ ] **VISU-02**: Composants logo remplacés (HandyTextLogo → Dictus, HandyHand → Dictus icon)
-- [ ] **VISU-03**: Branding sidebar mis à jour
+- [x] **VISU-02**: Composants logo remplacés (HandyTextLogo → Dictus, HandyHand → Dictus icon)
+- [x] **VISU-03**: Branding sidebar mis à jour
 - [ ] **VISU-04**: Strings i18n mises à jour dans tous les fichiers de locale (20+)
 - [ ] **VISU-05**: Design tokens Dictus injectés via Tailwind v4 @theme (palette bleu Dictus, typographie)
 - [ ] **VISU-06**: Palette couleurs basculée de rose Handy vers bleu Dictus dans toute l'UI
@@ -28,7 +28,7 @@ Requirements for Milestone V1 "Dictus Desktop Foundation". Each maps to roadmap 
 
 ### Onboarding
 
-- [ ] **ONBR-01**: Onboarding rebrandé avec textes, visuels et ton Dictus
+- [x] **ONBR-01**: Onboarding rebrandé avec textes, visuels et ton Dictus
 
 ### Language
 
@@ -90,14 +90,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BNDL-04 | Phase 1 | Complete |
 | BNDL-05 | Phase 1 | Complete |
 | VISU-01 | Phase 2 | Pending |
-| VISU-02 | Phase 2 | Pending |
-| VISU-03 | Phase 2 | Pending |
+| VISU-02 | Phase 2 | Complete |
+| VISU-03 | Phase 2 | Complete |
 | VISU-04 | Phase 2 | Pending |
 | VISU-05 | Phase 2 | Pending |
 | VISU-06 | Phase 2 | Pending |
 | VISU-07 | Phase 2 | Pending |
 | VISU-08 | Phase 2 | Pending |
-| ONBR-01 | Phase 2 | Pending |
+| ONBR-01 | Phase 2 | Complete |
 | LANG-01 | Phase 2 | Pending |
 | DOCS-01 | Phase 3 | Pending |
 | DOCS-02 | Phase 3 | Pending |

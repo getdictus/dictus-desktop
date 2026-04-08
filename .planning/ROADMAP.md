@@ -42,7 +42,7 @@ Plans:
   3. The app renders Dictus brand colors (blue palette) throughout — no Handy pink/rose palette visible
   4. A first-run user sees onboarding with Dictus name, logo, and tone — no Handy references
   5. The force language control presents "Auto / Français / English" choices clearly and the selected behavior is consistent with the label
-**Plans:** 4 plans
+**Plans:** 1/4 plans executed
 Plans:
 - [ ] 02-01-PLAN.md — Generate Dictus platform icons and swap design tokens from pink to blue
 - [ ] 02-02-PLAN.md — Create DictusLogo and DictusWaveformIcon, replace in Sidebar and Onboarding
@@ -67,5 +67,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Bundle Identity | 1/1 | Complete   | 2026-04-05 |
-| 2. Visual Rebrand | 0/4 | Planning complete | - |
+| 2. Visual Rebrand | 1/4 | In Progress|  |
 | 3. Documentation and Cleanup | 0/TBD | Not started | - |
