@@ -13,7 +13,7 @@ Three phases transform the Handy fork into Dictus Desktop. Phase 1 sets the bund
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Bundle Identity** - Set bundle ID, product name, and neutralize inherited Handy build artifacts before any distributed build (completed 2026-04-05)
-- [x] **Phase 2: Visual Rebrand** - Replace all visible Handy identity with Dictus: icons, design tokens, i18n strings, UI components, and onboarding (completed 2026-04-08)
+- [ ] **Phase 2: Visual Rebrand** - Replace all visible Handy identity with Dictus: icons, design tokens, i18n strings, UI components, and onboarding
 - [ ] **Phase 3: Documentation and Cleanup** - Rewrite external docs, update internal developer references, and rebrand the in-app About panel
 
 ## Phase Details
@@ -42,12 +42,13 @@ Plans:
   3. The app renders Dictus brand colors (blue palette) throughout — no Handy pink/rose palette visible
   4. A first-run user sees onboarding with Dictus name, logo, and tone — no Handy references
   5. The force language control presents "Auto / Français / English" choices clearly and the selected behavior is consistent with the label
-**Plans:** 4/4 plans complete
+**Plans:** 4/5 plans complete
 Plans:
-- [ ] 02-01-PLAN.md — Generate Dictus platform icons and swap design tokens from pink to blue
-- [ ] 02-02-PLAN.md — Create DictusLogo and DictusWaveformIcon, replace in Sidebar and Onboarding
-- [ ] 02-03-PLAN.md — Replace all Handy references in i18n locale files (en, es, fr, vi)
-- [ ] 02-04-PLAN.md — Redesign recording overlay with 18-bar waveform and iOS-style animations
+- [x] 02-01-PLAN.md — Generate Dictus platform icons and swap design tokens from pink to blue
+- [x] 02-02-PLAN.md — Create DictusLogo and DictusWaveformIcon, replace in Sidebar and Onboarding
+- [x] 02-03-PLAN.md — Replace all Handy references in i18n locale files (en, es, fr, vi)
+- [x] 02-04-PLAN.md — Redesign recording overlay with 18-bar waveform and iOS-style animations
+- [ ] 02-05-PLAN.md — [GAP] Replace Handy references in 16 remaining locale files (VISU-04)
 
 ### Phase 3: Documentation and Cleanup
 **Goal**: External documentation presents Dictus Desktop as a first-class product, internal developer docs contain no Handy references, and the in-app About panel reflects the Dictus identity
@@ -67,5 +68,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Bundle Identity | 1/1 | Complete   | 2026-04-05 |
-| 2. Visual Rebrand | 4/4 | Complete   | 2026-04-08 |
+| 2. Visual Rebrand | 4/5 | In Progress | - |
 | 3. Documentation and Cleanup | 0/TBD | Not started | - |
