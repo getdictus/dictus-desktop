@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 02-visual-rebrand-02-PLAN.md
-last_updated: "2026-04-08T09:35:24.818Z"
+stopped_at: Completed 02-visual-rebrand-01-PLAN.md
+last_updated: "2026-04-08T09:38:20.961Z"
 last_activity: 2026-04-05 — Roadmap created, phases derived from requirements
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 5
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -52,6 +52,7 @@ Progress: [░░░░░░░░░░] 0%
 *Updated after each plan completion*
 | Phase 01-bundle-identity P01 | 5 | 2 tasks | 2 files |
 | Phase 02-visual-rebrand P02 | 8 | 2 tasks | 5 files |
+| Phase 02-visual-rebrand P01 | 10min | 2 tasks | 55 files |
 
 ## Accumulated Context
 
@@ -69,6 +70,9 @@ Recent decisions affecting current work:
 - [Phase 01-bundle-identity]: Cargo binary name (handy) deferred to V2 (TECH-03) — only [package] metadata updated in this plan
 - [Phase 02-visual-rebrand]: DictusLogo and DictusWaveformIcon use fill=currentColor for automatic light/dark theme support without extra CSS
 - [Phase 02-visual-rebrand]: HandyTextLogo and HandyHand source files preserved (not deleted) until all consumers are verified
+- [Phase 02-visual-rebrand]: npx @tauri-apps/cli used instead of bunx tauri — bun not installed in execution environment, identical output
+- [Phase 02-visual-rebrand]: HandyTextLogo.tsx pink value left untouched — component replaced entirely in Plan 02-02
+- [Phase 02-visual-rebrand]: --color-logo-primary name preserved (not renamed) to maintain bg-logo-primary/80 Tailwind utility in Sidebar.tsx
 
 ### Pending Todos
 
@@ -82,6 +86,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-08T09:35:24.816Z
-Stopped at: Completed 02-visual-rebrand-02-PLAN.md
+Last session: 2026-04-08T09:38:20.959Z
+Stopped at: Completed 02-visual-rebrand-01-PLAN.md
 Resume file: None
