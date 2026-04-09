@@ -30,11 +30,12 @@ bun run format:check      # Check formatting without changes
 ```bash
 mkdir -p src-tauri/resources/models
 curl -o src-tauri/resources/models/silero_vad_v4.onnx https://blob.handy.computer/silero_vad_v4.onnx
+# Note: This URL is from the upstream Handy CDN. A Dictus-owned CDN migration is planned (V2 INFR-01).
 ```
 
 ## Architecture Overview
 
-Handy is a cross-platform desktop speech-to-text app built with Tauri 2.x (Rust backend + React/TypeScript frontend).
+Dictus Desktop is a cross-platform desktop speech-to-text app built with Tauri 2.x (Rust backend + React/TypeScript frontend).
 
 ### Backend Structure (src-tauri/src/)
 
@@ -121,7 +122,7 @@ Use conventional commits:
 
 ## CLI Parameters
 
-Handy supports command-line parameters on all platforms for integration with scripts, window managers, and autostart configurations.
+Dictus Desktop supports command-line parameters on all platforms for integration with scripts, window managers, and autostart configurations.
 
 **Implementation files:**
 

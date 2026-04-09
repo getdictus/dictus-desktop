@@ -1,6 +1,6 @@
 # Build Instructions
 
-This guide covers how to set up the development environment and build Handy from source across different platforms.
+This guide covers how to set up the development environment and build Dictus Desktop from source across different platforms.
 
 ## Prerequisites
 
@@ -52,8 +52,8 @@ This guide covers how to set up the development environment and build Handy from
 ### 1. Clone the Repository
 
 ```bash
-git clone git@github.com:cjpais/Handy.git
-cd Handy
+git clone git@github.com:getdictus/dictus-desktop.git
+cd dictus-desktop
 ```
 
 ### 2. Install Dependencies
@@ -77,6 +77,8 @@ bun run tauri build
 This compiles a release binary and generates platform-specific bundles (deb, rpm, AppImage on Linux; dmg on macOS; msi on Windows).
 
 ## Linux Install (from source)
+
+> **Note:** The binary is named `handy` and Tauri bundle filenames use `Handy` — a full rename is planned for V2 (TECH-03).
 
 The raw binary (`src-tauri/target/release/handy`) cannot run standalone — it needs Tauri resource files (tray icons, sounds, VAD model) to be co-located at the expected path.
 
