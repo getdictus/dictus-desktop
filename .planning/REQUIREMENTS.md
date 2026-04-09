@@ -38,7 +38,7 @@ Requirements for Milestone V1 "Dictus Desktop Foundation". Each maps to roadmap 
 
 - [x] **DOCS-01**: README Dictus Desktop (fork assumé, vision, licence MIT, positionnement open-source)
 - [x] **DOCS-02**: CLAUDE.md et BUILD.md mis à jour (références Handy supprimées)
-- [ ] **DOCS-03**: Section About in-app rebrandée Dictus
+- [x] **DOCS-03**: Section About in-app rebrandée Dictus
 
 ## v2 Requirements
 
@@ -101,7 +101,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LANG-01     | Phase 2 | Complete |
 | DOCS-01     | Phase 3 | Complete |
 | DOCS-02     | Phase 3 | Complete |
-| DOCS-03     | Phase 3 | Pending  |
+| DOCS-03     | Phase 3 | Complete |
 
 **Coverage:**
 

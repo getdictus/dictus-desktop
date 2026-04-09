@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 03-01-PLAN.md
-last_updated: "2026-04-09T11:10:51.034Z"
+stopped_at: Completed 03-02-PLAN.md
+last_updated: "2026-04-09T11:11:32.179Z"
 last_activity: 2026-04-05 — Roadmap created, phases derived from requirements
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 8
-  completed_plans: 7
+  completed_plans: 8
   percent: 0
 ---
 
@@ -59,6 +59,7 @@ _Updated after each plan completion_
 | Phase 02-visual-rebrand P04 | 15min | 2 tasks | 2 files |
 | Phase 02-visual-rebrand P05 | 25min | 2 tasks | 16 files |
 | Phase 03-documentation-and-cleanup P01 | 2min | 2 tasks | 3 files |
+| Phase 03-documentation-and-cleanup P02 | 2min | 2 tasks | 21 files |
 
 ## Accumulated Context
 
@@ -86,6 +87,8 @@ Recent decisions affecting current work:
 - [Phase 03-documentation-and-cleanup]: Fork attribution placed exclusively in Acknowledgments section in README
 - [Phase 03-documentation-and-cleanup]: blob.handy.computer VAD URL preserved in CLAUDE.md with V2 CDN migration note to avoid breaking dev setup
 - [Phase 03-documentation-and-cleanup]: handy binary name kept accurate in CLI docs with explicit V2 rename note (TECH-03)
+- [Phase 03-documentation-and-cleanup]: English fallback strings used for 18 locales in About panel i18n keys for V1 to prevent missing-key warnings without requiring full translations
+- [Phase 03-documentation-and-cleanup]: Privacy and Ecosystem sections added to About panel after sourceCode/supportDevelopment to group identity/legal content before app data sections
 
 ### Pending Todos
 
@@ -99,6 +102,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T11:10:51.032Z
-Stopped at: Completed 03-01-PLAN.md
+Last session: 2026-04-09T11:11:32.177Z
+Stopped at: Completed 03-02-PLAN.md
 Resume file: None
