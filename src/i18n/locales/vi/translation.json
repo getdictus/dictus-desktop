@@ -529,6 +529,16 @@
         "description": "Giúp chúng tôi tiếp tục xây dựng Dictus",
         "button": "Quyên góp"
       },
+      "privacy": {
+        "title": "Privacy Policy",
+        "description": "Your voice stays on your device. Read our privacy policy.",
+        "button": "View Privacy Policy"
+      },
+      "ecosystem": {
+        "title": "Dictus Ecosystem",
+        "description": "Dictus is available on iOS, Android, and Desktop.",
+        "button": "Learn More"
+      },
       "acknowledgments": {
         "title": "Lời cảm ơn",
         "whisper": {
