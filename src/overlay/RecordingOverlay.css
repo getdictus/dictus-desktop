@@ -1,21 +1,15 @@
 .recording-overlay {
   height: 56px;
   width: 300px;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+  display: flex;
   align-items: center;
-  padding: 8px 12px;
+  justify-content: center;
+  padding: 8px 10px;
   background: #000000cc;
   border-radius: 28px;
   opacity: 0;
   transition: opacity 300ms ease-out;
   box-sizing: border-box;
-  gap: 8px;
-}
-
-.overlay-left {
-  display: flex;
-  align-items: center;
 }
 
 .overlay-middle {
@@ -25,26 +19,21 @@
   flex: 1;
 }
 
-.overlay-right {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-
 .bars-container {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
   gap: 2px;
-  height: 36px;
-  overflow: hidden;
+  height: 40px;
+  width: 100%;
 }
 
 .bar {
   width: 6px;
-  min-height: 3px;
-  max-height: 36px;
+  min-height: 4px;
+  max-height: 40px;
   border-radius: 3px;
+  flex-shrink: 0;
 }
 
 .recording-overlay.fade-in {
@@ -54,7 +43,8 @@
 .transcribing-text {
   color: white;
   font-size: 13px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   animation: transcribing-pulse 1.5s infinite ease-in-out;
 }
 
@@ -68,11 +58,11 @@
   }
 }
 
-.cancel-button {
-  width: 32px;
-  height: 32px;
+.cancel-pill {
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  background: transparent;
+  background: #000000cc;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -81,13 +71,14 @@
     background-color 150ms ease-out,
     transform 100ms ease-out;
   flex-shrink: 0;
+  margin-left: 8px;
 }
 
-.cancel-button:hover {
-  background: #3d7eff33;
-  transform: scale(1.05);
+.cancel-pill:hover {
+  background: #000000ee;
+  transform: scale(1.08);
 }
 
-.cancel-button:active {
+.cancel-pill:active {
   transform: scale(0.95);
 }

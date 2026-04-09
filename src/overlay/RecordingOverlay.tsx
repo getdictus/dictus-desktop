@@ -1,11 +1,7 @@
 import { listen } from "@tauri-apps/api/event";
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  MicrophoneIcon,
-  TranscriptionIcon,
-  CancelIcon,
-} from "../components/icons";
+import { CancelIcon } from "../components/icons";
 import "./RecordingOverlay.css";
 import { commands } from "@/bindings";
 import i18n, { syncLanguageFromSettings } from "@/i18n";
@@ -13,7 +9,7 @@ import { getLanguageDirection } from "@/lib/utils/rtl";
 
 type OverlayState = "recording" | "transcribing" | "processing";
 
-const BAR_COUNT = 18;
+const BAR_COUNT = 32;
 
 function interpolateLevels(source: number[], barCount: number): number[] {
   if (source.length === 0) return Array(barCount).fill(0);
@@ -147,53 +143,42 @@ const RecordingOverlay: React.FC = () => {
     };
   }, [isVisible, state]);
 
-  const getIcon = () => {
-    if (state === "recording") {
-      return <MicrophoneIcon color="#EF4444" />;
-    } else {
-      return <TranscriptionIcon />;
-    }
-  };
-
   return (
-    <div
-      dir={direction}
-      className={`recording-overlay ${isVisible ? "fade-in" : ""}`}
-    >
-      <div className="overlay-left">{getIcon()}</div>
-
-      <div className="overlay-middle">
-        {(state === "recording" || state === "transcribing") && (
-          <div className="bars-container">
-            {levels.map((v, i) => (
-              <div
-                key={i}
-                className="bar"
-                style={{
-                  height: `${Math.max(3, v * 36)}px`,
-                  backgroundColor: getBarColor(i, BAR_COUNT),
-                }}
-              />
-            ))}
-          </div>
-        )}
-        {state === "processing" && (
-          <div className="transcribing-text">{t("overlay.processing")}</div>
-        )}
+    <div dir={direction} style={{ display: "flex", alignItems: "center" }}>
+      <div
+        className={`recording-overlay ${isVisible ? "fade-in" : ""}`}
+      >
+        <div className="overlay-middle">
+          {(state === "recording" || state === "transcribing") && (
+            <div className="bars-container">
+              {levels.map((v, i) => (
+                <div
+                  key={i}
+                  className="bar"
+                  style={{
+                    height: `${Math.max(4, v * 40)}px`,
+                    backgroundColor: getBarColor(i, BAR_COUNT),
+                  }}
+                />
+              ))}
+            </div>
+          )}
+          {state === "processing" && (
+            <div className="transcribing-text">{t("overlay.processing")}</div>
+          )}
+        </div>
       </div>
 
-      <div className="overlay-right">
-        {state === "recording" && (
-          <div
-            className="cancel-button"
-            onClick={() => {
-              commands.cancelOperation();
-            }}
-          >
-            <CancelIcon />
-          </div>
-        )}
-      </div>
+      {state === "recording" && (
+        <div
+          className="cancel-pill"
+          onClick={() => {
+            commands.cancelOperation();
+          }}
+        >
+          <CancelIcon width={22} height={22} />
+        </div>
+      )}
     </div>
   );
 };

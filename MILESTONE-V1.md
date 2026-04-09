@@ -32,6 +32,7 @@ Conclusion :
 Le repo source est encore très marqué **Handy** à plusieurs niveaux :
 
 ### Identité app / bundle
+
 - `package.json`
   - `name: "handy-app"`
 - `src-tauri/Cargo.toml`
@@ -44,6 +45,7 @@ Le repo source est encore très marqué **Handy** à plusieurs niveaux :
   - `identifier = "com.pais.handy"`
 
 ### Frontend / UI
+
 - `src/components/icons/HandyTextLogo.tsx`
 - `src/components/icons/HandyHand.tsx`
 - `src/components/Sidebar.tsx`
@@ -51,12 +53,14 @@ Le repo source est encore très marqué **Handy** à plusieurs niveaux :
 - nombreuses chaînes i18n mentionnent "Handy"
 
 ### Backend / commandes / nomenclature
+
 - `startHandyKeysRecording`
 - `stopHandyKeysRecording`
 - `KeyboardImplementation = "tauri" | "handy_keys"`
 - références internes à Handy dans plusieurs settings / shortcuts / docs
 
 ### Docs / metadata
+
 - `README.md`
 - `BUILD.md`
 - `CLAUDE.md`
@@ -78,9 +82,11 @@ Le rebrand ne sera **pas juste cosmétique**. Il faudra traiter au moins 4 couch
 Découper le rebrand en deux sous-phases :
 
 ### Phase A — rebrand visible / packaging
+
 Objectif : rendre l’application utilisable comme Dictus Desktop sans casser le code inutilement.
 
 À faire tôt :
+
 - nom app: `Dictus`
 - repo / docs: `Dictus Desktop`
 - icônes / logos / sidebar
@@ -89,13 +95,16 @@ Objectif : rendre l’application utilisable comme Dictus Desktop sans casser le
 - README initial du fork
 
 ### Phase B — rebrand technique interne
+
 À faire plus progressivement :
+
 - renommer les symboles fortement Handy-centric quand c’est utile
 - ne pas faire une chasse totale aux renommages internes dans la toute première passe si ça ralentit trop
 
 ## Mon avis
 
 Pour une V1 rapide et propre :
+
 - **renommer immédiatement le visible et le packaging**
 - **renommer plus tard une partie des internals** si ce n’est pas nécessaire à court terme
 
@@ -108,6 +117,7 @@ Pour une V1 rapide et propre :
 L’app frontend tourne autour d’une interface settings assez classique.
 
 ### Entrée principale
+
 - `src/App.tsx`
   - onboarding
   - permissions
@@ -115,7 +125,9 @@ L’app frontend tourne autour d’une interface settings assez classique.
   - rendu des sections via `SECTIONS_CONFIG`
 
 ### Sidebar
+
 Dans `src/components/Sidebar.tsx`, sections actuelles :
+
 - `general`
 - `models`
 - `advanced`
@@ -125,6 +137,7 @@ Dans `src/components/Sidebar.tsx`, sections actuelles :
 - `about`
 
 ### Composants settings intéressants déjà présents
+
 - `LanguageSelector`
 - `ModelSelector`
 - `CustomWords`
@@ -141,6 +154,7 @@ Dans `src/components/Sidebar.tsx`, sections actuelles :
 ## Lecture produit
 
 La base UI actuelle est pensée comme un **outil desktop utilitaire** centré sur :
+
 - config système
 - choix de modèles
 - raccourcis
@@ -148,6 +162,7 @@ La base UI actuelle est pensée comme un **outil desktop utilitaire** centré su
 - post-processing
 
 Dictus, lui, a une logique un peu plus **produit / expérience utilisateur**, surtout si on veut aligner avec l’iOS :
+
 - onboarding plus soigné
 - branding plus fort
 - paramètres orientés usage plutôt qu’orientés tech
@@ -156,11 +171,13 @@ Dictus, lui, a une logique un peu plus **produit / expérience utilisateur**, su
 ## Écart entre Handy et Dictus
 
 ### Handy aujourd’hui
+
 - UX utilitaire / desktop-tool
 - beaucoup de réglages exposés
 - focus sur le moteur et l’intégration OS
 
 ### Dictus cible
+
 - UX plus produit, plus claire, plus “grand public power-user”
 - branding et ton plus cohérents avec Dictus iOS
 - hiérarchie plus simple des options clés
@@ -170,12 +187,14 @@ Dictus, lui, a une logique un peu plus **produit / expérience utilisateur**, su
 Garder la structure générale Handy au début, mais réorganiser l’expérience :
 
 ### Ce qu’on garde
+
 - sidebar
 - système de sections
 - onboarding existant comme base
 - modèles / historique / advanced / about
 
 ### Ce qu’on adapte
+
 - section `general` à repenser comme **Dictation** / **Experience**
 - `postprocessing` à recadrer comme **Smart Modes** ou **AI Modes** plus tard
 - `about` à rebrand Dictus
@@ -183,7 +202,9 @@ Garder la structure générale Handy au début, mais réorganiser l’expérienc
 - logos / couleurs / wording / copy
 
 ### Ce qu’on pourrait viser ensuite
+
 Une structure plus proche de :
+
 - General / Dictation
 - Models
 - Shortcuts
@@ -201,14 +222,18 @@ Une structure plus proche de :
 La bonne surprise, c’est que **Handy a déjà pas mal de briques utiles** pour Dictus.
 
 ### Langues
+
 On a déjà :
+
 - `selected_language`
 - `change_selected_language_setting(...)`
 - logique backend de validation langue/modèle
 - `LanguageSelector.tsx`
 
 ### Modèles
+
 On a déjà :
+
 - `selected_model`
 - gestion de modèles côté frontend et backend
 - `ModelsSettings`
@@ -217,7 +242,9 @@ On a déjà :
 - `managers/transcription.rs`
 
 ### Translation / post-processing
+
 On a déjà :
+
 - `translate_to_english`
 - `post_process_enabled`
 - prompts LLM configurables
@@ -228,6 +255,7 @@ On a déjà :
 Le besoin que tu as cité — **forcer la langue pour Whisper** — est très probablement **beaucoup plus proche que prévu**.
 
 Ce n’est pas une feature totalement nouvelle à inventer. C’est plutôt :
+
 - reprendre l’existant
 - vérifier le comportement réel côté transcription manager
 - l’adapter au produit Dictus
@@ -236,21 +264,26 @@ Ce n’est pas une feature totalement nouvelle à inventer. C’est plutôt :
 ## Opportunités directes
 
 ### Feature 1 — force language proprement
+
 Très bon candidat Milestone V1.
 
 Objectif :
+
 - exposer clairement `Auto / Français / English / ...`
 - garantir que le paramètre est bien respecté en transcription
 - vérifier compatibilité par modèle
 - aligner wording avec Dictus
 
 ### Feature 2 — modèles recommandés
+
 On pourrait plus tard introduire une logique Dictus de sélection recommandée, par ex :
+
 - fast
 - balanced
 - accurate
 
 ### Feature 3 — smart model routing
+
 Ton idée “modèle court / modèle long + langue forcée” ressemble à un très bon chantier V1+ ou V2.
 Ce n’est pas nécessaire pour le premier fork produit, mais c’est un axe fort.
 
@@ -269,13 +302,16 @@ Ce n’est pas nécessaire pour le premier fork produit, mais c’est un axe for
 Le repo `dictus-ios` donne déjà plusieurs points de référence forts :
 
 ### Produit
+
 - ton privacy-first, open source, on-device
 - distinction STT pur vs modes intelligents
 - branding Dictus déjà formulé
 - README propre et cohérent
 
 ### UX / structure produit
+
 Le PRD iOS montre une logique forte :
+
 - onboarding
 - model manager
 - choix de langue
@@ -284,7 +320,9 @@ Le PRD iOS montre une logique forte :
 - philosophie simple + utile
 
 ### Design / wording
+
 Même si la tech diffère, l’app iOS fournit une excellente base pour :
+
 - naming des features
 - ton du produit
 - hiérarchie des settings
@@ -296,6 +334,7 @@ Ne pas essayer de copier aveuglément l’iOS.
 
 Desktop ≠ keyboard extension iOS.
 Il faut garder les différences structurelles :
+
 - raccourcis globaux desktop
 - paste into any app
 - tray / overlay / permissions OS
@@ -305,6 +344,7 @@ Il faut garder les différences structurelles :
 ## Ce qu’il faut réutiliser
 
 ### À reprendre presque tel quel
+
 - vision produit
 - ton open source / privacy
 - vocabulaire Dictus
@@ -313,6 +353,7 @@ Il faut garder les différences structurelles :
 - logique de langue forcée
 
 ### À adapter
+
 - design system et palette
 - structure des réglages
 - onboarding
@@ -320,6 +361,7 @@ Il faut garder les différences structurelles :
 - copy marketing / README / about
 
 ### À ne pas forcer tout de suite
+
 - synchronisation multi-device
 - architecture de compte / clé / chiffrement
 - logique mobile-specific
@@ -328,6 +370,7 @@ Il faut garder les différences structurelles :
 
 `dictus-ios` est une **référence produit et design**, pas une base technique de portage.  
 Pour Dictus Desktop, il faut :
+
 - **s’inspirer fortement de l’expérience et du ton**
 - **garder la structure desktop native de Handy**
 
@@ -346,6 +389,7 @@ Transformer le fork Handy en une première base produit **Dictus Desktop** cohé
 ## Scope de la Milestone V1
 
 ### A. Fork cleanup + identité produit
+
 - définir le repo comme **Dictus Desktop**
 - rebrand visible de l’application
 - renommer `productName`
@@ -358,18 +402,21 @@ Transformer le fork Handy en une première base produit **Dictus Desktop** cohé
   - vision et périmètre
 
 ### B. Audit et alignement UI
+
 - cartographier les sections actuelles
 - décider de la première structure UX Dictus Desktop
 - adapter les labels et le ton
 - identifier les composants à rethématiser en priorité
 
 ### C. Langue et transcription
+
 - vérifier le comportement actuel de `selected_language`
 - formaliser le mode `Auto / Français / English`
 - valider la feature “force language” comme comportement produit attendu
 - définir les limitations éventuelles par modèle
 
 ### D. Base de design inspirée de Dictus iOS
+
 - extraire les principes visuels et wording de Dictus iOS
 - définir un premier niveau d’alignement
   - nommage
@@ -378,12 +425,14 @@ Transformer le fork Handy en une première base produit **Dictus Desktop** cohé
   - structure de l’about / onboarding / settings
 
 ### E. Documentation projet
+
 - créer les documents de démarrage du projet desktop
 - préparer le terrain pour GSD
 
 ## Hors scope explicite
 
 ### Pas en V1
+
 - synchronisation mobile ↔ desktop
 - architecture Nostr / pair-à-pair / local sync
 - compte utilisateur ou gestion de clés cross-device
@@ -404,23 +453,30 @@ Transformer le fork Handy en une première base produit **Dictus Desktop** cohé
 # Recommandation de roadmap courte
 
 ## Milestone V1
+
 **Foundation / fork / rebrand / language groundwork**
 
 ## Milestone V2
+
 **Design alignment + Dictus-specific desktop UX**
+
 - redesign des écrans clés
 - meilleure hiérarchie settings
 - alignement plus fort avec Dictus iOS
 - polish onboarding / history / about / models
 
 ## Milestone V3
+
 **Desktop-specific Dictus features**
+
 - smart model routing
 - meilleurs modes intelligents
 - améliorations paste / shortcuts / dictation flow
 
 ## Milestone V4+
+
 **Cross-device sync research and implementation**
+
 - LAN / local-first / relay-based options
 - chiffrement
 - sync d’historique / préférences / snippets / etc.
@@ -432,11 +488,13 @@ Transformer le fork Handy en une première base produit **Dictus Desktop** cohé
 La stratégie est bonne.
 
 Le plus intelligent maintenant est de considérer `dictus-desktop` comme :
+
 - **un fork produit assumé** de Handy
 - **une future branche officielle desktop de Dictus**
 - **un chantier séparé de la sync cross-device**
 
 Et la première milestone doit être volontairement pragmatique :
+
 - partir du réel
 - clarifier l’identité
 - sécuriser la base technique

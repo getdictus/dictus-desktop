@@ -44,21 +44,13 @@ pub fn get_current_theme(app: &AppHandle) -> AppTheme {
     }
 }
 
-/// Gets the appropriate icon path for the given theme and state
-pub fn get_icon_path(theme: AppTheme, state: TrayIconState) -> &'static str {
-    match (theme, state) {
-        // Dark theme uses light icons
-        (AppTheme::Dark, TrayIconState::Idle) => "resources/tray_idle.png",
-        (AppTheme::Dark, TrayIconState::Recording) => "resources/tray_recording.png",
-        (AppTheme::Dark, TrayIconState::Transcribing) => "resources/tray_transcribing.png",
-        // Light theme uses dark icons
-        (AppTheme::Light, TrayIconState::Idle) => "resources/tray_idle_dark.png",
-        (AppTheme::Light, TrayIconState::Recording) => "resources/tray_recording_dark.png",
-        (AppTheme::Light, TrayIconState::Transcribing) => "resources/tray_transcribing_dark.png",
-        // Colored theme uses pink icons (for Linux)
-        (AppTheme::Colored, TrayIconState::Idle) => "resources/handy.png",
-        (AppTheme::Colored, TrayIconState::Recording) => "resources/recording.png",
-        (AppTheme::Colored, TrayIconState::Transcribing) => "resources/transcribing.png",
+/// Gets the appropriate icon path for the given theme.
+/// Always returns the idle (Dictus) icon — no state-based icon changes.
+pub fn get_icon_path(theme: AppTheme, _state: TrayIconState) -> &'static str {
+    match theme {
+        AppTheme::Dark => "resources/tray_idle.png",
+        AppTheme::Light => "resources/tray_idle_dark.png",
+        AppTheme::Colored => "resources/tray_idle.png",
     }
 }
 
@@ -87,9 +79,9 @@ pub fn tray_tooltip() -> String {
 
 fn version_label() -> String {
     if cfg!(debug_assertions) {
-        format!("Handy v{} (Dev)", env!("CARGO_PKG_VERSION"))
+        format!("Dictus v{} (Dev)", env!("CARGO_PKG_VERSION"))
     } else {
-        format!("Handy v{}", env!("CARGO_PKG_VERSION"))
+        format!("Dictus v{}", env!("CARGO_PKG_VERSION"))
     }
 }
 

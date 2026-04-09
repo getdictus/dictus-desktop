@@ -78,14 +78,15 @@ L'application doit être identifiable et utilisable comme **Dictus Desktop** —
 
 ## Key Decisions
 
-| Decision | Rationale | Outcome |
-|----------|-----------|---------|
-| Fork de Handy comme base | Stack moderne, positionnement proche, briques utiles déjà présentes | — Pending |
-| Rebrand en deux passes (visible puis interne) | Ne pas ralentir la V1 avec des renommages internes non critiques | — Pending |
-| Dictus iOS comme référence design (pas portage) | Desktop ≠ mobile, garder les spécificités desktop | — Pending |
-| com.dictus.desktop comme bundle ID | Format simple, aligné futur domaine | — Pending |
-| Onboarding : rebrand seulement, pas de refonte | Garder le flow existant, changer textes/visuels | — Pending |
-| Langue forcée conditionnelle en V1 | Si c'est juste clarifier l'existant oui, sinon V2 | — Pending |
+| Decision                                        | Rationale                                                           | Outcome   |
+| ----------------------------------------------- | ------------------------------------------------------------------- | --------- |
+| Fork de Handy comme base                        | Stack moderne, positionnement proche, briques utiles déjà présentes | — Pending |
+| Rebrand en deux passes (visible puis interne)   | Ne pas ralentir la V1 avec des renommages internes non critiques    | — Pending |
+| Dictus iOS comme référence design (pas portage) | Desktop ≠ mobile, garder les spécificités desktop                   | — Pending |
+| com.dictus.desktop comme bundle ID              | Format simple, aligné futur domaine                                 | — Pending |
+| Onboarding : rebrand seulement, pas de refonte  | Garder le flow existant, changer textes/visuels                     | — Pending |
+| Langue forcée conditionnelle en V1              | Si c'est juste clarifier l'existant oui, sinon V2                   | — Pending |
 
 ---
-*Last updated: 2026-04-05 after initialization*
+
+_Last updated: 2026-04-05 after initialization_

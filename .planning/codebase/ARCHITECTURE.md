@@ -7,6 +7,7 @@
 **Overall:** Manager-based layered architecture with command-event separation between Tauri backend and React frontend.
 
 **Key Characteristics:**
+
 - Clear separation between core business logic (Rust managers), I/O operations (audio toolkit), and UI (React components)
 - Event-driven communication across process boundary using Tauri's command-event pattern
 - Exclusive single-threaded coordinator for transcription pipeline to eliminate race conditions
@@ -16,6 +17,7 @@
 ## Layers
 
 **Presentation (Frontend):**
+
 - Purpose: User interface and user input handling
 - Location: `src/`
 - Contains: React components, hooks, Zustand stores
@@ -23,6 +25,7 @@
 - Used by: User interactions (clicks, keyboard, settings changes)
 
 **Application (Commands):**
+
 - Purpose: RPC handlers bridging frontend requests to backend managers
 - Location: `src-tauri/src/commands/`
 - Contains: Tauri command handlers (decorated with `#[tauri::command]`)
@@ -30,6 +33,7 @@
 - Used by: Frontend via Tauri IPC
 
 **Business Logic (Managers):**
+
 - Purpose: Core functionality orchestration and state management
 - Location: `src-tauri/src/managers/`
 - Contains: `TranscriptionManager`, `AudioRecordingManager`, `ModelManager`, `HistoryManager`
@@ -37,6 +41,7 @@
 - Used by: Commands, shortcut handlers, tray menu
 
 **Event Coordination:**
+
 - Purpose: Serializes transcription lifecycle events to prevent race conditions
 - Location: `src-tauri/src/transcription_coordinator.rs`
 - Contains: Command dispatch loop managing recording→processing→idle state machine
@@ -44,6 +49,7 @@
 - Used by: Shortcut handlers, signal handlers
 
 **Input Handling (Shortcuts):**
+
 - Purpose: Global keyboard shortcuts and input events
 - Location: `src-tauri/src/shortcut/`
 - Contains: Two keyboard implementations (Tauri native, HandyKeys), binding change handlers
@@ -51,6 +57,7 @@
 - Used by: OS-level keyboard events, transcription coordinator
 
 **Audio Processing (Audio Toolkit):**
+
 - Purpose: Low-level audio capture, processing, and device management
 - Location: `src-tauri/src/audio_toolkit/`
 - Contains: `AudioRecorder`, device enumeration, Voice Activity Detection (VAD), resampling
@@ -58,6 +65,7 @@
 - Used by: AudioRecordingManager
 
 **Persistence (Settings & History):**
+
 - Purpose: Application state and user data storage
 - Location: `src-tauri/src/settings.rs`, `src-tauri/src/managers/history.rs`
 - Contains: Settings struct, JSON serialization, history database
@@ -93,6 +101,7 @@
 **Settings Flow:**
 
 Frontend:
+
 ```
 useSettings() hook
   ↓ reads from
@@ -108,6 +117,7 @@ SettingsStore updates local state
 ```
 
 Backend:
+
 ```
 get_settings(&app) reads from disk cache
   ↓
@@ -128,7 +138,8 @@ Managers may react to setting changes (e.g., accelerator settings)
 
 Purpose: Encapsulate domain logic with internal state and thread-safe access
 Examples: `TranscriptionManager`, `AudioRecordingManager`, `ModelManager`, `HistoryManager`
-Pattern: 
+Pattern:
+
 - Held in `Arc<Mutex<T>>` for cloning across threads
 - Methods accept `&self`, state mutations via interior mutability
 - RAII guards (e.g., `LoadingGuard`) manage cleanup automatically
@@ -138,6 +149,7 @@ Pattern:
 
 Pattern: Cleanup executed on drop, even during panic or early return
 Examples:
+
 - `LoadingGuard` in TranscriptionManager — resets `is_loading` flag
 - `DownloadCleanup` in ModelManager — clears download state
 
@@ -145,7 +157,8 @@ Examples:
 
 Purpose: Dispatch different behaviors based on shortcut type
 Location: `src-tauri/src/actions.rs`
-Pattern: 
+Pattern:
+
 - Trait `ShortcutAction` with `start()` and `stop()` methods
 - Multiple implementations (TranscribeAction, CancelAction, etc.)
 - Stored in `ACTION_MAP` HashMap keyed by binding_id
@@ -155,6 +168,7 @@ Pattern:
 Purpose: Serialize all transcription lifecycle events
 Location: `src-tauri/src/transcription_coordinator.rs`
 Pattern:
+
 - Enum `Stage` with variants: Idle, Recording(binding_id), Processing
 - Channel `(tx, rx)` for command dispatch
 - Single background thread owns the stage, preventing race conditions
@@ -164,6 +178,7 @@ Pattern:
 
 Pattern: Backend sends events to all listeners via `app.emit("event-name", data)`
 Examples:
+
 - `model-state-changed` — frontend updates available models
 - `recording-error` — frontend shows error toast
 - `history-updated` — frontend refreshes history list
@@ -175,6 +190,7 @@ Examples:
 Location: `src-tauri/src/main.rs`
 Triggers: Application startup
 Responsibilities:
+
 1. Parse CLI arguments via clap
 2. Call `handy_app_lib::run(cli_args)` → `src-tauri/src/lib.rs::run()`
 3. Initialize Tauri builder with plugins
@@ -188,6 +204,7 @@ Responsibilities:
 Location: `src/App.tsx`
 Triggers: Browser/webview load
 Responsibilities:
+
 1. Initialize i18next for translations
 2. Check onboarding status (accessibility, model selection)
 3. Set up event listeners for backend events
@@ -199,6 +216,7 @@ Responsibilities:
 
 Location: `src-tauri/src/commands/*.rs`
 Pattern:
+
 ```rust
 #[tauri::command]
 #[specta::specta]
@@ -208,6 +226,7 @@ pub fn command_name(app: AppHandle, state: State<Manager>) -> Result<Type, Strin
     // Return Result<T, String> for error handling
 }
 ```
+
 - `#[tauri::command]` — Registers with Tauri
 - `#[specta::specta]` — Generates TypeScript bindings
 - Failures returned as `Err(String)` → JSON error response
@@ -235,30 +254,35 @@ pub fn command_name(app: AppHandle, state: State<Manager>) -> Result<Type, Strin
 
 ## Cross-Cutting Concerns
 
-**Logging:** 
+**Logging:**
+
 - Framework: `log` crate with tauri_plugin_log
 - Console: Respects RUST_LOG env var (info-level default)
 - File: Respects FILE_LOG_LEVEL atomic (debug-level default)
 - Rotation: Single file kept, max 500KB per file
 - Path: `{app_data}/logs/handy.log` or system app log dir
 
-**Validation:** 
+**Validation:**
+
 - Frontend: Zod schemas for settings forms
 - Backend: Implicit via Rust type system (enums, ranges)
 - Model validation: SHA256 checksums, file integrity checks
 
-**Authentication:** 
+**Authentication:**
+
 - Accessibility (macOS): Gated at App.tsx via component
 - Microphone: OS-level permission, checked on start
 - Not implemented: User accounts, API tokens
 
 **Concurrency:**
+
 - Audio recording: Single CPAL stream per recording
 - Transcription: Arc<Mutex> shared across threads, single loading thread
 - Settings: TOML-JSON with write-through persistence
 - Commands: Async via Tauri's runtime, thread pool for heavy work
 
 **Internationalization (i18n):**
+
 - Framework: i18next (React) + manual strings in Rust
 - Files: `src/i18n/locales/{lang}/translation.json`
 - ESLint rule: No hardcoded strings in JSX components
@@ -266,4 +290,4 @@ pub fn command_name(app: AppHandle, state: State<Manager>) -> Result<Type, Strin
 
 ---
 
-*Architecture analysis: 2026-04-05*
+_Architecture analysis: 2026-04-05_

@@ -84,7 +84,7 @@ fn build_console_filter() -> env_filter::Filter {
     builder.build()
 }
 
-fn show_main_window(app: &AppHandle) {
+fn try_show_main_window(app: &AppHandle) -> bool {
     if let Some(main_window) = app.get_webview_window("main") {
         if let Err(e) = main_window.unminimize() {
             log::error!("Failed to unminimize webview window: {}", e);
@@ -101,14 +101,30 @@ fn show_main_window(app: &AppHandle) {
                 log::error!("Failed to set activation policy to Regular: {}", e);
             }
         }
-        return;
+        return true;
     }
 
     let webview_labels = app.webview_windows().keys().cloned().collect::<Vec<_>>();
-    log::error!(
+    log::warn!(
         "Main window not found. Webview labels: {:?}",
         webview_labels
     );
+    false
+}
+
+fn show_main_window(app: &AppHandle) {
+    if try_show_main_window(app) {
+        return;
+    }
+
+    // Window may not be ready yet during setup; retry after a short delay
+    let app_clone = app.clone();
+    tauri::async_runtime::spawn(async move {
+        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+        if !try_show_main_window(&app_clone) {
+            log::error!("Main window not found after retry");
+        }
+    });
 }
 
 #[allow(unused_variables)]
@@ -322,6 +338,26 @@ pub fn run(cli_args: CliArgs) {
     // when the variable is unset
     let console_filter = build_console_filter();
 
+    // Clean up stale single-instance socket from a previous crash.
+    // The socket path mirrors the derivation in tauri-plugin-single-instance.
+    #[cfg(unix)]
+    {
+        let socket_path = format!(
+            "/tmp/{}_si.sock",
+            "com.dictus.desktop".replace('.', "_").replace('-', "_")
+        );
+        let socket = std::path::Path::new(&socket_path);
+        if socket.exists() {
+            match std::os::unix::net::UnixStream::connect(socket) {
+                Ok(_) => {} // Another instance is actually running; plugin will handle it
+                Err(_) => {
+                    eprintln!("Removing stale single-instance socket: {}", socket_path);
+                    let _ = std::fs::remove_file(socket);
+                }
+            }
+        }
+    }
+
     let specta_builder = Builder::<tauri::Wry>::new()
         .commands(collect_commands![
             shortcut::change_binding,
@@ -512,7 +548,7 @@ pub fn run(cli_args: CliArgs) {
             // for portable mode (redirects WebView2 cache to portable Data dir)
             let mut win_builder =
                 tauri::WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App("/".into()))
-                    .title("Handy")
+                    .title("Dictus")
                     .inner_size(680.0, 570.0)
                     .min_inner_size(680.0, 570.0)
                     .resizable(true)
@@ -564,16 +600,17 @@ pub fn run(cli_args: CliArgs) {
         })
         .on_window_event(|window, event| match event {
             tauri::WindowEvent::CloseRequested { api, .. } => {
-                api.prevent_close();
-                let _res = window.hide();
+                let settings = get_settings(&window.app_handle());
+                let tray_visible =
+                    settings.show_tray_icon && !window.app_handle().state::<CliArgs>().no_tray;
 
-                #[cfg(target_os = "macos")]
-                {
-                    let settings = get_settings(&window.app_handle());
-                    let tray_visible =
-                        settings.show_tray_icon && !window.app_handle().state::<CliArgs>().no_tray;
-                    if tray_visible {
-                        // Tray is available: hide the dock icon, app lives in the tray
+                if tray_visible {
+                    // Tray is available: hide the window, app lives in the tray
+                    api.prevent_close();
+                    let _res = window.hide();
+
+                    #[cfg(target_os = "macos")]
+                    {
                         let res = window
                             .app_handle()
                             .set_activation_policy(tauri::ActivationPolicy::Accessory);
@@ -581,7 +618,9 @@ pub fn run(cli_args: CliArgs) {
                             log::error!("Failed to set activation policy: {}", e);
                         }
                     }
-                    // No tray: keep the dock icon visible so the user can reopen
+                } else {
+                    // No tray: actually quit so the user doesn't get a zombie process
+                    window.app_handle().exit(0);
                 }
             }
             tauri::WindowEvent::ThemeChanged(theme) => {

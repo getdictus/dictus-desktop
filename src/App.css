@@ -4,11 +4,11 @@
   /* Design tokens */
   --color-text: #0f0f0f;
   --color-background: #fbfbfb;
-  --color-accent: #3D7EFF;
-  --color-accent-gradient-start: #6BA3FF;
-  --color-accent-gradient-end: #2563EB;
-  --color-logo-primary: #6BA3FF;
-  --color-logo-stroke: #0A1628;
+  --color-accent: #3d7eff;
+  --color-accent-gradient-start: #6ba3ff;
+  --color-accent-gradient-end: #2563eb;
+  --color-logo-primary: #6ba3ff;
+  --color-logo-stroke: #0a1628;
   --color-text-stroke: #f6f6f6;
   --color-mid-gray: #808080;
 }
@@ -51,8 +51,8 @@
   :root {
     /* Colors - Dark Theme */
     --color-text: #fbfbfb;
-    --color-background: #0A1628;
-    --color-logo-primary: #6BA3FF;
+    --color-background: #0a1628;
+    --color-logo-primary: #6ba3ff;
     --color-logo-stroke: #ffffff;
   }
 }

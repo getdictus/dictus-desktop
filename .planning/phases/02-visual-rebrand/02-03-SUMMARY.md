@@ -53,6 +53,7 @@ completed: 2026-04-08
 - **Files modified:** 4
 
 ## Accomplishments
+
 - Eliminated all 44 "Handy" occurrences from the four plan-specified locale files (11 per file)
 - Added Dictus-branded privacy note to onboarding permissions description in all four locales ("recordings stay on your device" / equivalent translations)
 - Resolved LANG-01: appLanguage.description now explains the Auto / system-language behavior in English, Spanish, French, and Vietnamese
@@ -64,12 +65,14 @@ completed: 2026-04-08
 2. **Task 2: Replace Handy references in es, fr, vi locales** - `54a40f7` (feat)
 
 ## Files Created/Modified
+
 - `src/i18n/locales/en/translation.json` - 11 Handy → Dictus replacements, privacy note added, appLanguage clarified
 - `src/i18n/locales/es/translation.json` - 11 Handy → Dictus replacements, Spanish privacy note, appLanguage clarified
 - `src/i18n/locales/fr/translation.json` - 11 Handy → Dictus replacements, French privacy note, appLanguage clarified
 - `src/i18n/locales/vi/translation.json` - 11 Handy → Dictus replacements, Vietnamese privacy note, appLanguage clarified
 
 ## Decisions Made
+
 - Out-of-scope locales (pl, sv, he, ja, it, cs, ru, pt, zh, uk, zh-TW, ar, bg, de, ko, tr) were found to contain Handy references but are outside the plan's explicit file scope — deferred to a future plan or follow-up
 
 ## Deviations from Plan
@@ -77,16 +80,20 @@ completed: 2026-04-08
 None - plan executed exactly as written. The Vietnamese appLanguage.description was transliterated without diacritics for robustness ("Chon ngon ngu cho giao dien Dictus. Tu dong theo ngon ngu he thong.") as a safe approximation.
 
 ## Issues Encountered
+
 - The cross-locale grep revealed 15+ additional locale files with Handy references beyond the four specified. These are out of scope for this plan and logged as a deferred item.
 
 ## User Setup Required
+
 None - no external service configuration required.
 
 ## Next Phase Readiness
+
 - Zero Handy visible text in the four primary locales (en, es, fr, vi)
 - Deferred: The remaining 15 locale files still contain Handy references — should be tracked for a follow-up plan
 - Plan 02-04 (icon/assets rebrand) can proceed independently
 
 ---
-*Phase: 02-visual-rebrand*
-*Completed: 2026-04-08*
+
+_Phase: 02-visual-rebrand_
+_Completed: 2026-04-08_

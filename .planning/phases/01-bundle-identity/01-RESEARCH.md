@@ -17,6 +17,7 @@ The updater strategy (set `createUpdaterArtifacts: false`, leave `plugins.update
 ---
 
 <user_constraints>
+
 ## User Constraints (from CONTEXT.md)
 
 ### Locked Decisions
@@ -39,20 +40,22 @@ The updater strategy (set `createUpdaterArtifacts: false`, leave `plugins.update
 - `[patch.crates-io]` references to `cjpais/tauri.git` (TECH-04, V2)
 - `handy-keys` dependency (TECH-01, V2)
 - Any Rust source code renaming
-</user_constraints>
+  </user_constraints>
 
 ---
 
 <phase_requirements>
+
 ## Phase Requirements
 
-| ID | Description | Research Support |
-|----|-------------|-----------------|
-| BNDL-01 | `productName` changed to "Dictus" in `tauri.conf.json` | Confirmed: `productName` is the top-level field controlling app bundle name, dock display (release builds), tray label, and window title in Tauri 2.x |
-| BNDL-02 | `identifier` changed to `"com.dictus.desktop"` | Confirmed: `identifier` field controls OS-level bundle ID and determines app data directory path; clean-slate install decided (no migration needed) |
-| BNDL-03 | Cargo.toml metadata updated (version, description, authors) — NOT name/default-run/lib.name | Confirmed: `version`, `description`, `authors` are safe to edit; `name`, `default-run`, `lib.name` deliberately excluded per V2 deferral |
-| BNDL-04 | Auto-updater endpoint disabled — no reference to upstream Handy releases | Confirmed: `createUpdaterArtifacts: false` + empty `plugins.updater: {}` disables artifact generation without requiring valid pubkey/endpoints; plugin dependency stays |
-| BNDL-05 | Upstream Windows code signing reference removed | Confirmed: `bundle.windows.signCommand` field removed entirely; clean removal with no placeholder |
+| ID      | Description                                                                                 | Research Support                                                                                                                                                        |
+| ------- | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| BNDL-01 | `productName` changed to "Dictus" in `tauri.conf.json`                                      | Confirmed: `productName` is the top-level field controlling app bundle name, dock display (release builds), tray label, and window title in Tauri 2.x                   |
+| BNDL-02 | `identifier` changed to `"com.dictus.desktop"`                                              | Confirmed: `identifier` field controls OS-level bundle ID and determines app data directory path; clean-slate install decided (no migration needed)                     |
+| BNDL-03 | Cargo.toml metadata updated (version, description, authors) — NOT name/default-run/lib.name | Confirmed: `version`, `description`, `authors` are safe to edit; `name`, `default-run`, `lib.name` deliberately excluded per V2 deferral                                |
+| BNDL-04 | Auto-updater endpoint disabled — no reference to upstream Handy releases                    | Confirmed: `createUpdaterArtifacts: false` + empty `plugins.updater: {}` disables artifact generation without requiring valid pubkey/endpoints; plugin dependency stays |
+| BNDL-05 | Upstream Windows code signing reference removed                                             | Confirmed: `bundle.windows.signCommand` field removed entirely; clean removal with no placeholder                                                                       |
+
 </phase_requirements>
 
 ---
@@ -60,12 +63,14 @@ The updater strategy (set `createUpdaterArtifacts: false`, leave `plugins.update
 ## Standard Stack
 
 ### Core (files being edited)
-| File | Current Identity | Target Identity |
-|------|-----------------|----------------|
+
+| File                        | Current Identity                                                                                                                                                                                          | Target Identity                                                                                                                                           |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `src-tauri/tauri.conf.json` | `productName: "Handy"`, `identifier: "com.pais.handy"`, `version: "0.8.2"`, `createUpdaterArtifacts: true`, `plugins.updater` with cjpais endpoint, `bundle.windows.signCommand` pointing to Azure/cjpais | `productName: "Dictus"`, `identifier: "com.dictus.desktop"`, `version: "0.1.0"`, `createUpdaterArtifacts: false`, `plugins.updater: {}`, no `signCommand` |
-| `src-tauri/Cargo.toml` | `version: "0.8.2"`, `description: "Handy"`, `authors: ["cjpais"]` | `version: "0.1.0"`, `description: <Dictus wording>`, `authors: ["Dictus", "cjpais"]` |
+| `src-tauri/Cargo.toml`      | `version: "0.8.2"`, `description: "Handy"`, `authors: ["cjpais"]`                                                                                                                                         | `version: "0.1.0"`, `description: <Dictus wording>`, `authors: ["Dictus", "cjpais"]`                                                                      |
 
 ### No new dependencies
+
 This phase installs nothing. All changes are field edits.
 
 ## Architecture Patterns
@@ -126,31 +131,35 @@ name = "handy_app_lib"  ← DO NOT TOUCH (V2/TECH-01)
 
 ## Don't Hand-Roll
 
-| Problem | Don't Build | Use Instead |
-|---------|-------------|-------------|
-| Verifying bundle identifier change took effect | Custom build script | `tauri build` output — the .app bundle path will contain the new identifier |
-| Checking OS data path changed | Runtime logging | Use `tauri_plugin_fs` `app_data_dir()` in a test run, or inspect macOS `~/Library/Application Support/` |
+| Problem                                        | Don't Build         | Use Instead                                                                                             |
+| ---------------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------- |
+| Verifying bundle identifier change took effect | Custom build script | `tauri build` output — the .app bundle path will contain the new identifier                             |
+| Checking OS data path changed                  | Runtime logging     | Use `tauri_plugin_fs` `app_data_dir()` in a test run, or inspect macOS `~/Library/Application Support/` |
 
 ## Common Pitfalls
 
 ### Pitfall 1: Dev mode still shows "handy" in dock
+
 **What goes wrong:** After changing `productName`, running `tauri dev` still shows "handy" in the macOS dock title and process name.
 **Why it happens:** `tauri dev` launches the raw binary directly (binary name = Cargo.toml `name` = "handy"). The `.app` bundle Info.plist that carries `productName` is only assembled during `tauri build`.
 **How to avoid:** This is expected and acceptable for Phase 1. The dock name in release builds will correctly show "Dictus". Document this in the plan so the implementer doesn't chase a non-bug.
 **Warning signs:** Only a concern if reviewer tests exclusively in `tauri dev`.
 
 ### Pitfall 2: Build fails after removing updater pubkey
+
 **What goes wrong:** `tauri build` errors with a complaint about missing updater configuration.
 **Why it happens:** If `createUpdaterArtifacts` is still `true` when `pubkey`/`endpoints` are removed, the build will fail — the updater build step requires signing keys.
 **How to avoid:** Set `createUpdaterArtifacts: false` in the same edit pass as removing `pubkey`/`endpoints`. Verify the boolean is `false`, not omitted or `"false"` (string).
 **Warning signs:** Build error mentioning "updater" or "pubkey" during `tauri build`.
 
 ### Pitfall 3: App data directory migration confusion
+
 **What goes wrong:** Existing Handy installation data (at `~/Library/Application Support/com.pais.handy`) is not accessible to the renamed app.
 **Why it happens:** Identifier change means a new data path.
 **How to avoid:** This is an accepted decision (clean-slate install, no migration needed). No existing Dictus user base. Document it and proceed.
 
 ### Pitfall 4: Windows NSIS template references old name
+
 **What goes wrong:** The NSIS installer template at `nsis/installer.nsi` might hardcode "Handy" strings.
 **Why it happens:** Custom NSIS templates can embed product name literals.
 **How to avoid:** After the config edit, grep the NSIS template for "Handy" to check. If found, those references are outside BNDL-01 scope but should be noted for Phase 2/3 cleanup (DOCS-02).
@@ -212,10 +221,10 @@ bun run tauri build 2>&1 | grep -i "error\|warning.*updater"
 
 ## State of the Art
 
-| Old Approach | Current Approach | Impact |
-|--------------|------------------|--------|
-| Tauri 1.x `tauri.conf.json` had updater under `tauri.updater` | Tauri 2.x uses `plugins.updater` and `bundle.createUpdaterArtifacts` | These files use Tauri 2.x schema — correct path confirmed |
-| `createUpdaterArtifacts` defaulted to `true` in early Tauri 2 migration output | Default is `false`; existing config has it explicitly `true` | Set to `false` is safe and idiomatic |
+| Old Approach                                                                   | Current Approach                                                     | Impact                                                    |
+| ------------------------------------------------------------------------------ | -------------------------------------------------------------------- | --------------------------------------------------------- |
+| Tauri 1.x `tauri.conf.json` had updater under `tauri.updater`                  | Tauri 2.x uses `plugins.updater` and `bundle.createUpdaterArtifacts` | These files use Tauri 2.x schema — correct path confirmed |
+| `createUpdaterArtifacts` defaulted to `true` in early Tauri 2 migration output | Default is `false`; existing config has it explicitly `true`         | Set to `false` is safe and idiomatic                      |
 
 ## Open Questions
 
@@ -233,22 +242,22 @@ bun run tauri build 2>&1 | grep -i "error\|warning.*updater"
 
 ### Test Framework
 
-| Property | Value |
-|----------|-------|
-| Framework | None detected — Rust: no test runner config; Frontend: no jest/vitest config found |
-| Config file | None |
-| Quick run command | `grep -rn "Handy\|cjpais\|com.pais\|0\.8\.2" src-tauri/tauri.conf.json src-tauri/Cargo.toml` |
-| Full suite command | `bun run format:check && bun run lint` |
+| Property           | Value                                                                                        |
+| ------------------ | -------------------------------------------------------------------------------------------- |
+| Framework          | None detected — Rust: no test runner config; Frontend: no jest/vitest config found           |
+| Config file        | None                                                                                         |
+| Quick run command  | `grep -rn "Handy\|cjpais\|com.pais\|0\.8\.2" src-tauri/tauri.conf.json src-tauri/Cargo.toml` |
+| Full suite command | `bun run format:check && bun run lint`                                                       |
 
 ### Phase Requirements to Test Map
 
-| Req ID | Behavior | Test Type | Automated Command | File Exists? |
-|--------|----------|-----------|-------------------|-------------|
-| BNDL-01 | `productName` equals "Dictus" | smoke (grep) | `grep '"productName": "Dictus"' src-tauri/tauri.conf.json` | ✅ |
-| BNDL-02 | `identifier` equals "com.dictus.desktop" | smoke (grep) | `grep '"identifier": "com.dictus.desktop"' src-tauri/tauri.conf.json` | ✅ |
-| BNDL-03 | Cargo version 0.1.0, authors includes "Dictus", description updated | smoke (grep) | `grep -E 'version = "0\.1\.0"' src-tauri/Cargo.toml && grep 'Dictus' src-tauri/Cargo.toml` | ✅ |
-| BNDL-04 | No updater endpoint pointing to cjpais/Handy; `createUpdaterArtifacts: false` | smoke (grep) | `grep -c "cjpais\|github.com/cjpais" src-tauri/tauri.conf.json` (expect 0) | ✅ |
-| BNDL-05 | No `signCommand` in bundle.windows | smoke (grep) | `grep -c "signCommand" src-tauri/tauri.conf.json` (expect 0) | ✅ |
+| Req ID  | Behavior                                                                      | Test Type    | Automated Command                                                                          | File Exists? |
+| ------- | ----------------------------------------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------ | ------------ |
+| BNDL-01 | `productName` equals "Dictus"                                                 | smoke (grep) | `grep '"productName": "Dictus"' src-tauri/tauri.conf.json`                                 | ✅           |
+| BNDL-02 | `identifier` equals "com.dictus.desktop"                                      | smoke (grep) | `grep '"identifier": "com.dictus.desktop"' src-tauri/tauri.conf.json`                      | ✅           |
+| BNDL-03 | Cargo version 0.1.0, authors includes "Dictus", description updated           | smoke (grep) | `grep -E 'version = "0\.1\.0"' src-tauri/Cargo.toml && grep 'Dictus' src-tauri/Cargo.toml` | ✅           |
+| BNDL-04 | No updater endpoint pointing to cjpais/Handy; `createUpdaterArtifacts: false` | smoke (grep) | `grep -c "cjpais\|github.com/cjpais" src-tauri/tauri.conf.json` (expect 0)                 | ✅           |
+| BNDL-05 | No `signCommand` in bundle.windows                                            | smoke (grep) | `grep -c "signCommand" src-tauri/tauri.conf.json` (expect 0)                               | ✅           |
 
 All checks are grep-based (no test framework needed). They are runnable in < 5 seconds.
 
@@ -265,21 +274,25 @@ None — existing files are sufficient. No test infrastructure setup required.
 ## Sources
 
 ### Primary (HIGH confidence)
+
 - `src-tauri/tauri.conf.json` — Current field values directly inspected
 - `src-tauri/Cargo.toml` — Current field values directly inspected
 - [Tauri 2 Configuration Reference](https://v2.tauri.app/reference/config/) — `createUpdaterArtifacts`, `identifier`, `productName` field definitions
 - [Tauri 2 Updater Plugin](https://v2.tauri.app/plugin/updater/) — `pubkey`/`endpoints` requirement; confirmed that these are only enforced when artifact generation is active
 
 ### Secondary (MEDIUM confidence)
+
 - [Tauri Issue #13874](https://github.com/tauri-apps/tauri/issues/13874) — Confirmed that `productName` controls release build dock/menu name; `tauri dev` uses binary name (known limitation, closed as not planned)
 - [Tauri Issue #10508](https://github.com/tauri-apps/tauri/issues/10508) — Confirmed that `createUpdaterArtifacts` config can be removed or set to `false` without build errors when updater is unused
 
 ### Tertiary (LOW confidence)
+
 - None — all claims verified with official sources or direct file inspection
 
 ## Metadata
 
 **Confidence breakdown:**
+
 - Standard stack: HIGH — both files directly inspected; exact field names confirmed
 - Architecture: HIGH — Tauri 2.x config structure verified from official schema reference
 - Pitfalls: HIGH (dev/build dock difference confirmed from GitHub issue); MEDIUM (NSIS template — not yet inspected)

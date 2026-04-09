@@ -7,7 +7,8 @@ requirements: [VISU-04, LANG-01]
 
 dependency_graph:
   requires: [02-03-SUMMARY.md]
-  provides: [zero-handy-refs-all-20-locales, appLanguage-auto-clarification-all-locales]
+  provides:
+    [zero-handy-refs-all-20-locales, appLanguage-auto-clarification-all-locales]
   affects: [i18next runtime, all language settings UI]
 
 tech_stack:
@@ -55,6 +56,7 @@ metrics:
 Gap-closure plan that completed the Handy→Dictus rebrand for all non-primary locale files. Plan 02-03 had covered en/es/fr/vi. This plan covered the remaining 16 locales in two batches of 8.
 
 Each file received:
+
 - Replacement of "Handy" with "Dictus" at all occurrences across 11 key paths
 - Updated `appLanguage.description` with both Dictus branding and an Auto/system-language clarification in the target language (LANG-01)
 
@@ -62,10 +64,10 @@ All 20 locale files now have zero "Handy" occurrences. VISU-04 is fully satisfie
 
 ## Tasks Completed
 
-| Task | Description | Commit | Files |
-|------|-------------|--------|-------|
-| 1 | Replace Handy→Dictus in pl, de, ja, it, ko, ru, zh, zh-TW | 8ae594e | 8 locale files |
-| 2 | Replace Handy→Dictus in sv, he, ar, pt, cs, uk, bg, tr | 4e7ddce | 8 locale files |
+| Task | Description                                               | Commit  | Files          |
+| ---- | --------------------------------------------------------- | ------- | -------------- |
+| 1    | Replace Handy→Dictus in pl, de, ja, it, ko, ru, zh, zh-TW | 8ae594e | 8 locale files |
+| 2    | Replace Handy→Dictus in sv, he, ar, pt, cs, uk, bg, tr    | 4e7ddce | 8 locale files |
 
 ## Key Changes Per Locale
 
@@ -74,6 +76,7 @@ All 20 locale files now have zero "Handy" occurrences. VISU-04 is fully satisfie
 **Task 2 locales (8):** Swedish, Hebrew, Arabic, Portuguese, Czech, Ukrainian, Bulgarian, Turkish
 
 **Key paths updated in each file:**
+
 1. `onboarding.permissions.description`
 2. `settings.shortcuts.title` (except uk — already localized)
 3. `settings.general.launchAtLogin.description`
@@ -100,6 +103,7 @@ All 16 gap-closure locale files: valid JSON (python3 json.load)
 ## Deviations from Plan
 
 **1. [Rule 1 - Observation] Ukrainian shortcut.title already localized**
+
 - **Found during:** Task 2
 - **Issue:** `uk/translation.json` shortcut.title reads "Комбінації клавіш" (no "Handy") — already properly localized in a prior edit outside this plan's scope
 - **Fix:** No action needed; 10 replacements made instead of 11

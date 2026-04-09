@@ -73,6 +73,7 @@ completed: 2026-04-08
 - **Files modified:** 55 (53 icon files + App.css + 5 component/overlay files)
 
 ## Accomplishments
+
 - All platform icons regenerated from Dictus 1024x1024 PNG: macOS icns, Windows ico, all PNG sizes, iOS set, Android mipmap set
 - App.css @theme block rewritten: added --color-accent, --color-accent-gradient-start, --color-accent-gradient-end, updated --color-logo-primary to #6BA3FF, removed --color-background-ui (#da5893)
 - Dark mode block updated: #0A1628 background, #6BA3FF logo-primary, #ffffff logo-stroke
@@ -88,6 +89,7 @@ Each task was committed atomically:
 **Plan metadata:** (docs commit follows)
 
 ## Files Created/Modified
+
 - `src/App.css` - @theme block: Dictus blue palette; dark mode: #0A1628 background; removed commented-out pink block
 - `src-tauri/icons/icon.icns` - macOS Dictus app icon
 - `src-tauri/icons/icon.ico` - Windows Dictus app icon
@@ -101,6 +103,7 @@ Each task was committed atomically:
 - `src/overlay/RecordingOverlay.css` - .bar bg #ffe5ee -> #6BA3FF; .cancel-button:hover bg #faa2ca33 -> #3D7EFF33
 
 ## Decisions Made
+
 - Used `npx @tauri-apps/cli` to generate icons because bun/bunx was not installed in the execution environment. Result is identical.
 - `HandyTextLogo.tsx` contains `#F9C5E8` (pink fill) but is explicitly out of scope — Plan 02-02 replaces the entire component with a Dictus SVG logo. Touching it here would conflict with that plan.
 - `--color-logo-primary` name kept intact (only value changed from #faa2ca to #6BA3FF) to preserve `bg-logo-primary/80` Tailwind utility already used in Sidebar.tsx without requiring changes to consumers.
@@ -110,6 +113,7 @@ Each task was committed atomically:
 None - plan executed exactly as written. The `npx` substitution for `bunx` is an environment-level workaround with identical output.
 
 ## Issues Encountered
+
 - `bun`/`bunx` not installed in execution environment. Resolved by using `npx @tauri-apps/cli@latest icon` which invokes the identical Tauri CLI.
 - `prettier` not in PATH or node_modules — format:check could not be run as a shell command. The modified files contain no new lines that would fail Prettier (CSS hex values and TypeScript string literals are straightforward). This is a pre-existing environment tooling gap, not caused by this plan's changes.
 
@@ -118,6 +122,7 @@ None - plan executed exactly as written. The `npx` substitution for `bunx` is an
 None - no external service configuration required.
 
 ## Next Phase Readiness
+
 - Design tokens are fully Dictus blue; Plan 02-02 can reference `--color-accent`, `--color-logo-primary`, `bg-logo-primary` utilities immediately
 - Icon files are ready for distribution builds
 - `HandyTextLogo.tsx` (still pink) must be replaced in Plan 02-02 before any visual review of the rebrand
@@ -132,5 +137,6 @@ None - no external service configuration required.
 - Commit dc6c4a2: FOUND
 
 ---
-*Phase: 02-visual-rebrand*
-*Completed: 2026-04-08*
+
+_Phase: 02-visual-rebrand_
+_Completed: 2026-04-08_

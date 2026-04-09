@@ -69,34 +69,34 @@
 
 ### Component Responsibilities — Branding Dimension
 
-| Component | Current Handy Identity | Rebrand Target | Boundary Type |
-|-----------|----------------------|----------------|---------------|
-| `tauri.conf.json` | `productName: "Handy"`, `identifier: "com.pais.handy"`, updater URL `cjpais/Handy` | `"Dictus Desktop"`, `"com.dictus.desktop"`, updater URL TBD | Config file (hard change) |
-| `src-tauri/Cargo.toml` | `name = "handy"`, `default-run = "handy"`, `[lib] name = "handy_app_lib"` | `"dictus-desktop"`, `"dictus_desktop_lib"` | Build config (requires code change in `main.rs` imports) |
-| `package.json` | `"name": "handy-app"` | `"dictus-desktop"` | Config file (soft change) |
-| `src/components/icons/HandyHand.tsx` | SVG icon — a hand graphic, Handy branded | Replace with Dictus logo SVG component | Component (rename + new content) |
-| `src/components/icons/HandyTextLogo.tsx` | SVG wordmark — renders "Handy" text | Replace with Dictus wordmark SVG | Component (rename + new content) |
-| `src/components/Sidebar.tsx` | Uses `HandyHand`, `HandyTextLogo` | Use renamed icon components | Component (rename imports) |
-| `src/components/onboarding/Onboarding.tsx` | Uses `HandyTextLogo`, mentions Handy | Dictus logo + Dictus copy | Component (rename + copy change) |
-| `src/components/onboarding/AccessibilityOnboarding.tsx` | Uses `HandyTextLogo`, "Handy needs accessibility…" | Dictus logo + Dictus copy | Component (rename + copy change) |
-| `src/i18n/locales/en/translation.json` | 12+ "Handy" occurrences in strings | "Dictus" everywhere | i18n source (all 4 languages) |
-| `src/components/settings/about/AboutSettings.tsx` | Links to `handy.computer/donate`, `cjpais/Handy` | Dictus URLs / attribution | Component (URL update) |
-| `src/components/update-checker/UpdateChecker.tsx` | Links to `cjpais/Handy/releases` | Dictus releases URL | Component (URL update) |
-| `src/components/settings/HandyKeysShortcutInput.tsx` | Component name, listens to `"handy-keys-event"` | Rename file/component; event name is tied to `handy-keys` crate | Internal API (Phase 2 rename) |
-| `src/components/settings/debug/DebugPaths.tsx` | Shows `%APPDATA%/handy` paths | `%APPDATA%/com.dictus.desktop` or OS-derived | UI string (derived from bundle ID) |
-| `src/components/settings/debug/KeyboardImplementationSelector.tsx` | Label `"Handy Keys"` | `"System Keys"` or keep as-is | UI label |
-| `src-tauri/src/shortcut/handy_keys.rs` | Module name, `HandyKeysState`, wraps `handy-keys` crate | Rename file to `ext_keys.rs` or similar; rename state struct | Internal (Phase 2) |
-| `src-tauri/src/settings.rs` | `KeyboardImplementation::HandyKeys`, serialized as `"handy_keys"` | Rename enum variant; `"handy_keys"` serialization key is persisted in user settings — migration required | Persisted data (migration risk) |
-| `src-tauri/src/tray.rs` | `"Handy v{}"` tray tooltip, `resources/handy.png` | `"Dictus Desktop v{}"`, `resources/dictus.png` | Runtime display + asset |
-| `src-tauri/src/lib.rs` | Window title `"Handy"`, log file `"handy"`, calls `handy_keys::*` | `"Dictus Desktop"`, `"dictus"`, updated module refs | Core bootstrap |
-| `src-tauri/src/cli.rs` | Binary CLI name `"handy"`, about `"Handy - Speech to Text"` | `"dictus-desktop"`, updated description | CLI identity |
-| `src-tauri/src/llm_client.rs` | HTTP headers: `Referer`, `User-Agent`, `X-Title` all reference Handy | Update to Dictus identity + repository URL | Network identity |
-| `src-tauri/src/portable.rs` | Marker string `"Handy Portable Mode"`, temp dir names `handy_test_*` | `"Dictus Portable Mode"` (breaks existing portable installs) | Data migration risk |
-| `src-tauri/nsis/installer.nsi` | Comments + strings reference Handy, `"Handy Portable Mode"` marker | Update strings; keep marker check backward-compat or handle migration | Windows installer |
-| `src-tauri/resources/handy.png` | Tray icon (colored, idle state) | Rename to `dictus.png`, replace content | Asset file |
-| `src-tauri/icons/` | App icons (generic, not Handy-branded visually) | Replace with Dictus brand icons | Asset files |
-| `handy-keys` crate (external) | Third-party crate name — not renameable | Crate stays; internal wrappers can be renamed | External dependency |
-| `[patch.crates-io] handy-2.10.2` | Forked Tauri runtime on `cjpais/handy-2.10.2` branch | Branch name stays (external); no action needed | External fork |
+| Component                                                          | Current Handy Identity                                                             | Rebrand Target                                                                                           | Boundary Type                                            |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| `tauri.conf.json`                                                  | `productName: "Handy"`, `identifier: "com.pais.handy"`, updater URL `cjpais/Handy` | `"Dictus Desktop"`, `"com.dictus.desktop"`, updater URL TBD                                              | Config file (hard change)                                |
+| `src-tauri/Cargo.toml`                                             | `name = "handy"`, `default-run = "handy"`, `[lib] name = "handy_app_lib"`          | `"dictus-desktop"`, `"dictus_desktop_lib"`                                                               | Build config (requires code change in `main.rs` imports) |
+| `package.json`                                                     | `"name": "handy-app"`                                                              | `"dictus-desktop"`                                                                                       | Config file (soft change)                                |
+| `src/components/icons/HandyHand.tsx`                               | SVG icon — a hand graphic, Handy branded                                           | Replace with Dictus logo SVG component                                                                   | Component (rename + new content)                         |
+| `src/components/icons/HandyTextLogo.tsx`                           | SVG wordmark — renders "Handy" text                                                | Replace with Dictus wordmark SVG                                                                         | Component (rename + new content)                         |
+| `src/components/Sidebar.tsx`                                       | Uses `HandyHand`, `HandyTextLogo`                                                  | Use renamed icon components                                                                              | Component (rename imports)                               |
+| `src/components/onboarding/Onboarding.tsx`                         | Uses `HandyTextLogo`, mentions Handy                                               | Dictus logo + Dictus copy                                                                                | Component (rename + copy change)                         |
+| `src/components/onboarding/AccessibilityOnboarding.tsx`            | Uses `HandyTextLogo`, "Handy needs accessibility…"                                 | Dictus logo + Dictus copy                                                                                | Component (rename + copy change)                         |
+| `src/i18n/locales/en/translation.json`                             | 12+ "Handy" occurrences in strings                                                 | "Dictus" everywhere                                                                                      | i18n source (all 4 languages)                            |
+| `src/components/settings/about/AboutSettings.tsx`                  | Links to `handy.computer/donate`, `cjpais/Handy`                                   | Dictus URLs / attribution                                                                                | Component (URL update)                                   |
+| `src/components/update-checker/UpdateChecker.tsx`                  | Links to `cjpais/Handy/releases`                                                   | Dictus releases URL                                                                                      | Component (URL update)                                   |
+| `src/components/settings/HandyKeysShortcutInput.tsx`               | Component name, listens to `"handy-keys-event"`                                    | Rename file/component; event name is tied to `handy-keys` crate                                          | Internal API (Phase 2 rename)                            |
+| `src/components/settings/debug/DebugPaths.tsx`                     | Shows `%APPDATA%/handy` paths                                                      | `%APPDATA%/com.dictus.desktop` or OS-derived                                                             | UI string (derived from bundle ID)                       |
+| `src/components/settings/debug/KeyboardImplementationSelector.tsx` | Label `"Handy Keys"`                                                               | `"System Keys"` or keep as-is                                                                            | UI label                                                 |
+| `src-tauri/src/shortcut/handy_keys.rs`                             | Module name, `HandyKeysState`, wraps `handy-keys` crate                            | Rename file to `ext_keys.rs` or similar; rename state struct                                             | Internal (Phase 2)                                       |
+| `src-tauri/src/settings.rs`                                        | `KeyboardImplementation::HandyKeys`, serialized as `"handy_keys"`                  | Rename enum variant; `"handy_keys"` serialization key is persisted in user settings — migration required | Persisted data (migration risk)                          |
+| `src-tauri/src/tray.rs`                                            | `"Handy v{}"` tray tooltip, `resources/handy.png`                                  | `"Dictus Desktop v{}"`, `resources/dictus.png`                                                           | Runtime display + asset                                  |
+| `src-tauri/src/lib.rs`                                             | Window title `"Handy"`, log file `"handy"`, calls `handy_keys::*`                  | `"Dictus Desktop"`, `"dictus"`, updated module refs                                                      | Core bootstrap                                           |
+| `src-tauri/src/cli.rs`                                             | Binary CLI name `"handy"`, about `"Handy - Speech to Text"`                        | `"dictus-desktop"`, updated description                                                                  | CLI identity                                             |
+| `src-tauri/src/llm_client.rs`                                      | HTTP headers: `Referer`, `User-Agent`, `X-Title` all reference Handy               | Update to Dictus identity + repository URL                                                               | Network identity                                         |
+| `src-tauri/src/portable.rs`                                        | Marker string `"Handy Portable Mode"`, temp dir names `handy_test_*`               | `"Dictus Portable Mode"` (breaks existing portable installs)                                             | Data migration risk                                      |
+| `src-tauri/nsis/installer.nsi`                                     | Comments + strings reference Handy, `"Handy Portable Mode"` marker                 | Update strings; keep marker check backward-compat or handle migration                                    | Windows installer                                        |
+| `src-tauri/resources/handy.png`                                    | Tray icon (colored, idle state)                                                    | Rename to `dictus.png`, replace content                                                                  | Asset file                                               |
+| `src-tauri/icons/`                                                 | App icons (generic, not Handy-branded visually)                                    | Replace with Dictus brand icons                                                                          | Asset files                                              |
+| `handy-keys` crate (external)                                      | Third-party crate name — not renameable                                            | Crate stays; internal wrappers can be renamed                                                            | External dependency                                      |
+| `[patch.crates-io] handy-2.10.2`                                   | Forked Tauri runtime on `cjpais/handy-2.10.2` branch                               | Branch name stays (external); no action needed                                                           | External fork                                            |
 
 ---
 
@@ -150,12 +150,14 @@ src-tauri/
 **When to use:** When internal renaming carries non-trivial risk (persisted data keys, IPC event names, generated bindings) and the visible rebrand has independent value.
 
 **Trade-offs:**
+
 - Pro: Visible rebrand ships quickly without risk of build breakage from Cargo crate rename
 - Pro: Settings migration can be scoped to a dedicated phase with a tested migration path
 - Con: Codebase temporarily has mismatched names (e.g., `HandyKeysShortcutInput` in a Dictus-branded UI)
 - Con: Two PRs, slightly longer overall timeline
 
 **Implementation:**
+
 ```
 Pass 1 (visible):
   tauri.conf.json → productName, identifier
@@ -180,6 +182,7 @@ Pass 2 (internal):
 ### Pattern 2: Config-Driven Identity (Tauri)
 
 **What:** Tauri derives many identity strings from `tauri.conf.json`. Changing `productName` and `identifier` propagates to:
+
 - OS app registration (macOS bundle ID, Windows registry key, Linux .desktop file)
 - App data directory path (OS derives this from the identifier)
 - Auto-updater artifact lookup
@@ -187,6 +190,7 @@ Pass 2 (internal):
 **When to use:** Always change `tauri.conf.json` first in Pass 1 — it is the canonical identity source.
 
 **Critical implication:** Changing `identifier` from `com.pais.handy` to `com.dictus.desktop` changes the OS-level app data directory path. Existing user data (settings, history, models) stored at `%APPDATA%/com.pais.handy` will no longer be found. This is a **data migration concern** — either:
+
 - Accept data loss for V1 (fresh install experience)
 - Implement a one-time migration in `lib.rs::run()` that moves data at first launch with new identifier
 
@@ -197,14 +201,17 @@ Pass 2 (internal):
 **When to use:** Any time a Rust enum variant used in persistent settings is renamed.
 
 **Trade-offs:**
+
 - Pro of renaming: Internal code is fully debranded
 - Con: Silent setting reset for existing users, hard to debug
 
 **Safe implementation:**
+
 ```rust
 #[serde(rename = "handy_keys")]  // keep wire format stable
 ExtKeys,                          // rename the Rust symbol
 ```
+
 This is the lowest-risk path and is fully supported by serde.
 
 ---
@@ -262,11 +269,11 @@ The settings flow itself does not change — only the filesystem path where `set
 
 This is a desktop app rebrand, not a scale concern. The applicable "scaling" dimension is across three platforms (macOS, Windows, Linux) and four locales (en, es, fr, vi).
 
-| Platform | Rebrand-Specific Notes |
-|----------|------------------------|
-| macOS | Bundle ID change affects LaunchAgent (autostart), Keychain entries. `signingIdentity` in `tauri.conf.json` may need update for production distribution. |
-| Windows | NSIS installer uses `"Handy Portable Mode"` marker string — needs update. Registry path changes with `identifier`. `signCommand` references `"Handy"` display name. |
-| Linux | `.desktop` file generated from `productName` — no manual action beyond `tauri.conf.json`. AppImage and RPM package names derive from `productName`. |
+| Platform | Rebrand-Specific Notes                                                                                                                                              |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| macOS    | Bundle ID change affects LaunchAgent (autostart), Keychain entries. `signingIdentity` in `tauri.conf.json` may need update for production distribution.             |
+| Windows  | NSIS installer uses `"Handy Portable Mode"` marker string — needs update. Registry path changes with `identifier`. `signCommand` references `"Handy"` display name. |
+| Linux    | `.desktop` file generated from `productName` — no manual action beyond `tauri.conf.json`. AppImage and RPM package names derive from `productName`.                 |
 
 ---
 
@@ -308,7 +315,7 @@ This is a desktop app rebrand, not a scale concern. The applicable "scaling" dim
 
 **What people do:** Create a new `icon.png` and replace only `icons/icon.png`, `icons/icon.icns`, `icons/icon.ico`.
 
-**Why it's wrong:** Tauri bundles multiple icon sizes. `tauri.conf.json` explicitly lists: `32x32.png`, `128x128.png`, `128x128@2x.png`, `icon.icns`, `icon.ico`. Windows Store packaging requires Square* variants. The tray uses `resources/handy.png` (separate from the app icons).
+**Why it's wrong:** Tauri bundles multiple icon sizes. `tauri.conf.json` explicitly lists: `32x32.png`, `128x128.png`, `128x128@2x.png`, `icon.icns`, `icon.ico`. Windows Store packaging requires Square\* variants. The tray uses `resources/handy.png` (separate from the app icons).
 
 **Do this instead:** Generate all required sizes using `tauri icon <source>` from a single high-resolution source (1024×1024 PNG). Also replace `resources/handy.png` → `resources/dictus.png` and update the reference in `tray.rs`.
 
@@ -318,21 +325,21 @@ This is a desktop app rebrand, not a scale concern. The applicable "scaling" dim
 
 ### External Services
 
-| Service | Integration Pattern | Branding Touch Point |
-|---------|---------------------|---------------------|
-| GitHub Releases (updater) | `tauri.conf.json` → `plugins.updater.endpoints` | URL hardcoded to `cjpais/Handy/releases/latest` — must point to Dictus releases. Also requires new signing key pair if updater public key changes. |
-| OpenRouter / LLM providers | `llm_client.rs` HTTP headers | `Referer`, `User-Agent`, `X-Title` all set to Handy. Change to Dictus identity. |
-| Windows Code Signing | `tauri.conf.json` `bundle.windows.signCommand` | References `"Handy"` display name in signing CLI. Update to Dictus. |
-| macOS autostart | `tauri-plugin-autostart` via LaunchAgent | LaunchAgent plist name derives from `identifier`. Changing identifier changes plist name; existing autostart entries from old identifier become orphaned. |
+| Service                    | Integration Pattern                             | Branding Touch Point                                                                                                                                      |
+| -------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GitHub Releases (updater)  | `tauri.conf.json` → `plugins.updater.endpoints` | URL hardcoded to `cjpais/Handy/releases/latest` — must point to Dictus releases. Also requires new signing key pair if updater public key changes.        |
+| OpenRouter / LLM providers | `llm_client.rs` HTTP headers                    | `Referer`, `User-Agent`, `X-Title` all set to Handy. Change to Dictus identity.                                                                           |
+| Windows Code Signing       | `tauri.conf.json` `bundle.windows.signCommand`  | References `"Handy"` display name in signing CLI. Update to Dictus.                                                                                       |
+| macOS autostart            | `tauri-plugin-autostart` via LaunchAgent        | LaunchAgent plist name derives from `identifier`. Changing identifier changes plist name; existing autostart entries from old identifier become orphaned. |
 
 ### Internal Boundaries
 
-| Boundary | Communication | Branding Notes |
-|----------|---------------|----------------|
-| Frontend ↔ Backend (IPC events) | Tauri events by string name | `"handy-keys-event"` event name is internal to the handy-keys wrapper. Changing it requires coordinated update in both `handy_keys.rs` and `HandyKeysShortcutInput.tsx`. Low priority — users never see event names. |
-| Rust binary ↔ Rust lib | `use handy_app_lib::CliArgs` in `main.rs` | When `[lib] name` changes in `Cargo.toml`, this import must be updated. Compile-time error if missed. |
-| tauri-specta code generation | Debug build generates `src/bindings.ts` | Any renamed Rust command function propagates to TypeScript. Must commit updated `bindings.ts`. |
-| Portable mode ↔ settings storage | Marker file `Handy Portable Mode` | Windows portable installs check for this exact string. Changing it breaks detection of existing portable installations. Requires backward-compatible string check in `portable.rs`. |
+| Boundary                          | Communication                             | Branding Notes                                                                                                                                                                                                       |
+| --------------------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Frontend ↔ Backend (IPC events)  | Tauri events by string name               | `"handy-keys-event"` event name is internal to the handy-keys wrapper. Changing it requires coordinated update in both `handy_keys.rs` and `HandyKeysShortcutInput.tsx`. Low priority — users never see event names. |
+| Rust binary ↔ Rust lib           | `use handy_app_lib::CliArgs` in `main.rs` | When `[lib] name` changes in `Cargo.toml`, this import must be updated. Compile-time error if missed.                                                                                                                |
+| tauri-specta code generation      | Debug build generates `src/bindings.ts`   | Any renamed Rust command function propagates to TypeScript. Must commit updated `bindings.ts`.                                                                                                                       |
+| Portable mode ↔ settings storage | Marker file `Handy Portable Mode`         | Windows portable installs check for this exact string. Changing it breaks detection of existing portable installations. Requires backward-compatible string check in `portable.rs`.                                  |
 
 ---
 
@@ -389,5 +396,5 @@ Phase 3 — Internal Symbol Rename (highest risk, lowest visible impact)
 
 ---
 
-*Architecture research for: Tauri 2.x app rebranding (Handy → Dictus Desktop)*
-*Researched: 2026-04-05*
+_Architecture research for: Tauri 2.x app rebranding (Handy → Dictus Desktop)_
+_Researched: 2026-04-05_

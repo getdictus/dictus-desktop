@@ -62,6 +62,7 @@ completed: 2026-04-08
 - **Files modified:** 2
 
 ## Accomplishments
+
 - Rewrote RecordingOverlay from scratch with full rAF animation system replacing static bar rendering
 - Implemented all four iOS BrandWaveformDriver functions: interpolateLevels, tickLevels, processingEnergy, getBarColor
 - Overlay dimensions updated from 172x36px to 300x56px; 18 waveform bars replace previous minimal indicator
@@ -74,10 +75,12 @@ completed: 2026-04-08
 2. **Task 2: Visual verification** - checkpoint approved by user, verification deferred (no code commit)
 
 ## Files Created/Modified
+
 - `src/overlay/RecordingOverlay.tsx` - Full rewrite: 18-bar waveform, rAF loop, iOS smoothing/decay/sine logic
 - `src/overlay/RecordingOverlay.css` - Updated to 300x56px pill, blue cancel hover, no CSS bar transitions
 
 ## Decisions Made
+
 - Visual verification deferred: dev build binary name ("Handy") conflicts with an existing Handy.app installed on the developer's machine, preventing accessibility permissions from being granted and the overlay from appearing. Will be verified once the binary rename is complete in a later phase.
 - BAR_COUNT = 18 (within the 15-20 range from spec).
 - Bars shown in both recording and transcribing states; processing state retains the text label as designed.
@@ -88,16 +91,20 @@ completed: 2026-04-08
 None - plan executed exactly as written. Checkpoint verification approved by user with documented reason for deferral.
 
 ## Issues Encountered
+
 - **Checkpoint gate:** Binary name conflict prevented visual verification in dev environment. User approved checkpoint with explicit deferral note — verification will occur post-binary-rename in phase 03.
 
 ## User Setup Required
+
 None - no external service configuration required.
 
 ## Next Phase Readiness
+
 - Recording overlay code is complete and committed; ready for phase 03 binary rename
 - Visual verification of overlay behavior is pending until binary name conflict is resolved (phase 03)
 - All other visual-rebrand plan outputs (icons, colors, i18n) are complete
 
 ---
-*Phase: 02-visual-rebrand*
-*Completed: 2026-04-08*
+
+_Phase: 02-visual-rebrand_
+_Completed: 2026-04-08_

@@ -17,39 +17,39 @@ re_verification: false
 
 ### Observable Truths
 
-| # | Truth | Status | Evidence |
-|---|-------|--------|----------|
-| 1 | The app identifies itself as Dictus at the OS level (productName, identifier) | VERIFIED | `"productName": "Dictus"` at line 3, `"identifier": "com.dictus.desktop"` at line 5 of tauri.conf.json |
-| 2 | No build artifact references the upstream Handy releases endpoint | VERIFIED | Zero matches for `cjpais`, `pubkey`, `endpoints` in tauri.conf.json; `"updater": {}` at line 67 is empty |
-| 3 | No Windows build config references the upstream maintainer signing identity | VERIFIED | Zero matches for `signCommand` in tauri.conf.json; `bundle.windows` contains only `nsis` key |
-| 4 | Cargo.toml metadata describes Dictus Desktop with correct authorship | VERIFIED | description "Dictus Desktop — open-source speech-to-text for your desktop" at line 4; authors ["Dictus", "cjpais"] at line 5 of Cargo.toml |
-| 5 | Version is 0.1.0 in both config files | VERIFIED | `"version": "0.1.0"` at line 4 of tauri.conf.json; `version = "0.1.0"` at line 3 of Cargo.toml |
+| #   | Truth                                                                         | Status   | Evidence                                                                                                                                   |
+| --- | ----------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | The app identifies itself as Dictus at the OS level (productName, identifier) | VERIFIED | `"productName": "Dictus"` at line 3, `"identifier": "com.dictus.desktop"` at line 5 of tauri.conf.json                                     |
+| 2   | No build artifact references the upstream Handy releases endpoint             | VERIFIED | Zero matches for `cjpais`, `pubkey`, `endpoints` in tauri.conf.json; `"updater": {}` at line 67 is empty                                   |
+| 3   | No Windows build config references the upstream maintainer signing identity   | VERIFIED | Zero matches for `signCommand` in tauri.conf.json; `bundle.windows` contains only `nsis` key                                               |
+| 4   | Cargo.toml metadata describes Dictus Desktop with correct authorship          | VERIFIED | description "Dictus Desktop — open-source speech-to-text for your desktop" at line 4; authors ["Dictus", "cjpais"] at line 5 of Cargo.toml |
+| 5   | Version is 0.1.0 in both config files                                         | VERIFIED | `"version": "0.1.0"` at line 4 of tauri.conf.json; `version = "0.1.0"` at line 3 of Cargo.toml                                             |
 
 **Score:** 5/5 truths verified
 
 ### Required Artifacts
 
-| Artifact | Expected | Status | Details |
-|----------|----------|--------|---------|
-| `src-tauri/tauri.conf.json` | Tauri bundle identity configuration containing `com.dictus.desktop` | VERIFIED | File exists, substantive, correct values confirmed |
-| `src-tauri/Cargo.toml` | Rust package metadata containing `Dictus` | VERIFIED | File exists, substantive, `[package]` section updated correctly |
+| Artifact                    | Expected                                                            | Status   | Details                                                         |
+| --------------------------- | ------------------------------------------------------------------- | -------- | --------------------------------------------------------------- |
+| `src-tauri/tauri.conf.json` | Tauri bundle identity configuration containing `com.dictus.desktop` | VERIFIED | File exists, substantive, correct values confirmed              |
+| `src-tauri/Cargo.toml`      | Rust package metadata containing `Dictus`                           | VERIFIED | File exists, substantive, `[package]` section updated correctly |
 
 ### Key Link Verification
 
-| From | To | Via | Status | Details |
-|------|----|-----|--------|---------|
-| `src-tauri/tauri.conf.json` | OS bundle registration | `productName` and `identifier` fields | WIRED | `"productName": "Dictus"` and `"identifier": "com.dictus.desktop"` confirmed present |
-| `src-tauri/tauri.conf.json` | Build system | `createUpdaterArtifacts` flag | WIRED | `"createUpdaterArtifacts": false` (boolean, not string) confirmed at line 28 |
+| From                        | To                     | Via                                   | Status | Details                                                                              |
+| --------------------------- | ---------------------- | ------------------------------------- | ------ | ------------------------------------------------------------------------------------ |
+| `src-tauri/tauri.conf.json` | OS bundle registration | `productName` and `identifier` fields | WIRED  | `"productName": "Dictus"` and `"identifier": "com.dictus.desktop"` confirmed present |
+| `src-tauri/tauri.conf.json` | Build system           | `createUpdaterArtifacts` flag         | WIRED  | `"createUpdaterArtifacts": false` (boolean, not string) confirmed at line 28         |
 
 ### Requirements Coverage
 
-| Requirement | Source Plan | Description | Status | Evidence |
-|-------------|------------|-------------|--------|----------|
-| BNDL-01 | 01-01-PLAN.md | productName changed to "Dictus" in tauri.conf.json | SATISFIED | `"productName": "Dictus"` verified at line 3 |
-| BNDL-02 | 01-01-PLAN.md | identifier changed to "com.dictus.desktop" | SATISFIED | `"identifier": "com.dictus.desktop"` verified at line 5 |
-| BNDL-03 | 01-01-PLAN.md | Cargo.toml metadata updated (description, authors, version) | SATISFIED | All three fields confirmed; deferred fields (name, default-run, lib.name) intentionally preserved per V2 scope |
-| BNDL-04 | 01-01-PLAN.md | Auto-updater endpoint disabled, no upstream Handy reference | SATISFIED | `createUpdaterArtifacts: false`; `"updater": {}`; zero occurrences of `cjpais`, `pubkey`, `endpoints` |
-| BNDL-05 | 01-01-PLAN.md | Upstream code signing references removed | SATISFIED | Zero occurrences of `signCommand` in tauri.conf.json; `bundle.windows` contains only `nsis` |
+| Requirement | Source Plan   | Description                                                 | Status    | Evidence                                                                                                       |
+| ----------- | ------------- | ----------------------------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------- |
+| BNDL-01     | 01-01-PLAN.md | productName changed to "Dictus" in tauri.conf.json          | SATISFIED | `"productName": "Dictus"` verified at line 3                                                                   |
+| BNDL-02     | 01-01-PLAN.md | identifier changed to "com.dictus.desktop"                  | SATISFIED | `"identifier": "com.dictus.desktop"` verified at line 5                                                        |
+| BNDL-03     | 01-01-PLAN.md | Cargo.toml metadata updated (description, authors, version) | SATISFIED | All three fields confirmed; deferred fields (name, default-run, lib.name) intentionally preserved per V2 scope |
+| BNDL-04     | 01-01-PLAN.md | Auto-updater endpoint disabled, no upstream Handy reference | SATISFIED | `createUpdaterArtifacts: false`; `"updater": {}`; zero occurrences of `cjpais`, `pubkey`, `endpoints`          |
+| BNDL-05     | 01-01-PLAN.md | Upstream code signing references removed                    | SATISFIED | Zero occurrences of `signCommand` in tauri.conf.json; `bundle.windows` contains only `nsis`                    |
 
 **Orphaned requirements:** None. All five BNDL-0x requirements mapped to this phase appear in the plan and are verified in the codebase.
 
@@ -58,6 +58,7 @@ re_verification: false
 None. No TODO, FIXME, placeholder, or stub patterns found in the two modified files. The plan explicitly and correctly preserves upstream `handy` binary name fields as intentional deferred V2 scope — these are not anti-patterns.
 
 **Notable scoped deferrals (by design, not defects):**
+
 - `name = "handy"` in Cargo.toml — deferred to TECH-03
 - `default-run = "handy"` in Cargo.toml — deferred to TECH-03
 - `[lib] name = "handy_app_lib"` in Cargo.toml — deferred to TECH-01

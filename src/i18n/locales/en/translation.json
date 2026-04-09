@@ -107,7 +107,9 @@
       },
       "accessibility": {
         "title": "Accessibility Access",
-        "description": "Required to type transcribed text into your applications."
+        "description": "Required to type transcribed text into your applications.",
+        "restartHint": "macOS requires an app restart to detect accessibility changes.",
+        "restart": "Restart Dictus"
       },
       "grant": "Grant Permission",
       "granted": "Granted",

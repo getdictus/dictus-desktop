@@ -20,12 +20,14 @@ The top risks are: (1) the auto-updater must be pointed away from the upstream `
 The stack is not a decision — it is inherited from the Handy codebase. The research task was to identify the correct tooling for each layer of rebrand work. All findings are HIGH confidence, based on official documentation and direct codebase inspection.
 
 **Core technologies:**
+
 - `tauri.conf.json` `productName` + `identifier` fields: single source of truth for app identity; changing `identifier` cascades to all OS-level paths automatically — change once, never revisit
 - `bun run tauri icon` (Tauri CLI 2.10.0): generates all required icon sizes from a single 1024x1024 PNG source — the only correct approach, no manual resizing
 - Tailwind v4 `@theme` directive (already installed at 4.1.16): CSS-first design token system; defines Dictus brand colors as CSS custom properties that auto-generate both utility classes and CSS variables simultaneously
 - `i18next-parser` (add as dev dep): scans all source files to flag missing/orphaned translation keys across all 21 locale files — essential for catching non-English locale gaps that visual testing misses
 
 **Version constraints:**
+
 - `@tauri-apps/cli 2.10.0` must match `tauri 2.10.2` crate version — always run matching versions
 - `tailwindcss 4.1.16` and `@tailwindcss/vite 4.1.16` must remain pinned together
 - The JS `tailwind.config.js` pattern is deprecated in v4; use only the CSS `@theme` directive
@@ -35,6 +37,7 @@ The stack is not a decision — it is inherited from the Handy codebase. The res
 The feature research defines a clear MVP boundary. Nearly all user-facing STT features (hotkey, overlay, paste, language selection, history, model management) already exist and are not in scope. V1 is exclusively a rebrand milestone.
 
 **Must have (table stakes for a legitimate rebrand):**
+
 - Product name "Dictus Desktop" everywhere visible (window title, tray menu, about panel, onboarding)
 - Bundle identifier `com.dictus.desktop` in `tauri.conf.json` and `Cargo.toml`
 - Dictus app icon across all required sizes (macOS `.icns`, Windows `.ico`, Linux `.png`)
@@ -45,12 +48,14 @@ The feature research defines a clear MVP boundary. Nearly all user-facing STT fe
 - Critical internal renames that surface in logs or filesystem (binary name, log file name)
 
 **Should have (deliver before first external user):**
+
 - Internal Rust symbol renames (handy_app_lib → dictus_app_lib, function names)
 - Full Dictus iOS palette alignment via Tailwind `@theme` tokens
 - About panel with privacy-first and open-source copy
 - Build and contributor documentation updated
 
 **Defer to V2+:**
+
 - Mobile ↔ desktop sync (no architecture defined)
 - Windows/Linux code signing pipeline
 - Model recommendation tiers (requires benchmark data)
@@ -136,20 +141,22 @@ Based on combined research, the rebrand naturally separates into three phases ma
 ### Research Flags
 
 Phases that can proceed without additional research:
+
 - **Phase 1:** Tauri config fields are fully documented, behavior is deterministic
 - **Phase 2:** `tauri icon` CLI, Tailwind `@theme`, and `i18next-parser` are all well-documented tools; icon pipeline is straightforward
 
 Phase that needs targeted investigation during execution:
+
 - **Phase 3 (Tauri patch audit):** The `cjpais/tauri.git` `handy-2.10.2` patch is undocumented in the codebase. Before Phase 3 closes, run `git diff` between the upstream Tauri tag and the patch branch to determine what behavior the patch enables. Decide whether to fork to a Dictus-controlled repository. This affects long-term security and maintainability.
 
 ## Confidence Assessment
 
-| Area | Confidence | Notes |
-|------|------------|-------|
-| Stack | HIGH | All tools verified via official Tauri and Tailwind docs; version constraints confirmed against package.json |
-| Features | HIGH | Rebrand scope well-defined; STT feature landscape confirmed via competitor research; codebase verified |
-| Architecture | HIGH | Based on direct codebase inspection of all relevant files; dependency graph confirmed by reading source |
-| Pitfalls | HIGH | All critical pitfalls verified directly in source files (`tauri.conf.json`, `portable.rs`, `model.rs`, locale files) |
+| Area         | Confidence | Notes                                                                                                                |
+| ------------ | ---------- | -------------------------------------------------------------------------------------------------------------------- |
+| Stack        | HIGH       | All tools verified via official Tauri and Tailwind docs; version constraints confirmed against package.json          |
+| Features     | HIGH       | Rebrand scope well-defined; STT feature landscape confirmed via competitor research; codebase verified               |
+| Architecture | HIGH       | Based on direct codebase inspection of all relevant files; dependency graph confirmed by reading source              |
+| Pitfalls     | HIGH       | All critical pitfalls verified directly in source files (`tauri.conf.json`, `portable.rs`, `model.rs`, locale files) |
 
 **Overall confidence:** HIGH
 
@@ -163,6 +170,7 @@ Phase that needs targeted investigation during execution:
 ## Sources
 
 ### Primary (HIGH confidence)
+
 - Tauri v2 configuration reference — `v2.tauri.app/reference/config/` — `productName`, `identifier`, `bundle`, `plugins.updater` fields
 - Tauri v2 App Icons documentation — `v2.tauri.app/develop/icons/` — icon generation pipeline, required sizes
 - Tailwind CSS v4 Theme Variables — `tailwindcss.com/docs/theme` — `@theme` directive, CSS variable generation
@@ -170,14 +178,17 @@ Phase that needs targeted investigation during execution:
 - Direct codebase analysis: `tauri.conf.json`, `Cargo.toml`, all Rust source files in `src-tauri/src/`, all TypeScript/TSX source files, all locale files, `nsis/installer.nsi`, `.github/workflows/`
 
 ### Secondary (MEDIUM confidence)
+
 - whisper.cpp language detection issue #1831 — forced language override edge case with multilingual models
 - GitHub issue tauri-apps/tauri #13874 — `productName` vs Cargo `name` divergence on macOS
 - OpenWhispr, Superwhisper, Voibe competitor feature analysis — table stakes STT feature set (confirms all required features already exist in codebase)
 - Speechify Windows app TechCrunch 2026 — market context for privacy-first local STT positioning
 
 ### Tertiary (LOW confidence / needs validation)
+
 - `cjpais/tauri.git` patch diff — not inspected; patch purpose is undocumented; must be audited in Phase 3
 
 ---
-*Research completed: 2026-04-05*
-*Ready for roadmap: yes*
+
+_Research completed: 2026-04-05_
+_Ready for roadmap: yes_

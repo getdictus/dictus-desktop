@@ -8,10 +8,11 @@ import {
   requestMicrophonePermission,
 } from "tauri-plugin-macos-permissions-api";
 import { toast } from "sonner";
+import { relaunch } from "@tauri-apps/plugin-process";
 import { commands } from "@/bindings";
 import { useSettingsStore } from "@/stores/settingsStore";
 import DictusLogo from "../icons/DictusLogo";
-import { Keyboard, Mic, Check, Loader2 } from "lucide-react";
+import { Keyboard, Mic, Check, Loader2, RotateCw } from "lucide-react";
 
 interface AccessibilityOnboardingProps {
   onComplete: () => void;
@@ -43,7 +44,9 @@ const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
   });
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const restartHintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const errorCountRef = useRef<number>(0);
+  const [showRestartHint, setShowRestartHint] = useState(false);
   const MAX_POLLING_ERRORS = 3;
 
   const isMacOS = permissionPlatform === "macos";
@@ -244,6 +247,9 @@ const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
+      if (restartHintTimerRef.current) {
+        clearTimeout(restartHintTimerRef.current);
+      }
     };
   }, []);
 
@@ -252,6 +258,12 @@ const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
       await requestAccessibilityPermission();
       setPermissions((prev) => ({ ...prev, accessibility: "waiting" }));
       startPolling();
+
+      // macOS often requires an app restart to detect accessibility changes.
+      // Show a restart hint after 8 seconds of waiting.
+      restartHintTimerRef.current = setTimeout(() => {
+        setShowRestartHint(true);
+      }, 8000);
     } catch (error) {
       console.error("Failed to request accessibility permission:", error);
       toast.error(t("onboarding.permissions.errors.requestFailed"));
@@ -380,9 +392,27 @@ const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
                     {t("onboarding.permissions.granted")}
                   </div>
                 ) : permissions.accessibility === "waiting" ? (
-                  <div className="flex items-center gap-2 text-text/50 text-sm">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    {t("onboarding.permissions.waiting")}
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2 text-text/50 text-sm">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      {t("onboarding.permissions.waiting")}
+                    </div>
+                    {showRestartHint && (
+                      <div className="flex flex-col gap-2">
+                        <p className="text-xs text-text/40">
+                          {t(
+                            "onboarding.permissions.accessibility.restartHint",
+                          )}
+                        </p>
+                        <button
+                          onClick={() => relaunch()}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-logo-primary hover:bg-logo-primary/90 text-white text-xs font-medium transition-colors w-fit"
+                        >
+                          <RotateCw className="w-3 h-3" />
+                          {t("onboarding.permissions.accessibility.restart")}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <button

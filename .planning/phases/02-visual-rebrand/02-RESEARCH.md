@@ -7,6 +7,7 @@
 ---
 
 <user_constraints>
+
 ## User Constraints (from CONTEXT.md)
 
 ### Locked Decisions
@@ -16,6 +17,7 @@
 **In-app logo:** Create `DictusLogo` component — 3-bar waveform SVG + "Dictus" wordmark — replacing `HandyTextLogo` and `HandyHand`. Use existing SVGs from `dictus-brand/source/logo-standalone-light.svg` and `appicon-dark.svg`. Light/dark variants.
 
 **Color palette:**
+
 - Primary accent: `#3D7EFF`
 - Gradient: `#6BA3FF` → `#2563EB`
 - Dark mode background: `#0A1628`
@@ -27,6 +29,7 @@
 **i18n:** Replace all ~12 "Handy" references per locale in all 4 locales (en, es, fr, vi). Match Dictus iOS tone. Claude translates all locales.
 
 **Recording overlay:**
+
 - Larger: ~300×56px (vs current 172×36px)
 - 15–20 waveform bars (vs current 9 bars sliced from 16)
 - Bar colors: blue gradient center bars (`#6BA3FF` → `#2563EB`), white/gray edge bars with opacity falloff
@@ -37,6 +40,7 @@
 - Cancel hover uses blue accent not pink
 
 ### Claude's Discretion
+
 - Exact overlay dimensions and bar spacing (within 15–20 bar constraint)
 - Waveform animation parameters (smoothing, decay) — optimize for desktop 60fps
 - Wordmark font weight and sizing in DictusLogo
@@ -44,26 +48,29 @@
 - Sidebar HandyHand icon replacement approach (waveform icon vs lucide icon)
 
 ### Deferred Ideas (OUT OF SCOPE)
+
 None — discussion stayed within phase scope.
 </user_constraints>
 
 ---
 
 <phase_requirements>
+
 ## Phase Requirements
 
-| ID | Description | Research Support |
-|----|-------------|-----------------|
-| VISU-01 | App icon generated for all platforms via `tauri icon` | `tauri icon` CLI confirmed; source file at `dictus-brand/ios/AppIcon.appiconset/AppIcon-1024.png` |
-| VISU-02 | Logo components replaced (HandyTextLogo → DictusLogo, HandyHand → Dictus waveform) | Brand SVGs exist in `dictus-brand/source/`; component pattern documented |
-| VISU-03 | Sidebar branding updated | `Sidebar.tsx` lines 4-5, 37, 97 identified; uses HandyTextLogo + HandyHand |
-| VISU-04 | i18n strings updated in all locale files | 11 "Handy" references confirmed per locale × 4 locales (en, es, fr, vi) |
-| VISU-05 | Dictus design tokens injected via Tailwind v4 @theme | `App.css` @theme block is single source of truth; 6 pink tokens to replace |
-| VISU-06 | Color palette switched from pink to blue throughout UI | 7 files with hardcoded pink identified |
-| VISU-07 | Recording overlay redesigned in Dictus style | Current overlay analyzed; iOS BrandWaveform parameters extracted |
-| VISU-08 | Animations aligned with Dictus identity | iOS ProcessingAnimation + BrandWaveformDriver parameters extracted |
-| ONBR-01 | Onboarding rebranded with Dictus text, visuals, tone | `Onboarding.tsx` and `AccessibilityOnboarding.tsx` identified |
-| LANG-01 | Force language UX clarified: Auto / Français / English clearly presented | `AppLanguageSelector.tsx` + `SUPPORTED_LANGUAGES` array identified |
+| ID      | Description                                                                        | Research Support                                                                                  |
+| ------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| VISU-01 | App icon generated for all platforms via `tauri icon`                              | `tauri icon` CLI confirmed; source file at `dictus-brand/ios/AppIcon.appiconset/AppIcon-1024.png` |
+| VISU-02 | Logo components replaced (HandyTextLogo → DictusLogo, HandyHand → Dictus waveform) | Brand SVGs exist in `dictus-brand/source/`; component pattern documented                          |
+| VISU-03 | Sidebar branding updated                                                           | `Sidebar.tsx` lines 4-5, 37, 97 identified; uses HandyTextLogo + HandyHand                        |
+| VISU-04 | i18n strings updated in all locale files                                           | 11 "Handy" references confirmed per locale × 4 locales (en, es, fr, vi)                           |
+| VISU-05 | Dictus design tokens injected via Tailwind v4 @theme                               | `App.css` @theme block is single source of truth; 6 pink tokens to replace                        |
+| VISU-06 | Color palette switched from pink to blue throughout UI                             | 7 files with hardcoded pink identified                                                            |
+| VISU-07 | Recording overlay redesigned in Dictus style                                       | Current overlay analyzed; iOS BrandWaveform parameters extracted                                  |
+| VISU-08 | Animations aligned with Dictus identity                                            | iOS ProcessingAnimation + BrandWaveformDriver parameters extracted                                |
+| ONBR-01 | Onboarding rebranded with Dictus text, visuals, tone                               | `Onboarding.tsx` and `AccessibilityOnboarding.tsx` identified                                     |
+| LANG-01 | Force language UX clarified: Auto / Français / English clearly presented           | `AppLanguageSelector.tsx` + `SUPPORTED_LANGUAGES` array identified                                |
+
 </phase_requirements>
 
 ---
@@ -84,16 +91,17 @@ The LANG-01 requirement is addressed by the existing `AppLanguageSelector` compo
 
 ### Core (already in project — no new installs)
 
-| Library | Version | Purpose | Why Standard |
-|---------|---------|---------|--------------|
-| Tailwind CSS v4 | 4.x | Design tokens via `@theme` | Already configured; `@theme` block is single source of truth |
-| i18next + react-i18next | current | All user-visible strings | ESLint-enforced; already handles en/es/fr/vi |
-| React | 18.x | Component authoring | Project baseline |
-| Tauri CLI | 2.x | `tauri icon` for icon generation | Already installed |
+| Library                 | Version | Purpose                          | Why Standard                                                 |
+| ----------------------- | ------- | -------------------------------- | ------------------------------------------------------------ |
+| Tailwind CSS v4         | 4.x     | Design tokens via `@theme`       | Already configured; `@theme` block is single source of truth |
+| i18next + react-i18next | current | All user-visible strings         | ESLint-enforced; already handles en/es/fr/vi                 |
+| React                   | 18.x    | Component authoring              | Project baseline                                             |
+| Tauri CLI               | 2.x     | `tauri icon` for icon generation | Already installed                                            |
 
 ### No New Dependencies
 
 This phase requires zero new npm or cargo dependencies. All work is:
+
 - SVG markup in React components
 - CSS custom property updates
 - JSON string file edits
@@ -141,6 +149,7 @@ Work Stream E — Recording Overlay (VISU-07, VISU-08)
 **When to use:** Any color change — do NOT add CSS variables elsewhere
 
 Current `@theme` block to replace:
+
 ```css
 /* BEFORE */
 --color-background-ui: #da5893;
@@ -148,23 +157,24 @@ Current `@theme` block to replace:
 --color-logo-stroke: #382731;
 
 /* AFTER */
---color-accent: #3D7EFF;
---color-accent-gradient-start: #6BA3FF;
---color-accent-gradient-end: #2563EB;
---color-logo-primary: #6BA3FF;      /* used by .logo-primary */
---color-logo-stroke: #0A1628;       /* dark text on logo bars */
---color-text-stroke: #f6f6f6;       /* unchanged */
---color-mid-gray: #808080;          /* unchanged */
+--color-accent: #3d7eff;
+--color-accent-gradient-start: #6ba3ff;
+--color-accent-gradient-end: #2563eb;
+--color-logo-primary: #6ba3ff; /* used by .logo-primary */
+--color-logo-stroke: #0a1628; /* dark text on logo bars */
+--color-text-stroke: #f6f6f6; /* unchanged */
+--color-mid-gray: #808080; /* unchanged */
 ```
 
 Dark mode block:
+
 ```css
 /* AFTER */
 @media (prefers-color-scheme: dark) {
   :root {
     --color-text: #fbfbfb;
-    --color-background: #0A1628;    /* Dictus dark bg */
-    --color-logo-primary: #6BA3FF;
+    --color-background: #0a1628; /* Dictus dark bg */
+    --color-logo-primary: #6ba3ff;
     --color-logo-stroke: #ffffff;
   }
 }
@@ -176,6 +186,7 @@ Dark mode block:
 **Source:** `dictus-brand/source/logo-standalone-light.svg` (3 bars, viewBox 0 0 80 80)
 
 SVG bar structure (from brand files):
+
 ```tsx
 // Source: dictus-brand/source/logo-standalone-light.svg + appicon-dark.svg
 // Light variant: dark-tinted bars
@@ -190,6 +201,7 @@ SVG bar structure (from brand files):
 ```
 
 Component interface (matches existing HandyTextLogo pattern):
+
 ```tsx
 const DictusLogo = ({
   width,
@@ -197,7 +209,9 @@ const DictusLogo = ({
 }: {
   width?: number | string;
   className?: string;
-}) => { /* ... */ };
+}) => {
+  /* ... */
+};
 export default DictusLogo;
 ```
 
@@ -207,6 +221,7 @@ export default DictusLogo;
 **Source:** Translated from BrandWaveform.swift + BrandWaveformDriver.swift
 
 Recording state (real audio energy):
+
 ```typescript
 // From BrandWaveformDriver.swift: smoothingFactor=0.3, decayFactor=0.85
 // rise: smoothed[i] = prev + (target - prev) * 0.3
@@ -215,6 +230,7 @@ Recording state (real audio energy):
 ```
 
 Transcribing state (sine wave):
+
 ```typescript
 // From BrandWaveformDriver.processingEnergy():
 // energy(index) = 0.2 + 0.25 * (sin(2π * (index/(N-1) + phase)) + 1.0)
@@ -224,6 +240,7 @@ Transcribing state (sine wave):
 ```
 
 Bar color logic (from BrandWaveform.swift resolvedBarColor):
+
 ```typescript
 // distanceFromCenter = |index - center| / center
 // if distanceFromCenter < 0.4: blue gradient center (#6BA3FF)
@@ -232,16 +249,17 @@ Bar color logic (from BrandWaveform.swift resolvedBarColor):
 ```
 
 Overlay CSS target dimensions:
+
 ```css
 .recording-overlay {
-  height: 56px;       /* up from 36px */
-  width: 300px;       /* up from 172px */
+  height: 56px; /* up from 36px */
+  width: 300px; /* up from 172px */
   border-radius: 28px; /* pill: height/2 */
 }
 
 .bars-container {
-  height: 36px;       /* room for taller bars */
-  gap: 2px;           /* from BrandWaveform.barSpacing */
+  height: 36px; /* room for taller bars */
+  gap: 2px; /* from BrandWaveform.barSpacing */
 }
 ```
 
@@ -250,6 +268,7 @@ Overlay CSS target dimensions:
 **What:** Replace "Handy" with "Dictus" + adapt tone to match iOS Localizable.xcstrings warmth
 
 11 locations per locale file (identical keys across en/es/fr/vi):
+
 ```
 onboarding.permissions.description
 settings.general.shortcut.title   ("Handy Shortcuts" → "Dictus Shortcuts")
@@ -265,6 +284,7 @@ appLanguage.description
 ```
 
 iOS tone examples to match:
+
 - "Dictus needs the microphone to transcribe your voice. Your recordings stay on your device."
 - "Dictus is set up and ready to use"
 - Warm, direct, privacy-aware — not corporate
@@ -272,6 +292,7 @@ iOS tone examples to match:
 ### Pattern 5: LANG-01 — Force Language UX
 
 **What:** The `AppLanguageSelector` component already works correctly. LANG-01 requires:
+
 1. Rename "Handy Shortcuts" → "Dictus Shortcuts" (same key in all locales)
 2. Update `appLanguage.description` to read clearly: "Choose the language for the Dictus interface. Auto follows your system language."
 3. Ensure the dropdown label text `lang.nativeName` renders "Français", "English" etc. clearly — it already does via `SUPPORTED_LANGUAGES`
@@ -290,47 +311,53 @@ No code changes needed to `AppLanguageSelector.tsx` beyond string updates.
 
 ## Don't Hand-Roll
 
-| Problem | Don't Build | Use Instead | Why |
-|---------|-------------|-------------|-----|
-| Platform icon sizes | Custom resize script | `bunx tauri icon <source>` | Generates all 20+ platform-specific sizes (icns, ico, PNGs) in one command |
-| Color scheme detection | Media query JS listener | CSS `@media (prefers-color-scheme: dark)` | Already implemented; adding JS would duplicate state |
-| Animation timing | `setInterval` | `requestAnimationFrame` | Syncs with display refresh; pauses when tab hidden; matches iOS CADisplayLink |
-| Translation QA | Visual scan | i18next `t()` + ESLint rule | ESLint already enforces no hardcoded JSX strings |
+| Problem                | Don't Build             | Use Instead                               | Why                                                                           |
+| ---------------------- | ----------------------- | ----------------------------------------- | ----------------------------------------------------------------------------- |
+| Platform icon sizes    | Custom resize script    | `bunx tauri icon <source>`                | Generates all 20+ platform-specific sizes (icns, ico, PNGs) in one command    |
+| Color scheme detection | Media query JS listener | CSS `@media (prefers-color-scheme: dark)` | Already implemented; adding JS would duplicate state                          |
+| Animation timing       | `setInterval`           | `requestAnimationFrame`                   | Syncs with display refresh; pauses when tab hidden; matches iOS CADisplayLink |
+| Translation QA         | Visual scan             | i18next `t()` + ESLint rule               | ESLint already enforces no hardcoded JSX strings                              |
 
 ---
 
 ## Common Pitfalls
 
 ### Pitfall 1: `tauri icon` Overwrites All Icons
+
 **What goes wrong:** Running `tauri icon` replaces all 20+ files in `src-tauri/icons/`. Any manually placed icons are gone.
 **Why it happens:** It's a full regeneration, not incremental.
 **How to avoid:** Run `tauri icon` first as the single action for VISU-01 — don't manually place any PNG files before or after.
 **Warning signs:** After running, check `icon.icns` and `icon.ico` to confirm they changed (file size or date).
 
 ### Pitfall 2: Tailwind v4 `@theme` Token Names Must Match Utility Classes
+
 **What goes wrong:** Renaming `--color-logo-primary` to `--color-accent` breaks `bg-logo-primary/80` usage in `Sidebar.tsx` line 107.
 **Why it happens:** Tailwind v4 generates utility classes from `@theme` variable names.
 **How to avoid:** Keep `--color-logo-primary` name OR update all usage sites together. The Sidebar uses `bg-logo-primary/80` for active state — this is a Tailwind utility class derived from the token name.
 **Warning signs:** Active sidebar item loses its highlight color.
 
 ### Pitfall 3: RecordingOverlay Runs in a Separate Window
+
 **What goes wrong:** CSS changes in `App.css` don't affect the overlay — it has its own `RecordingOverlay.css` and separate entry point (`src/overlay/main.tsx`).
 **Why it happens:** Tauri overlay window is a separate webview with its own HTML/CSS.
 **How to avoid:** All overlay color changes must go in `RecordingOverlay.css`, not `App.css`. The overlay doesn't import Tailwind or `App.css`.
 **Warning signs:** Main app looks correct, overlay still has pink bars.
 
 ### Pitfall 4: Bar Count Mismatch Between Rust and React
+
 **What goes wrong:** The Rust backend emits `mic-level` events with 16 values (`Array(16)`). The React overlay currently slices to 9 bars. With 15–20 target bars, the interpolation logic must handle the count mismatch.
 **Why it happens:** `RecordingOverlay.tsx` line 51: `setLevels(smoothed.slice(0, 9))` — it discards values instead of interpolating.
 **How to avoid:** Implement linear interpolation to map N Rust energy values to 15–20 display bars (matching `BrandWaveformDriver.targetLevels()` which does exactly this).
 **Warning signs:** Some bars are always at minimum height.
 
 ### Pitfall 5: i18n ESLint Rule Blocks Hardcoded Test Strings
+
 **What goes wrong:** If a string is written directly in JSX (e.g., `<p>Dictus</p>`), ESLint will fail with the `no-hardcoded-strings` rule.
 **Why it happens:** `CLAUDE.md` documents this ESLint rule — all user-facing strings must use `t()`.
 **How to avoid:** The "Dictus" wordmark in the logo SVG is not JSX text — it can be an SVG `<text>` element or a `tspan`. If rendered as JSX text, it must use a translation key.
 
 ### Pitfall 6: Only 4 Locales Have Translation Files
+
 **What goes wrong:** Assuming all 20 languages in `LANGUAGE_METADATA` have translation files.
 **Why it happens:** `languages.ts` defines metadata for 20 languages, but only en/es/fr/vi have `translation.json` files.
 **How to avoid:** Only update the 4 existing locale files (en, es, fr, vi). Other languages fall back to English.
@@ -340,6 +367,7 @@ No code changes needed to `AppLanguageSelector.tsx` beyond string updates.
 ## Code Examples
 
 ### `tauri icon` Command
+
 ```bash
 # Source: CLAUDE.md + tauri.conf.json conventions
 cd /Users/pierreviviere/dev/dictus-desktop
@@ -348,6 +376,7 @@ bunx tauri icon ../dictus-brand/ios/AppIcon.appiconset/AppIcon-1024.png
 ```
 
 ### Waveform Bar Interpolation (VISU-07)
+
 ```typescript
 // Translate N Rust levels → BAR_COUNT display bars (from BrandWaveformDriver.targetLevels)
 // Source: dictus/DictusCore/Sources/DictusCore/Design/BrandWaveform.swift
@@ -366,9 +395,14 @@ function interpolateLevels(source: number[], barCount: number): number[] {
 ```
 
 ### Sinusoidal Processing Animation (VISU-08)
+
 ```typescript
 // Source: dictus/DictusCore/Sources/DictusCore/Design/BrandWaveform.swift processingEnergy()
-function processingEnergy(index: number, barCount: number, phase: number): number {
+function processingEnergy(
+  index: number,
+  barCount: number,
+  phase: number,
+): number {
   const normalizedIndex = index / Math.max(barCount - 1, 1);
   const sineValue = Math.sin(2 * Math.PI * (normalizedIndex + phase));
   return 0.2 + 0.25 * (sineValue + 1.0);
@@ -378,13 +412,14 @@ function processingEnergy(index: number, barCount: number, phase: number): numbe
 ```
 
 ### Bar Color by Position (VISU-07)
+
 ```typescript
 // Source: dictus/DictusCore/Sources/DictusCore/Design/BrandWaveform.swift resolvedBarColor()
 function getBarColor(index: number, barCount: number, isDark: boolean): string {
   const center = (barCount - 1) / 2;
   const distanceFromCenter = Math.abs(index - center) / center;
   if (distanceFromCenter < 0.4) {
-    return '#6BA3FF'; // dictusGradientStart — inner 40%
+    return "#6BA3FF"; // dictusGradientStart — inner 40%
   }
   const opacity = (1.0 - distanceFromCenter) * 0.9 + 0.15;
   return isDark
@@ -394,6 +429,7 @@ function getBarColor(index: number, barCount: number, isDark: boolean): string {
 ```
 
 ### Smoothing/Decay Loop (VISU-07, VISU-08)
+
 ```typescript
 // Source: BrandWaveformDriver.tickLevels() — smoothingFactor=0.3, decayFactor=0.85
 function tickLevels(current: number[], targets: number[]): number[] {
@@ -401,7 +437,7 @@ function tickLevels(current: number[], targets: number[]): number[] {
     const target = targets[i] ?? 0;
     let next: number;
     if (target > prev) {
-      next = prev + (target - prev) * 0.3;  // rise: smooth
+      next = prev + (target - prev) * 0.3; // rise: smooth
     } else {
       next = target + (prev - target) * 0.85; // fall: decay
     }
@@ -411,16 +447,17 @@ function tickLevels(current: number[], targets: number[]): number[] {
 ```
 
 ### App.css @theme After Swap (VISU-05)
+
 ```css
 /* Source: dictus-brand/source/dictus-brand-kit.html + DictusColors.swift */
 @theme {
   --color-text: #0f0f0f;
   --color-background: #fbfbfb;
-  --color-accent: #3D7EFF;
-  --color-accent-gradient-start: #6BA3FF;
-  --color-accent-gradient-end: #2563EB;
-  --color-logo-primary: #6BA3FF;     /* Tailwind: bg-logo-primary */
-  --color-logo-stroke: #0A1628;
+  --color-accent: #3d7eff;
+  --color-accent-gradient-start: #6ba3ff;
+  --color-accent-gradient-end: #2563eb;
+  --color-logo-primary: #6ba3ff; /* Tailwind: bg-logo-primary */
+  --color-logo-stroke: #0a1628;
   --color-text-stroke: #f6f6f6;
   --color-mid-gray: #808080;
 }
@@ -428,8 +465,8 @@ function tickLevels(current: number[], targets: number[]): number[] {
 @media (prefers-color-scheme: dark) {
   :root {
     --color-text: #fbfbfb;
-    --color-background: #0A1628;      /* Dictus blue-900 dark bg */
-    --color-logo-primary: #6BA3FF;
+    --color-background: #0a1628; /* Dictus blue-900 dark bg */
+    --color-logo-primary: #6ba3ff;
     --color-logo-stroke: #ffffff;
   }
 }
@@ -439,11 +476,11 @@ function tickLevels(current: number[], targets: number[]): number[] {
 
 ## State of the Art
 
-| Old Approach | Current Approach | When Changed | Impact |
-|--------------|------------------|--------------|--------|
-| Multiple CSS vars files | Tailwind v4 `@theme` single block | v4 (project already uses this) | All color changes in one place |
-| `setInterval` animation | `requestAnimationFrame` | — | Must use rAF for waveform smoothness |
-| ForEach SVG rects | JS-driven height style | — | Direct DOM style mutation per frame (no React re-render overhead) |
+| Old Approach            | Current Approach                  | When Changed                   | Impact                                                            |
+| ----------------------- | --------------------------------- | ------------------------------ | ----------------------------------------------------------------- |
+| Multiple CSS vars files | Tailwind v4 `@theme` single block | v4 (project already uses this) | All color changes in one place                                    |
+| `setInterval` animation | `requestAnimationFrame`           | —                              | Must use rAF for waveform smoothness                              |
+| ForEach SVG rects       | JS-driven height style            | —                              | Direct DOM style mutation per frame (no React re-render overhead) |
 
 ---
 
@@ -469,44 +506,48 @@ function tickLevels(current: number[], targets: number[]): number[] {
 ## Validation Architecture
 
 ### Test Framework
-| Property | Value |
-|----------|-------|
-| Framework | None detected — visual rebrand; ESLint + TypeScript type-check are the automated gates |
-| Config file | `eslint.config.js` (ESLint), `tsconfig.json` (TypeScript) |
-| Quick run command | `bun run lint && bun run format:check` |
-| Full suite command | `bun run lint && bun run format:check` |
+
+| Property           | Value                                                                                  |
+| ------------------ | -------------------------------------------------------------------------------------- |
+| Framework          | None detected — visual rebrand; ESLint + TypeScript type-check are the automated gates |
+| Config file        | `eslint.config.js` (ESLint), `tsconfig.json` (TypeScript)                              |
+| Quick run command  | `bun run lint && bun run format:check`                                                 |
+| Full suite command | `bun run lint && bun run format:check`                                                 |
 
 ### Phase Requirements → Test Map
 
-| Req ID | Behavior | Test Type | Automated Command | File Exists? |
-|--------|----------|-----------|-------------------|-------------|
-| VISU-01 | `src-tauri/icons/icon.icns` exists and changed | manual-only | `ls -la src-tauri/icons/icon.icns` (visual confirm) | — |
-| VISU-02 | `DictusLogo` component renders without error | build | `bun run lint` catches unused imports | Wave 0 |
-| VISU-03 | Sidebar has no `HandyTextLogo`/`HandyHand` imports | lint/grep | `grep -r "HandyTextLogo\|HandyHand" src/` | — |
-| VISU-04 | No "Handy" in any translation.json | lint/grep | `grep -r "Handy" src/i18n/locales/` | — |
-| VISU-05 | No pink hex values in App.css @theme | grep | `grep -i "FAA2CA\|da5893\|ffe5ee\|f28cbb\|fad1ed" src/App.css` | — |
-| VISU-06 | No hardcoded pink in component files | grep | `grep -ri "FAA2CA\|da5893\|faa2ca" src/components/ src/overlay/` | — |
-| VISU-07 | Overlay CSS width 300px, bars 15-20 | manual-only | Visual launch test | — |
-| VISU-08 | Sine wave animation plays during transcribing | manual-only | Visual launch test | — |
-| ONBR-01 | Onboarding renders DictusLogo, no "Handy" text | build + grep | `grep "Handy" src/components/onboarding/` | — |
-| LANG-01 | AppLanguageSelector shows correct description | grep | `grep "Handy" src/i18n/locales/en/translation.json` | — |
+| Req ID  | Behavior                                           | Test Type    | Automated Command                                                | File Exists? |
+| ------- | -------------------------------------------------- | ------------ | ---------------------------------------------------------------- | ------------ |
+| VISU-01 | `src-tauri/icons/icon.icns` exists and changed     | manual-only  | `ls -la src-tauri/icons/icon.icns` (visual confirm)              | —            |
+| VISU-02 | `DictusLogo` component renders without error       | build        | `bun run lint` catches unused imports                            | Wave 0       |
+| VISU-03 | Sidebar has no `HandyTextLogo`/`HandyHand` imports | lint/grep    | `grep -r "HandyTextLogo\|HandyHand" src/`                        | —            |
+| VISU-04 | No "Handy" in any translation.json                 | lint/grep    | `grep -r "Handy" src/i18n/locales/`                              | —            |
+| VISU-05 | No pink hex values in App.css @theme               | grep         | `grep -i "FAA2CA\|da5893\|ffe5ee\|f28cbb\|fad1ed" src/App.css`   | —            |
+| VISU-06 | No hardcoded pink in component files               | grep         | `grep -ri "FAA2CA\|da5893\|faa2ca" src/components/ src/overlay/` | —            |
+| VISU-07 | Overlay CSS width 300px, bars 15-20                | manual-only  | Visual launch test                                               | —            |
+| VISU-08 | Sine wave animation plays during transcribing      | manual-only  | Visual launch test                                               | —            |
+| ONBR-01 | Onboarding renders DictusLogo, no "Handy" text     | build + grep | `grep "Handy" src/components/onboarding/`                        | —            |
+| LANG-01 | AppLanguageSelector shows correct description      | grep         | `grep "Handy" src/i18n/locales/en/translation.json`              | —            |
 
 ### Sampling Rate
+
 - **Per task commit:** `bun run lint && bun run format:check`
 - **Per wave merge:** `bun run lint && bun run format:check` + grep for "Handy" and pink hex
 - **Phase gate:** Full lint green + grep clean + visual UAT before `/gsd:verify-work`
 
 ### Wave 0 Gaps
+
 - [ ] No unit tests exist for this phase — intentional. Visual rebrand is validated by grep + lint + UAT.
 - [ ] Grep scripts for "Handy" and pink hex can be run ad-hoc; no test file setup needed.
 
-*(All automated checks are one-liners, not test files. Wave 0 = no new test infrastructure required.)*
+_(All automated checks are one-liners, not test files. Wave 0 = no new test infrastructure required.)_
 
 ---
 
 ## Sources
 
 ### Primary (HIGH confidence)
+
 - `dictus-brand/source/appicon-light.svg`, `appicon-dark.svg`, `logo-standalone-light.svg` — exact SVG bar coordinates and color values
 - `dictus/DictusCore/Sources/DictusCore/Design/BrandWaveform.swift` — smoothing=0.3, decay=0.85, bar color thresholds, sine formula
 - `dictus/DictusCore/Sources/DictusCore/Design/ProcessingAnimation.swift` — 3-bar pulse animation parameters
@@ -518,9 +559,11 @@ function tickLevels(current: number[], targets: number[]): number[] {
 - `src/components/settings/AppLanguageSelector.tsx` — LANG-01 implementation confirmed
 
 ### Secondary (MEDIUM confidence)
+
 - `CLAUDE.md` — confirms `tauri icon` CLI usage and system font stack decision
 
 ### Tertiary (LOW confidence)
+
 - None
 
 ---
@@ -528,6 +571,7 @@ function tickLevels(current: number[], targets: number[]): number[] {
 ## Metadata
 
 **Confidence breakdown:**
+
 - Standard stack: HIGH — all libraries already in project, no new deps
 - Architecture: HIGH — all files inspected directly, exact locations confirmed
 - iOS animation parameters: HIGH — read directly from Swift source files
