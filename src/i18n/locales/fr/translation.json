@@ -529,6 +529,16 @@
         "description": "Aidez-nous à continuer à construire Dictus",
         "button": "Faire un don"
       },
+      "privacy": {
+        "title": "Politique de confidentialit\u00e9",
+        "description": "Votre voix reste sur votre appareil. Consultez notre politique de confidentialit\u00e9.",
+        "button": "Voir la politique"
+      },
+      "ecosystem": {
+        "title": "\u00c9cosyst\u00e8me Dictus",
+        "description": "Dictus est disponible sur iOS, Android et Desktop.",
+        "button": "En savoir plus"
+      },
       "acknowledgments": {
         "title": "Remerciements",
         "whisper": {

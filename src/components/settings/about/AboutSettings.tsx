@@ -29,7 +29,7 @@ export const AboutSettings: React.FC = () => {
 
   const handleDonateClick = async () => {
     try {
-      await openUrl("https://handy.computer/donate");
+      await openUrl("https://getdictus.com/donate");
     } catch (error) {
       console.error("Failed to open donate link:", error);
     }
@@ -66,9 +66,37 @@ export const AboutSettings: React.FC = () => {
           <Button
             variant="secondary"
             size="md"
-            onClick={() => openUrl("https://github.com/cjpais/Handy")}
+            onClick={() => openUrl("https://github.com/getdictus/dictus-desktop")}
           >
             {t("settings.about.sourceCode.button")}
+          </Button>
+        </SettingContainer>
+
+        <SettingContainer
+          title={t("settings.about.privacy.title")}
+          description={t("settings.about.privacy.description")}
+          grouped={true}
+        >
+          <Button
+            variant="secondary"
+            size="md"
+            onClick={() => openUrl("https://getdictus.com/en/privacy")}
+          >
+            {t("settings.about.privacy.button")}
+          </Button>
+        </SettingContainer>
+
+        <SettingContainer
+          title={t("settings.about.ecosystem.title")}
+          description={t("settings.about.ecosystem.description")}
+          grouped={true}
+        >
+          <Button
+            variant="secondary"
+            size="md"
+            onClick={() => openUrl("https://getdictus.com")}
+          >
+            {t("settings.about.ecosystem.button")}
           </Button>
         </SettingContainer>
 
