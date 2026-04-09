@@ -58,7 +58,10 @@ Plans:
   1. The repository README describes Dictus Desktop (fork attribution, MIT licence, privacy-first positioning) — not Handy
   2. A developer cloning the repo finds CLAUDE.md and BUILD.md free of Handy-specific instructions and URLs
   3. The in-app About panel shows Dictus branding, open-source positioning, and no Handy references
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 03-01-PLAN.md — Rewrite README.md and update CLAUDE.md/BUILD.md to remove Handy branding
+- [ ] 03-02-PLAN.md — Rebrand About panel with Dictus URLs, privacy policy, and ecosystem sections
 
 ## Progress
 
@@ -69,4 +72,4 @@ Phases execute in numeric order: 1 → 2 → 3
 |-------|----------------|--------|-----------|
 | 1. Bundle Identity | 1/1 | Complete   | 2026-04-05 |
 | 2. Visual Rebrand | 4/5 | In Progress | - |
-| 3. Documentation and Cleanup | 0/TBD | Not started | - |
+| 3. Documentation and Cleanup | 0/2 | Not started | - |
