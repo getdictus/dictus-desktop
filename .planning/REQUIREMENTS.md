@@ -36,8 +36,8 @@ Requirements for Milestone V1 "Dictus Desktop Foundation". Each maps to roadmap 
 
 ### Documentation
 
-- [ ] **DOCS-01**: README Dictus Desktop (fork assumé, vision, licence MIT, positionnement open-source)
-- [ ] **DOCS-02**: CLAUDE.md et BUILD.md mis à jour (références Handy supprimées)
+- [x] **DOCS-01**: README Dictus Desktop (fork assumé, vision, licence MIT, positionnement open-source)
+- [x] **DOCS-02**: CLAUDE.md et BUILD.md mis à jour (références Handy supprimées)
 - [ ] **DOCS-03**: Section About in-app rebrandée Dictus
 
 ## v2 Requirements
@@ -69,45 +69,47 @@ Deferred to future milestones. Tracked but not in current roadmap.
 
 ## Out of Scope
 
-| Feature | Reason |
-|---------|--------|
-| Synchronisation mobile ↔ desktop | Architecture V4+, pas de cloud pour V1 |
-| Compte utilisateur / clés cross-device | Pas pertinent sans sync |
-| Architecture Nostr / pair-à-pair | Recherche ultérieure |
-| Redesign pixel-perfect complet | V1 = alignement visuel, pas refonte totale des composants |
-| App mobile (Android/iOS native) | Projets séparés existants |
-| Real-time streaming transcription | Complexité excessive pour V1 |
+| Feature                                | Reason                                                    |
+| -------------------------------------- | --------------------------------------------------------- |
+| Synchronisation mobile ↔ desktop      | Architecture V4+, pas de cloud pour V1                    |
+| Compte utilisateur / clés cross-device | Pas pertinent sans sync                                   |
+| Architecture Nostr / pair-à-pair       | Recherche ultérieure                                      |
+| Redesign pixel-perfect complet         | V1 = alignement visuel, pas refonte totale des composants |
+| App mobile (Android/iOS native)        | Projets séparés existants                                 |
+| Real-time streaming transcription      | Complexité excessive pour V1                              |
 
 ## Traceability
 
 Which phases cover which requirements. Updated during roadmap creation.
 
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| BNDL-01 | Phase 1 | Complete |
-| BNDL-02 | Phase 1 | Complete |
-| BNDL-03 | Phase 1 | Complete |
-| BNDL-04 | Phase 1 | Complete |
-| BNDL-05 | Phase 1 | Complete |
-| VISU-01 | Phase 2 | Complete |
-| VISU-02 | Phase 2 | Complete |
-| VISU-03 | Phase 2 | Complete |
-| VISU-04 | Phase 2 | Complete |
-| VISU-05 | Phase 2 | Complete |
-| VISU-06 | Phase 2 | Complete |
-| VISU-07 | Phase 2 | Complete |
-| VISU-08 | Phase 2 | Complete |
-| ONBR-01 | Phase 2 | Complete |
-| LANG-01 | Phase 2 | Complete |
-| DOCS-01 | Phase 3 | Pending |
-| DOCS-02 | Phase 3 | Pending |
-| DOCS-03 | Phase 3 | Pending |
+| Requirement | Phase   | Status   |
+| ----------- | ------- | -------- |
+| BNDL-01     | Phase 1 | Complete |
+| BNDL-02     | Phase 1 | Complete |
+| BNDL-03     | Phase 1 | Complete |
+| BNDL-04     | Phase 1 | Complete |
+| BNDL-05     | Phase 1 | Complete |
+| VISU-01     | Phase 2 | Complete |
+| VISU-02     | Phase 2 | Complete |
+| VISU-03     | Phase 2 | Complete |
+| VISU-04     | Phase 2 | Complete |
+| VISU-05     | Phase 2 | Complete |
+| VISU-06     | Phase 2 | Complete |
+| VISU-07     | Phase 2 | Complete |
+| VISU-08     | Phase 2 | Complete |
+| ONBR-01     | Phase 2 | Complete |
+| LANG-01     | Phase 2 | Complete |
+| DOCS-01     | Phase 3 | Complete |
+| DOCS-02     | Phase 3 | Complete |
+| DOCS-03     | Phase 3 | Pending  |
 
 **Coverage:**
+
 - v1 requirements: 18 total
 - Mapped to phases: 18
 - Unmapped: 0
 
 ---
-*Requirements defined: 2026-04-05*
-*Last updated: 2026-04-05 after roadmap creation*
+
+_Requirements defined: 2026-04-05_
+_Last updated: 2026-04-05 after roadmap creation_
