@@ -541,6 +541,12 @@
       },
       "acknowledgments": {
         "title": "致謝",
+        "handy": {
+          "title": "Handy",
+          "description": "Open-source desktop speech-to-text application by CJ Pais",
+          "details": "Dictus Desktop is a fork of Handy. Thanks to CJ Pais and the Handy community for building the foundation that Dictus is built upon.",
+          "button": "View on GitHub"
+        },
         "whisper": {
           "title": "Whisper.cpp",
           "description": "針對 OpenAI Whisper 自動語音識別模型的高效能推理引擎",

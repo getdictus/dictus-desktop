@@ -541,6 +541,12 @@
       },
       "acknowledgments": {
         "title": "Remerciements",
+        "handy": {
+          "title": "Handy",
+          "description": "Application open-source de transcription vocale par CJ Pais",
+          "details": "Dictus Desktop est un fork de Handy. Merci à CJ Pais et à la communauté Handy pour avoir construit les fondations sur lesquelles Dictus repose.",
+          "button": "Voir sur GitHub"
+        },
         "whisper": {
           "title": "Whisper.cpp",
           "description": "Inférence haute performance du modèle de reconnaissance vocale automatique Whisper d'OpenAI",
