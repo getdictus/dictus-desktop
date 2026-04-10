@@ -1,184 +1,261 @@
-# Stack Research
+# Technology Stack: Auto-Updater + Upstream Sync (v1.1)
 
-**Domain:** Tauri 2.x desktop app rebranding (identity, assets, bundle config, design tokens)
-**Researched:** 2026-04-05
-**Confidence:** HIGH (Tauri config/icons verified via official docs; Tailwind v4 tokens verified via official docs; migration pitfalls verified via codebase inspection)
-
----
-
-## Context: What This Research Covers
-
-This is not a greenfield stack decision. The Tauri 2.x + React + TypeScript + Tailwind + Rust stack is fixed. This research answers: **what tools and approaches govern a safe, complete rebrand** of this specific app from Handy to Dictus Desktop?
-
-The four work layers in scope:
-
-1. **Bundle identity** — `tauri.conf.json`, `Cargo.toml`, platform-specific outputs
-2. **Icon/asset pipeline** — generating all required icon formats from a single source
-3. **Design tokens** — Tailwind v4 `@theme` for palette/typography alignment with Dictus iOS
-4. **i18n string updates** — 21 locale files, ESLint-enforced translation coverage
+**Project:** Dictus Desktop v1.1
+**Researched:** 2026-04-10
+**Scope:** NEW capabilities only — auto-updater (Ed25519, GitHub Releases) and upstream sync automation
+**Confidence:** HIGH for updater stack (verified against official Tauri v2 docs); MEDIUM for upstream sync workflow (standard pattern, needs testing)
 
 ---
 
-## Recommended Stack
+## What Already Exists (Do Not Re-Add)
 
-### Core Technologies
+The following is already wired in the codebase. It is current and correct:
 
-| Technology                                            | Version (current)                       | Purpose                                                                                                               | Why This Approach                                                                                                                                                                                                                                                                                                       |
-| ----------------------------------------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tauri.conf.json` fields: `productName`, `identifier` | Tauri 2.10.2                            | Controls user-visible app name and all system paths (bundle ID, app data dir, webview data dir, update endpoint path) | Single source of truth for Tauri. Changing `identifier` cascades to ALL platform-specific outputs automatically — no manual plist/registry edits needed. **HIGH confidence** — official docs confirm.                                                                                                                   |
-| `Cargo.toml` package metadata                         | Rust stable                             | Controls binary name (`default-run`), crate name, description                                                         | Must stay in sync with `tauri.conf.json`. Cargo binary name affects CLI invocation and macOS `.app` bundle internals. Divergence between Cargo name and Tauri `productName` is a known source of macOS bundle confusion (GitHub issue #13874).                                                                          |
-| `tauri icon` CLI command                              | @tauri-apps/cli 2.10.0                  | Generates all required icon sizes from a single 1024x1024 PNG or SVG source                                           | One command, zero manual resizing. Outputs: `32x32.png`, `128x128.png`, `128x128@2x.png`, `icon.icns`, `icon.ico` into `src-tauri/icons/`. No external tooling needed. **HIGH confidence** — verified via official Tauri docs.                                                                                          |
-| Tailwind v4 `@theme` directive                        | Tailwind CSS 4.1.16 (already installed) | CSS-first design token system; defines brand colors, typography, spacing as CSS custom properties                     | v4 `@theme` replaces the JS config pattern entirely. Every `--color-*` token in `@theme` auto-generates utility classes AND becomes a CSS variable on `:root`. This is the correct approach for Dictus palette injection without touching any JS config. **HIGH confidence** — verified via tailwindcss.com/docs/theme. |
-| `i18next-parser`                                      | ^9.x (add as dev dep)                   | Scans all source files, extracts `t('key')` calls, flags missing/orphaned keys across all 21 locale files             | Prevents silent regressions during rebrand (old keys left in JSON, new keys missing from non-EN locales). The existing `eslint-plugin-i18next` enforces usage in JSX but does not detect orphaned or untranslated keys.                                                                                                 |
-
-### Supporting Libraries / Tools
-
-| Library                             | Version     | Purpose                                                                                            | When to Use                                                                                                                                                                            |
-| ----------------------------------- | ----------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sharp` (Node.js) or `Inkscape` CLI | Latest      | Pre-processing source icon to exact 1024x1024 PNG with transparency before feeding to `tauri icon` | Use when the Dictus brand SVG/logo needs compositing, padding, or background removal. `tauri icon` accepts SVG directly but PNG gives more predictable output for complex brand marks. |
-| macOS `iconutil` (system tool)      | Built-in    | Inspect generated `.icns` for correct sizes                                                        | Use after `tauri icon` to sanity-check the `.icns` bundle, especially for macOS 26+ template icon requirements (see Pitfalls).                                                         |
-| `cargo fmt` + `cargo clippy`        | Rust stable | Validate Rust code after internal symbol renames (`HandyKeys` → `DictusKeys`, etc.)                | Run after any Rust identifier changes to catch missed references and enforce style.                                                                                                    |
-
-### Development Tools
-
-| Tool                             | Purpose                                               | Notes                                                                                                                                                  |
-| -------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `bun run tauri icon`             | Single-command icon generation                        | Run from repo root. Source file: `./app-icon.png` by default. Place a 1024x1024 PNG at that path before running.                                       |
-| `tauri.macos.conf.json`          | macOS-specific config overrides                       | Merge cleanly over `tauri.conf.json`. Use for macOS-specific signing identity, entitlements path, minimum OS version — do not duplicate shared fields. |
-| `tauri.windows.conf.json`        | Windows-specific config overrides                     | Use to update the `signCommand` with the new Dictus signing identity. The current value references `Handy` in the `-d` description flag.               |
-| Text search + replace (Grep/sed) | Bulk string replacement across translation JSON files | 21 locale files all contain "Handy" strings. Automated search-replace is safer than manual editing for strings that appear 11 times per locale file.   |
+| Component | Location | Current State |
+|-----------|----------|--------------|
+| `tauri-plugin-updater = "2.10.0"` | `src-tauri/Cargo.toml:89` | Installed, latest stable |
+| `@tauri-apps/plugin-updater` | `package.json` | Installed, JS bindings |
+| `UpdateChecker.tsx` | `src/components/update-checker/` | Exists, broken (wrong URL at line 206) |
+| `plugins.updater` config stub | `src-tauri/tauri.conf.json:67-70` | Present, values empty |
+| `bundle.createUpdaterArtifacts` | `src-tauri/tauri.conf.json:28` | Present, set to `false` |
+| `tauri-apps/tauri-action@v0` | `.github/workflows/build.yml:341` | Wired, latest tag resolves to v0.6.2 |
+| `TAURI_SIGNING_PRIVATE_KEY` env var | `.github/workflows/build.yml:354` | Referenced, GitHub secret not yet set |
+| `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` env var | `.github/workflows/build.yml:355` | Referenced, GitHub secret not yet set |
 
 ---
 
-## Installation
+## Stack Additions Required
 
-No new runtime dependencies are required. The rebrand is achieved entirely through configuration changes and asset replacement.
+### 1. Ed25519 Keypair — One-Time Developer Setup
+
+No new tool to install. The Tauri CLI (`@tauri-apps/cli`) already provides the `signer generate` subcommand. With this project using bun, the command is:
 
 ```bash
-# Add i18next-parser as a dev dependency for key auditing
-bun add -D i18next-parser
-
-# Run icon generation after placing app-icon.png at repo root
-bun run tauri icon
-
-# After Rust identifier renames, validate the codebase
-cargo fmt --manifest-path src-tauri/Cargo.toml
-cargo clippy --manifest-path src-tauri/Cargo.toml
+bunx tauri signer generate -w ~/.tauri/dictus.key
+# Produces two files:
+#   ~/.tauri/dictus.key      (private key — never commit, never share)
+#   ~/.tauri/dictus.key.pub  (public key — embed in tauri.conf.json)
 ```
+
+**Key format:** Tauri uses its own Minisign-compatible wire format. Do not use `openssl` or `minisign` CLI — they produce incompatible key formats that the updater plugin will reject.
+
+**What to do with the output:**
+- `~/.tauri/dictus.key.pub` content → paste into `tauri.conf.json` `plugins.updater.pubkey`
+- `~/.tauri/dictus.key` content → store as GitHub repository secret `TAURI_SIGNING_PRIVATE_KEY`
+- If no password was set during generation: store an empty string `""` as `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`
+
+**Confidence: HIGH** — Verified via [Tauri v2 Updater docs](https://v2.tauri.app/plugin/updater/) and [Tauri CLI reference](https://v2.tauri.app/reference/cli/)
+
+---
+
+### 2. tauri.conf.json — Two Field Changes
+
+No new dependencies. Only configuration values need updating:
+
+| Field | Current Value | Required Value |
+|-------|--------------|---------------|
+| `bundle.createUpdaterArtifacts` | `false` | `true` |
+| `plugins.updater.pubkey` | `""` | Contents of `~/.tauri/dictus.key.pub` |
+| `plugins.updater.endpoints` | `[]` | `["https://github.com/PiVii/dictus-desktop/releases/latest/download/latest.json"]` |
+
+**Why `createUpdaterArtifacts: true`:** Instructs the Tauri bundler to generate `.sig` signature files alongside each installer at build time. The `tauri-action` then uploads these `.sig` files and the `latest.json` manifest to the GitHub Release automatically. Without this flag, no updater artifacts are produced and the updater plugin will find nothing to install.
+
+**Why this endpoint URL:** `tauri-action` automatically uploads a `latest.json` to each GitHub Release (controlled by `uploadUpdaterJson` input, default `true`). The URL `releases/latest/download/latest.json` is the stable GitHub CDN path for that asset on the most recently *published* non-draft, non-prerelease release. Draft releases are NOT served at this URL.
+
+**The `latest.json` structure** (generated by tauri-action v0.6.x with `tauri-plugin-updater 2.10.0+`):
+
+```json
+{
+  "version": "0.1.1",
+  "notes": "...",
+  "pub_date": "2026-04-10T...",
+  "platforms": {
+    "darwin-aarch64": { "signature": "...", "url": "..." },
+    "darwin-x86_64": { "signature": "...", "url": "..." },
+    "linux-x86_64": { "signature": "...", "url": "..." },
+    "windows-x86_64": { "signature": "...", "url": "..." }
+  }
+}
+```
+
+`tauri-plugin-updater 2.10.0` added `{os}-{arch}-{installer}` keyed entries. This version is already installed — no upgrade needed.
+
+**Confidence: HIGH** — Confirmed via official Tauri docs and [tauri-apps/tauri Discussion #10206](https://github.com/orgs/tauri-apps/discussions/10206)
+
+---
+
+### 3. GitHub Actions — Release Workflow Fixes
+
+No new GitHub Actions to add. Two changes to existing files:
+
+#### `.github/workflows/release.yml`
+
+| Field | Current Value | Required Value | Line |
+|-------|--------------|---------------|------|
+| `asset-prefix` | `"handy"` | `"dictus"` | 77 |
+
+This fixes asset filenames uploaded to GitHub Releases from `handy_Dictus_0.1.0_...` to `dictus_Dictus_0.1.0_...`. The `assetNamePattern` in build.yml uses this prefix.
+
+#### `.github/workflows/build.yml` — verification step
+
+Line 383: `otool -L "$APP/Contents/MacOS/handy"` — references old binary name. Will need updating when TECH-03 (binary rename) ships. For v1.1, this is a non-blocking issue (the binary is still named `handy`).
+
+**`tauri-action` version:** Already using `tauri-apps/tauri-action@v0`. The latest patch is `v0.6.2` (released 2026-03-14). The `@v0` floating tag resolves to the latest v0.x release automatically. No version change needed.
+
+**Confidence: HIGH** — Verified via [tauri-action releases](https://github.com/tauri-apps/tauri-action/releases)
+
+---
+
+### 4. UpdateChecker.tsx — Fix Broken URL
+
+One line change. Line 206 hard-codes the upstream Handy repo URL:
+
+```tsx
+// Current (wrong):
+openUrl("https://github.com/cjpais/Handy/releases/latest");
+
+// Required:
+openUrl("https://github.com/PiVii/dictus-desktop/releases/latest");
+```
+
+This URL shows only when the app is running as a portable install (the `isPortable()` check at line 105). It redirects portable users to download the latest release manually rather than using the in-app updater.
+
+**Confidence: HIGH** — Direct code inspection
+
+---
+
+### 5. GitHub Actions — Upstream Sync Detection
+
+New file: `.github/workflows/upstream-sync-check.yml`
+
+No new marketplace actions required. Uses only:
+
+| Component | Version | Purpose |
+|-----------|---------|---------|
+| `actions/checkout@v4` | v4 (already used throughout) | Clone repo with full history (`fetch-depth: 0`) |
+| `actions/github-script@v7` | v7 (already used in `release.yml`) | Create GitHub Issue when upstream commits detected |
+
+**Workflow design:**
+
+```yaml
+name: Upstream Sync Check
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'   # Monday 09:00 UTC
+  workflow_dispatch:        # Manual trigger for ad-hoc checks
+
+jobs:
+  check-upstream:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch upstream (cjpais/Handy)
+        run: |
+          git remote add upstream https://github.com/cjpais/Handy.git || true
+          git fetch upstream main
+
+      - name: Count new upstream commits
+        id: check
+        run: |
+          COUNT=$(git log HEAD..upstream/main --oneline | wc -l | tr -d ' ')
+          COMMITS=$(git log HEAD..upstream/main --oneline | head -20)
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+          echo "commits<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$COMMITS" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Check for existing open sync issue
+        id: existing
+        if: steps.check.outputs.count != '0'
+        uses: actions/github-script@v7
+        with:
+          result-encoding: string
+          script: |
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'upstream-sync',
+              state: 'open'
+            });
+            return issues.data.length > 0 ? 'true' : 'false';
+
+      - name: Create upstream sync issue
+        if: steps.check.outputs.count != '0' && steps.existing.outputs.result != 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Upstream sync needed: ${${{ steps.check.outputs.count }}} new commits in cjpais/Handy`,
+              labels: ['upstream-sync'],
+              body: `## Upstream Delta Detected\n\n**New commits:** ${{ steps.check.outputs.count }}\n\n\`\`\`\n${{ steps.check.outputs.commits }}\n\`\`\`\n\nRun \`git fetch upstream && git log HEAD..upstream/main\` locally to see the full diff.`
+            });
+```
+
+**Why native bash, not a marketplace action:** Two candidate actions were evaluated:
+- `ivanmilov/upstream_check_new_commits@v1`: Single-developer action, no maintenance signals, no security audit. The bash alternative is 5 lines and fully auditable.
+- `maheshrayas/action-release-notifier@v2.1`: Tracks GitHub *releases* only, not commits. Handy does not always tag releases immediately after committing.
+
+**Why create GitHub Issues, not PRs:** Merging 69 commits from upstream requires human judgment — the Dictus rebrand conflicts with upstream on bundle IDs, icon paths, and i18n strings. Automating merge is out of scope and risky. Detection + notification is the correct scope.
+
+**Confidence: MEDIUM** — Standard GHA pattern; deduplication logic (checking for existing open issues by label) requires testing in CI.
+
+---
+
+## GitHub Secrets Required
+
+Both secrets are already referenced in `build.yml` (lines 354-355). Only the values are missing from GitHub repo settings.
+
+| Secret Name | Value | Notes |
+|-------------|-------|-------|
+| `TAURI_SIGNING_PRIVATE_KEY` | Full content of `~/.tauri/dictus.key` | Include the full key file contents |
+| `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | Passphrase or empty string `""` | Must be set even if empty |
+
+Setting these secrets does not require any workflow changes — they are already consumed by the build when `sign-binaries: true`.
 
 ---
 
 ## Alternatives Considered
 
-| Recommended                                | Alternative                                                      | When to Use Alternative                                                                                                                                                             |
-| ------------------------------------------ | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tauri icon` CLI for all icon generation   | Manual creation of each PNG size + separate `.icns`/`.ico` tools | Never for this project — `tauri icon` is the official, maintained path. Manual creation risks missing required sizes.                                                               |
-| Tailwind v4 `@theme` directive in CSS      | CSS custom properties in `:root` directly                        | Only if you need to share tokens with non-Tailwind stylesheets. For this project, `@theme` is strictly better — it auto-generates utility classes AND CSS variables simultaneously. |
-| `i18next-parser` for key audit             | Manual cross-check of 21 JSON files                              | Only for tiny projects (<3 locales). At 21 locales, manual is error-prone and does not scale.                                                                                       |
-| `portable.rs` magic string update in place | Creating a migration command                                     | In-place update is simpler and the existing file already has the right abstraction (`is_valid_portable_marker`). Just update the string constant and add backward-compat check.     |
+| Category | Recommended | Alternative | Why Not |
+|----------|-------------|-------------|---------|
+| Ed25519 key generation | `bunx tauri signer generate` | `openssl`, `minisign` CLI | Tauri uses its own Minisign wire format for the public key string. External tools produce incompatible formats rejected by `tauri-plugin-updater`. |
+| Update endpoint | GitHub Releases `latest.json` | CrabnNebula Cloud, self-hosted update server | GitHub Releases is free, zero-infrastructure, already used. CrabnNebula adds cost and vendor lock-in. |
+| `createUpdaterArtifacts` value | `true` | `"v1Compatible"` | Dictus has no existing v1 users — no backwards-compat needed. `"v1Compatible"` generates compressed `.tar.gz`/`.zip` bundles for legacy updater clients unnecessarily. |
+| Upstream sync method | Native `git log` in bash | `ivanmilov/upstream_check_new_commits@v1` | Unmaintained single-developer action. 5-line bash is simpler and auditable. |
+| Sync notification target | GitHub Issue | Slack/email webhook | No external service required. GitHub Issues are the project's existing tracking surface. |
 
 ---
 
-## What NOT to Do
+## What NOT to Add
 
-| Avoid                                                                                                                   | Why                                                                                                                                                                                                                                                                                                                                                                                                                | Use Instead                                                                                                                                                                                                                        |
-| ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Changing `identifier` without a first-run migration                                                                     | `identifier` determines the app data directory path on all platforms (`${dataDir}/${identifier}`). Changing from `com.pais.handy` to `com.dictus.desktop` will orphan existing users' settings, history DB, model downloads, and `tauri-plugin-store` file. This affects `~/.local/share/com.pais.handy/` (Linux), `%APPDATA%\com.pais.handy\` (Windows), `~/Library/Application Support/com.pais.handy/` (macOS). | Implement a first-run migration in Rust that checks for the old path and copies data to the new path before Tauri initializes the store. The `portable.rs` abstraction pattern is a good model.                                    |
-| Renaming Rust symbols (`HandyKeys`, `handy_app_lib`, `default-run = "handy"`) before confirming they are not serialized | `KeyboardImplementation::HandyKeys` is serialized as `"handy_keys"` via `#[serde(rename_all = "snake_case")]`. If you rename the enum variant, existing settings JSON files break on deserialization.                                                                                                                                                                                                              | Add a `#[serde(rename = "handy_keys")]` attribute to preserve the serialized form, OR implement a settings migration that maps the old value to the new one. This is the V1 "progressive renaming" strategy from the project plan. |
-| Editing `.icns` and `.ico` files by hand                                                                                | These are binary formats with embedded size variants. Manual edits corrupt the file.                                                                                                                                                                                                                                                                                                                               | Always regenerate from source via `bun run tauri icon`. Keep the source `app-icon.png` in the repo.                                                                                                                                |
-| Using a `tailwind.config.js` file for design tokens                                                                     | Tailwind v4 (already installed at 4.1.16) has deprecated the JS config approach for theme values. Using it creates a dual-config situation that causes confusing precedence behavior.                                                                                                                                                                                                                              | Define all brand tokens in the CSS entry point via `@theme`. The project already uses the Vite integration (`@tailwindcss/vite`) which expects the CSS-first approach.                                                             |
-| Updating the updater `pubkey` and `endpoints` without a new release                                                     | The updater plugin verifies release signatures against the public key. Changing the endpoint to a Dictus GitHub org requires updating the key pair and re-signing releases.                                                                                                                                                                                                                                        | For V1 internal/test builds, keep the updater pointing to the existing endpoint or disable it. Update the endpoint + key only when a real Dictus GitHub releases workflow is ready.                                                |
-| Adding "Handy Portable Mode" string removal to V1 scope                                                                 | `portable.rs` line 30 writes `"Handy Portable Mode"` as a magic marker to disk. This is a portable install detection mechanism. Changing the string is a **breaking change for existing portable installs** and requires a backward-compat migration path.                                                                                                                                                         | Defer this to V2 when a broader portable mode migration strategy can be implemented. The visible UI impact of this string is zero (it is written to a marker file, not displayed).                                                 |
-
----
-
-## Stack Patterns by Layer
-
-**Layer 1 — Bundle Identity (tauri.conf.json + Cargo.toml):**
-
-- Change `productName: "Handy"` → `"Dictus Desktop"`
-- Change `identifier: "com.pais.handy"` → `"com.dictus.desktop"`
-- Change `Cargo.toml` `name`, `description`, `default-run` → `dictus-desktop`
-- Change `Cargo.toml` `[lib] name` → `dictus_app_lib`
-- Update `windows.signCommand` `-d` flag value from `Handy` to `Dictus Desktop`
-- Update updater `endpoints` URL when Dictus GitHub org releases are configured
-- **Prerequisite:** Implement data migration before this change ships to real users
-
-**Layer 2 — Icon/Asset Pipeline:**
-
-- Place 1024x1024 `app-icon.png` (Dictus branding, transparency, square) at repo root
-- Run `bun run tauri icon` — this replaces all files in `src-tauri/icons/`
-- Replace tray icons in `src-tauri/resources/`: `tray_idle.png`, `tray_idle_dark.png`, `tray_recording.png`, `tray_recording_dark.png`, `tray_transcribing.png`, `tray_transcribing_dark.png`
-- Replace `src-tauri/resources/recording.png`, `transcribing.png`, `handy.png`
-- Replace `src-tauri/icons/logo.png`
-- Tray icons are 22x22px (macOS) / 16x16px (Windows) — design them as template images (monochrome) for macOS so the system handles dark/light mode automatically via `iconAsTemplate: true`
-
-**Layer 3 — Design Tokens (Tailwind v4 CSS):**
-
-- Locate the CSS entry point (typically `src/index.css` or similar) where `@import "tailwindcss"` lives
-- Add a `@theme` block with Dictus brand colors from the iOS reference palette
-- Example structure:
-  ```css
-  @theme {
-    --color-dictus-primary: oklch(...); /* main brand color */
-    --color-dictus-surface: oklch(...); /* card/panel background */
-    --color-dictus-text: oklch(...); /* primary text */
-    /* add typography, radius tokens as needed */
-  }
-  ```
-- These tokens auto-generate utility classes (`bg-dictus-primary`, `text-dictus-text`) AND CSS variables (`var(--color-dictus-primary)`)
-- Do NOT remove existing color tokens in V1 — add Dictus tokens alongside them, then migrate usage incrementally
-
-**Layer 4 — i18n String Updates:**
-
-- All 21 locale files contain "Handy" references (verified: 258 total occurrences across 33 files)
-- English source (`en/translation.json`) is the canonical file — update it first
-- The component `HandyTextLogo.tsx` and `HandyHand.tsx` contain hardcoded references — these components need renaming
-- `eslint-plugin-i18next` is already configured and will enforce that any JSX string changes go through `t()` calls
-- After updating EN, use `i18next-parser` to flag which keys in non-EN locales are stale or missing
-- For V1 visible rebrand, only EN + FR are critical to validate manually (other locales can ship with EN fallback temporarily)
-
----
-
-## Key Configuration File: What Changes Where
-
-| File                           | Field(s) to Change                           | Current Value       | Target Value                     |
-| ------------------------------ | -------------------------------------------- | ------------------- | -------------------------------- |
-| `src-tauri/tauri.conf.json`    | `productName`                                | `"Handy"`           | `"Dictus Desktop"`               |
-| `src-tauri/tauri.conf.json`    | `identifier`                                 | `"com.pais.handy"`  | `"com.dictus.desktop"`           |
-| `src-tauri/tauri.conf.json`    | `bundle.windows.signCommand`                 | `"... -d Handy %1"` | `"... -d \"Dictus Desktop\" %1"` |
-| `src-tauri/tauri.conf.json`    | `plugins.updater.endpoints`                  | GitHub cjpais/Handy | Dictus GitHub releases URL       |
-| `src-tauri/tauri.conf.json`    | `plugins.updater.pubkey`                     | cjpais key          | New Dictus key pair              |
-| `src-tauri/Cargo.toml`         | `[package] name`                             | `"handy"`           | `"dictus-desktop"`               |
-| `src-tauri/Cargo.toml`         | `[package] description`                      | `"Handy"`           | `"Dictus Desktop"`               |
-| `src-tauri/Cargo.toml`         | `[package] authors`                          | `["cjpais"]`        | Dictus team author(s)            |
-| `src-tauri/Cargo.toml`         | `[package] default-run`                      | `"handy"`           | `"dictus-desktop"`               |
-| `src-tauri/Cargo.toml`         | `[lib] name`                                 | `"handy_app_lib"`   | `"dictus_app_lib"`               |
-| `src-tauri/nsis/installer.nsi` | Header comment + any `Handy` literal strings | `"Handy"`           | `"Dictus Desktop"`               |
-
----
-
-## Version Compatibility
-
-| Package                       | Compatible With            | Notes                                                                                                                         |
-| ----------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `@tauri-apps/cli 2.10.0`      | `tauri 2.10.2`             | `tauri icon` command is stable. Always run CLI version matching the Tauri crate version.                                      |
-| `Tailwind CSS 4.1.16`         | `@tailwindcss/vite 4.1.16` | These must match exactly — the Vite plugin and Tailwind core share the version. The project already has them pinned together. |
-| `i18next 25.7.2`              | TypeScript 5.x only        | Project uses TypeScript ~5.6.3, no compatibility issue. i18next v25 dropped TS 4.x support.                                   |
-| `eslint-plugin-i18next 6.1.3` | ESLint 9.39.1              | Plugin is already configured. No changes needed for rebrand.                                                                  |
+| Item | Reason |
+|------|--------|
+| CrabnNebula Cloud / Tauri Cloud | Paid service, adds vendor dependency. GitHub Releases sufficient. |
+| `tauri-plugin-ota-updater` (third-party) | Different project, not the official plugin. Official `tauri-plugin-updater` already installed. |
+| Delta/patch updates | Not supported by Tauri v2 updater. Full installers only. Not worth custom implementation. |
+| Auto-merge upstream Action | 69 diverged commits require human review (Dictus rebrand conflicts). Automate detection only. |
+| Apple code signing (Developer ID) | Deferred to INFR-03. macOS ad-hoc signing (`signingIdentity: "-"`) already configured. |
+| Windows Azure code signing | Deferred to INFR-03. `sign-binaries: true` path already exists in workflow — just needs secrets. |
 
 ---
 
 ## Sources
 
-- [Tauri App Icons — v2.tauri.app/develop/icons/](https://v2.tauri.app/develop/icons/) — Icon pipeline, source format, generated output list. HIGH confidence.
-- [Tauri Config Reference — v2.tauri.app/reference/config/](https://v2.tauri.app/reference/config/) — `productName`, `identifier`, bundle fields, platform mappings. HIGH confidence.
-- [Tailwind CSS Theme Variables — tailwindcss.com/docs/theme](https://tailwindcss.com/docs/theme) — `@theme` directive, CSS variable generation, dark mode integration. HIGH confidence.
-- [Tauri Configuration Files — v2.tauri.app/develop/configuration-files/](https://v2.tauri.app/develop/configuration-files/) — Platform-specific config merge strategy. HIGH confidence.
-- GitHub issue tauri-apps/tauri #13874 — macOS `productName` vs Cargo `name` divergence bug. Informs the recommendation to keep them synchronized.
-- Codebase inspection (`portable.rs`, `settings.rs`, `tauri.conf.json`, `Cargo.toml`) — Identifies exact serialized values, migration risks, and scope of "Handy" references (258 occurrences, 33 files). HIGH confidence — direct source of truth.
+- [Tauri v2 Updater plugin docs](https://v2.tauri.app/plugin/updater/) — HIGH confidence
+- [Tauri GitHub Actions pipeline docs](https://v2.tauri.app/distribute/pipelines/github/) — HIGH confidence
+- [Tauri CLI reference (signer generate)](https://v2.tauri.app/reference/cli/) — HIGH confidence
+- [tauri-apps/tauri-action releases](https://github.com/tauri-apps/tauri-action/releases) — v0.6.2 confirmed
+- [tauri-apps/tauri Discussion #10206](https://github.com/orgs/tauri-apps/discussions/10206) — GitHub Releases latest.json endpoint pattern
+- [Generating TAURI_SIGNING_PRIVATE_KEY (HackMD)](https://hackmd.io/@zo-el/S1vu7IFrxx) — MEDIUM confidence, community
 
----
-
-_Stack research for: Tauri 2.x desktop app rebranding (Handy → Dictus Desktop)_
-_Researched: 2026-04-05_
+_Stack research for: Dictus Desktop v1.1 — Auto-Updater + Upstream Sync_
+_Researched: 2026-04-10_

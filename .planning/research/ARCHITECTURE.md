@@ -1,400 +1,409 @@
-# Architecture Research
+# Architecture Patterns: Auto-Updater & Upstream Sync
 
-**Domain:** Tauri 2.x desktop app rebranding (Handy → Dictus Desktop)
-**Researched:** 2026-04-05
-**Confidence:** HIGH (based on direct codebase analysis, not assumptions)
-
----
-
-## Standard Architecture
-
-### System Overview
-
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                     IDENTITY LAYER (Branding)                    │
-│  tauri.conf.json · Cargo.toml · package.json · nsis/installer   │
-│  icons/ · resources/handy.png · i18n JSON strings               │
-├──────────────────────────────────────────────────────────────────┤
-│                    FRONTEND (React/TypeScript)                    │
-│  ┌─────────────┐  ┌──────────────────┐  ┌──────────────────┐    │
-│  │  Sidebar.tsx│  │ Onboarding.tsx   │  │  AboutSettings   │    │
-│  │ HandyHand   │  │ HandyTextLogo    │  │  (URLs/links)    │    │
-│  │ HandyText   │  │ AccessOnboarding │  │                  │    │
-│  └─────────────┘  └──────────────────┘  └──────────────────┘    │
-│  ┌─────────────────────────────────────────────────────────┐    │
-│  │   HandyKeysShortcutInput.tsx / ShortcutInput.tsx        │    │
-│  │   (listens to "handy-keys-event", calls handy_keys cmds)│    │
-│  └─────────────────────────────────────────────────────────┘    │
-│  ┌─────────────────────────────────────────────────────────┐    │
-│  │   bindings.ts (auto-generated: startHandyKeysRecording) │    │
-│  └─────────────────────────────────────────────────────────┘    │
-├──────────────────────────────────────────────────────────────────┤
-│              IPC BOUNDARY (Tauri commands + events)              │
-│   "handy-keys-event" event · start_handy_keys_recording cmd      │
-│   stop_handy_keys_recording cmd                                  │
-├──────────────────────────────────────────────────────────────────┤
-│                    BACKEND (Rust / src-tauri)                    │
-│  ┌──────────────────────┐  ┌──────────────────────────────┐     │
-│  │  shortcut/           │  │  lib.rs                      │     │
-│  │  ├── handy_keys.rs   │  │  (crate: handy_app_lib)      │     │
-│  │  │   HandyKeysState  │  │  window title "Handy"        │     │
-│  │  │   "handy-keys-*"  │  │  log file name "handy"       │     │
-│  │  └── mod.rs          │  │                              │     │
-│  └──────────────────────┘  └──────────────────────────────┘     │
-│  ┌──────────────────────┐  ┌──────────────────────────────┐     │
-│  │  tray.rs             │  │  cli.rs                      │     │
-│  │  "Handy v{}"         │  │  command(name = "handy")     │     │
-│  │  resources/handy.png │  │  about = "Handy - STT"       │     │
-│  │  "handy-1.wav"       │  │                              │     │
-│  └──────────────────────┘  └──────────────────────────────┘     │
-│  ┌──────────────────────┐  ┌──────────────────────────────┐     │
-│  │  llm_client.rs       │  │  portable.rs                 │     │
-│  │  Referer: cjpais/    │  │  "Handy Portable Mode"       │     │
-│  │  User-Agent: Handy   │  │  handy_test_* (temp dirs)    │     │
-│  │  X-Title: Handy      │  │                              │     │
-│  └──────────────────────┘  └──────────────────────────────┘     │
-│  ┌──────────────────────┐  ┌──────────────────────────────┐     │
-│  │  settings.rs         │  │  managers/ · commands/       │     │
-│  │  HandyKeys enum      │  │  (no Handy-branded symbols)  │     │
-│  │  "handy_keys" key    │  │                              │     │
-│  └──────────────────────┘  └──────────────────────────────┘     │
-├──────────────────────────────────────────────────────────────────┤
-│                    EXTERNAL DEPENDENCY                           │
-│  Cargo.toml: handy-keys = "0.2.4" (third-party crate)           │
-│  Cargo.toml: [patch.crates-io] → github.com/cjpais/tauri.git    │
-│             branch: handy-2.10.2 (forked Tauri runtime)         │
-└──────────────────────────────────────────────────────────────────┘
-```
-
-### Component Responsibilities — Branding Dimension
-
-| Component                                                          | Current Handy Identity                                                             | Rebrand Target                                                                                           | Boundary Type                                            |
-| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| `tauri.conf.json`                                                  | `productName: "Handy"`, `identifier: "com.pais.handy"`, updater URL `cjpais/Handy` | `"Dictus Desktop"`, `"com.dictus.desktop"`, updater URL TBD                                              | Config file (hard change)                                |
-| `src-tauri/Cargo.toml`                                             | `name = "handy"`, `default-run = "handy"`, `[lib] name = "handy_app_lib"`          | `"dictus-desktop"`, `"dictus_desktop_lib"`                                                               | Build config (requires code change in `main.rs` imports) |
-| `package.json`                                                     | `"name": "handy-app"`                                                              | `"dictus-desktop"`                                                                                       | Config file (soft change)                                |
-| `src/components/icons/HandyHand.tsx`                               | SVG icon — a hand graphic, Handy branded                                           | Replace with Dictus logo SVG component                                                                   | Component (rename + new content)                         |
-| `src/components/icons/HandyTextLogo.tsx`                           | SVG wordmark — renders "Handy" text                                                | Replace with Dictus wordmark SVG                                                                         | Component (rename + new content)                         |
-| `src/components/Sidebar.tsx`                                       | Uses `HandyHand`, `HandyTextLogo`                                                  | Use renamed icon components                                                                              | Component (rename imports)                               |
-| `src/components/onboarding/Onboarding.tsx`                         | Uses `HandyTextLogo`, mentions Handy                                               | Dictus logo + Dictus copy                                                                                | Component (rename + copy change)                         |
-| `src/components/onboarding/AccessibilityOnboarding.tsx`            | Uses `HandyTextLogo`, "Handy needs accessibility…"                                 | Dictus logo + Dictus copy                                                                                | Component (rename + copy change)                         |
-| `src/i18n/locales/en/translation.json`                             | 12+ "Handy" occurrences in strings                                                 | "Dictus" everywhere                                                                                      | i18n source (all 4 languages)                            |
-| `src/components/settings/about/AboutSettings.tsx`                  | Links to `handy.computer/donate`, `cjpais/Handy`                                   | Dictus URLs / attribution                                                                                | Component (URL update)                                   |
-| `src/components/update-checker/UpdateChecker.tsx`                  | Links to `cjpais/Handy/releases`                                                   | Dictus releases URL                                                                                      | Component (URL update)                                   |
-| `src/components/settings/HandyKeysShortcutInput.tsx`               | Component name, listens to `"handy-keys-event"`                                    | Rename file/component; event name is tied to `handy-keys` crate                                          | Internal API (Phase 2 rename)                            |
-| `src/components/settings/debug/DebugPaths.tsx`                     | Shows `%APPDATA%/handy` paths                                                      | `%APPDATA%/com.dictus.desktop` or OS-derived                                                             | UI string (derived from bundle ID)                       |
-| `src/components/settings/debug/KeyboardImplementationSelector.tsx` | Label `"Handy Keys"`                                                               | `"System Keys"` or keep as-is                                                                            | UI label                                                 |
-| `src-tauri/src/shortcut/handy_keys.rs`                             | Module name, `HandyKeysState`, wraps `handy-keys` crate                            | Rename file to `ext_keys.rs` or similar; rename state struct                                             | Internal (Phase 2)                                       |
-| `src-tauri/src/settings.rs`                                        | `KeyboardImplementation::HandyKeys`, serialized as `"handy_keys"`                  | Rename enum variant; `"handy_keys"` serialization key is persisted in user settings — migration required | Persisted data (migration risk)                          |
-| `src-tauri/src/tray.rs`                                            | `"Handy v{}"` tray tooltip, `resources/handy.png`                                  | `"Dictus Desktop v{}"`, `resources/dictus.png`                                                           | Runtime display + asset                                  |
-| `src-tauri/src/lib.rs`                                             | Window title `"Handy"`, log file `"handy"`, calls `handy_keys::*`                  | `"Dictus Desktop"`, `"dictus"`, updated module refs                                                      | Core bootstrap                                           |
-| `src-tauri/src/cli.rs`                                             | Binary CLI name `"handy"`, about `"Handy - Speech to Text"`                        | `"dictus-desktop"`, updated description                                                                  | CLI identity                                             |
-| `src-tauri/src/llm_client.rs`                                      | HTTP headers: `Referer`, `User-Agent`, `X-Title` all reference Handy               | Update to Dictus identity + repository URL                                                               | Network identity                                         |
-| `src-tauri/src/portable.rs`                                        | Marker string `"Handy Portable Mode"`, temp dir names `handy_test_*`               | `"Dictus Portable Mode"` (breaks existing portable installs)                                             | Data migration risk                                      |
-| `src-tauri/nsis/installer.nsi`                                     | Comments + strings reference Handy, `"Handy Portable Mode"` marker                 | Update strings; keep marker check backward-compat or handle migration                                    | Windows installer                                        |
-| `src-tauri/resources/handy.png`                                    | Tray icon (colored, idle state)                                                    | Rename to `dictus.png`, replace content                                                                  | Asset file                                               |
-| `src-tauri/icons/`                                                 | App icons (generic, not Handy-branded visually)                                    | Replace with Dictus brand icons                                                                          | Asset files                                              |
-| `handy-keys` crate (external)                                      | Third-party crate name — not renameable                                            | Crate stays; internal wrappers can be renamed                                                            | External dependency                                      |
-| `[patch.crates-io] handy-2.10.2`                                   | Forked Tauri runtime on `cjpais/handy-2.10.2` branch                               | Branch name stays (external); no action needed                                                           | External fork                                            |
+**Domain:** Tauri 2.x auto-update + fork upstream sync integration
+**Milestone:** v1.1 Auto-Update & Upstream Sync
+**Researched:** 2026-04-10
+**Confidence:** HIGH (based on direct codebase analysis + official Tauri v2 docs)
 
 ---
 
-## Recommended Project Structure (Post-Rebrand)
-
-No structural reorganization is needed. The existing structure is sound. Only renaming within the structure:
+## System Overview
 
 ```
-src/
-├── components/
-│   ├── icons/
-│   │   ├── DictusLogo.tsx          # was HandyTextLogo.tsx
-│   │   ├── DictusIcon.tsx          # was HandyHand.tsx
-│   │   └── ...
-│   ├── settings/
-│   │   ├── ExtKeysShortcutInput.tsx  # was HandyKeysShortcutInput.tsx (Phase 2)
-│   │   └── ...
-│   └── ...
-├── i18n/locales/
-│   ├── en/translation.json         # replace all "Handy" → "Dictus"
-│   ├── es/translation.json         # same
-│   ├── fr/translation.json         # same
-│   └── vi/translation.json         # same
-
-src-tauri/
-├── src/
-│   ├── shortcut/
-│   │   ├── ext_keys.rs             # was handy_keys.rs (Phase 2)
-│   │   └── mod.rs                  # updated references
-│   ├── lib.rs                      # window title, log name, crate ref
-│   ├── tray.rs                     # tray tooltip, resource path
-│   ├── cli.rs                      # binary name, description
-│   ├── llm_client.rs               # HTTP headers
-│   └── portable.rs                 # marker string (migration-sensitive)
-├── resources/
-│   ├── dictus.png                  # was handy.png (tray colored idle)
-│   └── ...
-├── icons/                          # replace all PNGs + .icns + .ico
-├── Cargo.toml                      # crate name + lib name
-└── tauri.conf.json                 # productName, identifier, updater endpoint
+┌───────────────────────────────────────────────────────────────────────┐
+│                        GITHUB INFRASTRUCTURE                          │
+│                                                                       │
+│  ┌───────────────────┐   ┌─────────────────────────────────────────┐ │
+│  │  cjpais/Handy     │   │  dictus-desktop/dictus-desktop          │ │
+│  │  upstream remote  │──▶│  GitHub Releases                        │ │
+│  │  (69 commits      │   │  ├── Dictus_0.1.1_aarch64.dmg          │ │
+│  │   ahead of fork)  │   │  ├── Dictus_0.1.1_aarch64.dmg.sig      │ │
+│  └───────────────────┘   │  ├── Dictus_0.1.1_x64.msi              │ │
+│           ▲              │  ├── Dictus_0.1.1_x64.msi.sig          │ │
+│           │              │  ├── Dictus_0.1.1.AppImage              │ │
+│           │              │  ├── Dictus_0.1.1.AppImage.sig          │ │
+│  weekly   │              │  └── latest.json  ◀── updater endpoint  │ │
+│  cron     │              └─────────────────────────────────────────┘ │
+│  workflow─┘                                                           │
+│                                                                       │
+│  ┌─────────────────────────────────────────────────────────────────┐ │
+│  │  GitHub Actions                                                  │ │
+│  │  ├── release.yml         (manual: build + sign + publish)       │ │
+│  │  ├── build.yml           (reusable: 7-platform matrix)          │ │
+│  │  └── upstream-sync.yml   (NEW: weekly cron, detect + alert)     │ │
+│  └─────────────────────────────────────────────────────────────────┘ │
+└───────────────────────────────────────────────────────────────────────┘
+                                    │
+                    latest.json at GitHub Releases URL
+                                    │
+                                    ▼
+┌───────────────────────────────────────────────────────────────────────┐
+│                     DICTUS DESKTOP (RUNTIME)                          │
+│                                                                       │
+│  ┌────────────────────────────────────────────────────────────────┐  │
+│  │  FRONTEND (React / TypeScript)                                 │  │
+│  │                                                                │  │
+│  │  UpdateChecker.tsx          UpdateChecksToggle.tsx             │  │
+│  │  ├── check() [plugin-updater]  └── settings.update_checks_enabled │
+│  │  ├── downloadAndInstall()                                      │  │
+│  │  ├── listens "check-for-updates" event                         │  │
+│  │  └── openUrl() → github.com/dictus-desktop/dictus-desktop      │  │  
+│  │      (CHANGE: fix hardcoded cjpais/Handy URL)                  │  │
+│  │                                                                │  │
+│  │  Footer.tsx → renders UpdateChecker.tsx                        │  │
+│  └────────────────────────────┬───────────────────────────────────┘  │
+│                               │ IPC commands + events                 │
+│  ┌────────────────────────────▼───────────────────────────────────┐  │
+│  │  BACKEND (Rust / src-tauri)                                    │  │
+│  │                                                                │  │
+│  │  lib.rs                                                        │  │
+│  │  ├── .plugin(tauri_plugin_updater::Builder::new().build())     │  │
+│  │  │   (already registered — NO change needed)                  │  │
+│  │  ├── trigger_update_check command (already exists)            │  │
+│  │  └── tray "check_updates" handler (already exists)            │  │
+│  │                                                                │  │
+│  │  tauri.conf.json  (CHANGES NEEDED)                            │  │
+│  │  ├── bundle.createUpdaterArtifacts: true  (was false)         │  │
+│  │  └── plugins.updater.pubkey: "<Ed25519 pubkey>"               │  │
+│  │      plugins.updater.endpoints: ["<github releases url>"]     │  │
+│  └────────────────────────────────────────────────────────────────┘  │
+└───────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Architectural Patterns
+## Component Responsibilities
 
-### Pattern 1: Two-Pass Rebrand (Visible First, Internal Second)
+### Existing Components (Modified)
 
-**What:** Separate the rebrand into two distinct passes — user-visible identity changes first, then internal code symbol renaming.
+| Component | File | Current State | Required Change |
+|-----------|------|---------------|-----------------|
+| updater config | `src-tauri/tauri.conf.json` | `createUpdaterArtifacts: false`, `pubkey: ""`, `endpoints: []` | Set `createUpdaterArtifacts: true`, add real pubkey, add GitHub Releases endpoint URL |
+| UpdateChecker.tsx | `src/components/update-checker/UpdateChecker.tsx` | Hardcoded `openUrl("https://github.com/cjpais/Handy/releases/latest")` at line 206 | Change to `https://github.com/dictus-desktop/dictus-desktop/releases/latest` |
+| release.yml | `.github/workflows/release.yml` | `asset-prefix: "handy"` (wrong), missing `TAURI_SIGNING_PRIVATE_KEY` env, missing `includeUpdaterJson` | Fix asset-prefix to `"dictus"`, add signing env vars, add `includeUpdaterJson: true` |
+| build.yml | `.github/workflows/build.yml` | default `asset-prefix: "handy"`, missing signing key env passthrough | Accept signing key env vars from caller |
 
-**When to use:** When internal renaming carries non-trivial risk (persisted data keys, IPC event names, generated bindings) and the visible rebrand has independent value.
+### New Components
 
-**Trade-offs:**
-
-- Pro: Visible rebrand ships quickly without risk of build breakage from Cargo crate rename
-- Pro: Settings migration can be scoped to a dedicated phase with a tested migration path
-- Con: Codebase temporarily has mismatched names (e.g., `HandyKeysShortcutInput` in a Dictus-branded UI)
-- Con: Two PRs, slightly longer overall timeline
-
-**Implementation:**
-
-```
-Pass 1 (visible):
-  tauri.conf.json → productName, identifier
-  Cargo.toml      → description only (keep name="handy" to defer binary rename risk)
-  icons/          → replace all PNGs
-  resources/      → rename handy.png → dictus.png + update tray.rs reference
-  src/icons/      → rename/replace HandyTextLogo, HandyHand
-  src/i18n/       → all 4 language files
-  src/components/ → Sidebar, Onboarding, About, UpdateChecker
-  lib.rs          → window title, log file name
-
-Pass 2 (internal):
-  Cargo.toml      → name, lib name (binary rename)
-  main.rs         → update handy_app_lib import
-  shortcut/handy_keys.rs → rename file + struct
-  settings.rs     → KeyboardImplementation::HandyKeys variant rename + migration
-  bindings.ts     → regenerated automatically from Rust changes
-  portable.rs     → marker string (migration logic for existing installs)
-  nsis/           → template strings
-```
-
-### Pattern 2: Config-Driven Identity (Tauri)
-
-**What:** Tauri derives many identity strings from `tauri.conf.json`. Changing `productName` and `identifier` propagates to:
-
-- OS app registration (macOS bundle ID, Windows registry key, Linux .desktop file)
-- App data directory path (OS derives this from the identifier)
-- Auto-updater artifact lookup
-
-**When to use:** Always change `tauri.conf.json` first in Pass 1 — it is the canonical identity source.
-
-**Critical implication:** Changing `identifier` from `com.pais.handy` to `com.dictus.desktop` changes the OS-level app data directory path. Existing user data (settings, history, models) stored at `%APPDATA%/com.pais.handy` will no longer be found. This is a **data migration concern** — either:
-
-- Accept data loss for V1 (fresh install experience)
-- Implement a one-time migration in `lib.rs::run()` that moves data at first launch with new identifier
-
-### Pattern 3: Persisted Key Stability (Settings Migration)
-
-**What:** The `KeyboardImplementation` enum variant `HandyKeys` serializes as `"handy_keys"` in `settings_store.json`. If renamed to e.g. `ExtKeys` serializing as `"ext_keys"`, existing users get a deserialization failure and fall back to defaults — their keyboard implementation choice is reset.
-
-**When to use:** Any time a Rust enum variant used in persistent settings is renamed.
-
-**Trade-offs:**
-
-- Pro of renaming: Internal code is fully debranded
-- Con: Silent setting reset for existing users, hard to debug
-
-**Safe implementation:**
-
-```rust
-#[serde(rename = "handy_keys")]  // keep wire format stable
-ExtKeys,                          // rename the Rust symbol
-```
-
-This is the lowest-risk path and is fully supported by serde.
+| Component | File | Purpose |
+|-----------|------|---------|
+| upstream-sync.yml | `.github/workflows/upstream-sync.yml` | Weekly cron: check for new commits on `cjpais/Handy` since fork point, open a GitHub issue or post a summary if detected |
+| Ed25519 keypair | GitHub Secrets: `TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | Signing artifacts for verified updates — generated once, private key stored only in GitHub Secrets |
 
 ---
 
-## Data Flow
-
-### Rebrand Touch Point Dependencies
+## Data Flow: Auto-Update Check
 
 ```
-tauri.conf.json (identifier change)
-    ↓ affects
-OS app data directory path
-    ↓ requires
-Migration logic in lib.rs (copy old dir → new dir on first launch)
-
-Cargo.toml (lib name: handy_app_lib → dictus_desktop_lib)
-    ↓ requires
-main.rs updated import: use dictus_desktop_lib::CliArgs
-
-shortcut/handy_keys.rs (rename file + struct)
-    ↓ requires
-shortcut/mod.rs updated references
-lib.rs updated references (handy_keys::start_handy_keys_recording)
-    ↓ triggers
-Rebuild of bindings.ts (auto-generated via tauri-specta on debug build)
-    ↓ requires
-src/components/settings/HandyKeysShortcutInput.tsx updated imports
-
-icons/ replacement
-    ↓ no code changes required
-    (tauri.conf.json already references icons/ by generic names: 32x32.png, icon.icns)
-
-resources/handy.png → resources/dictus.png
-    ↓ requires
-tray.rs: update path string at line 59
+App startup
+    │
+    ▼
+UpdateChecker.tsx useEffect
+    │ settings loaded & update_checks_enabled = true
+    ▼
+check() from @tauri-apps/plugin-updater
+    │ calls tauri_plugin_updater internally
+    ▼
+HTTP GET https://github.com/dictus-desktop/dictus-desktop/releases/latest/download/latest.json
+    │
+    ├── 200 OK → latest.json with { version, platforms.[target].url, platforms.[target].signature }
+    │   │
+    │   ├── version > current? → setUpdateAvailable(true)
+    │   └── version <= current? → setShowUpToDate(true) [if manual check]
+    │
+    └── network error → console.error, no UI change
 ```
 
-### Settings Flow (Unchanged by Rebrand)
+## Data Flow: Update Install
 
 ```
-useSettings() hook
-    ↓
-settingsStore (Zustand)
-    ↓ initialized from
-commands.getAppSettings()
-    ↓
-settings_store.json (path derived from identifier via Tauri)
+User clicks "Update Available" button
+    │
+    ▼
+installUpdate() in UpdateChecker.tsx
+    │
+    ├── commands.isPortable() → true? → show portable dialog → openUrl(GitHub releases)
+    │
+    └── false? →
+        ▼
+        update.downloadAndInstall(progressCallback)
+            │ streams from platforms.[target].url
+            │ verifies Ed25519 signature from platforms.[target].signature
+            │ against pubkey embedded in tauri.conf.json
+            ▼
+        Progress events → setDownloadProgress()
+            │
+            ▼
+        Install complete → relaunch()
 ```
 
-The settings flow itself does not change — only the filesystem path where `settings_store.json` lives changes when the identifier changes.
+## Data Flow: Release Build + Signing
+
+```
+Developer triggers release.yml (workflow_dispatch)
+    │
+    ▼
+create-release job
+    ├── reads version from tauri.conf.json
+    └── creates draft GitHub Release with tag v{version}
+    │
+    ▼
+publish-tauri job (7-platform matrix, parallel)
+    │
+    ├── each platform: tauri-apps/tauri-action@v0
+    │   ├── reads TAURI_SIGNING_PRIVATE_KEY from GitHub Secret
+    │   ├── bun run tauri build (with createUpdaterArtifacts: true)
+    │   │   └── produces: Dictus_0.1.1_aarch64.dmg + .sig file
+    │   ├── uploads artifacts to draft release
+    │   └── (last platform) generates latest.json from all .sig files
+    │
+    ▼
+Developer reviews draft → publishes release
+    │
+    ▼
+latest.json available at:
+    https://github.com/dictus-desktop/dictus-desktop/releases/latest/download/latest.json
+```
+
+## Data Flow: Upstream Sync Detection
+
+```
+Weekly cron (Monday 08:00 UTC) OR workflow_dispatch
+    │
+    ▼
+upstream-sync.yml
+    ├── git fetch upstream (cjpais/Handy)
+    ├── git log upstream/main..HEAD --oneline → count new upstream commits
+    │
+    ├── new commits found?
+    │   ├── YES → create GitHub issue "Upstream sync available: N commits since v0.8.2"
+    │   │         with commit list + affected files summary
+    │   └── NO  → workflow exits cleanly (no noise)
+    │
+    └── outputs: upstream_version, commit_count, has_changes
+```
 
 ---
 
-## Scaling Considerations
+## Integration Points with Existing Architecture
 
-This is a desktop app rebrand, not a scale concern. The applicable "scaling" dimension is across three platforms (macOS, Windows, Linux) and four locales (en, es, fr, vi).
+### What Does NOT Change
 
-| Platform | Rebrand-Specific Notes                                                                                                                                              |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| macOS    | Bundle ID change affects LaunchAgent (autostart), Keychain entries. `signingIdentity` in `tauri.conf.json` may need update for production distribution.             |
-| Windows  | NSIS installer uses `"Handy Portable Mode"` marker string — needs update. Registry path changes with `identifier`. `signCommand` references `"Handy"` display name. |
-| Linux    | `.desktop` file generated from `productName` — no manual action beyond `tauri.conf.json`. AppImage and RPM package names derive from `productName`.                 |
+- `tauri_plugin_updater` is already registered in `lib.rs` line 532: `.plugin(tauri_plugin_updater::Builder::new().build())` — no Rust code changes needed
+- `trigger_update_check` command exists in `lib.rs` lines 315-323 — already wired to tray "check_updates" event
+- `UpdateChecker.tsx` already uses `@tauri-apps/plugin-updater`'s `check()` and `downloadAndInstall()` correctly
+- `UpdateChecksToggle.tsx` already toggles `update_checks_enabled` setting via Zustand/tauri-plugin-store
+- All 7 build platforms already in release matrix
 
----
+### What Must Change
 
-## Anti-Patterns
-
-### Anti-Pattern 1: Renaming the `handy-keys` Crate Name
-
-**What people do:** Attempt to alias or rename the `handy-keys` external crate in `Cargo.toml` to remove the Handy reference.
-
-**Why it's wrong:** The crate is a third-party dependency (`handy-keys = "0.2.4"`). Its name cannot be changed. Attempting `handy-keys = { package = "handy-keys", ... }` with a local rename changes the Rust import path but adds confusion. The crate is an implementation detail — users never see the crate name.
-
-**Do this instead:** Rename only the internal module file (`handy_keys.rs` → `ext_keys.rs`) and the internal struct (`HandyKeysState` → `ExtKeysState`). The extern crate remains as-is with `use handy_keys::...` inside the module.
-
-### Anti-Pattern 2: Renaming the Settings Key Wire Format
-
-**What people do:** Rename `KeyboardImplementation::HandyKeys` including its serde serialization from `"handy_keys"` to `"ext_keys"`.
-
-**Why it's wrong:** `settings_store.json` on existing user machines contains `"keyboard_implementation": "handy_keys"`. After the rename, deserialization silently falls back to the default, resetting the user's setting without any warning.
-
-**Do this instead:** Use `#[serde(rename = "handy_keys")]` on the renamed variant to keep the wire format stable, or write an explicit migration that reads the old value and writes the new one on first launch.
-
-### Anti-Pattern 3: Changing the App Identifier Without a Data Migration
-
-**What people do:** Change `identifier` in `tauri.conf.json` from `com.pais.handy` to `com.dictus.desktop` and ship, treating it as a config-only change.
-
-**Why it's wrong:** Tauri derives the OS app data directory path from the identifier. On macOS, data lives at `~/Library/Application Support/com.pais.handy/`. After the change, the app reads from `~/Library/Application Support/com.dictus.desktop/` — a new empty directory. All user settings, history, and model downloads become invisible to the app.
-
-**Do this instead:** For V1, either explicitly accept this as a "fresh install" (acceptable for a fork → rebrand transition) and document it, or implement a one-time migration in `lib.rs::run()` early in the setup closure that detects and copies the old data directory.
-
-### Anti-Pattern 4: Regenerating bindings.ts Without Committing
-
-**What people do:** Rename Rust command functions (e.g., `start_handy_keys_recording` → `start_ext_keys_recording`), rebuild, but forget to commit the regenerated `bindings.ts`.
-
-**Why it's wrong:** `bindings.ts` is committed to git (per the codebase conventions). If it's not updated, TypeScript code still calls the old command name, breaking at runtime. Other contributors won't get the update.
-
-**Do this instead:** After any Rust command rename, run `bun run tauri dev` once to regenerate `bindings.ts`, then commit both the Rust changes and the updated `bindings.ts` in the same commit.
-
-### Anti-Pattern 5: Replacing Icons Without All Required Sizes
-
-**What people do:** Create a new `icon.png` and replace only `icons/icon.png`, `icons/icon.icns`, `icons/icon.ico`.
-
-**Why it's wrong:** Tauri bundles multiple icon sizes. `tauri.conf.json` explicitly lists: `32x32.png`, `128x128.png`, `128x128@2x.png`, `icon.icns`, `icon.ico`. Windows Store packaging requires Square\* variants. The tray uses `resources/handy.png` (separate from the app icons).
-
-**Do this instead:** Generate all required sizes using `tauri icon <source>` from a single high-resolution source (1024×1024 PNG). Also replace `resources/handy.png` → `resources/dictus.png` and update the reference in `tray.rs`.
-
----
-
-## Integration Points
-
-### External Services
-
-| Service                    | Integration Pattern                             | Branding Touch Point                                                                                                                                      |
-| -------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GitHub Releases (updater)  | `tauri.conf.json` → `plugins.updater.endpoints` | URL hardcoded to `cjpais/Handy/releases/latest` — must point to Dictus releases. Also requires new signing key pair if updater public key changes.        |
-| OpenRouter / LLM providers | `llm_client.rs` HTTP headers                    | `Referer`, `User-Agent`, `X-Title` all set to Handy. Change to Dictus identity.                                                                           |
-| Windows Code Signing       | `tauri.conf.json` `bundle.windows.signCommand`  | References `"Handy"` display name in signing CLI. Update to Dictus.                                                                                       |
-| macOS autostart            | `tauri-plugin-autostart` via LaunchAgent        | LaunchAgent plist name derives from `identifier`. Changing identifier changes plist name; existing autostart entries from old identifier become orphaned. |
-
-### Internal Boundaries
-
-| Boundary                          | Communication                             | Branding Notes                                                                                                                                                                                                       |
-| --------------------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Frontend ↔ Backend (IPC events)  | Tauri events by string name               | `"handy-keys-event"` event name is internal to the handy-keys wrapper. Changing it requires coordinated update in both `handy_keys.rs` and `HandyKeysShortcutInput.tsx`. Low priority — users never see event names. |
-| Rust binary ↔ Rust lib           | `use handy_app_lib::CliArgs` in `main.rs` | When `[lib] name` changes in `Cargo.toml`, this import must be updated. Compile-time error if missed.                                                                                                                |
-| tauri-specta code generation      | Debug build generates `src/bindings.ts`   | Any renamed Rust command function propagates to TypeScript. Must commit updated `bindings.ts`.                                                                                                                       |
-| Portable mode ↔ settings storage | Marker file `Handy Portable Mode`         | Windows portable installs check for this exact string. Changing it breaks detection of existing portable installations. Requires backward-compatible string check in `portable.rs`.                                  |
-
----
-
-## Build Order for Rebrand Phases
-
-The dependency graph determines safe execution order:
-
-```
-Phase 1 — Visual Identity (no build risk)
-  1a. icons/ → replace all PNGs + .icns + .ico   (asset swap, no code)
-  1b. resources/handy.png → resources/dictus.png  (asset rename)
-  1c. src/components/icons/ → rename+replace SVG components
-  1d. src/i18n/ → update all 4 language files     (no compile step needed)
-  1e. tauri.conf.json → productName, identifier    (DECISION GATE: accept data loss or write migration first)
-      → if migration: implement in lib.rs setup closure first, test, then change identifier
-  1f. src/components/ → Sidebar, Onboarding, About, UpdateChecker
-
-Phase 2 — Bundle Identity (build config changes)
-  2a. package.json → name                          (low risk, npm name only)
-  2b. src-tauri/Cargo.toml → description           (safe, display only)
-  2c. src-tauri/Cargo.toml → name, default-run, [lib] name  (compile break if main.rs not updated simultaneously)
-      → must update main.rs import in same commit
-  2d. lib.rs → window title, log file name
-  2e. cli.rs → command name, about string
-  2f. llm_client.rs → HTTP headers
-  2g. tray.rs → tray tooltip string, resource path  (after 1b asset rename)
-
-Phase 3 — Internal Symbol Rename (highest risk, lowest visible impact)
-  3a. settings.rs → rename KeyboardImplementation::HandyKeys  (use serde rename to keep wire format)
-  3b. shortcut/handy_keys.rs → rename file to ext_keys.rs, rename HandyKeysState
-  3c. shortcut/mod.rs → update all references
-  3d. lib.rs → update handy_keys:: references
-  3e. bun run tauri dev → regenerate bindings.ts
-  3f. src/components/settings/HandyKeysShortcutInput.tsx → rename file + component
-  3g. portable.rs → update marker string  (migration: keep backward-compat check for old string)
-  3h. nsis/installer.nsi → update Handy references + portable marker string
+**tauri.conf.json** — three fields:
+```json
+"bundle": {
+  "createUpdaterArtifacts": true  // was false
+},
+"plugins": {
+  "updater": {
+    "pubkey": "<content of ~/.tauri/dictus.key.pub>",  // was ""
+    "endpoints": [
+      "https://github.com/dictus-desktop/dictus-desktop/releases/latest/download/latest.json"
+    ]  // was []
+  }
+}
 ```
 
-**Critical dependency:** Phase 2c (Cargo.toml lib name change) MUST be in the same commit as the `main.rs` import update. Splitting them produces a broken build.
+**UpdateChecker.tsx** — line 206 only:
+```typescript
+// Change:
+openUrl("https://github.com/cjpais/Handy/releases/latest");
+// To:
+openUrl("https://github.com/dictus-desktop/dictus-desktop/releases/latest");
+```
 
-**Decision gate before Phase 1e:** Determine whether existing user data migration is required. This decision gates the identifier change and should be resolved in planning before coding starts.
+**release.yml** — three changes:
+1. `asset-prefix: "handy"` → `asset-prefix: "dictus"`
+2. Add `includeUpdaterJson: true` to tauri-action `with:` block
+3. `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` are already passed via `secrets: inherit` — no change if secrets are set in repo
+
+**build.yml** — verify `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` are forwarded from caller env to the `tauri-apps/tauri-action@v0` step (currently they are in the `env:` block at lines 344-345 — this is correct, no change needed if secrets exist)
+
+---
+
+## latest.json Format
+
+`tauri-action` generates this file and uploads it to the release. Structure:
+
+```json
+{
+  "version": "0.1.1",
+  "notes": "Release notes from GitHub",
+  "pub_date": "2026-04-15T10:00:00Z",
+  "platforms": {
+    "darwin-aarch64": {
+      "signature": "<content of .sig file>",
+      "url": "https://github.com/dictus-desktop/dictus-desktop/releases/download/v0.1.1/Dictus_0.1.1_aarch64.dmg"
+    },
+    "darwin-x86_64": {
+      "signature": "<content of .sig file>",
+      "url": "https://github.com/dictus-desktop/dictus-desktop/releases/download/v0.1.1/Dictus_0.1.1_x64.dmg"
+    },
+    "linux-x86_64": {
+      "signature": "<content of .sig file>",
+      "url": "https://github.com/dictus-desktop/dictus-desktop/releases/download/v0.1.1/Dictus_0.1.1_amd64.AppImage"
+    },
+    "windows-x86_64": {
+      "signature": "<content of .sig file>",
+      "url": "https://github.com/dictus-desktop/dictus-desktop/releases/download/v0.1.1/Dictus_0.1.1_x64-setup.exe"
+    }
+  }
+}
+```
+
+Platform keys follow `{os}-{arch}` where os is one of `darwin/linux/windows` and arch is `x86_64/aarch64`.
+
+---
+
+## Ed25519 Keypair Setup (One-Time)
+
+```bash
+# Generate keypair (run locally, once)
+bunx tauri signer generate -w ~/.tauri/dictus.key
+# Prompts for password (store password in password manager)
+# Creates: ~/.tauri/dictus.key (private) + ~/.tauri/dictus.key.pub (public)
+
+# Copy pubkey content to tauri.conf.json plugins.updater.pubkey
+cat ~/.tauri/dictus.key.pub
+
+# Add to GitHub repository secrets:
+# TAURI_SIGNING_PRIVATE_KEY = content of ~/.tauri/dictus.key
+# TAURI_SIGNING_PRIVATE_KEY_PASSWORD = the password you chose
+```
+
+**Critical constraint:** If the private key is lost, future updates cannot be signed and users will be stuck. Store the key and password in a password manager with offline backup.
+
+---
+
+## Upstream Sync Workflow Design
+
+```yaml
+# .github/workflows/upstream-sync.yml (new file)
+name: Upstream Sync Check
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'  # Every Monday at 08:00 UTC
+  workflow_dispatch:
+
+jobs:
+  check-upstream:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/cjpais/Handy.git
+          git fetch upstream
+
+      - name: Check for new upstream commits
+        id: check
+        run: |
+          FORK_POINT="85a8ed77"
+          NEW_COMMITS=$(git log ${FORK_POINT}..upstream/main --oneline | wc -l | tr -d ' ')
+          LATEST_TAG=$(git describe --tags upstream/main --abbrev=0 2>/dev/null || echo "unknown")
+          echo "commit_count=${NEW_COMMITS}" >> $GITHUB_OUTPUT
+          echo "latest_tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
+          echo "has_changes=$([ $NEW_COMMITS -gt 0 ] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+
+      - name: Open tracking issue if new commits found
+        if: steps.check.outputs.has_changes == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Check if open issue with same title already exists
+            const title = `Upstream sync: ${${{ steps.check.outputs.commit_count }}} new commits (${${{ steps.check.outputs.latest_tag }}})`;
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: 'upstream-sync'
+            });
+            if (!existing.data.some(i => i.title.startsWith('Upstream sync:'))) {
+              await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title, labels: ['upstream-sync'],
+                body: `## Upstream Sync Available\n\n**${${{ steps.check.outputs.commit_count }}} commits** available from cjpais/Handy since fork point \`85a8ed77\`.\n\nLatest upstream tag: \`${${{ steps.check.outputs.latest_tag }}}\`\n\nReview and cherry-pick or merge as appropriate per the sync strategy in issue #1.`
+              });
+            }
+```
+
+---
+
+## Build Order for v1.1
+
+Dependency graph drives this order — each step is a prerequisite for the next:
+
+### Step 1: Ed25519 Keypair Generation (blocker for everything)
+Generate the keypair locally. Add public key to `tauri.conf.json`. Add private key and password to GitHub repository secrets. Without this, the build cannot sign artifacts and `createUpdaterArtifacts: true` will produce unsigned (and therefore rejected) updates.
+
+**No code dependencies. Do this first.**
+
+### Step 2: tauri.conf.json Updater Configuration
+Set `createUpdaterArtifacts: true` and populate `pubkey` + `endpoints`. This is a config-only change with no frontend or backend code impact.
+
+**Depends on:** Step 1 (pubkey content)
+
+### Step 3: Fix UpdateChecker.tsx Hardcoded URL
+Change the one hardcoded `cjpais/Handy` URL in the portable update dialog. Single-line change. No logic changes, no API changes.
+
+**Depends on:** Nothing (independent, can be done any time)
+
+### Step 4: Fix release.yml asset-prefix + includeUpdaterJson
+Change `asset-prefix: "handy"` to `asset-prefix: "dictus"`. Add `includeUpdaterJson: true` to tauri-action invocation. This ensures assets are named `Dictus_*` instead of `handy_*` and that `latest.json` is generated and uploaded.
+
+**Depends on:** Step 1 (secrets must exist for signing to work on first test run)
+
+### Step 5: Test Release (dry-run)
+Trigger `release.yml` manually (workflow_dispatch). Verify: artifacts are named `Dictus_*`, `.sig` files are present, `latest.json` is uploaded to the release, pubkey verification passes.
+
+**Depends on:** Steps 1–4
+
+### Step 6: Upstream Sync Workflow
+Add `.github/workflows/upstream-sync.yml`. This is independent of the auto-updater work and can be done in parallel with steps 3–5.
+
+**Depends on:** Nothing (independent of auto-updater)
+
+### Step 7: Upstream Merge (v0.8.0–v0.8.2)
+Fetch upstream remote, review 69 commits, cherry-pick or merge selectively. This is the highest-risk step: merge conflicts with the Handy→Dictus rebrand are expected in:
+- `src-tauri/tauri.conf.json` (productName, identifier, updater config)
+- `src/` files where Dictus branding was applied
+- Any new features upstream added to settings, managers, or commands
+
+**Depends on:** Step 6 (workflow already exists to detect future upstream commits after this merge)
+
+### Step 8: Documentation
+Document fork point, sync strategy, and update process. Update `CLAUDE.md` with new workflows.
+
+**Depends on:** Steps 6–7
+
+---
+
+## Scalability Considerations
+
+| Concern | Current (v1.1) | Future |
+|---------|---------------|--------|
+| Update endpoint | GitHub Releases direct (`latest.json`) | If rate-limited, migrate to Dictus CDN (INFR-01 deferred) |
+| Code signing | Self-signed macOS (`signingIdentity: "-"`) | Full Apple Developer + Notarization (INFR-03 deferred) |
+| Windows signing | Azure Trusted Signing in CI | Already configured in build.yml, requires secrets |
+| Upstream sync | Weekly detection issue | Could add auto-PR creation, diff summaries, conflict prediction |
+| Update channel | Single release channel | Could add beta/nightly channels via different endpoint URLs |
 
 ---
 
 ## Sources
 
-- Direct analysis of `/Users/pierreviviere/dev/dictus-desktop/src-tauri/Cargo.toml` (crate identity)
-- Direct analysis of `/Users/pierreviviere/dev/dictus-desktop/src-tauri/tauri.conf.json` (bundle config)
-- Direct analysis of `/Users/pierreviviere/dev/dictus-desktop/src-tauri/src/` (all Rust files with Handy references)
-- Direct analysis of `/Users/pierreviviere/dev/dictus-desktop/src/` (all TypeScript/TSX files with Handy references)
-- Direct analysis of `/Users/pierreviviere/dev/dictus-desktop/src-tauri/nsis/installer.nsi` (Windows installer)
-- Direct analysis of `/Users/pierreviviere/dev/dictus-desktop/src/i18n/locales/en/translation.json` (i18n strings)
-- Tauri 2.x documentation on bundle identifier and app data paths (HIGH confidence — well-established Tauri behavior)
-
----
-
-_Architecture research for: Tauri 2.x app rebranding (Handy → Dictus Desktop)_
-_Researched: 2026-04-05_
+- Tauri v2 Updater plugin docs: https://v2.tauri.app/plugin/updater/
+- tauri-action GitHub Action: https://github.com/tauri-apps/tauri-action
+- Tauri v2 GitHub pipeline guide: https://v2.tauri.app/distribute/pipelines/github/
+- `tauri_plugin_updater` in Cargo.toml: `tauri-plugin-updater = "2.10.0"` (already present)
+- Upstream sync actions: https://github.com/marketplace/actions/upstream-sync

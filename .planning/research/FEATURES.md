@@ -1,232 +1,200 @@
-# Feature Research
+# Feature Landscape
 
-**Domain:** Desktop speech-to-text app (rebranding milestone — Handy fork → Dictus Desktop V1)
-**Researched:** 2026-04-05
-**Confidence:** HIGH (rebrand scope well-defined; language feature verified in codebase; STT competitive landscape confirmed via multiple sources)
+**Domain:** Desktop app auto-updater + fork upstream sync (Dictus Desktop v1.1)
+**Researched:** 2026-04-10
+**Confidence:** HIGH (Tauri v2 updater is a first-party plugin with official docs; upstream sync patterns are GitHub-native and well-established)
 
 ---
 
-## Feature Landscape
+## Table Stakes
 
-### Table Stakes for Rebranding (Missing = Not a Real Rebrand)
+Features users and maintainers expect. Missing any of these means the milestone is incomplete.
 
-Features that must exist for the product to be legitimately called "Dictus Desktop" rather than a reskinned Handy.
+### Auto-Updater Table Stakes
 
-| Feature                                           | Why Expected                                                                             | Complexity | Notes                                                                                              |
-| ------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------- |
-| Product name change everywhere visible            | Users see "Handy" = product identity failure                                             | LOW        | tauri.conf.json `productName`, window title, about panel                                           |
-| Bundle identifier update                          | `com.handy.*` in system = broken install trust; future com.dictus.desktop packaging      | LOW        | `identifier` in tauri.conf.json; Tauri 2 single field                                              |
-| App icon and logo replacement                     | Visual identity is the primary signal of brand                                           | MEDIUM     | Multiple sizes required (macOS .icns, Windows .ico, Linux .png); must match Dictus visual language |
-| Onboarding text + visuals rebranded               | First run experience is the brand introduction                                           | LOW        | Text changes + replace HandyHand/HandyTextLogo components                                          |
-| All "Handy" labels removed from UI                | Any remaining "Handy" reference is a regression                                          | LOW        | Systematic grep + replace across JSX/translation files                                             |
-| i18n strings updated (all locales)                | UI text is what users read — en/es/fr/vi must all be updated                             | MEDIUM     | 4 locale files; must preserve translation completeness                                             |
-| README rewritten as Dictus Desktop                | Public repository identity — fork attribution + Dictus positioning                       | LOW        | Markdown only; no code changes                                                                     |
-| Internal code references renamed (critical path)  | `handy_app_lib`, `handy.log`, `startHandyKeysRecording` in observable outputs leak brand | MEDIUM     | Rust library name in Cargo.toml, log file path, binary name                                        |
-| Documentation cleaned (CLAUDE.md, BUILD.md, etc.) | Dev-facing docs with "Handy" break contributor/maintainer trust                          | LOW        | Text changes only                                                                                  |
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| Ed25519 keypair generated and stored as repo secret | Required by Tauri v2 updater; no keypair = no signed updates = updater cannot function | LOW | `npm run tauri signer generate -- -w ~/.tauri/dictus.key`; pubkey goes in `tauri.conf.json`, private key as `TAURI_SIGNING_PRIVATE_KEY` secret |
+| `tauri.conf.json` updater endpoint pointing to Dictus releases | Currently `pubkey: ""` and `endpoints: []`; updater silently does nothing without this | LOW | Set `pubkey` to generated pubkey content; set `endpoints` to `https://github.com/getdictus/dictus-desktop/releases/latest/download/latest.json` |
+| `createUpdaterArtifacts: true` in bundle config | Currently `false`; without this, the build does not produce `.sig` files and `latest.json` — the update payload does not exist | LOW | Single field change in `tauri.conf.json`; confirmed required for tauri-plugin-updater 2.x |
+| Release workflow `asset-prefix` fixed to "dictus" | Currently hardcoded `"handy"` in `release.yml`; uploaded artifacts will be named `handy_*` which breaks the `latest.json` URL references | LOW | One-line change in `release.yml`; affects all 7 platform jobs via the shared `build.yml` input |
+| `tauri-action` configured with `includeUpdaterJson: true` | tauri-action must be told to generate and upload `latest.json` to the GitHub Release; without it no update manifest exists | LOW | Add `includeUpdaterJson: true` to the `tauri-apps/tauri-action@v0` step in `build.yml` |
+| UpdateChecker.tsx portable-update dialog fixed | Currently hardcodes `https://github.com/cjpais/Handy/releases/latest` — users on Windows portable builds are sent to the wrong project | LOW | One-line URL change; already identified in milestone scope |
+| Manual "Check for Updates" accessible to user | User must be able to trigger an update check from settings/footer — the mechanism already exists in UpdateChecker.tsx but only works if endpoint is configured | LOW | Zero new code; fixing the config makes this work automatically |
+| Update check respects `update_checks_enabled` setting | Already implemented in UpdateChecker.tsx; must remain gated by the user setting so opt-out is honored | LOW | Already correct; just verify the setting key matches settings.rs |
 
-### Table Stakes for Desktop STT UX (Users Assume These Exist)
+### Upstream Sync Table Stakes
 
-Features that desktop STT users expect regardless of brand. Missing these makes the product feel broken.
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| Weekly GitHub Action to detect new upstream commits | Without automated detection, maintainer will miss upstream releases; 69 commits already accumulated before detection | LOW | Schedule cron; compare `upstream/main` HEAD vs tracked merge base |
+| Upstream detection creates a GitHub Issue or PR | Passive notification (workflow summary only) is easy to miss; an issue/PR ensures the upstream delta is visible and tracked | LOW | Use `gh issue create` or `peter-evans/create-pull-request` action |
+| First upstream merge: v0.8.0–v0.8.2 (69 commits) | The fork is 69 commits behind; shipping v1.1 without merging these means accumulated drift and growing conflict risk | HIGH | Highest complexity in the milestone; git rebase or cherry-pick onto a dedicated branch; conflict resolution required |
+| Fork point documented (commit `85a8ed77`) | Future merges require knowing the divergence point; undocumented fork point means every future sync starts from ambiguity | LOW | One-time write to `UPSTREAM.md` or equivalent; already referenced in PROJECT.md |
+| Merge strategy documented (rebase vs merge vs cherry-pick) | Without a documented strategy, each sync risks inconsistent history and repeated conflict resolution | LOW | Write the strategy once; reference it in the weekly action output |
 
-| Feature                                             | Why Expected                                                                         | Complexity | Notes                                                               |
-| --------------------------------------------------- | ------------------------------------------------------------------------------------ | ---------- | ------------------------------------------------------------------- |
-| Global keyboard shortcut to start/stop recording    | STT without a hotkey is unusable in practice; every competitor has this              | LOW        | Already exists; just needs Dictus-branded default                   |
-| Recording visual feedback                           | User needs to know when app is listening                                             | LOW        | Overlay already exists                                              |
-| Auto-paste or clipboard output                      | Transcription that requires manual paste is friction; kills workflow                 | LOW        | Already exists (multiple paste methods)                             |
-| Language selection (Auto + specific languages)      | Multi-language users need control; monolingual users expect auto                     | LOW-MEDIUM | Already exists; "force language" UX needs clarification (see below) |
-| System tray presence                                | Desktop apps that vanish are confusing; tray = "it's running" signal                 | LOW        | Already exists                                                      |
-| Transcription history                               | Users expect to recover recent dictations                                            | LOW        | Already exists                                                      |
-| Model management (download, switch)                 | Local STT requires user-facing model control; cloud apps hide this, local apps can't | MEDIUM     | Already exists                                                      |
-| Settings for audio device selection                 | Multi-device users (headset vs built-in mic) need this                               | LOW        | Already exists                                                      |
-| Error feedback (mic permission, model load failure) | Silent failures destroy user trust                                                   | LOW        | Already exists via toast/events                                     |
+---
 
-### Differentiators for Dictus (Competitive Advantage in V1 Context)
+## Differentiators
 
-These set Dictus Desktop apart from Handy and from generic Whisper wrappers like MacWhisper. Not all are V1 work — some are positioning choices that cost nothing to document.
+Features that go beyond minimum-viable and improve maintainability or user experience meaningfully.
 
-| Feature                                         | Value Proposition                                                                                                                                                                | Complexity | Notes                                                                                                                 |
-| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------- |
-| Dictus ecosystem coherence                      | Users with Dictus iOS recognize the brand, palette, tone — reduces onboarding friction                                                                                           | MEDIUM     | Visual alignment work: palette tokens, sidebar labels, section naming (General→Dictation, Postprocessing→Smart Modes) |
-| Privacy-first explicit positioning              | "No cloud, no account, audio never leaves device" — this is a real differentiator vs Speechify, Wispr Flow                                                                       | LOW        | Documentation + About panel copy; no code needed                                                                      |
-| Forced language guarantee (UX clarity)          | Power users who dictate in French exclusively don't want auto-detect guessing wrong; clear "Auto / Français / English" selector is more trustworthy than a 100-language dropdown | LOW        | Existing LanguageSelector already does this technically; the gap is UX clarity and confidence messaging               |
-| Cross-platform parity (macOS + Windows + Linux) | Most polished STT tools are macOS-only (Superwhisper is Mac-only); Linux support is rare                                                                                         | LOW        | Already exists; just needs to be surfaced in documentation                                                            |
-| Open source + MIT license                       | Trust, auditability, no vendor lock-in — increasingly valued as privacy concern grows                                                                                            | LOW        | README positioning only                                                                                               |
-| LLM post-processing ("Smart Modes")             | Transcription cleanup, formatting, tone adjustment — more than raw STT                                                                                                           | LOW        | Already exists; rename "postprocessing" → "Smart Modes" in UI aligns with Dictus iOS language                         |
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| Silent background update check on startup (non-blocking) | Users do not notice update checks unless an update is found; less disruptive than blocking-modal approach | LOW | Already implemented in UpdateChecker.tsx (async, non-blocking); works once endpoint is live |
+| Download progress bar during update install | Users know the app has not frozen; 3-second silence at 0% progress is anxiety-inducing for large binaries | LOW | Already implemented in UpdateChecker.tsx with `ProgressBar`; works once endpoint is live |
+| "Up to date" confirmation with 3-second auto-dismiss | Users who manually check want confirmation; persistent "up to date" is visual noise | LOW | Already implemented (3s `setTimeout` in UpdateChecker.tsx); works once endpoint is live |
+| Windows NSIS `installMode: passive` | Windows updates install silently with a progress bar rather than prompting the user for confirmation each time | LOW | Add `"windows": { "installMode": "passive" }` to updater plugin config in `tauri.conf.json` |
+| Upstream diff summary in Issue body | Weekly action posts a one-liner count of new commits and top 5 commit messages; maintainer can assess merge urgency without opening GitHub manually | LOW | `git log --oneline upstream/main ^<tracked-base> | head -5` in the action |
+| Labeled upstream issue (`upstream-sync`, `maintenance`) | Issues without labels get lost in triage; a consistent label makes it easy to query all sync history | LOW | One `labels:` field in the issue creation step |
+| Idempotent weekly action (no duplicate issues) | If no upstream changes exist, the action does nothing; if an open issue already exists, it does not create a second one | MEDIUM | Query open issues by label before creating; skip if found |
 
-### Anti-Features (Do Not Build in V1)
+---
 
-Features that seem reasonable but would harm the V1 milestone scope, quality, or timeline.
+## Anti-Features
 
-| Feature                                            | Why Requested                                    | Why Problematic                                                                                                                                                    | Alternative                                                                               |
-| -------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| Pixel-perfect iOS design port                      | "Make it look exactly like the iOS app"          | Desktop ≠ mobile interaction model; window chrome, keyboard navigation, density differ fundamentally; a pixel port would look wrong on desktop and take 10x longer | Align palette + tone + naming; accept desktop-specific layout as correct                  |
-| Mobile ↔ desktop sync                             | Natural evolution of Dictus ecosystem            | Zero architecture defined for this yet; cloud/Nostr/local sync are all open questions; V1 with sync hooks would be half-built and unstable                         | Hard defer to V4+; document it as planned, not present                                    |
-| User accounts / auth                               | Monetization or cross-device continuity pressure | Privacy-first product with accounts is a trust contradiction; adds infra, auth flows, and security surface in V1                                                   | Stay local-only; frame as a feature, not a limitation                                     |
-| Model auto-recommendation (fast/balanced/accurate) | Users want guidance on model selection           | Requires calibration across hardware profiles, model performance benchmarking, and UI to surface it; not a rebrand task                                            | V2 scope; V1 just shows available models with capability metadata                         |
-| Additional LLM providers in V1                     | "While we're in there..."                        | Risk of scope creep on a branding milestone; existing providers (OpenAI, Anthropic, Ollama, etc.) already cover needs                                              | V2 feature; existing providers stay as-is                                                 |
-| Real-time streaming transcription                  | Users see AI tools doing live captions           | whisper.cpp architecture in this codebase is segment-based, not streaming; adding streaming is a pipeline rewrite, not a V1 task                                   | VAD + fast inference gives low-enough latency for dictation use; call it "near real-time" |
-| Windows/Linux code-signing in V1                   | Proper distribution                              | Code signing requires certificates, notarization workflows, CI pipeline work — separate from rebrand                                                               | V2 distribution milestone; V1 is local dev builds                                         |
+Features to explicitly NOT build in this milestone.
+
+| Anti-Feature | Why It Seems Reasonable | Why to Avoid | What to Do Instead |
+|--------------|------------------------|--------------|-------------------|
+| Auto-merge upstream without human review | Reduces manual work | Dictus has 52 commits of divergence (branding, config, workflow changes); an auto-merge would silently overwrite Dictus identity with Handy defaults, breaking the rebrand | Always open a PR for review; never push upstream changes directly to main |
+| Built-in update dialog/modal (replacing UpdateChecker.tsx) | Tauri v2 has a built-in dialog API for updates | The existing custom UpdateChecker.tsx already handles all UX states (checking, progress, up-to-date, available) with i18n in 20 locales; the built-in dialog is English-only with no customization | Keep UpdateChecker.tsx; just fix the endpoint and Handy URL reference |
+| Delta/patch updates | Reduces download size for users | Not natively supported by tauri-plugin-updater v2; requires custom update server (CrabNebula Cloud or similar); the full installer approach is simpler and sufficient at this scale | Ship full installers; revisit if binary size becomes a user complaint |
+| Code-signing on macOS/Windows in this milestone | Avoids Gatekeeper / SmartScreen warnings | Code signing requires Apple Developer Program enrollment (paid), Azure Trusted Signing (paid), or notarization pipeline work — scope is separate from updater mechanics; already deferred as INFR-03 | `signingIdentity: "-"` (ad-hoc) on macOS stays; Windows signing deferred to V2/INFR-03 |
+| Semantic changelog auto-generation | Nice release notes in update dialog | Requires conventional commit tooling setup and a changelog template; not worth the setup time in this milestone | GitHub's built-in `generate_release_notes: true` in `release.yml` already provides this at zero cost |
+| Automated upstream cherry-pick for specific commits only | Lets you merge just the bug fixes without the new features | Requires manual commit curation, high conflict risk, and no tooling supports it reliably; cherry-pick approach fragments history and makes future merges harder | Full branch merge/rebase per release; use feature flags or reverts if specific Handy features are unwanted |
+| Self-hosted update server (e.g. CrabNebula Cloud) | Avoids GitHub rate limits, adds analytics | Zero evidence of GitHub rate limit issues at current scale; adds infra dependency, cost, and operational burden with no benefit at this stage | GitHub Releases + `latest.json` is the standard Tauri community pattern and is sufficient |
 
 ---
 
 ## Feature Dependencies
 
 ```
-[Dictus brand identity (icons, palette, name)]
-    └──required by──> [Onboarding rebrand]
-    └──required by──> [About panel rebrand]
-    └──required by──> [Bundle identifier update]
+[Ed25519 keypair generated]
+    └──required by──> [tauri.conf.json pubkey field]
+    └──required by──> [TAURI_SIGNING_PRIVATE_KEY repo secret]
+                           └──required by──> [build.yml signs artifacts]
+                                                └──required by──> [latest.json contains valid signatures]
+                                                                        └──required by──> [UpdateChecker.tsx can verify and install]
 
-[Bundle identifier (com.dictus.desktop)]
-    └──required by──> [Installable .dmg / .exe / .deb packaging]
-                           └──required by──> [Distribution / release]
+[createUpdaterArtifacts: true]
+    └──required by──> [.sig files exist in GitHub Release]
+    └──required by──> [latest.json references valid artifact URLs]
 
-[i18n strings updated]
-    └──required by──> [Any UI label change in non-English locales]
+[asset-prefix: "dictus" in release.yml]
+    └──required by──> [artifact filenames match latest.json URLs]
+    └──required by──> [UpdateChecker.tsx portable dialog shows correct URL]
 
-[Force Language UX clarity]
-    └──enhances──> [Language Selector (existing)]
-    └──requires──> [Understanding of whisper.cpp language param behavior]
+[includeUpdaterJson: true in tauri-action]
+    └──required by──> [latest.json uploaded to GitHub Release]
+    └──required by──> [updater endpoint returns valid manifest]
 
-[Settings section renaming (General→Dictation)]
-    └──enhances──> [Dictus iOS visual alignment]
-    └──depends on──> [i18n strings updated]
+[All four above complete]
+    └──enables──> [Auto-update end-to-end functional for users]
 
-[Internal code rename (Cargo.toml, log paths)]
-    └──independent of──> [Visible UI rebrand]  ← can be deferred to pass 2
+[Fork point documented (85a8ed77)]
+    └──required by──> [First upstream merge (v0.8.0-v0.8.2)]
+    └──required by──> [Weekly detection action knows the tracked base]
+
+[Weekly detection action]
+    └──independent of──> [auto-updater config] (can ship in either order)
+    └──feeds into──> [First upstream merge workflow (human-triggered)]
+
+[First upstream merge]
+    └──depends on──> [Fork point documented]
+    └──depends on──> [Merge strategy documented]
+    └──risk of conflict with──> [Any Dictus-specific files: tauri.conf.json, release.yml, icons, i18n locales, UpdateChecker.tsx]
 ```
 
 ### Dependency Notes
 
-- **Icons require brand identity first:** App icons cannot be produced until the Dictus visual language (palette, logomark) is defined or sourced from the iOS app assets.
-- **Bundle ID change is safe for a new app:** Since Dictus Desktop has no existing install base (new product, not an update), changing from `com.handy.*` to `com.dictus.desktop` carries zero migration risk.
-- **Force language depends on whisper.cpp behavior understanding:** The existing `LanguageSelector` already passes `selected_language` → whisper params. The UX work is labeling and confidence copy, not backend changes. One known edge case: multilingual models may override explicit language params (confirmed whisper.cpp issue #1831). The clarification task is documenting this behavior honestly in the UI.
-- **Internal rename (pass 2) is independent:** Renaming `handy_app_lib`, `startHandyKeysRecording`, etc. does not block any user-visible V1 feature. It can be done after the visible rebrand without risk.
+- **Keypair → everything:** The keypair is the critical path gate for the entire auto-updater feature. It must be generated first, stored as a secret, and committed to `tauri.conf.json` before any other updater work can be verified end-to-end.
+- **`createUpdaterArtifacts` and `asset-prefix` are build-time:** These changes only take effect on the next release build. They cannot be tested without running a full release workflow.
+- **UpdateChecker.tsx fixes are decoupled:** The portable dialog URL fix and any future cosmetic changes to UpdateChecker.tsx are independent of the build pipeline changes. They can ship in any order.
+- **Upstream merge is highest-risk:** The 69 upstream commits touch files that Dictus has already modified (tauri.conf.json, release.yml, i18n locales, possibly components). Conflicts are expected. The merge must happen on a dedicated branch with careful review before merging to main.
+- **Weekly action is low-risk and independent:** It reads remote state and opens issues. It does not modify the codebase. It can be shipped in a standalone PR with no dependency on the updater config work.
 
 ---
 
 ## MVP Definition
 
-### Launch With (V1 — Dictus Desktop Foundation)
+### Must Ship for v1.1
 
-Minimum for the product to legitimately be "Dictus Desktop V1" rather than a Handy fork with a renamed README.
+Minimum for the milestone goals to be met: "the app can update itself and we don't fall further behind upstream."
 
-- [ ] Product name "Dictus Desktop" everywhere visible (window title, about, tray menu, onboarding)
-- [ ] Bundle identifier `com.dictus.desktop` in tauri.conf.json + Cargo.toml
-- [ ] Dictus app icon (all required sizes for macOS/Windows/Linux)
-- [ ] All "Handy" user-visible text replaced (UI labels, onboarding, settings)
-- [ ] i18n strings updated across all 4 locales (en/es/fr/vi) — or flagged as incomplete
-- [ ] Settings sections renamed to Dictus language (Dictation, Smart Modes)
-- [ ] Force language UX: Auto / specific language selector with clear behavior description
-- [ ] README.md as Dictus Desktop (fork attribution, privacy-first positioning, MIT license)
-- [ ] Critical internal renames that surface in logs or filesystem (handy.log → dictus.log, binary name)
+- [ ] Ed25519 keypair generated; `TAURI_SIGNING_PRIVATE_KEY` stored as GitHub secret
+- [ ] `tauri.conf.json`: `pubkey` populated, `endpoints` set to Dictus GitHub Releases `latest.json` URL, `createUpdaterArtifacts: true`
+- [ ] `release.yml`: `asset-prefix` changed from `"handy"` to `"dictus"`
+- [ ] `build.yml`: `includeUpdaterJson: true` added to tauri-action step
+- [ ] UpdateChecker.tsx portable dialog URL changed from `cjpais/Handy` to `getdictus/dictus-desktop`
+- [ ] First release cut with the above changes to validate the pipeline end-to-end
+- [ ] First upstream merge (v0.8.0–v0.8.2) completed on a feature branch, reviewed, merged
+- [ ] Weekly upstream detection GitHub Action live (scheduled + manual dispatch)
+- [ ] `UPSTREAM.md` written: fork point, merge history, strategy
 
-### Add After Validation (V1.x)
+### Add After Core Ships
 
-- [ ] Internal code symbol rename (handy_app_lib → dictus_app_lib, function names) — low user impact, do after V1 ships
-- [ ] Complete Dictus iOS palette alignment (if token-level work is needed beyond color overrides)
-- [ ] About panel with open-source / privacy-first copy
-- [ ] BUILD.md and contributor docs updated
+- [ ] Windows `installMode: passive` in updater config (low friction, can go in same PR as config changes)
+- [ ] Idempotent check in weekly action (skip issue creation if open issue already exists)
+- [ ] Upstream diff summary in issue body (commit count + top 5 commit titles)
 
-### Future Consideration (V2+)
+### Future / Deferred
 
-- [ ] Model recommendation tiers (fast/balanced/accurate) — needs benchmark data
-- [ ] Windows/Linux code signing and notarization pipeline
-- [ ] Smart model routing (short vs long audio)
-- [ ] Mobile ↔ desktop sync (requires architecture decision first)
-- [ ] Additional language UI (per-mode language override)
+- [ ] macOS/Windows code-signing for Gatekeeper/SmartScreen bypass (INFR-03, V2)
+- [ ] Delta/patch updates (requires self-hosted server, no current need)
+- [ ] CDN migration for models away from `blob.handy.computer` (INFR-01, V2)
 
 ---
 
 ## Feature Prioritization Matrix
 
-| Feature                                          | User Value                       | Implementation Cost            | Priority |
-| ------------------------------------------------ | -------------------------------- | ------------------------------ | -------- |
-| Product name + bundle ID                         | HIGH                             | LOW                            | P1       |
-| App icon replacement                             | HIGH                             | MEDIUM (asset production)      | P1       |
-| Onboarding rebrand                               | HIGH                             | LOW                            | P1       |
-| UI labels + i18n update                          | HIGH                             | MEDIUM (4 locales, systematic) | P1       |
-| Settings section rename                          | MEDIUM                           | LOW                            | P1       |
-| Force language UX clarity                        | MEDIUM                           | LOW (copy + description only)  | P1       |
-| README rewrite                                   | MEDIUM                           | LOW                            | P1       |
-| Internal code rename (critical path: log/binary) | LOW (user) / HIGH (maintainer)   | MEDIUM                         | P2       |
-| Internal symbol rename (Rust lib, functions)     | LOW (user) / MEDIUM (maintainer) | MEDIUM                         | P2       |
-| Dictus iOS palette token alignment               | MEDIUM                           | MEDIUM                         | P2       |
-| About panel copy                                 | LOW                              | LOW                            | P2       |
-| Documentation cleanup (CLAUDE.md, BUILD.md)      | LOW                              | LOW                            | P3       |
+| Feature | User Value | Maintainer Value | Implementation Cost | Priority |
+|---------|-----------|-----------------|--------------------:|---------|
+| Ed25519 keypair + tauri.conf.json config | HIGH (enables all updates) | HIGH | LOW | P1 |
+| `createUpdaterArtifacts: true` | HIGH (without it, no update payload) | HIGH | LOW | P1 |
+| `asset-prefix: "dictus"` in release.yml | HIGH (broken otherwise) | HIGH | LOW | P1 |
+| `includeUpdaterJson: true` in build.yml | HIGH (no manifest without it) | HIGH | LOW | P1 |
+| UpdateChecker.tsx portable URL fix | MEDIUM (affects portable users) | MEDIUM | LOW | P1 |
+| First upstream merge v0.8.0-v0.8.2 | MEDIUM (bug fixes, new features) | HIGH (reduces drift) | HIGH | P1 |
+| Weekly upstream detection action | LOW (invisible to users) | HIGH (prevents future 69-commit drift) | LOW | P1 |
+| `UPSTREAM.md` fork documentation | LOW (users) | HIGH (maintainers) | LOW | P1 |
+| Windows `installMode: passive` | MEDIUM (Windows UX) | LOW | LOW | P2 |
+| Idempotent weekly action | LOW | MEDIUM | MEDIUM | P2 |
+| Upstream issue diff summary | LOW | MEDIUM | LOW | P2 |
 
 **Priority key:**
-
-- P1: Must have for V1 release — product is incomplete without it
-- P2: Should have — ship in V1.x or before first external user
-- P3: Nice to have — background work, no user urgency
-
----
-
-## Force Language: What It Means in Whisper Context
-
-This feature deserves its own section because it's explicitly in scope for V1 and has nuance.
-
-### How whisper.cpp language parameter works
-
-- Default (`selected_language = "auto"`): Whisper auto-detects the language from the first ~30 seconds of audio. Works well for clear single-language recordings.
-- Forced (`selected_language = "fr"`): The `language` param is set explicitly in `WhisperInferenceParams`. Whisper skips auto-detection and treats the audio as the specified language.
-- Known edge case: With some multilingual models, whisper.cpp has been reported to override explicit language params and auto-detect anyway (GitHub issue #1831). The existing code already handles this by validating language against the model's `supported_languages` list and falling back to `"auto"` if unsupported — this is correct behavior.
-
-### What the codebase already does (HIGH confidence — verified in source)
-
-The `LanguageSelector` component (`src/components/settings/LanguageSelector.tsx`) already:
-
-- Shows "Auto" as the default and reset value (`default_selected_language() = "auto"`)
-- Shows a searchable dropdown of all supported languages (filtered to the active model's `supported_languages`)
-- Persists the choice to settings (`selected_language`)
-- The `TranscriptionManager` reads `settings.selected_language`, validates it against model support, and passes it to the whisper engine as `None` (auto) or `Some(lang_code)` (forced)
-
-### What the V1 UX work actually is (LOW complexity)
-
-The current implementation is technically complete. The V1 task is **UX clarity**, not engineering:
-
-1. Rename the setting section from "General" to "Dictation" so language appears under dictation context
-2. Update the description copy to make "Auto" vs forced behavior explicit (the current string is good but generic)
-3. Ensure the selector shows "Auto" prominently with a clear label (not just a list item)
-4. Verify behavior documentation is accurate about the edge case (multilingual model fallback)
-
-There is no new backend work needed unless the team discovers the forced language is not reliably honored — in that case it becomes a V2 investigation.
+- P1: Required for milestone to be complete
+- P2: Meaningfully improves quality; ship if time allows in same milestone
+- P3: Nice to have; background work, no urgency
 
 ---
 
-## Competitor Feature Analysis
+## Known Conflict Zones for Upstream Merge
 
-| Feature                              | Superwhisper    | MacWhisper      | OpenWhispr | Dictus Desktop V1 Target              |
-| ------------------------------------ | --------------- | --------------- | ---------- | ------------------------------------- |
-| Local processing (no cloud required) | Yes (default)   | Yes             | Yes        | Yes                                   |
-| Global hotkey                        | Yes             | Limited         | Yes        | Yes (existing)                        |
-| Recording overlay                    | Yes             | No (file-based) | Yes        | Yes (existing)                        |
-| Language auto-detect                 | Yes             | Yes             | Yes        | Yes (existing)                        |
-| Force specific language              | Yes (via modes) | Yes             | Yes        | Yes (existing, UX to clarify)         |
-| Transcription history                | Yes             | Yes             | Yes        | Yes (existing)                        |
-| LLM post-processing                  | Yes (AI modes)  | No              | Partial    | Yes (existing, rename to Smart Modes) |
-| Cross-platform (Win/Linux)           | macOS only      | macOS only      | Yes        | Yes                                   |
-| Open source                          | No              | No              | Yes        | Yes (MIT)                             |
-| Privacy-first messaging              | Partial         | Strong          | Strong     | Strong (V1 README positioning)        |
-| App-specific modes                   | Yes (premium)   | No              | No         | No (V2+)                              |
-| Mobile companion                     | No              | No              | No         | Planned V4+                           |
+The upstream v0.8.0–v0.8.2 merge will encounter conflicts in files Dictus has intentionally modified. These are not bugs — they require deliberate resolution.
+
+| File | Dictus Change | Upstream Likely Change | Resolution Strategy |
+|------|--------------|----------------------|---------------------|
+| `src-tauri/tauri.conf.json` | `productName: "Dictus"`, `identifier: "com.dictus.desktop"`, `signingIdentity: "-"`, updater config | Version bump, possible new plugin config | Keep Dictus values; apply upstream config structure changes |
+| `.github/workflows/release.yml` | `asset-prefix: "handy"` (to be fixed to "dictus") | Possible runner changes, new signing steps | Keep Dictus asset-prefix; apply upstream CI improvements |
+| `.github/workflows/build.yml` | Minor Dictus additions | Possible new build matrix entries, ONNX updates | Merge carefully; upstream build improvements are valuable |
+| `src/i18n/locales/*/translation.json` | All strings rebranded Handy→Dictus | New translation keys from new features | Add upstream new keys; do not revert Dictus brand strings |
+| `src/components/update-checker/UpdateChecker.tsx` | Will have Handy URL fixed | Possible upstream UX changes | Keep Dictus URL; evaluate upstream UX changes individually |
+| `src-tauri/src-tauri/Cargo.toml` | `tauri-plugin-updater = "2.10.0"` (existing) | Possible version bumps | Take upstream version bumps |
 
 ---
 
 ## Sources
 
-- [OpenWhispr vs SuperWhisper comparison](https://openwhispr.com/compare/superwhisper) — competitor feature landscape
-- [Superwhisper documentation](https://superwhisper.com/docs/get-started/introduction) — feature set, language modes, dictation modes
-- [whisper.cpp CLI documentation (DeepWiki)](https://deepwiki.com/ggml-org/whisper.cpp/3.1-command-line-interface) — language parameter behavior
-- [whisper.cpp language detection issue #1831](https://github.com/ggml-org/whisper.cpp/issues/1831) — known edge case for forced language override
-- [Tauri configuration reference](https://v2.tauri.app/reference/config/) — productName, identifier fields
-- [Speechify Windows app local models (TechCrunch 2026)](https://techcrunch.com/2026/03/31/speechifys-windows-app-uses-local-models-for-transcription-and-dictation/) — market context
-- [Best dictation tools comparison 2026 (OpenWhispr)](https://openwhispr.com/blog/best-dictation-tools-windows-2026) — table stakes feature set
-- [11 Best Superwhisper Alternatives 2026 (Voibe)](https://www.getvoibe.com/blog/superwhisper-alternatives/) — competitor positioning
-- Verified directly in codebase: `src/components/settings/LanguageSelector.tsx`, `src-tauri/src/managers/transcription.rs`, `src-tauri/src/settings.rs`
+- [Tauri v2 Updater Plugin documentation](https://v2.tauri.app/plugin/updater/) — official, HIGH confidence
+- [Tauri v2 GitHub Releases pipeline](https://v2.tauri.app/distribute/pipelines/github/) — official, HIGH confidence
+- [tauri-action v0.5.24 release notes — `includeUpdaterJson`](https://github.com/tauri-apps/tauri-action/releases) — HIGH confidence
+- [Tauri updater with GitHub Releases — community guide](https://thatgurjot.com/til/tauri-auto-updater/) — MEDIUM confidence
+- [aormsby/Fork-Sync-With-Upstream-action](https://github.com/aormsby/Fork-Sync-With-Upstream-action) — MEDIUM confidence
+- [GitHub Actions fork sync best practices discussion](https://github.com/orgs/community/discussions/153608) — MEDIUM confidence
+- Verified directly in codebase: `src-tauri/tauri.conf.json`, `.github/workflows/release.yml`, `.github/workflows/build.yml`, `src/components/update-checker/UpdateChecker.tsx`, `src-tauri/Cargo.toml`
 
 ---
 
-_Feature research for: Desktop speech-to-text app rebranding (Dictus Desktop V1)_
-_Researched: 2026-04-05_
+_Feature research for: Dictus Desktop v1.1 — Auto-Update & Upstream Sync_
+_Researched: 2026-04-10_

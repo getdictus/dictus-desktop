@@ -1,324 +1,451 @@
 # Pitfalls Research
 
 **Domain:** Desktop app rebranding — Tauri 2.x / Rust / React fork (Handy → Dictus Desktop)
-**Researched:** 2026-04-05
-**Confidence:** HIGH — based on direct codebase analysis, not hypothetical scenarios
+**Researched:** 2026-04-10 (updated for v1.1: Auto-Update + Upstream Sync milestone)
+**Confidence:** HIGH — based on direct codebase analysis and Tauri v2 official documentation
 
 ---
 
-## Critical Pitfalls
+## v1.1 Scope
 
-### Pitfall 1: Updater Endpoint Left Pointing at Upstream
+This file covers pitfalls for two new workstreams added in the v1.1 milestone:
+
+1. **Tauri v2 auto-updater** — enabling the updater that was disabled in v1.0 (no Dictus endpoint existed)
+2. **First upstream merge** — merging Handy v0.8.0-v0.8.2 changes (69 commits from fork point `85a8ed77`)
+
+Pitfalls from v1.0 rebrand are preserved below in their own section for reference.
+
+---
+
+## Critical Pitfalls — Auto-Updater (v1.1)
+
+### Pitfall A1: Ed25519 Keypair Lost or Never Generated
 
 **What goes wrong:**
-The Tauri updater is configured in `tauri.conf.json` to pull from `https://github.com/cjpais/Handy/releases/latest/download/latest.json`. If this endpoint is not updated before the first Dictus release, users will either receive upstream Handy updates (installing a rebranded binary over their Dictus install) or the updater silently fails when the upstream version does not match the fork's version number.
+The Tauri updater uses a Minisign Ed25519 keypair. The public key goes in `tauri.conf.json`; the private key signs every release artifact. If the private key is ever lost after even one Dictus release is published, all existing installed copies can never receive an update. Users on those installs are permanently stranded — no workaround exists. The app's updater will keep checking and failing forever.
 
 **Why it happens:**
-The updater config, the pubkey, and the endpoint are buried in `tauri.conf.json` and easy to overlook during a UI-focused rebrand. Developers visually rebrand the app but do not consider the background update mechanism.
+The keypair is generated once with `tauri signer generate`. Developers generate it locally, add the pubkey to config, add the privkey to CI secrets, and never write the privkey down anywhere else. When CI secrets are rotated or a new repo is created, the key is gone.
 
-**How to avoid:**
+**Consequences:**
+Permanent loss of update delivery to any user who installed before the key was lost.
 
-- Change `plugins.updater.endpoints` in `tauri.conf.json` to a Dictus-controlled URL before any release build.
-- Generate a new signing keypair (`tauri signer generate`) and replace the `pubkey` field. Keep the private key outside the repo.
-- Set up a Dictus releases endpoint (GitHub Releases on the dictus-desktop repo, or a self-hosted `latest.json`).
-- Disable updater entirely (`createUpdaterArtifacts: false`) until the endpoint is ready, rather than leaving upstream endpoint active.
+**Prevention:**
+- Generate the keypair once with `bun run tauri signer generate -w ~/.tauri/dictus.key` before the first release build.
+- Store the private key in at minimum two places: a password manager (Bitwarden/1Password entry) AND an encrypted backup file outside the repo.
+- Add the public key to `tauri.conf.json` `plugins.updater.pubkey`.
+- Add the private key and password as GitHub Actions secrets `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` before running `release.yml`.
+- Document the key's location in a private note; never commit it.
 
-**Warning signs:**
+**Detection (warning signs):**
+- `tauri.conf.json` `plugins.updater.pubkey` is still `""` (current state).
+- `TAURI_SIGNING_PRIVATE_KEY` is not set as a GitHub Actions secret.
+- Build logs show `TAURI_SIGNING_PRIVATE_KEY` warning: `Signing key not set, skipping artifact signing`.
 
-- `tauri.conf.json` still references `cjpais/Handy` in the `endpoints` array.
-- `pubkey` value is the original Handy key (starts with `dW50cnVzdGVk...`).
-- `bundle.windows.signCommand` still contains `cjpais-dev` Azure signing identity.
-
-**Phase to address:**
-Identity and bundle rebrand phase (first phase). Must be resolved before any test build is distributed.
+**Phase to address:** Auto-updater setup, before any release build that users will install.
 
 ---
 
-### Pitfall 2: Bundle Identifier Not Changed — Conflicting App Data on macOS/Windows
+### Pitfall A2: Asset Prefix Still "handy" — Updater URLs Point to Wrong Files
 
 **What goes wrong:**
-`tauri.conf.json` currently uses `identifier: "com.pais.handy"`. Tauri uses this identifier to determine where app data is stored (macOS: `~/Library/Application Support/com.pais.handy/`, Windows: `%APPDATA%/com.pais.handy/`). If the identifier is changed after a user has already installed the app, all their settings, history, and downloaded models will appear to be missing on next launch. The app will start as fresh with a new identifier directory. The old data remains but is no longer found.
+`release.yml` passes `asset-prefix: "handy"` to `build.yml`. The `tauri-action` uses this prefix to name release artifacts: `handy_0.1.0_aarch64.dmg`, `handy_0.1.0_x64-setup.exe`, etc. The Tauri updater then generates a `latest.json` with download URLs pointing to these `handy_*.dmg` filenames. If the pubkey is valid and the endpoint is correct but the asset prefix is wrong, updates will check for a version correctly but then try to download `handy_*.dmg` — which might not exist if a future rename happens, or which installs a binary named `handy` onto a machine where the user expects `Dictus`.
+
+The build.yml `Verify macOS dylib bundling` step at line 380–392 also hard-references `Contents/MacOS/handy` — if the binary is ever renamed, this step will fail silently (the `|| true` at the end suppresses errors).
 
 **Why it happens:**
-The identifier looks like a pure config detail. Developers focus on visible branding and assume this can be changed cleanly at any time.
+`asset-prefix: "handy"` was the original Handy release workflow value. It was never updated during the v1.0 rebrand because `release.yml` was not exercised (no Dictus releases were made).
 
-**How to avoid:**
+**Consequences:**
+Release artifacts named `handy_*` instead of `dictus_*`. Users downloading manually from GitHub Releases get a confusingly named file. The updater `latest.json` URLs will contain `handy` in the filename, which may confuse debugging. Does not break updater functionality as long as the filename is consistent.
 
-- Change the identifier to `com.dictus.desktop` in `tauri.conf.json` as part of the very first rebrand commit, before any Dictus builds are distributed.
-- Since no Dictus users exist yet (this is a fresh fork), there is no existing data to migrate. Change it once and be done.
-- Do NOT change the identifier after distributing any Dictus build without implementing a data migration.
+**Prevention:**
+- Change `asset-prefix: "handy"` to `asset-prefix: "dictus"` in `release.yml` before the first Dictus release.
+- Change the `asset-prefix` default in `build.yml` from `"handy"` to `"dictus"`.
+- Fix the `Verify macOS dylib bundling` step to reference `Contents/MacOS/dictus` — or keep `handy` until TECH-03 (binary rename, deferred to V3+) is done; document the inconsistency.
 
-**Warning signs:**
+**Detection:**
+- `grep "asset-prefix" .github/workflows/release.yml` returns `"handy"`.
+- First test release shows `handy_0.1.0_aarch64.dmg` in GitHub Releases assets.
 
-- `identifier` still reads `com.pais.handy` after rebrand work is considered complete.
-- macOS app data path contains `handy` instead of `dictus`.
-
-**Phase to address:**
-Identity and bundle rebrand phase (first phase). Change once, never revisit.
+**Phase to address:** Auto-updater setup / CI fix phase.
 
 ---
 
-### Pitfall 3: Model Download URLs Hard-Wired to `blob.handy.computer`
+### Pitfall A3: `createUpdaterArtifacts` Not Set — No `.sig` Files Generated
 
 **What goes wrong:**
-All 15+ model download URLs in `src-tauri/src/managers/model.rs` (lines 133–600) point to `https://blob.handy.computer/`. This is a CDN controlled by the upstream Handy project. If that CDN goes offline, changes access policies, or the upstream project stops hosting files, all model downloads in Dictus Desktop break silently — the download fails and users cannot get a working model. This is a hard runtime dependency on upstream infrastructure.
+The `tauri.conf.json` `bundle` section currently has no `createUpdaterArtifacts` key. Without this, `tauri build` does not generate `.sig` signature files alongside the installers. The `tauri-action` workflow will upload the unsigned installers but the updater has nothing to verify. When a user runs the update check, it will either fail with a signature error or (worse) appear to download but refuse to install.
+
+The current `tauri.conf.json` updater config is:
+```json
+"updater": {
+  "pubkey": "",
+  "endpoints": []
+}
+```
+Both fields are empty and `createUpdaterArtifacts` is absent.
 
 **Why it happens:**
-CDN URLs are implementation details that look stable. Developers rebrand the UI without auditing the backend data dependencies.
+Tauri v2 separates artifact generation (`bundle.createUpdaterArtifacts`) from updater runtime config (`plugins.updater`). Developers configure one without the other.
 
-**How to avoid:**
+**Consequences:**
+Update check succeeds (version comparison works), download starts, installation blocked with `InvalidSignature` or missing artifact.
 
-- Decide immediately: will Dictus host its own models or continue relying on `blob.handy.computer`?
-- For V1, the pragmatic path is to keep the URLs but document the dependency explicitly. Add a fallback error message that names the dependency so debugging is straightforward.
-- For V2+, consider mirroring models to a Dictus-controlled CDN or using Hugging Face as a neutral host.
-- The VAD model (`silero_vad_v4.onnx`) is also fetched from this CDN in all dev setup docs (`CLAUDE.md`, `CRUSH.md`, `CONTRIBUTING.md`, `AGENTS.md`). Update all docs to reflect the chosen source.
+**Prevention:**
+Add `"createUpdaterArtifacts": true` to the `bundle` section of `tauri.conf.json`. This tells the Tauri bundler to produce `.tar.gz` + `.sig` for macOS/Linux and `.nsis.zip` + `.sig` for Windows alongside the normal installer outputs.
 
-**Warning signs:**
+```json
+"bundle": {
+  "createUpdaterArtifacts": true,
+  ...
+}
+```
 
-- `model.rs` still contains only `blob.handy.computer` URLs after V1 ships.
-- Dev setup docs still instruct contributors to `curl` from `blob.handy.computer` without a note about the dependency.
+**Detection:**
+- Build output contains no `.sig` files in `src-tauri/target/*/bundle/`.
+- `latest.json` generated by tauri-action has empty `signature` fields.
 
-**Phase to address:**
-Document the dependency in V1. Resolve the CDN dependency ownership in V2.
+**Phase to address:** Auto-updater setup.
 
 ---
 
-### Pitfall 4: i18n Translation Files Contain "Handy" in Every Language
+### Pitfall A4: Endpoint URL Returns 404 or Wrong JSON — Updater Fails Silently
 
 **What goes wrong:**
-The English `translation.json` contains "Handy" as a literal string in at least 10 keys (onboarding descriptions, tray descriptions, about page). All other language files (20+ locales including tr, pt, vi, ru, zh, etc.) have their own translated forms of "Handy" embedded. A rebrand that only touches the English file leaves every non-English user seeing "Handy" in the UI.
+The Tauri updater calls the endpoint from `plugins.updater.endpoints`, parses the JSON, and compares versions. The recommended GitHub Releases endpoint is:
+
+```
+https://github.com/[owner]/[repo]/releases/latest/download/latest.json
+```
+
+Common failure modes in the Dictus context:
+1. **Repo not public** — GitHub Releases assets are not accessible without auth; the updater request gets a redirect to a login page, not JSON.
+2. **No release published yet** — endpoint 404s until the first release is created.
+3. **Wrong repo path** — if someone copies the endpoint from upstream and still has `cjpais/Handy`, the check succeeds but offers Handy updates.
+4. **`latest.json` not uploaded** — `tauri-action` only uploads `latest.json` if `createUpdaterArtifacts: true` is set AND the release upload step runs with a valid `releaseId`.
 
 **Why it happens:**
-Developers run a visible string search in the UI, find the strings to change, edit `en/translation.json`, and consider the job done. The 20 other locale files are not checked.
+Developers test the updater check before publishing a real release, or publish to a private repo, or forget to wire `release-id` through the workflow.
 
-**How to avoid:**
+**Prevention:**
+- Endpoint should be `https://github.com/[dictus-org]/dictus-desktop/releases/latest/download/latest.json`.
+- Test by hitting the URL in a browser before enabling the updater in production.
+- Keep `update_checks_enabled` defaulting to `true` in `settings.rs` (current behavior: line 455-456) — but pair it with a guard: if endpoint is empty string, disable silently.
+- In the `release.yml`, confirm `releaseId` is always passed to `tauri-action`; this is what triggers `latest.json` upload.
 
-- Run `grep -rl "Handy" src/i18n/locales/` before marking any rebrand phase done — the search confirms 20+ locale files are affected.
-- Treat translation key _values_ (not keys) as content to audit. Use a script or grep to generate an exhaustive list across all locales.
-- For V1, change the values in all locale files to "Dictus" (the name is a proper noun and does not require localization — keep existing translations for surrounding text but replace only the product name).
-- Do not rely on visual review of the running app to catch this — non-English locales are not typically tested during development.
+**Detection:**
+- `curl -I https://github.com/[owner]/dictus-desktop/releases/latest/download/latest.json` returns 404.
+- UpdateChecker shows "Checking..." indefinitely and logs `Failed to check for updates` to console.
 
-**Warning signs:**
-
-- `grep -r '"Handy"' src/i18n/locales/` still returns results after rebrand.
-- The onboarding screen shown in a non-English locale still reads "Handy".
-
-**Phase to address:**
-UI rebrand phase. Must cover all 20+ locale files, not just English.
+**Phase to address:** Auto-updater setup + first release dry-run.
 
 ---
 
-### Pitfall 5: Patched Tauri Runtime Tied to `handy-2.10.2` Branch
+### Pitfall A5: Version Mismatch Across Three Files — Updates Never Detected
 
 **What goes wrong:**
-`Cargo.toml` patches three core Tauri crates (`tauri-runtime`, `tauri-runtime-wry`, `tauri-utils`) with a custom fork at `https://github.com/cjpais/tauri.git` branch `handy-2.10.2`. This is the upstream maintainer's personal fork. If Tauri releases a security patch or breaking change in `2.10.x`, this fork branch is unlikely to be updated. Dictus is locked to a modified Tauri version on infrastructure it does not control.
+The Tauri updater compares the currently installed version against the version in `latest.json`. The installed version comes from `tauri.conf.json` `version` field. The `latest.json` version comes from the release workflow. If `Cargo.toml` version, `tauri.conf.json` version, and `package.json` version are out of sync, update detection misbehaves:
 
-**Why it happens:**
-The patch was added to support custom behavior (likely the overlay or macOS private API features). Developers inherit the patch without evaluating whether the dependency risk is acceptable long-term.
+- If `Cargo.toml` is `0.1.0` but `tauri.conf.json` is `0.1.1`, the bundle is stamped `0.1.1` but the Rust binary self-identifies as `0.1.0` in logs — confusing but not broken.
+- If `tauri.conf.json` is `0.1.0` and `latest.json` is `v0.1.0` (with `v` prefix), version comparison may fail in some implementations.
 
-**How to avoid:**
+Currently all three files are `0.1.0`. The risk appears when cutting the first `v1.1.0` release.
 
-- Audit what the patch actually changes: `git diff tauri-v2.10.1..handy-2.10.2` on that repo.
-- Determine whether the patch is still needed or has been upstreamed to official Tauri.
-- If needed, fork the branch to a Dictus-controlled repository (`github.com/dictus-app/tauri` or similar) so Dictus controls its Tauri dependency.
-- Document the patch clearly in `CONTRIBUTING.md` so future maintainers understand why the override exists.
+**Prevention:**
+- When bumping version, update all three files atomically: `Cargo.toml`, `tauri.conf.json`, `package.json`.
+- The `latest.json` `name` field should be `"v1.1.0"` (with `v` prefix, per Tauri convention) while the config files store `"1.1.0"` (without `v`).
+- Do not use the release workflow's `get-version` step (grep on `tauri.conf.json`) as the single source of truth — verify all three files agree before triggering release.
 
-**Warning signs:**
+**Detection:**
+- `grep '"version"' src-tauri/tauri.conf.json Cargo.toml package.json` shows different values.
+- Updater reports "up to date" immediately after a release that should be newer.
 
-- `[patch.crates-io]` in `Cargo.toml` still references `cjpais/tauri.git` after V1.
-- No documentation explaining why the patch exists.
-
-**Phase to address:**
-Technical dependency audit phase (or early in V1 infrastructure work). Does not block visual rebrand but blocks long-term stability.
+**Phase to address:** Version management, before first release.
 
 ---
 
-### Pitfall 6: `handy-keys` Crate as a Runtime Dependency
+### Pitfall A6: `update_checks_enabled` Defaults to `true` With No Valid Endpoint
 
 **What goes wrong:**
-The crate `handy-keys = "0.2.4"` is a published crate authored by the upstream maintainer (`cjpais`). It is used as the preferred keyboard implementation for recording shortcuts. If the crate is yanked, abandoned, or not updated for a new platform/Rust edition, Dictus's shortcut implementation degrades silently to the fallback Tauri implementation (which the code already handles, but the fallback is persisted to settings without warning the user).
+`settings.rs` line 455–456 shows `default_update_checks_enabled()` returns `true`. With `pubkey: ""` and `endpoints: []` in `tauri.conf.json`, the app currently tries to check for updates on every launch (based on `lib.rs` line 229 and `useEffect` in `UpdateChecker.tsx`). With an empty endpoints array, the Tauri updater throws an error that is currently silently swallowed in `catch (error)` on line 88 of `UpdateChecker.tsx`.
 
-**Why it happens:**
-Third-party crates with names tied to upstream project branding are easy to miss during rebrand audits because they are in `Cargo.toml`, not in the visible UI.
+This means: every user of the current v1.0 build launches the app, the updater fires, fails with an internal error, and the component silently resets to `isChecking: false`. No user-facing harm, but the error is happening in production.
 
-**How to avoid:**
+**Prevention:**
+- When wiring up the updater for real, confirm the guard at `lib.rs` line 317 (`if !settings.update_checks_enabled`) properly gates the Rust-side check.
+- For v1.1, as soon as `endpoints` is populated with a real URL, existing v1.0 users will have `update_checks_enabled: true` in their persisted settings and will start hitting the endpoint — make sure the endpoint exists before the release.
 
-- Accept the dependency for V1 — the fallback path is already implemented and tested.
-- Track the crate's health on crates.io. If `handy-keys` is yanked or stops compiling, the Tauri fallback already works.
-- Document that `handy-keys` is an upstream crate and Dictus should evaluate publishing its own fork if abandonment becomes a risk.
+**Detection:**
+- Browser console on v1.0 shows `Failed to check for updates` on each launch.
+- Tauri Rust logs show updater error at startup.
 
-**Warning signs:**
-
-- `handy-keys` is marked deprecated or yanked on crates.io.
-- The shortcut implementation selector UI shows "Tauri" as the only option (fallback has engaged).
-
-**Phase to address:**
-Track in V2 risk backlog. Not a V1 blocker given the existing fallback.
+**Phase to address:** Awareness during auto-updater setup; not a blocker but ensure endpoint is live before `endpoints` is populated in `tauri.conf.json`.
 
 ---
 
-### Pitfall 7: Windows NSIS Installer Contains Upstream Code Signing Identity
+## Critical Pitfalls — Upstream Merge (v1.1)
+
+### Pitfall B1: Conflict in Files Modified by Both Sides — Tauri Custom Patch Fork
 
 **What goes wrong:**
-`tauri.conf.json` contains `signCommand: "trusted-signing-cli -e https://eus.codesigning.azure.net/ -a CJ-Signing -c cjpais-dev -d Handy %1"`. This references a specific Azure code signing account (`CJ-Signing`, `cjpais-dev`) that belongs to the upstream maintainer. Any Windows build that runs this command will attempt to sign with credentials it does not have access to, causing the build to fail — or worse, if credentials are leaked via CI secrets inheritance, it could sign under the wrong identity.
+`Cargo.toml` has a `[patch.crates-io]` section pointing to `https://github.com/cjpais/tauri.git` branch `handy-2.10.2`. The upstream Handy repo may have updated to a different Tauri version or a different patch branch (e.g., `handy-2.11.x`). The current state shows 4 upstream commits post-v0.8.2, but future syncs will accumulate more. If upstream bumps the Tauri patch branch and the Dictus `Cargo.toml` is merged naively, the patch will either be duplicated (two `[patch.crates-io]` sections) or overridden with upstream's branch — which may not compile with Dictus-specific changes.
 
-**Why it happens:**
-Windows code signing config is buried in the JSON bundle config and rarely exercised during development (developers build unsigned on their machines). It becomes visible only when the CI release pipeline runs.
+**Prevention:**
+- Before any `git merge upstream/main`, run `git diff HEAD upstream/main -- src-tauri/Cargo.toml` to preview the `Cargo.toml` delta.
+- After merge, explicitly verify `[patch.crates-io]` still references the correct branch and that `cargo build` succeeds.
+- If upstream changes the Tauri patch branch (e.g., `handy-2.11.0`), evaluate whether to follow (inherit their patch) or stay on `handy-2.10.2` (known working).
 
-**How to avoid:**
+**Detection:**
+- `cargo build` fails after merge with `failed to resolve patches for crates.io`.
+- Two `[patch.crates-io]` sections appear in `Cargo.toml` after a merge.
 
-- Replace the `signCommand` with Dictus's own signing identity, or remove it entirely if Windows code signing is not a V1 requirement.
-- Audit CI pipeline secrets to ensure no `cjpais` signing credentials are inherited.
-- If unsigned builds are acceptable for V1, set `signCommand: ""` or remove the `windows.signCommand` key entirely.
-
-**Warning signs:**
-
-- `signCommand` still contains `CJ-Signing` or `cjpais-dev`.
-- CI release pipeline fails with a signing error on the Windows target.
-
-**Phase to address:**
-Identity and bundle rebrand phase. Fix before any CI-driven Windows release build.
+**Phase to address:** Upstream sync phase, pre-merge checklist step.
 
 ---
 
-### Pitfall 8: Portable Mode Marker File Contains "Handy Portable Mode" String
+### Pitfall B2: Upstream Changes `tauri.conf.json` — Overwrites Dictus Identity Fields
 
 **What goes wrong:**
-`src-tauri/src/portable.rs` creates and reads a marker file using the string `"Handy Portable Mode"` as both a write value and a validation check. The `is_valid_portable_marker()` function checks that the file content starts with `"Handy Portable Mode"`. If this string is changed to `"Dictus Portable Mode"` without migrating existing marker files, users with existing portable installations will find that their portable mode is no longer detected — the app falls back to system app data, and their data appears to be missing.
+`tauri.conf.json` is the most conflict-prone file in this fork. The Dictus version has `productName: "Dictus"`, `identifier: "com.dictus.desktop"`, `version: "0.1.0"`, `pubkey: ""`, `endpoints: []`. Upstream Handy has `productName: "Handy"`, `identifier: "com.handy.desktop"` (or `com.pais.handy`), their version number, and their own pubkey/endpoints.
+
+When upstream makes any change to `tauri.conf.json` (e.g., adding a new bundle option, changing macOS entitlements, adding a new platform), `git merge` will produce a conflict on the entire file. A careless resolution that accepts upstream's changes wholesale will silently revert the bundle identifier to `com.handy.desktop`. Users who already installed `com.dictus.desktop` will have their settings orphaned on next launch — the app sees itself as a new install.
 
 **Why it happens:**
-The marker string is a magic value embedded in a Rust source file. It is not visible in the UI, does not surface in translation files, and is missed by grep patterns that only search for "Handy" in visible strings.
+`tauri.conf.json` is not just config — it is identity. Developers resolving merge conflicts focus on the functional change (e.g., new entitlements) and do not notice the identity fields being reverted.
 
-**How to avoid:**
+**Prevention:**
+- Mark `tauri.conf.json` as "always use ours for identity fields" in a merge driver or document explicit rules:
+  - `productName`, `identifier`, `version`, `plugins.updater.pubkey`, `plugins.updater.endpoints` → always keep Dictus values
+  - All other keys → evaluate upstream changes
+- After every upstream merge, run: `grep -E '"identifier"|"productName"' src-tauri/tauri.conf.json` and verify values are Dictus, not Handy.
+- Consider a post-merge smoke test: `tauri info` should show `com.dictus.desktop`.
 
-- When changing the magic string, preserve backward compatibility by accepting both `"Handy Portable Mode"` (legacy) and `"Dictus Portable Mode"` (new) in `is_valid_portable_marker()`.
-- The existing `portable.rs` already has a legacy migration path (from empty marker to magic string) — extend this pattern.
-- New marker files written post-rebrand should use the new string. Old files should be upgraded on first read.
+**Detection:**
+- `grep "com.handy\|com.pais\|Handy" src-tauri/tauri.conf.json` returns results after merge.
+- App data directory on test machine shows `com.handy.desktop` after merge build.
 
-**Warning signs:**
-
-- `portable.rs` contains `"Handy Portable Mode"` as a hard-coded string after rebrand.
-- A portable mode test (`handy_test_valid` and similar) still uses the old string.
-
-**Phase to address:**
-Technical rename phase (second pass). Low urgency for V1 since portable mode is a Windows feature affecting a subset of users, but must not break existing portable installs.
-
----
-
-## Technical Debt Patterns
-
-| Shortcut                                                                       | Immediate Benefit              | Long-term Cost                                                       | When Acceptable                                           |
-| ------------------------------------------------------------------------------ | ------------------------------ | -------------------------------------------------------------------- | --------------------------------------------------------- |
-| Keep `blob.handy.computer` for model downloads                                 | Zero V1 effort                 | CDN dependency on upstream infrastructure the fork does not control  | V1 only, with documented risk                             |
-| Keep `handy-keys` crate without forking                                        | Works today with fallback path | Potential break if upstream yanks crate; name inconsistency          | V1 acceptable; review in V2                               |
-| Skip internal Rust symbol renames (`handy_app_lib`, `startHandyKeysRecording`) | Saves compile time             | Developer confusion when internal names contradict external branding | Acceptable in V1 if a V2 ticket exists                    |
-| Disable updater before Dictus endpoint is ready                                | Ships faster                   | Users have no update path, no communication about new releases       | Never ship an enabled updater pointing to upstream        |
-| Remove Windows `signCommand` rather than fixing it                             | Unblocks builds                | Unsigned Windows builds trigger security warnings on install         | Acceptable for V1 if targeted at technical early adopters |
+**Phase to address:** Every upstream sync, as a mandatory post-merge verification step.
 
 ---
 
-## Integration Gotchas
+### Pitfall B3: Upstream Adds New Translation Keys — Dictus Locales Go Out of Sync
 
-| Integration             | Common Mistake                                                                    | Correct Approach                                                                                                                                             |
-| ----------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Tauri updater           | Change `productName` but not `endpoints` or `pubkey`                              | All three must change together: productName, endpoints, pubkey                                                                                               |
-| macOS entitlements      | Forget to update `signingIdentity` in `macOS.signingIdentity`                     | Currently set to `"-"` (ad-hoc) which is fine for local builds; only matters if distribution signing is added                                                |
-| tauri-specta bindings   | Rename Rust commands without regenerating `src/bindings.ts`                       | `bindings.ts` is auto-generated — re-run the specta export after any Rust command rename                                                                     |
-| i18next translations    | Rebrand English source, forget to run translation validation                      | All 20+ locale files must be searched independently; ESLint i18next rule catches hardcoded strings in JSX but not wrong values in JSON files                 |
-| NSIS installer template | Update `tauri.conf.json` but not the custom NSIS template in `nsis/installer.nsi` | The custom template uses Tauri template variables (`{{product_name}}` etc.) so it should inherit correctly, but the Windows `signCommand` is a direct string |
+**What goes wrong:**
+The upstream Handy project has 20+ PR contributors adding translation keys in every version (the 69 commits include multiple translation PRs). When merging, new keys added in `src/i18n/locales/en/translation.json` upstream will merge cleanly if they don't conflict. However, any key whose value references "Handy" will be added with that value. Separately, if upstream adds a key that the Dictus fork has already added (perhaps with a different structure), the merge will conflict.
 
----
+**Consequences:**
+- New features from upstream (v0.8.x) ship with "Handy" branding in user-facing strings.
+- If a key conflict exists, the merge fails — developers resolve it manually and may introduce the wrong key structure.
 
-## Performance Traps
+**Prevention:**
+- After merge, always run: `grep -r '"Handy"' src/i18n/locales/` — any hit is a rebrand miss.
+- For keys added by upstream that contain "Handy", perform a targeted search-and-replace of the value (not the key name).
+- If Dictus has modified a key's value that upstream also modified: keep Dictus's value unless upstream's change adds meaningful new content (e.g., a correction); never accept upstream's "Handy" product name in values.
 
-| Trap                                     | Symptoms                                                       | Prevention                                                                          | When It Breaks                                |
-| ---------------------------------------- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------- | --------------------------------------------- |
-| SHA256 model verification on UI thread   | UI freezes for 5-30 seconds after model download               | Move to background thread (already flagged in CONCERNS.md)                          | Every time a large model (1GB+) is downloaded |
-| Linux clipboard tool availability checks | Slow paste on Linux; multiple process spawns per transcription | Cache `which` results on first call via `OnceLock` (already flagged in CONCERNS.md) | Every transcription on Linux                  |
-| Model directory scan at startup          | Startup delay with many custom models                          | Load custom models lazily; cache discovery results                                  | Users with 10+ custom models                  |
+**Detection:**
+- Post-merge `grep -r '"Handy"' src/i18n/` returns results.
+- A newly added feature from upstream shows "Handy" in the UI.
 
-These are pre-existing issues (not introduced by rebrand) but worth noting since any rebrand phase that touches model management could accidentally worsen them.
+**Phase to address:** Upstream sync — post-merge i18n audit is mandatory.
 
 ---
 
-## Security Mistakes
+### Pitfall B4: `Cargo.lock` Merge Conflict Resolved Incorrectly
 
-| Mistake                           | Risk                                                                      | Prevention                                                                               |
-| --------------------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| Inheriting upstream CI secrets    | CI build could use `cjpais` Azure signing credentials for Dictus releases | Audit all repo secrets; remove any inherited from upstream before enabling CI            |
-| Keeping upstream updater `pubkey` | Attacker with upstream private key could push updates to Dictus installs  | Generate new keypair immediately; treat this as a security boundary, not a config detail |
-| Custom model SHA256 bypass        | Users can load unverified arbitrary models                                | Existing behavior — acceptable, but add UI warning that custom models are unverified     |
+**What goes wrong:**
+`Cargo.lock` is a generated file that records the exact resolved versions of every Rust dependency. When merging upstream, both sides will have modified `Cargo.lock` (upstream bumped dependencies in their releases; Dictus may have added dependencies). `git merge` will produce a conflict in this file. Manually resolving `Cargo.lock` conflicts is extremely error-prone — the file format is not designed for human editing.
 
----
+**Why it happens:**
+Developers see a Cargo.lock conflict, pick one side with `git checkout --ours Cargo.lock` or `--theirs`, and move on without verifying the result is consistent with `Cargo.toml`.
 
-## UX Pitfalls
+**Prevention:**
+- Never resolve `Cargo.lock` conflicts by manually editing — always regenerate.
+- The correct procedure: resolve all `Cargo.toml` conflicts first, then run `cargo generate-lockfile` to regenerate `Cargo.lock` from scratch.
+- Alternatively: `git checkout --theirs src-tauri/Cargo.lock && cargo update` — accept upstream's lock, then let Cargo re-resolve to include Dictus-specific dependencies.
+- Add `.gitattributes` rule: `src-tauri/Cargo.lock merge=union` (merges non-conflicting changes automatically) to reduce conflict frequency.
 
-| Pitfall                                                            | User Impact                                                             | Better Approach                                                                        |
-| ------------------------------------------------------------------ | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| Updater still checks `cjpais/Handy` releases                       | Users see "Handy v0.9.0 available" after installing Dictus              | Disable updater before V1 ships; enable when Dictus endpoint is ready                  |
-| About page links to `handy.computer` and `github.com/cjpais/Handy` | Clicking "Source Code" or "Donate" goes to upstream project             | Update all URLs in `AboutSettings.tsx` and `UpdateChecker.tsx` to Dictus equivalents   |
-| Onboarding shows `HandyTextLogo` SVG                               | First-run experience shows competitor branding                          | Replace SVG with Dictus logo before any user-facing V1 build                           |
-| Sidebar icon is `HandyHand` component                              | Every session the user sees upstream branding in navigation             | Replace icon component (it is a single SVG component, low effort)                      |
-| Settings section names unchanged                                   | Users from Dictus iOS expect "Dictation" naming; find "General" instead | Rename settings sections as planned: General → Dictation, Postprocessing → Smart Modes |
+**Detection:**
+- `cargo build` fails after merge with version conflict errors citing dependencies not in `Cargo.toml`.
+- `Cargo.lock` still has conflict markers (`<<<<<<<`) after resolution attempt.
 
----
-
-## "Looks Done But Isn't" Checklist
-
-- [ ] **Visual rebrand:** Check the app with a non-English locale active — 20+ locale files contain "Handy" in translation values, not just `en/translation.json`.
-- [ ] **Bundle identity:** Verify `~Library/Application Support/` on macOS shows `com.dictus.desktop` (or equivalent), not `com.pais.handy`.
-- [ ] **Updater:** Confirm the updater endpoint in `tauri.conf.json` does not point to `cjpais/Handy`. Disable updater until a Dictus endpoint exists.
-- [ ] **Signing identity:** Windows `signCommand` in `tauri.conf.json` must not reference `cjpais-dev` or `CJ-Signing`.
-- [ ] **Rust crate name:** `Cargo.toml` `[package] name` and `default-run` still say `handy`. Binary will be named `handy` until this changes.
-- [ ] **Tauri runtime patch:** `[patch.crates-io]` still references `cjpais/tauri.git`. Either accept and document, or fork to Dictus-controlled repo.
-- [ ] **Model CDN:** `blob.handy.computer` URLs in `model.rs` are present and operational — decide whether to keep (acceptable for V1) or mirror.
-- [ ] **Portable marker:** `portable.rs` magic string `"Handy Portable Mode"` — if changing, implement backward compatibility before breaking existing installs.
-- [ ] **Bindings regenerated:** After any Rust command rename, `src/bindings.ts` must be regenerated by running the app in debug mode (specta auto-generates on debug build).
-- [ ] **GitHub Actions workflows:** `build.yml` asset prefix is `handy`, `release.yml` asset prefix is `handy` — release artifacts will be named `handy-*.dmg` etc. until changed.
+**Phase to address:** Upstream sync — pre-merge, add `.gitattributes`; during merge, follow the regeneration procedure.
 
 ---
 
-## Recovery Strategies
+### Pitfall B5: New Upstream Features Reference `handy.computer` Infrastructure
 
-| Pitfall                                                           | Recovery Cost                   | Recovery Steps                                                                                             |
-| ----------------------------------------------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Updater pointing to upstream                                      | LOW (config change)             | Update `tauri.conf.json` endpoints + pubkey; rebuild and redistribute                                      |
-| Bundle ID changed after distribution                              | HIGH (data migration required)  | Write a migration shim that copies data from old path to new path on first launch                          |
-| i18n missed in non-English locales                                | LOW (JSON edits)                | `grep -rl "Handy" src/i18n/locales/` to find all files; batch-edit values                                  |
-| Portable mode magic string changed without backward compatibility | MEDIUM                          | Release a patch that reads both old and new magic strings; auto-upgrades on read                           |
-| Patched Tauri branch abandoned                                    | MEDIUM-HIGH                     | Fork `cjpais/tauri.git` to Dictus-owned repo; update `Cargo.toml` patch URL                                |
-| Rust binary still named `handy`                                   | LOW (Cargo.toml edit + rebuild) | Change `[package] name`, `default-run`, and `[lib] name`; test Windows (lib name collision caveat applies) |
+**What goes wrong:**
+The 4 current post-v0.8.2 upstream commits and any future ones may add new features that reference `blob.handy.computer` URLs (new models), `handy.computer` API endpoints, or `cjpais/Handy` GitHub links. These will merge cleanly (no conflict) but introduce new Handy-branded dependencies into Dictus.
+
+The current merge base already has model URLs pointing to `blob.handy.computer`. The upstream commit `upgrade transcribe rs to 0.3.5` (in the 69-commit delta) likely added new model entries. Each such addition is a silent Handy dependency.
+
+**Prevention:**
+- Post-merge, run: `grep -r "handy.computer\|cjpais/Handy\|cjpais/Handy" src-tauri/src/` — any hit in newly-merged files is a foreign dependency.
+- For new model URLs, decide: keep as-is (acceptable for v1.1, document the dependency) or redirect to Dictus CDN (INFR-01, deferred to V3+).
+- For new UI/frontend references to Handy, replace before shipping.
+
+**Detection:**
+- Post-merge `grep -r "blob.handy.computer" src-tauri/src/managers/model.rs` shows new entries not present before merge.
+- A new settings panel or feature shows "Handy" branding.
+
+**Phase to address:** Upstream sync — post-merge foreign dependency scan.
 
 ---
 
-## Pitfall-to-Phase Mapping
+### Pitfall B6: Upstream Bumps Version Number — Dictus Version Policy Confused
 
-| Pitfall                                       | Prevention Phase                        | Verification                                                                                              |
-| --------------------------------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Updater endpoint pointing to upstream         | Phase 1: Bundle identity                | `grep -r "cjpais/Handy" tauri.conf.json` returns empty                                                    |
-| Bundle identifier not changed                 | Phase 1: Bundle identity                | App data path contains `dictus` not `handy`                                                               |
-| Windows signing identity from upstream        | Phase 1: Bundle identity                | `signCommand` contains no `cjpais` references                                                             |
-| i18n "Handy" across 20+ locale files          | Phase 2: UI rebrand                     | `grep -rl '"Handy"' src/i18n/locales/` returns empty                                                      |
-| Visual components (HandyTextLogo, HandyHand)  | Phase 2: UI rebrand                     | No `HandyTextLogo` or `HandyHand` imports in the codebase                                                 |
-| Hardcoded URLs in About/UpdateChecker         | Phase 2: UI rebrand                     | `grep -r "handy.computer\|cjpais/Handy" src/` returns empty                                               |
-| Model CDN dependency on `blob.handy.computer` | Phase 1 (document) / Phase 3+ (resolve) | Risk documented in README; decision recorded in PROJECT.md                                                |
-| Patched Tauri runtime tied to upstream branch | Phase 2 or V2                           | `[patch.crates-io]` references Dictus-owned repo or is removed                                            |
-| `handy-keys` crate dependency                 | V2 risk review                          | Crate health checked; fork decision documented                                                            |
-| Portable marker string                        | Phase 3: Technical renames              | `grep "Handy Portable Mode" src-tauri/src/portable.rs` returns empty; backward compatibility code present |
-| Rust binary name still `handy`                | Phase 3: Technical renames              | `cargo build` produces `dictus-desktop` binary; Windows lib name collision tested                         |
+**What goes wrong:**
+Upstream Handy is at v0.8.2. Dictus Desktop is at v0.1.0. These version namespaces are completely different (Dictus follows its own versioning). After merging upstream, `tauri.conf.json` on the upstream side has `version: "0.8.2"`. If this is accepted during conflict resolution, Dictus's internal version jumps from `0.1.0` to `0.8.2` — breaking the Dictus versioning strategy documented in `MEMORY.md` ("App is 0.1.0, GSD milestones ≠ app version, semver 0.x.y").
+
+Additionally, the Tauri updater uses the version in `tauri.conf.json` to detect updates. If the version jumps to `0.8.2`, existing `0.1.0` users will immediately be offered an "update" to `0.8.2` even if no new Dictus release was published — or if the endpoint doesn't have a `0.8.2` release, update checks will silently fail.
+
+**Prevention:**
+- Always keep `version` in `tauri.conf.json` under Dictus's own versioning scheme.
+- In conflict resolution for `tauri.conf.json`, upstream's `version` field is always discarded.
+- Dictus version is incremented only intentionally when cutting a Dictus release (not as a side effect of upstream merges).
+
+**Detection:**
+- `grep '"version"' src-tauri/tauri.conf.json` shows `0.8.x` after merge.
+- Tauri updater starts looking for a release that doesn't exist.
+
+**Phase to address:** Upstream sync — `tauri.conf.json` post-merge verification.
+
+---
+
+### Pitfall B7: Weekly Upstream Detection Action Creates False Alarm Noise
+
+**What goes wrong:**
+The planned GitHub Action to detect new upstream commits will trigger on any commit to `upstream/main`, including dependency bumps, typo fixes, and translation PRs. If it creates a GitHub issue or sends a notification for every upstream commit, the signal-to-noise ratio becomes poor and maintainers start ignoring the notifications — defeating the purpose.
+
+Separately, if the action runs `git fetch upstream` but the upstream remote is not configured in the CI environment (it's only configured locally), the action will fail.
+
+**Prevention:**
+- The action should report upstream changes as a single summary (e.g., "N new commits since last sync, latest: {commit message}") rather than per-commit issues.
+- Configure a threshold: only notify when N commits or a new release tag exists upstream.
+- The action must explicitly add the upstream remote before fetching: `git remote add upstream https://github.com/cjpais/Handy.git && git fetch upstream`.
+- Store the last-synced upstream SHA in the repo (e.g., `.upstream-sync-marker`) so the action can compute delta cleanly.
+
+**Detection:**
+- GitHub Issues flooded with one-per-commit upstream notifications.
+- Action fails with `fatal: 'upstream' does not appear to be a git repository`.
+
+**Phase to address:** Upstream sync automation design.
+
+---
+
+## Technical Debt Patterns (v1.1 additions)
+
+| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
+|---|---|---|---|
+| Keep `asset-prefix: "handy"` in release workflow | No CI changes | Release artifacts named `handy_*.dmg`; confusing but functional | Not acceptable — fix in v1.1 before first release |
+| Merge upstream without auditing new model URLs | Fast merge | New `blob.handy.computer` entries added silently | Acceptable with documented list of new dependencies |
+| Accept upstream `Cargo.lock` wholesale | Fast resolution | May miss Dictus-specific dependency resolution | Acceptable if followed by `cargo build` + full test pass |
+| Keep `update_checks_enabled: true` default with no endpoint | No setting change needed | Invisible errors on every launch; wasted HTTP attempts | Fix by populating endpoint before shipping v1.1 |
+| Use `tauri-action@v0` without pinning to specific version | Always latest action | Breaking change in tauri-action could silently break release CI | Pin to a specific SHA or tag after verifying it works |
+
+---
+
+## Integration Gotchas (v1.1 additions)
+
+| Integration | Common Mistake | Correct Approach |
+|---|---|---|
+| Tauri updater `pubkey` | Add pubkey from key file but include the full PEM armor | `pubkey` must be the raw base64 public key string only, not PEM format |
+| `endpoints` array | Use the GitHub Releases page URL | Must be the direct asset URL: `.../releases/latest/download/latest.json` (raw download, not page) |
+| `createUpdaterArtifacts` | Set in wrong section (`plugins.updater` instead of `bundle`) | Must be in `bundle: { createUpdaterArtifacts: true }` |
+| `TAURI_SIGNING_PRIVATE_KEY` in CI | Set as regular env var in workflow | Must be a GitHub Actions secret (encrypted); if set as plaintext in yml, it leaks in logs |
+| Upstream merge + `bindings.ts` | Upstream adds new Tauri commands; `bindings.ts` is not regenerated | After merge, if `src-tauri/src/commands/` changed, run a debug build to regenerate `src/bindings.ts` via tauri-specta |
+| Upstream merge + macOS entitlements | Upstream may change `entitlements.plist`; merge keeps old entitlements | Post-merge, `diff src-tauri/entitlements.plist <(git show upstream/main:src-tauri/entitlements.plist)` to check |
+
+---
+
+## "Looks Done But Isn't" Checklist (v1.1)
+
+**Auto-Updater:**
+- [ ] `tauri.conf.json` `bundle.createUpdaterArtifacts` is `true`
+- [ ] `tauri.conf.json` `plugins.updater.pubkey` contains the Dictus Ed25519 public key (not empty string, not Handy's key)
+- [ ] `tauri.conf.json` `plugins.updater.endpoints` points to `https://github.com/[dictus-org]/dictus-desktop/releases/latest/download/latest.json`
+- [ ] `release.yml` `asset-prefix` is `"dictus"` not `"handy"`
+- [ ] `build.yml` default `asset-prefix` is `"dictus"` not `"handy"`
+- [ ] `UpdateChecker.tsx` line 206 portable update button URL points to Dictus releases, not `cjpais/Handy/releases/latest`
+- [ ] GitHub Actions secret `TAURI_SIGNING_PRIVATE_KEY` is set in the repo settings
+- [ ] Private key is backed up outside GitHub (password manager / encrypted file)
+- [ ] A test release was dry-run: `latest.json` is accessible at the configured endpoint URL
+- [ ] Release artifacts include `.sig` files alongside installer files
+
+**Upstream Merge:**
+- [ ] `git diff HEAD upstream/main -- src-tauri/tauri.conf.json` reviewed before merge; Dictus identity fields are NOT overwritten
+- [ ] Post-merge: `grep '"identifier"\|"productName"' src-tauri/tauri.conf.json` shows `com.dictus.desktop` / `Dictus`
+- [ ] Post-merge: `grep '"version"' src-tauri/tauri.conf.json` shows Dictus version (not `0.8.x`)
+- [ ] Post-merge: `grep -r '"Handy"' src/i18n/locales/` returns empty (or only attribution/acknowledgment uses)
+- [ ] Post-merge: `grep -r "cjpais/Handy" src/` returns empty (or only attribution links, not functional endpoints)
+- [ ] `cargo build` succeeds after resolving `Cargo.toml` and `Cargo.lock` conflicts
+- [ ] `[patch.crates-io]` in `Cargo.toml` references intended Tauri fork branch; no duplicate section
+- [ ] `src/bindings.ts` regenerated if any Rust commands changed in upstream merge
+- [ ] All new model URLs from upstream documented (even if still pointing to `blob.handy.computer`)
+
+---
+
+## Recovery Strategies (v1.1)
+
+| Pitfall | Recovery Cost | Recovery Steps |
+|---|---|---|
+| Ed25519 private key lost after first release | CRITICAL — no recovery | Must generate new keypair; existing installs permanently cannot update. Mitigate: include fallback "manual download" link in the update UI |
+| `asset-prefix` wrong in first release | LOW | Change prefix in workflow for next release; existing release artifacts keep old name (no impact on updater if endpoint URL is consistent) |
+| `tauri.conf.json` identity reverted after upstream merge | HIGH if already shipped | Roll back via git revert; if shipped, next release must re-establish `com.dictus.desktop` identifier (data migration required for anyone who received the wrong identifier build) |
+| Upstream version number accepted in merge | MEDIUM | Increment to next intended Dictus version (e.g., `0.2.0`), rebuild, republish; existing installs on wrong version will get "update available" notification |
+| New "Handy" strings slipped in via upstream translation merge | LOW | JSON edit + patch release |
+| `Cargo.lock` regenerated incorrectly | LOW if caught before release | `cargo generate-lockfile` followed by `cargo build` |
+
+---
+
+## Phase-Specific Warnings (v1.1)
+
+| Phase Topic | Likely Pitfall | Mitigation |
+|---|---|---|
+| Ed25519 keypair generation | Generating but not backing up the private key | Generate → immediately store in password manager → add to CI secrets → verify CI build signs artifacts |
+| `tauri.conf.json` updater config | Enabling updater before endpoint is live | Populate `endpoints` only after the first release is published and `latest.json` is accessible |
+| `release.yml` asset prefix fix | Missing the `asset-prefix` default in `build.yml` (there are two places) | Fix both `release.yml` and `build.yml` in the same commit |
+| First upstream merge | Conflict resolution accepting wrong values for identity fields | Write a post-merge checklist; use `grep` assertions as verification |
+| Upstream `bindings.ts` changes | Upstream may have regenerated bindings with new commands; merge may conflict | If `bindings.ts` conflicts, delete it and regenerate with a debug build |
+| Weekly upstream detection action | Upstream remote not configured in CI | Add `git remote add upstream` step explicitly; test action with `workflow_dispatch` before enabling schedule |
+| `Cargo.lock` post-merge | Manual edit of Cargo.lock introduces subtle version conflicts | Never edit Cargo.lock manually; always regenerate |
+
+---
+
+## v1.0 Rebrand Pitfalls (preserved for reference)
+
+The following pitfalls were identified during the v1.0 milestone and are resolved or deferred. Kept here as context.
+
+### Resolved in v1.0
+- **Bundle Identifier:** Changed from `com.pais.handy` to `com.dictus.desktop` before any Dictus distribution.
+- **i18n "Handy" in all 20 locales:** All locale files updated as part of the rebrand.
+- **Visual components (HandyTextLogo, HandyHand):** Replaced with Dictus SVGs.
+- **Windows NSIS signing identity (`cjpais-dev`):** Removed/updated.
+- **About panel URLs:** Updated to Dictus references.
+
+### Still Active / Deferred
+- **Updater endpoint:** Was disabled (empty endpoints). v1.1 must wire this up.
+- **`blob.handy.computer` model CDN:** Still in use, documented as deferred to V3+ (INFR-01).
+- **`cjpais/tauri.git` Cargo patch:** Still active (`handy-2.10.2` branch), documented, deferred.
+- **`handy-keys` crate:** Still used, fallback exists, deferred to V2 risk review.
+- **Binary name `handy`:** Still `Contents/MacOS/handy`, deferred to V3+ (TECH-03).
+- **Portable mode magic string `"Handy Portable Mode"`:** Still present in `portable.rs`, deferred.
+- **CLI `about = "Handy - Speech to Text"`** in `src-tauri/src/cli.rs` line 4: still `handy`, deferred.
 
 ---
 
 ## Sources
 
-- Direct codebase analysis: `tauri.conf.json`, `Cargo.toml`, `src-tauri/src/portable.rs`, `src-tauri/src/managers/model.rs`, `src-tauri/src/shortcut/mod.rs`
-- Translation files: all 20+ locale files in `src/i18n/locales/`
-- Component audit: `src/components/icons/`, `src/components/settings/about/AboutSettings.tsx`, `src/components/update-checker/UpdateChecker.tsx`
-- CI workflow audit: `.github/workflows/build.yml`, `.github/workflows/release.yml`
-- Known concerns: `.planning/codebase/CONCERNS.md`
-- Project scope: `.planning/PROJECT.md`
+- Direct codebase analysis: `tauri.conf.json`, `Cargo.toml`, `release.yml`, `build.yml`, `UpdateChecker.tsx`, `settings.rs`, `lib.rs`, `portable.rs`
+- Tauri v2 updater official docs: https://v2.tauri.app/plugin/updater/
+- Tauri v2 GitHub pipeline docs: https://v2.tauri.app/distribute/pipelines/github/
+- Tauri issue #9565 (InvalidSignature root causes): https://github.com/tauri-apps/tauri/issues/9565
+- Tauri issue #10316 (UnexpectedKeyId root causes): https://github.com/tauri-apps/tauri/issues/10316
+- tauri-action assetNamePattern docs: https://github.com/tauri-apps/tauri-action
+- Git upstream sync state: `git merge-base HEAD upstream/main` = `39e855d` (v0.8.2 release commit); 4 commits ahead on upstream/main, 55 commits ahead on Dictus main
 
 ---
 
-_Pitfalls research for: Tauri 2.x desktop app rebranding (Handy → Dictus Desktop)_
-_Researched: 2026-04-05_
+_Pitfalls research for: Tauri v2 auto-updater + upstream sync (Handy → Dictus Desktop v1.1)_
+_Researched: 2026-04-10_
