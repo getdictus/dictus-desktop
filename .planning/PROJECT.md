@@ -8,6 +8,17 @@ Dictus Desktop est l'application desktop officielle de l'écosystème Dictus —
 
 L'application doit être identifiable et utilisable comme **Dictus Desktop** — pas comme Handy.
 
+## Current Milestone: v1.1 Auto-Update & Upstream Sync
+
+**Goal:** L'app peut se mettre à jour toute seule et on ne décroche pas du upstream Handy.
+
+**Target features:**
+- Auto-updater complet (keypair Ed25519, endpoint GitHub Releases, signature, release workflow fixé)
+- UpdateChecker.tsx corrigé (plus de référence à cjpais/Handy)
+- Premier merge upstream v0.8.0-v0.8.2 (69 commits)
+- GitHub Action weekly pour détecter les nouveaux commits upstream
+- Documentation du fork point et de la stratégie de sync
+
 ## Current State
 
 **Shipped:** v1.0 (2026-04-10)
@@ -36,15 +47,21 @@ Le rebrand Handy→Dictus est complet : bundle identity, visual rebrand (icons, 
 - ✓ README Dictus Desktop avec fork attribution — v1.0
 - ✓ About panel rebrandé avec Handy acknowledgment — v1.0
 
-### Active (V2)
+### Active (v1.1)
+
+- [ ] Auto-updater complet (keypair, endpoint, signature, release workflow)
+- [ ] UpdateChecker.tsx corrigé
+- [ ] Premier merge upstream v0.8.0-v0.8.2
+- [ ] GitHub Action weekly upstream detection
+- [ ] Documentation fork point et sync strategy
+
+### Deferred (V3+)
 
 - [ ] TECH-03: Cargo binary rename handy→dictus
 - [ ] TECH-01: Renommage module handy_keys
 - [ ] INFR-01: CDN modèles Dictus (remplacer blob.handy.computer)
-- [ ] INFR-02: Endpoint auto-updater Dictus
 - [ ] INFR-03: Code signing Dictus (macOS + Windows)
 - [ ] SETT-01: Sections settings renommées
-- [ ] Upstream sync strategy (issue #1)
 
 ### Out of Scope
 
@@ -87,4 +104,4 @@ Le rebrand Handy→Dictus est complet : bundle identity, visual rebrand (icons, 
 
 ---
 
-_Last updated: 2026-04-10 after v1.0 milestone_
+_Last updated: 2026-04-10 after v1.1 milestone start_

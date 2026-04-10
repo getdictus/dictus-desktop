@@ -1,53 +1,49 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: completed
-last_updated: "2026-04-10T15:31:51.972Z"
-last_activity: 2026-04-10 — UAT validation passed, all commits pushed
+milestone: v1.1
+milestone_name: Auto-Update & Upstream Sync
+status: defining_requirements
+last_updated: "2026-04-10T16:00:00.000Z"
+last_activity: 2026-04-10 — Milestone v1.1 started
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 8
-  completed_plans: 8
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-05)
+See: .planning/PROJECT.md (updated 2026-04-10)
 
-**Core value:** The application must be identifiable and usable as Dictus Desktop — not Handy.
-**Status: MILESTONE COMPLETE**
+**Core value:** L'application doit être identifiable et utilisable comme Dictus Desktop — pas comme Handy.
+**Current focus:** Defining requirements for v1.1
 
 ## Current Position
 
-Phase: 3 of 3 — All complete
-Status: Milestone V1 complete, validated, pushed to origin
-Last activity: 2026-04-10 — UAT validation passed, all commits pushed
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-10 — Milestone v1.1 started
 
-Progress: [██████████] 100%
+## Accumulated Context
 
-## Milestone Summary
-
-| Phase | Plans | Status | Completed |
-|-------|-------|--------|-----------|
-| 1. Bundle Identity | 1/1 | Complete | 2026-04-05 |
-| 2. Visual Rebrand | 5/5 | Complete | 2026-04-09 |
-| 3. Documentation & Cleanup | 2/2 | Complete | 2026-04-09 |
-
-### Post-milestone work (same session)
+### From v1.0
 - Overlay redesign: 84px pill, symmetric center→edges waveform, cancel pill
 - Tray icon: black-on-transparent template PNG
 - Handy acknowledgment added to About panel (all 20 locales)
 - Upstream remote added, sync strategy documented (issue #1)
+- Auto-updater disabled (no Dictus endpoint yet)
+- UpdateChecker.tsx still points to cjpais/Handy releases
+- release.yml asset-prefix still uses "handy"
 
-## Deferred to V2
+## Deferred to V3+
 
 - TECH-03: Rename binary from `handy` to `dictus`
-- INFR-01: Migrate VAD model CDN from blob.handy.computer to Dictus-owned
-- UpdateChecker.tsx: points to cjpais/Handy releases (auto-updater disabled)
-- KeyboardImplementationSelector: "Handy Keys" label in debug menu
-- Upstream sync: first manual merge of v0.8.x changes (issue #1)
+- TECH-01: Rename handy_keys module
+- INFR-01: CDN migration (blob.handy.computer → Dictus-owned)
+- INFR-03: Code signing (macOS + Windows)
+- SETT-01: Settings sections renamed
