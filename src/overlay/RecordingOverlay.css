@@ -1,12 +1,12 @@
 .recording-overlay {
-  height: 56px;
+  height: 84px;
   width: 300px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 10px;
+  padding: 10px 12px;
   background: #000000cc;
-  border-radius: 28px;
+  border-radius: 42px;
   opacity: 0;
   transition: opacity 300ms ease-out;
   box-sizing: border-box;
@@ -24,14 +24,14 @@
   align-items: center;
   justify-content: center;
   gap: 2px;
-  height: 40px;
+  height: 64px;
   width: 100%;
 }
 
 .bar {
   width: 6px;
-  min-height: 4px;
-  max-height: 40px;
+  min-height: 2px;
+  max-height: 64px;
   border-radius: 3px;
   flex-shrink: 0;
 }
@@ -59,8 +59,8 @@
 }
 
 .cancel-pill {
-  width: 56px;
-  height: 56px;
+  width: 84px;
+  height: 84px;
   border-radius: 50%;
   background: #000000cc;
   display: flex;

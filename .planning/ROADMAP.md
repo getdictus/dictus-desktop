@@ -14,7 +14,7 @@ Three phases transform the Handy fork into Dictus Desktop. Phase 1 sets the bund
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Bundle Identity** - Set bundle ID, product name, and neutralize inherited Handy build artifacts before any distributed build (completed 2026-04-05)
-- [ ] **Phase 2: Visual Rebrand** - Replace all visible Handy identity with Dictus: icons, design tokens, i18n strings, UI components, and onboarding
+- [x] **Phase 2: Visual Rebrand** - Replace all visible Handy identity with Dictus: icons, design tokens, i18n strings, UI components, and onboarding (completed 2026-04-09)
 - [x] **Phase 3: Documentation and Cleanup** - Rewrite external docs, update internal developer references, and rebrand the in-app About panel (completed 2026-04-09)
 
 ## Phase Details
@@ -48,14 +48,14 @@ Decimal phases appear between their surrounding integers in numeric order.
 3. The app renders Dictus brand colors (blue palette) throughout — no Handy pink/rose palette visible
 4. A first-run user sees onboarding with Dictus name, logo, and tone — no Handy references
 5. The force language control presents "Auto / Français / English" choices clearly and the selected behavior is consistent with the label
-   **Plans:** 4/5 plans complete
+   **Plans:** 5/5 plans complete
    Plans:
 
 - [x] 02-01-PLAN.md — Generate Dictus platform icons and swap design tokens from pink to blue
 - [x] 02-02-PLAN.md — Create DictusLogo and DictusWaveformIcon, replace in Sidebar and Onboarding
 - [x] 02-03-PLAN.md — Replace all Handy references in i18n locale files (en, es, fr, vi)
 - [x] 02-04-PLAN.md — Redesign recording overlay with 18-bar waveform and iOS-style animations
-- [ ] 02-05-PLAN.md — [GAP] Replace Handy references in 16 remaining locale files (VISU-04)
+- [x] 02-05-PLAN.md — [GAP] Replace Handy references in 16 remaining locale files (VISU-04)
 
 ### Phase 3: Documentation and Cleanup
 
@@ -70,8 +70,8 @@ Decimal phases appear between their surrounding integers in numeric order.
    **Plans:** 2/2 plans complete
    Plans:
 
-- [ ] 03-01-PLAN.md — Rewrite README.md and update CLAUDE.md/BUILD.md to remove Handy branding
-- [ ] 03-02-PLAN.md — Rebrand About panel with Dictus URLs, privacy policy, and ecosystem sections
+- [x] 03-01-PLAN.md — Rewrite README.md and update CLAUDE.md/BUILD.md to remove Handy branding
+- [x] 03-02-PLAN.md — Rebrand About panel with Dictus URLs, privacy policy, and ecosystem sections
 
 ## Progress
 
@@ -81,5 +81,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | Phase                        | Plans Complete | Status      | Completed  |
 | ---------------------------- | -------------- | ----------- | ---------- |
 | 1. Bundle Identity           | 1/1            | Complete    | 2026-04-05 |
-| 2. Visual Rebrand            | 4/5            | In Progress | -          |
+| 2. Visual Rebrand            | 5/5            | Complete    | 2026-04-09 |
 | 3. Documentation and Cleanup | 2/2 | Complete   | 2026-04-09 |

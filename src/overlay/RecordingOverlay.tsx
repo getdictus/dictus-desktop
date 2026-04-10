@@ -9,19 +9,37 @@ import { getLanguageDirection } from "@/lib/utils/rtl";
 
 type OverlayState = "recording" | "transcribing" | "processing";
 
-const BAR_COUNT = 32;
+const BAR_COUNT = 30;
 
 function interpolateLevels(source: number[], barCount: number): number[] {
   if (source.length === 0) return Array(barCount).fill(0);
-  return Array.from({ length: barCount }, (_, index) => {
-    const position = index / Math.max(barCount - 1, 1);
-    const arrayIndex = position * (source.length - 1);
-    const lower = Math.floor(arrayIndex);
-    const upper = Math.min(lower + 1, source.length - 1);
-    const fraction = arrayIndex - lower;
-    const value = source[lower] * (1 - fraction) + source[upper] * fraction;
-    return value < 0.05 ? 0 : Math.min(Math.max(value, 0), 1);
+
+  // Compute overall energy (weighted toward low freq = voice)
+  let weightedSum = 0;
+  let weightTotal = 0;
+  for (let i = 0; i < source.length; i++) {
+    const weight = 1.0 - (i / source.length) * 0.5;
+    weightedSum += source[i] * source[i] * weight;
+    weightTotal += weight;
+  }
+  const energy = Math.min(Math.sqrt(weightedSum / weightTotal) * 8.0, 1.0);
+
+  // Per-bar random multiplier for organic variation (different each bar, each frame)
+  const center = (barCount - 1) / 2;
+  const result = Array.from({ length: barCount }, (_, i) => {
+    const distFromCenter = Math.abs(i - center) / center;
+    // Envelope: 2/3 center = full, edges drop off
+    const envelope =
+      distFromCenter < 0.65
+        ? 1.0
+        : 1.0 - ((distFromCenter - 0.65) / 0.35) * 0.8;
+    // Random variation per bar: 0.5 to 1.0 — makes each bar different height
+    const randomFactor = 0.5 + Math.random() * 0.5;
+    const value = energy * envelope * randomFactor;
+    return value < 0.02 ? 0 : Math.min(value, 1);
   });
+
+  return result;
 }
 
 function tickLevels(current: number[], targets: number[]): number[] {
@@ -29,9 +47,9 @@ function tickLevels(current: number[], targets: number[]): number[] {
     const target = targets[i] ?? 0;
     let next: number;
     if (target > prev) {
-      next = prev + (target - prev) * 0.3; // rise: smooth
+      next = prev + (target - prev) * 0.7; // fast attack = minimal perceived delay
     } else {
-      next = target + (prev - target) * 0.85; // fall: decay
+      next = target + (prev - target) * 0.85;
     }
     return next < 0.005 ? 0 : next;
   });
@@ -51,7 +69,7 @@ function getBarColor(index: number, barCount: number): string {
   const center = (barCount - 1) / 2;
   const distanceFromCenter = Math.abs(index - center) / center;
   if (distanceFromCenter < 0.4) {
-    return "#6BA3FF"; // blue gradient — inner 40%
+    return "#6BA3FF";
   }
   const opacity = (1.0 - distanceFromCenter) * 0.9 + 0.15;
   return `rgba(255,255,255,${opacity.toFixed(2)})`;
@@ -71,32 +89,26 @@ const RecordingOverlay: React.FC = () => {
 
   useEffect(() => {
     const setupEventListeners = async () => {
-      // Listen for show-overlay event from Rust
       const unlistenShow = await listen("show-overlay", async (event) => {
-        // Sync language from settings each time overlay is shown
         await syncLanguageFromSettings();
         const overlayState = event.payload as OverlayState;
         setState(overlayState);
-        // Reset animation state on show
         phaseRef.current = 0;
         smoothedLevelsRef.current = Array(BAR_COUNT).fill(0);
         targetLevelsRef.current = Array(BAR_COUNT).fill(0);
         setIsVisible(true);
       });
 
-      // Listen for hide-overlay event from Rust
       const unlistenHide = await listen("hide-overlay", () => {
         cancelAnimationFrame(rafIdRef.current);
         setIsVisible(false);
       });
 
-      // Listen for mic-level updates — store interpolated targets
       const unlistenLevel = await listen<number[]>("mic-level", (event) => {
         const raw = event.payload as number[];
         targetLevelsRef.current = interpolateLevels(raw, BAR_COUNT);
       });
 
-      // Cleanup function
       return () => {
         unlistenShow();
         unlistenHide();
@@ -107,7 +119,6 @@ const RecordingOverlay: React.FC = () => {
     setupEventListeners();
   }, []);
 
-  // Animation loop — runs when visible
   useEffect(() => {
     if (!isVisible) return;
 
@@ -121,8 +132,8 @@ const RecordingOverlay: React.FC = () => {
       if (state === "recording") {
         targets = targetLevelsRef.current;
       } else {
-        // transcribing or processing: sine wave animation
-        phaseRef.current += dt * 0.5;
+        // Sine wave at 2x iOS speed (1 cycle/sec instead of 0.5)
+        phaseRef.current += dt * 1.0;
         targets = Array.from({ length: BAR_COUNT }, (_, i) =>
           processingEnergy(i, BAR_COUNT, phaseRef.current),
         );
@@ -156,7 +167,7 @@ const RecordingOverlay: React.FC = () => {
                   key={i}
                   className="bar"
                   style={{
-                    height: `${Math.max(4, v * 40)}px`,
+                    height: `${Math.max(2, v * 64)}px`,
                     backgroundColor: getBarColor(i, BAR_COUNT),
                   }}
                 />
@@ -176,7 +187,7 @@ const RecordingOverlay: React.FC = () => {
             commands.cancelOperation();
           }}
         >
-          <CancelIcon width={22} height={22} />
+          <CancelIcon width={38} height={38} />
         </div>
       )}
     </div>
