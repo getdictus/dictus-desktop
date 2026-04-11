@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Auto-Update & Upstream Sync
 status: planning
-stopped_at: Completed 04-02-PLAN.md
-last_updated: "2026-04-11T14:12:45.952Z"
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-04-11T14:14:26.725Z"
 last_activity: 2026-04-10 — Roadmap v1.1 created
 progress:
   total_phases: 2
   completed_phases: 0
   total_plans: 4
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -45,6 +45,7 @@ Progress: [░░░░░░░░░░] 0%
 |-------|-------|-------|----------|
 | 1-3 (v1.0) | 8 | - | - |
 | Phase 04-updater-infrastructure P02 | 1 | 2 tasks | 3 files |
+| Phase 04-updater-infrastructure P01 | 15 | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -55,6 +56,8 @@ Progress: [░░░░░░░░░░] 0%
 - v1.1: Upstream delta is 4 commits (not 69) — merge-base is 39e855d, not the full fork point delta
 - [Phase 04-updater-infrastructure]: TECH-03 (binary rename Contents/MacOS/handy) deferred post-v1.1; inline comment protects against accidental rename
 - [Phase 04-updater-infrastructure]: includeUpdaterJson: true added to tauri-action — auto-generates latest.json per release without extra CI steps
+- [Phase 04-01]: Wave 0 pattern: validate.sh intentionally expected to FAIL on current codebase; Plans 02 and 03 make it green
+- [Phase 04-01]: TECH-03 anti-regression check uses simple grep -B5 form (no awk) for debuggability
 
 ### Pending Todos
 
@@ -68,6 +71,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-11T14:12:45.950Z
-Stopped at: Completed 04-02-PLAN.md
+Last session: 2026-04-11T14:14:26.723Z
+Stopped at: Completed 04-01-PLAN.md
 Resume file: None
