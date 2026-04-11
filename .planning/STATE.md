@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Auto-Update & Upstream Sync
 status: planning
-stopped_at: Phase 4 context gathered
-last_updated: "2026-04-11T12:13:21.954Z"
+stopped_at: Completed 04-02-PLAN.md
+last_updated: "2026-04-11T14:12:45.952Z"
 last_activity: 2026-04-10 — Roadmap v1.1 created
 progress:
   total_phases: 2
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 4
+  completed_plans: 1
   percent: 0
 ---
 
@@ -44,6 +44,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1-3 (v1.0) | 8 | - | - |
+| Phase 04-updater-infrastructure P02 | 1 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -52,6 +53,8 @@ Progress: [░░░░░░░░░░] 0%
 - v1.0: Auto-updater disabled — no Dictus endpoint existed
 - v1.0: release.yml asset-prefix left as "handy" — deferred to v1.1
 - v1.1: Upstream delta is 4 commits (not 69) — merge-base is 39e855d, not the full fork point delta
+- [Phase 04-updater-infrastructure]: TECH-03 (binary rename Contents/MacOS/handy) deferred post-v1.1; inline comment protects against accidental rename
+- [Phase 04-updater-infrastructure]: includeUpdaterJson: true added to tauri-action — auto-generates latest.json per release without extra CI steps
 
 ### Pending Todos
 
@@ -65,6 +68,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-11T12:13:21.951Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-updater-infrastructure/04-CONTEXT.md
+Last session: 2026-04-11T14:12:45.950Z
+Stopped at: Completed 04-02-PLAN.md
+Resume file: None

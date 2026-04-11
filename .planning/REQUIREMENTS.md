@@ -14,10 +14,10 @@ Requirements for milestone v1.1 (Auto-Update & Upstream Sync). Each maps to road
 - [ ] **UPDT-03**: `tauri.conf.json` is configured with Ed25519 public key in `plugins.updater.pubkey`
 - [ ] **UPDT-04**: `tauri.conf.json` is configured with GitHub Releases `latest.json` endpoint in `plugins.updater.endpoints`
 - [ ] **UPDT-05**: `tauri.conf.json` has `createUpdaterArtifacts: true` in `bundle` section
-- [ ] **UPDT-06**: `release.yml` asset-prefix changed from `"handy"` to `"dictus"`
-- [ ] **UPDT-07**: `build.yml` asset-prefix changed from `"handy"` to `"dictus"`
-- [ ] **UPDT-08**: `build.yml` has `includeUpdaterJson: true` in tauri-action config
-- [ ] **UPDT-09**: `UpdateChecker.tsx` fallback URL points to `getdictus/dictus-desktop` releases (not `cjpais/Handy`)
+- [x] **UPDT-06**: `release.yml` asset-prefix changed from `"handy"` to `"dictus"`
+- [x] **UPDT-07**: `build.yml` asset-prefix changed from `"handy"` to `"dictus"`
+- [x] **UPDT-08**: `build.yml` has `includeUpdaterJson: true` in tauri-action config
+- [x] **UPDT-09**: `UpdateChecker.tsx` fallback URL points to `getdictus/dictus-desktop` releases (not `cjpais/Handy`)
 - [ ] **UPDT-10**: A dry-run release validates that `latest.json` is generated and accessible on GitHub Releases
 
 ### Upstream Sync
@@ -71,10 +71,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UPDT-03 | Phase 4 | Pending |
 | UPDT-04 | Phase 4 | Pending |
 | UPDT-05 | Phase 4 | Pending |
-| UPDT-06 | Phase 4 | Pending |
-| UPDT-07 | Phase 4 | Pending |
-| UPDT-08 | Phase 4 | Pending |
-| UPDT-09 | Phase 4 | Pending |
+| UPDT-06 | Phase 4 | Complete |
+| UPDT-07 | Phase 4 | Complete |
+| UPDT-08 | Phase 4 | Complete |
+| UPDT-09 | Phase 4 | Complete |
 | UPDT-10 | Phase 4 | Pending |
 | SYNC-01 | Phase 5 | Pending |
 | SYNC-02 | Phase 5 | Pending |
