@@ -25,7 +25,7 @@
   },
   "bundle": {
     "active": true,
-    "createUpdaterArtifacts": false,
+    "createUpdaterArtifacts": true,
     "targets": "all",
     "resources": ["resources/**/*"],
     "license": "MIT",
@@ -65,8 +65,10 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "",
-      "endpoints": []
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDczQ0M5QzAyNDA2QzVBNzYKUldSMldteEFBcHpNYzZjaHRGOGV2QkZkUGwrYSswU3NKbkw0MmF4R1cxOW1yYkxaakNUazNNR0UK",
+      "endpoints": [
+        "https://github.com/getdictus/dictus-desktop/releases/latest/download/latest.json"
+      ]
     }
   }
 }
