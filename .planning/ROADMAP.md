@@ -35,7 +35,11 @@
   3. `release.yml` and `build.yml` both use `asset-prefix: "dictus"` and `build.yml` has `includeUpdaterJson: true`
   4. `UpdateChecker.tsx` fallback URL references `getdictus/dictus-desktop` (not `cjpais/Handy`)
   5. A dry-run release produces a `latest.json` file that is accessible on GitHub Releases
-**Plans**: TBD
+**Plans**: 4 plans
+- [ ] 04-01-PLAN.md — Wave 0 infra: runbook + validator script + UPDT-10 curl wrapper (Wave 1)
+- [ ] 04-02-PLAN.md — CI text fixes: asset-prefix, includeUpdaterJson, TECH-03 comment, UpdateChecker URL (Wave 1)
+- [ ] 04-03-PLAN.md — Keypair generation + GitHub Secrets + tauri.conf.json updater config (Wave 2, depends on 04-01)
+- [ ] 04-04-PLAN.md — Dry-run release trigger + UPDT-10 curl assertion (Wave 3, depends on 04-01/02/03)
 
 ### Phase 5: Upstream Sync
 **Goal**: New upstream Handy commits are detected automatically each week and the current delta (4 commits) is merged into a dedicated branch with identity integrity verified
@@ -56,5 +60,5 @@
 | 1. Bundle Identity | v1.0 | 1/1 | Complete | 2026-04-05 |
 | 2. Visual Rebrand | v1.0 | 5/5 | Complete | 2026-04-09 |
 | 3. Documentation and Cleanup | v1.0 | 2/2 | Complete | 2026-04-09 |
-| 4. Updater Infrastructure | v1.1 | 0/? | Not started | - |
+| 4. Updater Infrastructure | v1.1 | 0/4 | Planned | - |
 | 5. Upstream Sync | v1.1 | 0/? | Not started | - |
