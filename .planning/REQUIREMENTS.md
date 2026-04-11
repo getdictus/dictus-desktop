@@ -11,9 +11,9 @@ Requirements for milestone v1.1 (Auto-Update & Upstream Sync). Each maps to road
 
 - [x] **UPDT-01**: Developer can generate Ed25519 keypair using `bunx tauri signer generate` and back up private key securely
 - [x] **UPDT-02**: Developer can add `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` to GitHub Secrets
-- [ ] **UPDT-03**: `tauri.conf.json` is configured with Ed25519 public key in `plugins.updater.pubkey`
-- [ ] **UPDT-04**: `tauri.conf.json` is configured with GitHub Releases `latest.json` endpoint in `plugins.updater.endpoints`
-- [ ] **UPDT-05**: `tauri.conf.json` has `createUpdaterArtifacts: true` in `bundle` section
+- [x] **UPDT-03**: `tauri.conf.json` is configured with Ed25519 public key in `plugins.updater.pubkey`
+- [x] **UPDT-04**: `tauri.conf.json` is configured with GitHub Releases `latest.json` endpoint in `plugins.updater.endpoints`
+- [x] **UPDT-05**: `tauri.conf.json` has `createUpdaterArtifacts: true` in `bundle` section
 - [x] **UPDT-06**: `release.yml` asset-prefix changed from `"handy"` to `"dictus"`
 - [x] **UPDT-07**: `build.yml` asset-prefix changed from `"handy"` to `"dictus"`
 - [x] **UPDT-08**: `build.yml` has `includeUpdaterJson: true` in tauri-action config
@@ -68,9 +68,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | UPDT-01 | Phase 4 | Complete |
 | UPDT-02 | Phase 4 | Complete |
-| UPDT-03 | Phase 4 | Pending |
-| UPDT-04 | Phase 4 | Pending |
-| UPDT-05 | Phase 4 | Pending |
+| UPDT-03 | Phase 4 | Complete |
+| UPDT-04 | Phase 4 | Complete |
+| UPDT-05 | Phase 4 | Complete |
 | UPDT-06 | Phase 4 | Complete |
 | UPDT-07 | Phase 4 | Complete |
 | UPDT-08 | Phase 4 | Complete |
