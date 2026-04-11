@@ -66,27 +66,27 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| UPDT-01 | — | Pending |
-| UPDT-02 | — | Pending |
-| UPDT-03 | — | Pending |
-| UPDT-04 | — | Pending |
-| UPDT-05 | — | Pending |
-| UPDT-06 | — | Pending |
-| UPDT-07 | — | Pending |
-| UPDT-08 | — | Pending |
-| UPDT-09 | — | Pending |
-| UPDT-10 | — | Pending |
-| SYNC-01 | — | Pending |
-| SYNC-02 | — | Pending |
-| SYNC-03 | — | Pending |
-| SYNC-04 | — | Pending |
-| SYNC-05 | — | Pending |
+| UPDT-01 | Phase 4 | Pending |
+| UPDT-02 | Phase 4 | Pending |
+| UPDT-03 | Phase 4 | Pending |
+| UPDT-04 | Phase 4 | Pending |
+| UPDT-05 | Phase 4 | Pending |
+| UPDT-06 | Phase 4 | Pending |
+| UPDT-07 | Phase 4 | Pending |
+| UPDT-08 | Phase 4 | Pending |
+| UPDT-09 | Phase 4 | Pending |
+| UPDT-10 | Phase 4 | Pending |
+| SYNC-01 | Phase 5 | Pending |
+| SYNC-02 | Phase 5 | Pending |
+| SYNC-03 | Phase 5 | Pending |
+| SYNC-04 | Phase 5 | Pending |
+| SYNC-05 | Phase 5 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 15 total
-- Mapped to phases: 0
-- Unmapped: 15
+- Mapped to phases: 15
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-10*
-*Last updated: 2026-04-10 after initial definition*
+*Last updated: 2026-04-10 after roadmap creation*
