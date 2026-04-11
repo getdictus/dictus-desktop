@@ -19,7 +19,7 @@ on:
       asset-prefix:
         required: false
         type: string
-        default: "handy"
+        default: "dictus"
       asset-name-pattern:
         required: false
         type: string
@@ -368,7 +368,12 @@ jobs:
           releaseId: ${{ inputs.release-id }}
           assetNamePattern: ${{ steps.patch-release-name.outputs.platform }}
           args: ${{ inputs.build-args }}
+          includeUpdaterJson: true
 
+      # NOTE: The binary is named 'handy' (not 'dictus') because TECH-03 (binary rename)
+      # is deferred post-v1.1 per .planning/phases/04-updater-infrastructure/04-CONTEXT.md.
+      # Do NOT change 'Contents/MacOS/handy' below to 'Contents/MacOS/dictus' until TECH-03
+      # is explicitly un-deferred. Also keep the '|| true' tolerance on the `otool` calls.
       - name: Verify macOS dylib bundling
         if: inputs.target == 'x86_64-apple-darwin'
         shell: bash
