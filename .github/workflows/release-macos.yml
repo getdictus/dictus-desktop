@@ -6,9 +6,12 @@ on:
       - 'v*'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-macos:
-    runs-on: macos-14  # Apple Silicon M1
+    runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
 
