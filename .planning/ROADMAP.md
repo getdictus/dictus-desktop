@@ -20,7 +20,7 @@
 
 **Milestone Goal:** L'app peut se mettre à jour toute seule et on ne décroche pas du upstream Handy.
 
-- [ ] **Phase 4: Updater Infrastructure** - Wire Ed25519 keypair, tauri.conf.json config, CI fixes, and URL fix; validate with dry-run release
+- [x] **Phase 4: Updater Infrastructure** - Wire Ed25519 keypair, tauri.conf.json config, CI fixes, and URL fix; validate with dry-run release (completed 2026-04-13)
 - [ ] **Phase 5: Upstream Sync** - Weekly detection action, UPSTREAM.md, 4-commit merge, post-merge checklist
 
 ## Phase Details
@@ -60,5 +60,5 @@
 | 1. Bundle Identity | v1.0 | 1/1 | Complete | 2026-04-05 |
 | 2. Visual Rebrand | v1.0 | 5/5 | Complete | 2026-04-09 |
 | 3. Documentation and Cleanup | v1.0 | 2/2 | Complete | 2026-04-09 |
-| 4. Updater Infrastructure | 2/4 | In Progress|  | - |
+| 4. Updater Infrastructure | 4/4 | Complete   | 2026-04-13 | - |
 | 5. Upstream Sync | v1.1 | 0/? | Not started | - |

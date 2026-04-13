@@ -18,7 +18,7 @@ Requirements for milestone v1.1 (Auto-Update & Upstream Sync). Each maps to road
 - [x] **UPDT-07**: `build.yml` asset-prefix changed from `"handy"` to `"dictus"`
 - [x] **UPDT-08**: `build.yml` has `includeUpdaterJson: true` in tauri-action config
 - [x] **UPDT-09**: `UpdateChecker.tsx` fallback URL points to `getdictus/dictus-desktop` releases (not `cjpais/Handy`)
-- [ ] **UPDT-10**: A dry-run release validates that `latest.json` is generated and accessible on GitHub Releases
+- [x] **UPDT-10**: A dry-run release validates that `latest.json` is generated and accessible on GitHub Releases
 
 ### Upstream Sync
 
@@ -75,7 +75,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UPDT-07 | Phase 4 | Complete |
 | UPDT-08 | Phase 4 | Complete |
 | UPDT-09 | Phase 4 | Complete |
-| UPDT-10 | Phase 4 | Pending |
+| UPDT-10 | Phase 4 | Complete |
 | SYNC-01 | Phase 5 | Pending |
 | SYNC-02 | Phase 5 | Pending |
 | SYNC-03 | Phase 5 | Pending |

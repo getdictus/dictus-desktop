@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Auto-Update & Upstream Sync
-status: executing
-stopped_at: Completed 04-03-PLAN.md
-last_updated: "2026-04-11T14:44:23.491Z"
-last_activity: "2026-04-11 — Plan 04-03 complete: updater signing keypair + tauri.conf.json wired"
+status: completed
+stopped_at: Completed 04-04-PLAN.md
+last_updated: "2026-04-13T20:47:17.076Z"
+last_activity: "2026-04-13 — Plan 04-04 complete: v0.1.0 published, UPDT-10 validated, all Phase 4 requirements green"
 progress:
   total_phases: 2
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 4
-  completed_plans: 3
-  percent: 75
+  completed_plans: 4
+  percent: 100
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-10)
 
 ## Current Position
 
-Phase: 4 of 5 (Updater Infrastructure)
-Plan: 3 of 4 complete (Plan 04-03 — Updater Signing Keypair + Config — shipped)
-Status: In progress — Plan 04-04 (dry-run release) is the next plan
-Last activity: 2026-04-11 — Plan 04-03 complete: updater signing keypair + tauri.conf.json wired
+Phase: 4 of 5 (Updater Infrastructure) — COMPLETE
+Plan: 4 of 4 complete (Plan 04-04 — Dry-Run Release v0.1.0 — shipped)
+Status: Phase 4 complete — Phase 5 (Upstream Sync) is next
+Last activity: 2026-04-13 — Plan 04-04 complete: v0.1.0 published, UPDT-10 validated, all Phase 4 requirements green
 
-Progress: [████████░░] 75%
+Progress: [██████████] 100% (Phase 4)
 
 ## Performance Metrics
 
@@ -64,6 +64,8 @@ Progress: [████████░░] 75%
 - [Phase 04-03]: Updater endpoint uses direct asset download URL (releases/latest/download/latest.json), NOT the HTML releases page URL.
 - [Phase 04-03]: Task 3 executed in parallel with Task 2 (GitHub Secrets entry) because Task 3 has zero runtime dependency on the secrets — secrets only matter at CI build time.
 - [Phase 04-03]: iCloud Drive `age -p` encrypted offline backup accepted in lieu of yubikey-age recipient wrap. Revisit if/when yubikey-age setup exists.
+- [Phase 04-updater-infrastructure]: latest.json has 18 platform entries (not 7) — tauri-action creates one entry per bundle format per architecture; all 7 build matrix targets are represented
+- [Phase 04-updater-infrastructure]: Windows builds unsigned at OS level (Authenticode) for v0.1.0 — Azure Trusted Signing not yet set up; Ed25519 .sig files present for tauri-updater, SmartScreen warning expected on first install
 
 ### Pending Todos
 
@@ -78,6 +80,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-11T14:44:23.489Z
-Stopped at: Completed 04-03-PLAN.md
+Last session: 2026-04-13T20:47:17.074Z
+Stopped at: Completed 04-04-PLAN.md
 Resume file: None
