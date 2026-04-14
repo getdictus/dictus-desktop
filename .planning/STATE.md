@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Auto-Update & Upstream Sync
-status: completed
-stopped_at: "Completed 05-03-PLAN.md — Sync #1 branch pushed, PR #3 opened, verify-sync.sh green"
-last_updated: "2026-04-14T20:08:03.683Z"
-last_activity: "2026-04-13 — Plan 04-04 complete: v0.1.0 published, UPDT-10 validated, all Phase 4 requirements green"
+status: archived
+stopped_at: "v1.1 archived — tagged, MILESTONES.md updated, REQUIREMENTS.md deleted for next milestone"
+last_updated: "2026-04-14T21:00:00.000Z"
+last_activity: "2026-04-14 — v1.1 milestone archived; audit status tech_debt; next milestone TBD via /gsd:new-milestone"
 progress:
   total_phases: 2
   completed_phases: 2
@@ -18,19 +18,18 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-10)
+See: .planning/PROJECT.md (updated 2026-04-14 after v1.1 milestone completion)
 
-**Core value:** L'application doit être identifiable et utilisable comme Dictus Desktop — pas comme Handy.
-**Current focus:** Phase 4 — Updater Infrastructure
+**Core value:** L'application doit être identifiable et utilisable comme Dictus Desktop — pas comme Handy — et rester vivante (updates automatiques) sans décrocher du upstream Handy.
+**Current focus:** Planning next milestone (v1.2 TBD via `/gsd:new-milestone`)
 
 ## Current Position
 
-Phase: 4 of 5 (Updater Infrastructure) — COMPLETE
-Plan: 4 of 4 complete (Plan 04-04 — Dry-Run Release v0.1.0 — shipped)
-Status: Phase 4 complete — Phase 5 (Upstream Sync) is next
-Last activity: 2026-04-13 — Plan 04-04 complete: v0.1.0 published, UPDT-10 validated, all Phase 4 requirements green
+Milestone: v1.1 ARCHIVED (2026-04-14) — tagged `v1.1`
+Status: Ready for next milestone. No active phase.
+Last activity: 2026-04-14 — v1.1 milestone archived; audit status tech_debt (non-blocking); next milestone TBD
 
-Progress: [██████████] 100% (Phase 4)
+Progress: [██████████] 100% (v1.1 shipped)
 
 ## Performance Metrics
 
@@ -80,13 +79,19 @@ None yet.
 
 ### Blockers/Concerns
 
-- Phase 4: Ed25519 private key must be backed up before first release — no recovery path if lost ✅ RESOLVED by Plan 04-03 (Bitwarden x2 + iCloud age -p backup, local deleted)
-- Phase 4: Repo must be public for GitHub Releases endpoint to work as updater source — still PRIVATE, pre-flight gate for Plan 04-04 Task 1
-- Phase 4: validate.sh anti-regression check for TECH-03 comment fails — pre-existing Plan 04-01 scope issue, logged to `.planning/phases/04-updater-infrastructure/deferred-items.md`, suggested fix is one-line `-B5` → `-B12`
-- Phase 5: `upstream-sync` label created 2026-04-14 via `gh label create` — blocker resolved
+Carried into next milestone from v1.1 audit (`tech_debt` items):
+- UPSTREAM.md §6 post-sync gate missing UPDT-03/UPDT-05 re-assertion — regression risk before Sync #2
+- Phase 5 VALIDATION.md draft → run `/gsd:validate-phase 5` to close Nyquist coverage
+- `blob.handy.computer` CDN still used for onnxruntime (INFR-01)
+- Windows builds unsigned at OS level — Azure Trusted Signing pending (INFR-03)
+
+Human verification still outstanding:
+- Confirm v0.1.0 release assets all prefixed `dictus_` (27 assets)
+- Trigger `upstream-sync.yml` with upstream==upstream-sha.txt → verify `changed=false` branch
+- Post Sync #2, confirm no duplicate issue on subsequent Monday cron
 
 ## Session Continuity
 
-Last session: 2026-04-14T15:34:46.663Z
-Stopped at: Completed 05-03-PLAN.md — Sync #1 branch pushed, PR #3 opened, verify-sync.sh green
+Last session: 2026-04-14T21:00:00.000Z
+Stopped at: v1.1 archived — next step is /gsd:new-milestone
 Resume file: None
