@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Auto-Update & Upstream Sync
 status: completed
-stopped_at: Completed 05-01-PLAN.md — upstream-sync detection infra + label confirmed
-last_updated: "2026-04-14T08:12:26.194Z"
+stopped_at: "Completed 05-03-PLAN.md — Sync #1 branch pushed, PR #3 opened, verify-sync.sh green"
+last_updated: "2026-04-14T15:34:46.665Z"
 last_activity: "2026-04-13 — Plan 04-04 complete: v0.1.0 published, UPDT-10 validated, all Phase 4 requirements green"
 progress:
   total_phases: 2
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 7
-  completed_plans: 6
+  completed_plans: 7
   percent: 100
 ---
 
@@ -48,6 +48,7 @@ Progress: [██████████] 100% (Phase 4)
 | Phase 04-updater-infrastructure P02 | 1 | 2 tasks | 3 files |
 | Phase 04-updater-infrastructure P01 | 15 | 3 tasks | 3 files |
 | Phase 05-upstream-sync P02 | 1 | 1 tasks | 1 files |
+| Phase 05-upstream-sync P03 | 25min | 2 tasks | 27 files |
 
 ## Accumulated Context
 
@@ -70,6 +71,8 @@ Progress: [██████████] 100% (Phase 4)
 - [Phase 05-upstream-sync]: upstream-sha.txt updated only on merge-to-main (not on issue creation) — premature update would make weekly action report false idempotency before work is done (Pitfall 2)
 - [Phase 05-upstream-sync]: SYNC-05d i18n check uses awk to skip acknowledgments block — legitimate attribution to Handy upstream project must not fail identity regression check
 - [Phase 05-upstream-sync]: UPSTREAM.md placed at repo root alongside README.md for maximum visibility; copy-paste runbook codifies conflict rules for all 9 hot zones and Pitfalls 1/2/6
+- [Phase 05-upstream-sync]: Capped merge at fdc8cb7 (not upstream/main HEAD aee682f) — 4 researched commits only, 6 deferred to Sync #2
+- [Phase 05-upstream-sync]: AWS Bedrock commit (aee682f) excluded per local-first philosophy — flagged for Sync #2 discussion
 
 ### Pending Todos
 
@@ -84,6 +87,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-14T08:12:26.192Z
-Stopped at: Completed 05-01-PLAN.md — upstream-sync detection infra + label confirmed
+Last session: 2026-04-14T15:34:46.663Z
+Stopped at: Completed 05-03-PLAN.md — Sync #1 branch pushed, PR #3 opened, verify-sync.sh green
 Resume file: None

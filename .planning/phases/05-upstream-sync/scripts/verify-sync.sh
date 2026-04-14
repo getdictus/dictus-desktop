@@ -44,8 +44,8 @@ check "SYNC-05g no handy.computer reference in actions.rs" \
 check "SYNC-05h no handy.computer reference in llm_client.rs" \
   "! grep 'handy\.computer' src-tauri/src/llm_client.rs"
 
-check "SYNC-05i no handy.log comment in actions.rs (Pitfall 6)" \
-  "! grep -i 'handy\.log' src-tauri/src/actions.rs"
+check "SYNC-05i no handy.log reference in source code (Pitfall 6)" \
+  "! grep -rn 'handy\.log' src/ src-tauri/src/ 2>/dev/null"
 
 check "SYNC-05j cargo build succeeds" \
   "cargo build --manifest-path src-tauri/Cargo.toml 2>&1"
