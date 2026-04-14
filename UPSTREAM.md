@@ -192,8 +192,13 @@ git add README.md
 ### 5. Finalize the merge
 
 ```bash
-# Update upstream-sha.txt to the new upstream HEAD
+# Update upstream-sha.txt to the new upstream HEAD (full 40-char SHA)
+# MUST be full SHA — the detection workflow compares against `git rev-parse upstream/main`
+# which always returns 40 chars. Short SHAs produce a permanent false-positive.
 git rev-parse upstream/main > .github/upstream-sha.txt
+
+# If you capped the merge at a specific SHA (not upstream HEAD), use that SHA's full form:
+#   git rev-parse <cap-sha> > .github/upstream-sha.txt
 
 # Stage all resolved files
 git add -A

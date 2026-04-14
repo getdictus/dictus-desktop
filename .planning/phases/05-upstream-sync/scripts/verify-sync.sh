@@ -50,6 +50,9 @@ check "SYNC-05i no handy.log reference in source code (Pitfall 6)" \
 check "SYNC-05j cargo build succeeds" \
   "cargo build --manifest-path src-tauri/Cargo.toml 2>&1"
 
+check "SYNC-05k upstream-sha.txt is full 40-char SHA" \
+  "[ \$(tr -d '[:space:]' < .github/upstream-sha.txt | wc -c) -eq 40 ]"
+
 echo
 if [ $FAIL -eq 0 ]; then
   echo "All Phase 5 checks passed."
