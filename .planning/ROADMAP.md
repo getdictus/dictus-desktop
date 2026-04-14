@@ -64,4 +64,4 @@
 | 2. Visual Rebrand | v1.0 | 5/5 | Complete | 2026-04-09 |
 | 3. Documentation and Cleanup | v1.0 | 2/2 | Complete | 2026-04-09 |
 | 4. Updater Infrastructure | 4/4 | Complete   | 2026-04-13 | - |
-| 5. Upstream Sync | v1.1 | 0/3 | Not started | - |
+| 5. Upstream Sync | 1/3 | In Progress|  | - |

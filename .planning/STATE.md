@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Auto-Update & Upstream Sync
 status: completed
-stopped_at: Phase 5 context gathered
-last_updated: "2026-04-13T22:13:04.482Z"
+stopped_at: "Checkpoint: Task 3 of 05-01-PLAN.md — awaiting upstream-sync label verification"
+last_updated: "2026-04-14T07:52:46.578Z"
 last_activity: "2026-04-13 — Plan 04-04 complete: v0.1.0 published, UPDT-10 validated, all Phase 4 requirements green"
 progress:
   total_phases: 2
   completed_phases: 1
-  total_plans: 4
-  completed_plans: 4
+  total_plans: 7
+  completed_plans: 5
   percent: 100
 ---
 
@@ -66,6 +66,8 @@ Progress: [██████████] 100% (Phase 4)
 - [Phase 04-03]: iCloud Drive `age -p` encrypted offline backup accepted in lieu of yubikey-age recipient wrap. Revisit if/when yubikey-age setup exists.
 - [Phase 04-updater-infrastructure]: latest.json has 18 platform entries (not 7) — tauri-action creates one entry per bundle format per architecture; all 7 build matrix targets are represented
 - [Phase 04-updater-infrastructure]: Windows builds unsigned at OS level (Authenticode) for v0.1.0 — Azure Trusted Signing not yet set up; Ed25519 .sig files present for tauri-updater, SmartScreen warning expected on first install
+- [Phase 05-upstream-sync]: upstream-sha.txt updated only on merge-to-main (not on issue creation) — premature update would make weekly action report false idempotency before work is done (Pitfall 2)
+- [Phase 05-upstream-sync]: SYNC-05d i18n check uses awk to skip acknowledgments block — legitimate attribution to Handy upstream project must not fail identity regression check
 
 ### Pending Todos
 
@@ -80,6 +82,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-13T22:13:04.480Z
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-upstream-sync/05-CONTEXT.md
+Last session: 2026-04-14T07:52:41.065Z
+Stopped at: Checkpoint: Task 3 of 05-01-PLAN.md — awaiting upstream-sync label verification
+Resume file: None
