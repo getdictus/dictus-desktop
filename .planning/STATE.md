@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Auto-Update & Upstream Sync
 status: completed
-stopped_at: "Checkpoint: Task 3 of 05-01-PLAN.md — awaiting upstream-sync label verification"
-last_updated: "2026-04-14T07:52:46.578Z"
+stopped_at: Completed 05-02-PLAN.md — UPSTREAM.md runbook written
+last_updated: "2026-04-14T07:56:07.561Z"
 last_activity: "2026-04-13 — Plan 04-04 complete: v0.1.0 published, UPDT-10 validated, all Phase 4 requirements green"
 progress:
   total_phases: 2
   completed_phases: 1
   total_plans: 7
-  completed_plans: 5
+  completed_plans: 6
   percent: 100
 ---
 
@@ -47,6 +47,7 @@ Progress: [██████████] 100% (Phase 4)
 | Phase 04-updater-infrastructure P03 | ~15min | 3 tasks (2 human-action, 1 auto) | 2 files |
 | Phase 04-updater-infrastructure P02 | 1 | 2 tasks | 3 files |
 | Phase 04-updater-infrastructure P01 | 15 | 3 tasks | 3 files |
+| Phase 05-upstream-sync P02 | 1 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,7 @@ Progress: [██████████] 100% (Phase 4)
 - [Phase 04-updater-infrastructure]: Windows builds unsigned at OS level (Authenticode) for v0.1.0 — Azure Trusted Signing not yet set up; Ed25519 .sig files present for tauri-updater, SmartScreen warning expected on first install
 - [Phase 05-upstream-sync]: upstream-sha.txt updated only on merge-to-main (not on issue creation) — premature update would make weekly action report false idempotency before work is done (Pitfall 2)
 - [Phase 05-upstream-sync]: SYNC-05d i18n check uses awk to skip acknowledgments block — legitimate attribution to Handy upstream project must not fail identity regression check
+- [Phase 05-upstream-sync]: UPSTREAM.md placed at repo root alongside README.md for maximum visibility; copy-paste runbook codifies conflict rules for all 9 hot zones and Pitfalls 1/2/6
 
 ### Pending Todos
 
@@ -82,6 +84,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-14T07:52:41.065Z
-Stopped at: Checkpoint: Task 3 of 05-01-PLAN.md — awaiting upstream-sync label verification
+Last session: 2026-04-14T07:56:07.560Z
+Stopped at: Completed 05-02-PLAN.md — UPSTREAM.md runbook written
 Resume file: None

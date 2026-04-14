@@ -24,7 +24,7 @@ Requirements for milestone v1.1 (Auto-Update & Upstream Sync). Each maps to road
 
 - [ ] **SYNC-01**: `.github/workflows/upstream-sync.yml` detects new commits on `cjpais/Handy` main and creates a GitHub issue with commit summary
 - [ ] **SYNC-02**: Weekly action is idempotent (no duplicate issues for same upstream state)
-- [ ] **SYNC-03**: `UPSTREAM.md` documents fork point (`85a8ed77`), merge-base (`39e855d`), and step-by-step merge process
+- [x] **SYNC-03**: `UPSTREAM.md` documents fork point (`85a8ed77`), merge-base (`39e855d`), and step-by-step merge process
 - [ ] **SYNC-04**: First upstream merge of 4 post-v0.8.2 commits completed on dedicated branch
 - [ ] **SYNC-05**: Post-merge checklist verified (identity fields, version, i18n scan, handy.computer scan, cargo build)
 
@@ -78,7 +78,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UPDT-10 | Phase 4 | Complete |
 | SYNC-01 | Phase 5 | Pending |
 | SYNC-02 | Phase 5 | Pending |
-| SYNC-03 | Phase 5 | Pending |
+| SYNC-03 | Phase 5 | Complete |
 | SYNC-04 | Phase 5 | Pending |
 | SYNC-05 | Phase 5 | Pending |
 
