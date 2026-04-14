@@ -1,0 +1,91 @@
+name: Upstream Sync Check
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'   # Monday 08:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check-upstream:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch upstream
+        run: |
+          if ! git remote get-url upstream >/dev/null 2>&1; then
+            git remote add upstream https://github.com/cjpais/Handy.git
+          fi
+          git fetch upstream main --no-tags
+
+      - name: Compare upstream SHA
+        id: compare
+        run: |
+          STORED_SHA=$(cat .github/upstream-sha.txt 2>/dev/null | tr -d '[:space:]' || echo "")
+          CURRENT_SHA=$(git rev-parse upstream/main)
+          echo "stored=${STORED_SHA}" >> $GITHUB_OUTPUT
+          echo "current=${CURRENT_SHA}" >> $GITHUB_OUTPUT
+          if [ "$STORED_SHA" = "$CURRENT_SHA" ]; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No upstream changes since last sync (${CURRENT_SHA:0:8}). Exiting."
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Upstream changed: stored=${STORED_SHA:0:8} current=${CURRENT_SHA:0:8}"
+          fi
+
+      - name: Build commit list
+        id: commits
+        if: steps.compare.outputs.changed == 'true'
+        run: |
+          STORED="${{ steps.compare.outputs.stored }}"
+          CURRENT="${{ steps.compare.outputs.current }}"
+          if [ -z "$STORED" ]; then
+            STORED="85a8ed77"
+          fi
+          COUNT=$(git log ${STORED}..upstream/main --oneline | wc -l | tr -d ' ')
+          COMMIT_LIST=$(git log ${STORED}..upstream/main --oneline | head -20)
+          echo "count=${COUNT}" >> $GITHUB_OUTPUT
+          {
+            echo "commit_list<<EOF"
+            echo "$COMMIT_LIST"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+      - name: Create tracking issue
+        if: steps.compare.outputs.changed == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const count = '${{ steps.commits.outputs.count }}';
+            const commitList = `${{ steps.commits.outputs.commit_list }}`;
+            const storedSha = '${{ steps.compare.outputs.stored }}'.substring(0, 8);
+            const currentSha = '${{ steps.compare.outputs.current }}'.substring(0, 8);
+            const compareUrl = `https://github.com/cjpais/Handy/compare/${storedSha}...${currentSha}`;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Upstream: ${count} new commits on cjpais/Handy`,
+              labels: ['upstream-sync'],
+              body: [
+                `## Upstream Sync Available`,
+                ``,
+                `**${count} new commit(s)** on [\`cjpais/Handy\`](https://github.com/cjpais/Handy) since last sync (\`${storedSha}\`).`,
+                ``,
+                `**Compare:** ${compareUrl}`,
+                ``,
+                `### Commits`,
+                `\`\`\``,
+                commitList,
+                `\`\`\``,
+                ``,
+                `Follow \`UPSTREAM.md\` to merge.`,
+              ].join('\n')
+            });
