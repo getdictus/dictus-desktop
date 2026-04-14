@@ -10,9 +10,12 @@ L'application doit être identifiable et utilisable comme **Dictus Desktop** —
 
 ## Current State
 
-**Shipped:** v1.0 (2026-04-10), v1.1 (2026-04-14)
+**GSD milestones shipped:** v1.0 (2026-04-10), v1.1 (2026-04-14)
 **App version:** 0.1.0 (first public release, `getdictus/dictus-desktop`)
-**Latest tag:** `v1.1`
+**Latest app release tag:** `v0.1.0`
+
+> GSD milestones (`v1.0`, `v1.1`) are internal planning units — no git tags.
+> App versions (`0.x.y`) are the only tagged entities. See `docs/VERSIONING.md`.
 
 **v1.1 highlights:**
 - Auto-updater end-to-end: Ed25519 signing, GitHub Releases latest.json endpoint, signed v0.1.0 delivered

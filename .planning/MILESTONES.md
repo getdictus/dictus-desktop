@@ -8,8 +8,11 @@
 - Files changed: 49 | LOC: +4277/-517
 - Git range: `84cc346` → `bedf363` (27 commits)
 - Timeline: 2026-04-11 → 2026-04-14 (4 days)
-- Git tag: `v1.1`
+- App releases shipped within this milestone: `v0.1.0` (2026-04-11)
 - Audit status: `tech_debt` — all 15 requirements satisfied; non-blocking debt documented below
+
+> GSD milestones are internal planning units and **do not** produce git tags.
+> See `docs/VERSIONING.md` for the tag/version convention.
 
 **Key accomplishments:**
 - **Auto-updater end-to-end** — Ed25519 signing keypair, tauri.conf.json updater config (pubkey + endpoint + createUpdaterArtifacts), CI asset-prefix fixes, and UpdateChecker.tsx fallback corrected (UPDT-01…UPDT-09)
