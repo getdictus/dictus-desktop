@@ -21,7 +21,7 @@
 **Milestone Goal:** L'app peut se mettre à jour toute seule et on ne décroche pas du upstream Handy.
 
 - [x] **Phase 4: Updater Infrastructure** - Wire Ed25519 keypair, tauri.conf.json config, CI fixes, and URL fix; validate with dry-run release (completed 2026-04-13)
-- [ ] **Phase 5: Upstream Sync** - Weekly detection action, UPSTREAM.md, 4-commit merge, post-merge checklist
+- [x] **Phase 5: Upstream Sync** - Weekly detection action, UPSTREAM.md, 4-commit merge, post-merge checklist (completed 2026-04-14)
 
 ## Phase Details
 
@@ -64,4 +64,4 @@
 | 2. Visual Rebrand | v1.0 | 5/5 | Complete | 2026-04-09 |
 | 3. Documentation and Cleanup | v1.0 | 2/2 | Complete | 2026-04-09 |
 | 4. Updater Infrastructure | 4/4 | Complete   | 2026-04-13 | - |
-| 5. Upstream Sync | 2/3 | In Progress|  | - |
+| 5. Upstream Sync | 3/3 | Complete   | 2026-04-14 | - |
