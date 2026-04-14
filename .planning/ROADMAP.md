@@ -51,7 +51,10 @@
   3. `UPSTREAM.md` documents fork point `85a8ed77`, merge-base `39e855d`, and a step-by-step merge process a developer can follow
   4. A dedicated branch contains the 4 post-v0.8.2 upstream commits merged into main
   5. Post-merge grep confirms `productName`, `identifier`, and all i18n strings remain Dictus (no Handy regressions)
-**Plans**: TBD
+**Plans**: 3 plans
+- [ ] 05-01-PLAN.md — Detection infra: upstream-sync.yml + upstream-sha.txt seed + verify-sync.sh + label pre-flight (Wave 1)
+- [ ] 05-02-PLAN.md — UPSTREAM.md merge runbook with conflict resolution rules (Wave 1, parallel to 05-01)
+- [ ] 05-03-PLAN.md — Execute first merge (4 upstream commits) + post-merge verification + PR to main (Wave 2, depends on 05-01 and 05-02)
 
 ## Progress
 
@@ -61,4 +64,4 @@
 | 2. Visual Rebrand | v1.0 | 5/5 | Complete | 2026-04-09 |
 | 3. Documentation and Cleanup | v1.0 | 2/2 | Complete | 2026-04-09 |
 | 4. Updater Infrastructure | 4/4 | Complete   | 2026-04-13 | - |
-| 5. Upstream Sync | v1.1 | 0/? | Not started | - |
+| 5. Upstream Sync | v1.1 | 0/3 | Not started | - |
