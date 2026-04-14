@@ -59,7 +59,7 @@ completed: 2026-04-14
 - **Duration:** ~30 min
 - **Started:** 2026-04-14T07:49:11Z
 - **Completed:** 2026-04-14T08:20:00Z
-- **Tasks:** 2 of 3 complete (Task 3 is human checkpoint — awaiting manual label verification)
+- **Tasks:** 3 of 3 complete
 - **Files modified:** 3 created
 
 ## Accomplishments
@@ -73,7 +73,7 @@ Each task was committed atomically:
 
 1. **Task 1: Create upstream-sha.txt seed and verify-sync.sh validator** - `f1b7b96` (chore)
 2. **Task 2: Create upstream-sync.yml detection workflow** - `8b76ad0` (feat)
-3. **Task 3: Verify upstream-sync label exists** - CHECKPOINT (awaiting human)
+3. **Task 3: Verify upstream-sync label exists** - COMPLETE (label created 2026-04-14 via `gh label create`)
 
 ## Files Created/Modified
 - `.github/upstream-sha.txt` - Idempotency seed file; stores last-seen upstream SHA (currently merge-base `39e855d`)
@@ -106,18 +106,27 @@ Each task was committed atomically:
 ## Issues Encountered
 - `pyyaml` not available in the default Python environment; installed inline to validate YAML. YAML validated as correct.
 
-## User Setup Required
+## Label Status
 
-**Task 3 requires manual action before workflow can run:**
-1. Open https://github.com/getdictus/dictus-desktop/labels
-2. Create label `upstream-sync` if missing (name: `upstream-sync`, description: `Tracks new upstream Handy commits detected by weekly sync action`)
-3. Optional: Run workflow manually via Actions tab to verify issue creation with 4-commit delta
+**Task 3 — `upstream-sync` label: CONFIRMED PRESENT**
+
+Label created on 2026-04-14 via:
+```
+gh label create upstream-sync --repo getdictus/dictus-desktop --color fbca04 --description "Tracks new upstream Handy commits detected by weekly sync action"
+```
+
+- Name: `upstream-sync` (exact, case-sensitive)
+- Color: `#fbca04`
+- Description: `Tracks new upstream Handy commits detected by weekly sync action`
+
+Smoke test (optional end-to-end workflow dispatch) skipped — requires unmerged upstream commits to be present on pushed main. User will trigger manually if desired before Plan 03 merge.
 
 ## Next Phase Readiness
-- Detection infrastructure complete pending Task 3 label verification
+- Detection infrastructure complete — all 3 tasks done
 - `verify-sync.sh` ready for Plan 03 post-merge gate
 - `upstream-sha.txt` will be updated to current upstream HEAD as part of Plan 03 merge commit
+- `upstream-sync` label confirmed in repo — workflow can run without 422 error
 
 ---
 *Phase: 05-upstream-sync*
-*Completed: 2026-04-14 (partial — Task 3 checkpoint)*
+*Completed: 2026-04-14*

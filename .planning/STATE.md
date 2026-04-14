@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Auto-Update & Upstream Sync
 status: completed
-stopped_at: Completed 05-02-PLAN.md — UPSTREAM.md runbook written
-last_updated: "2026-04-14T07:56:07.561Z"
+stopped_at: Completed 05-01-PLAN.md — upstream-sync detection infra + label confirmed
+last_updated: "2026-04-14T08:12:26.194Z"
 last_activity: "2026-04-13 — Plan 04-04 complete: v0.1.0 published, UPDT-10 validated, all Phase 4 requirements green"
 progress:
   total_phases: 2
@@ -80,10 +80,10 @@ None yet.
 - Phase 4: Ed25519 private key must be backed up before first release — no recovery path if lost ✅ RESOLVED by Plan 04-03 (Bitwarden x2 + iCloud age -p backup, local deleted)
 - Phase 4: Repo must be public for GitHub Releases endpoint to work as updater source — still PRIVATE, pre-flight gate for Plan 04-04 Task 1
 - Phase 4: validate.sh anti-regression check for TECH-03 comment fails — pre-existing Plan 04-01 scope issue, logged to `.planning/phases/04-updater-infrastructure/deferred-items.md`, suggested fix is one-line `-B5` → `-B12`
-- Phase 5: `upstream-sync` label must be created in the repo before the detection action runs
+- Phase 5: `upstream-sync` label created 2026-04-14 via `gh label create` — blocker resolved
 
 ## Session Continuity
 
-Last session: 2026-04-14T07:56:07.560Z
-Stopped at: Completed 05-02-PLAN.md — UPSTREAM.md runbook written
+Last session: 2026-04-14T08:12:26.192Z
+Stopped at: Completed 05-01-PLAN.md — upstream-sync detection infra + label confirmed
 Resume file: None
