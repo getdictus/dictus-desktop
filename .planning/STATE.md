@@ -75,7 +75,7 @@ Progress: [██████████] 100% (v1.1 shipped)
 
 ### Pending Todos
 
-None yet.
+4 pending — see `.planning/todos/pending/` for details.
 
 ### Blockers/Concerns
 
