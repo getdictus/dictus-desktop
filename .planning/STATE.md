@@ -1,35 +1,36 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Auto-Update & Upstream Sync
-status: archived
-stopped_at: "v1.1 archived — tagged, MILESTONES.md updated, REQUIREMENTS.md deleted for next milestone"
-last_updated: "2026-04-14T21:00:00.000Z"
-last_activity: "2026-04-14 — v1.1 milestone archived; audit status tech_debt; next milestone TBD via /gsd:new-milestone"
+milestone: v1.2
+milestone_name: Polish & Automation
+status: defining_requirements
+stopped_at: "v1.2 kickoff — scope aligned, gathering requirements"
+last_updated: "2026-04-15T00:00:00.000Z"
+last_activity: "2026-04-15 — v1.2 Polish & Automation milestone started"
 progress:
-  total_phases: 2
-  completed_phases: 2
-  total_plans: 7
-  completed_plans: 7
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-14 after v1.1 milestone completion)
+See: .planning/PROJECT.md (updated 2026-04-15 at v1.2 kickoff)
 
 **Core value:** L'application doit être identifiable et utilisable comme Dictus Desktop — pas comme Handy — et rester vivante (updates automatiques) sans décrocher du upstream Handy.
-**Current focus:** Planning next milestone (v1.2 TBD via `/gsd:new-milestone`)
+**Current focus:** v1.2 Polish & Automation — defining requirements
 
 ## Current Position
 
-Milestone: v1.1 ARCHIVED (2026-04-14) — tagged `v1.1`
-Status: Ready for next milestone. No active phase.
-Last activity: 2026-04-14 — v1.1 milestone archived; audit status tech_debt (non-blocking); next milestone TBD
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-15 — Milestone v1.2 Polish & Automation started
 
-Progress: [██████████] 100% (v1.1 shipped)
+Progress: [░░░░░░░░░░] 0% (v1.2 starting)
 
 ## Performance Metrics
 

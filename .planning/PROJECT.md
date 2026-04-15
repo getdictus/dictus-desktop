@@ -27,17 +27,18 @@ L'application doit être identifiable et utilisable comme **Dictus Desktop** —
 - Phase 5 VALIDATION.md left draft — needs `/gsd:validate-phase 5`
 - `blob.handy.computer` CDN still used for onnxruntime (INFR-01)
 
-## Next Milestone: TBD
+## Current Milestone: v1.2 Polish & Automation
 
-Upcoming candidates:
-- Harden post-sync gate (close regression-risk wiring gap from v1.1 audit)
-- Privacy/local-first UX audit (todos captured in `.planning/todos/`)
-- INFR-01: Dictus-owned CDN for models (replace `blob.handy.computer`)
-- TECH-03: Cargo binary rename `handy`→`dictus`
-- INFR-03: Code signing (macOS Developer ID verified, Windows Azure Trusted Signing pending)
-- SYNC-A1: AI-assisted cherry-pick triage
+**Goal:** Polir l'identité visuelle cross-platform, nettoyer les fuites de brand Handy, automatiser le workflow upstream sync avec des agents Claude Code (adapt + audit), et corriger les bugs de polish (quit dialog, UX local-first).
 
-Scope to be defined via `/gsd:new-milestone`.
+**Target features:**
+- Logos Linux/Windows correctement adaptés (bords carrés, cohérence avec dictus-brand)
+- Brand cleanup complet (recording files, Portable Mode string, DebugPaths) + verify-sync.sh étendu
+- Upstream sync refactor (community action auto-PR, move verify-sync.sh hors `.planning/`, trim UPSTREAM.md)
+- Layer d'agents Claude Code GitHub Action (agent adaptation + agent audit indépendant sur PR upstream)
+- Privacy / local-first UX audit (reorder providers, network surface doc, onboarding copy)
+- Post-sync gate hardening (UPDT-03/UPDT-05 re-assertion dans UPSTREAM.md §6)
+- macOS clean shutdown fix (Dictus quit unexpectedly dialog)
 
 ## Requirements
 
@@ -70,7 +71,7 @@ Scope to be defined via `/gsd:new-milestone`.
 
 ### Active
 
-(None yet — next milestone pending `/gsd:new-milestone`.)
+(v1.2 Polish & Automation — requirements defined in `.planning/REQUIREMENTS.md`.)
 
 ### Deferred
 
@@ -139,4 +140,4 @@ Scope to be defined via `/gsd:new-milestone`.
 
 ---
 
-_Last updated: 2026-04-14 after v1.1 milestone completion_
+_Last updated: 2026-04-15 at v1.2 milestone kickoff_
