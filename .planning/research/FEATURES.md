@@ -1,200 +1,283 @@
-# Feature Landscape
+# Feature Research
 
-**Domain:** Desktop app auto-updater + fork upstream sync (Dictus Desktop v1.1)
-**Researched:** 2026-04-10
-**Confidence:** HIGH (Tauri v2 updater is a first-party plugin with official docs; upstream sync patterns are GitHub-native and well-established)
+**Domain:** Desktop app polish & CI automation (Dictus Desktop v1.2 — Tauri 2.x fork of Handy)
+**Researched:** 2026-04-15
+**Confidence:** MEDIUM-HIGH (icon platform behavior HIGH; CI agent patterns HIGH; macOS shutdown MEDIUM; privacy UX patterns MEDIUM)
 
----
-
-## Table Stakes
-
-Features users and maintainers expect. Missing any of these means the milestone is incomplete.
-
-### Auto-Updater Table Stakes
-
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| Ed25519 keypair generated and stored as repo secret | Required by Tauri v2 updater; no keypair = no signed updates = updater cannot function | LOW | `npm run tauri signer generate -- -w ~/.tauri/dictus.key`; pubkey goes in `tauri.conf.json`, private key as `TAURI_SIGNING_PRIVATE_KEY` secret |
-| `tauri.conf.json` updater endpoint pointing to Dictus releases | Currently `pubkey: ""` and `endpoints: []`; updater silently does nothing without this | LOW | Set `pubkey` to generated pubkey content; set `endpoints` to `https://github.com/getdictus/dictus-desktop/releases/latest/download/latest.json` |
-| `createUpdaterArtifacts: true` in bundle config | Currently `false`; without this, the build does not produce `.sig` files and `latest.json` — the update payload does not exist | LOW | Single field change in `tauri.conf.json`; confirmed required for tauri-plugin-updater 2.x |
-| Release workflow `asset-prefix` fixed to "dictus" | Currently hardcoded `"handy"` in `release.yml`; uploaded artifacts will be named `handy_*` which breaks the `latest.json` URL references | LOW | One-line change in `release.yml`; affects all 7 platform jobs via the shared `build.yml` input |
-| `tauri-action` configured with `includeUpdaterJson: true` | tauri-action must be told to generate and upload `latest.json` to the GitHub Release; without it no update manifest exists | LOW | Add `includeUpdaterJson: true` to the `tauri-apps/tauri-action@v0` step in `build.yml` |
-| UpdateChecker.tsx portable-update dialog fixed | Currently hardcodes `https://github.com/cjpais/Handy/releases/latest` — users on Windows portable builds are sent to the wrong project | LOW | One-line URL change; already identified in milestone scope |
-| Manual "Check for Updates" accessible to user | User must be able to trigger an update check from settings/footer — the mechanism already exists in UpdateChecker.tsx but only works if endpoint is configured | LOW | Zero new code; fixing the config makes this work automatically |
-| Update check respects `update_checks_enabled` setting | Already implemented in UpdateChecker.tsx; must remain gated by the user setting so opt-out is honored | LOW | Already correct; just verify the setting key matches settings.rs |
-
-### Upstream Sync Table Stakes
-
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| Weekly GitHub Action to detect new upstream commits | Without automated detection, maintainer will miss upstream releases; 69 commits already accumulated before detection | LOW | Schedule cron; compare `upstream/main` HEAD vs tracked merge base |
-| Upstream detection creates a GitHub Issue or PR | Passive notification (workflow summary only) is easy to miss; an issue/PR ensures the upstream delta is visible and tracked | LOW | Use `gh issue create` or `peter-evans/create-pull-request` action |
-| First upstream merge: v0.8.0–v0.8.2 (69 commits) | The fork is 69 commits behind; shipping v1.1 without merging these means accumulated drift and growing conflict risk | HIGH | Highest complexity in the milestone; git rebase or cherry-pick onto a dedicated branch; conflict resolution required |
-| Fork point documented (commit `85a8ed77`) | Future merges require knowing the divergence point; undocumented fork point means every future sync starts from ambiguity | LOW | One-time write to `UPSTREAM.md` or equivalent; already referenced in PROJECT.md |
-| Merge strategy documented (rebase vs merge vs cherry-pick) | Without a documented strategy, each sync risks inconsistent history and repeated conflict resolution | LOW | Write the strategy once; reference it in the weekly action output |
+> Scope: v1.2 only. Features shipped in v1.0/v1.1 are not re-researched.
 
 ---
 
-## Differentiators
+## Feature Landscape
 
-Features that go beyond minimum-viable and improve maintainability or user experience meaningfully.
+### Table Stakes (Users Expect These)
+
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| Platform-native icons (Linux square, Windows multi-size .ico) | Users see the Dictus icon in their app launcher and taskbar. The macOS rounded-corner `.icns` renders with a black backing on Linux — visibly broken and off-brand. | LOW | One new 1024x1024 square source PNG + `bun run tauri icon` regenerates all platform sizes. No per-platform manual work needed. Linux expects square PNG; the `.icns` is macOS-only at bundle time. |
+| Brand-clean recording filenames | Users who export recordings or browse transcription history see `handy-TIMESTAMP.wav` filenames. Hard brand leak on a user-visible surface. | LOW-MEDIUM | String replace in `actions.rs:538`, `history.rs:689`, `tray.rs:273`. Decision required: migrate existing DB records (higher scope) or only rename new recordings going forward. |
+| Accurate Portable Mode label | `portable.rs:30` and `:98` use the literal `"Handy Portable Mode"` string. User-visible on portable installs; incorrect brand. | LOW | String replace in two locations. Add a migration-window fallback that still recognizes the old string so existing portable installs are not broken immediately. |
+| Accurate DebugPaths display | `DebugPaths.tsx:29-46` hardcodes `%APPDATA%/handy`. If the on-disk path is already `dictus`, the display is wrong and misleading to users debugging data locations. | LOW-MEDIUM | Fix display to read actual path from `appDataDir()` Tauri API instead of a hardcoded string. A separate data-dir migration (if the path on disk is still `handy`) is higher scope and deferred. |
+| Clean macOS shutdown (no "quit unexpectedly" dialog) | Every clean quit — tray menu "Quit Dictus" or post-update relaunch — triggers an OS-level crash dialog. Erodes user trust even though the app does quit correctly. | MEDIUM-HIGH | Investigation-first: read Console.app crash report to identify the crashing thread. Likely candidates: tokio-runtime-worker audio loop, VAD worker, or a Tauri plugin teardown. Fix strategy determined after diagnosis. Pre-existing upstream (Handy) bug confirmed — not a v1.1 regression. |
+| Upstream sync PR already open on arrival | Current flow: weekly cron detects drift → opens GitHub Issue → human manually creates branch + PR. Community action alternatives open a draft PR directly, saving 30+ min of setup per sync. | MEDIUM | Replace custom `upstream-sync.yml` detection with a community action configured for draft-PR-only mode (no auto-merge). Conflict detection varies by action; real merge conflicts may still require manual branch setup. |
+| Post-sync identity gate runs automatically | `verify-sync.sh` is currently run manually by the engineer. If forgotten, identity regressions can land on main silently. | LOW | Move `verify-sync.sh` to `.github/scripts/`. Add `verify-sync.yml` CI workflow triggered on PRs labeled `upstream-sync`. Mark as required check in branch protection. |
+| UPDT-03/UPDT-05 re-assertion in post-sync gate | Current `verify-sync.sh` (11 assertions) does not check updater pubkey or endpoint config. A sync PR could silently wipe the auto-updater configuration. | LOW | Extend `verify-sync.sh` with two `jq` assertions: `plugins.updater.pubkey` not empty, `plugins.updater.endpoints[0]` contains `getdictus/dictus-desktop`. |
+
+### Differentiators (Competitive Advantage)
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Silent background update check on startup (non-blocking) | Users do not notice update checks unless an update is found; less disruptive than blocking-modal approach | LOW | Already implemented in UpdateChecker.tsx (async, non-blocking); works once endpoint is live |
-| Download progress bar during update install | Users know the app has not frozen; 3-second silence at 0% progress is anxiety-inducing for large binaries | LOW | Already implemented in UpdateChecker.tsx with `ProgressBar`; works once endpoint is live |
-| "Up to date" confirmation with 3-second auto-dismiss | Users who manually check want confirmation; persistent "up to date" is visual noise | LOW | Already implemented (3s `setTimeout` in UpdateChecker.tsx); works once endpoint is live |
-| Windows NSIS `installMode: passive` | Windows updates install silently with a progress bar rather than prompting the user for confirmation each time | LOW | Add `"windows": { "installMode": "passive" }` to updater plugin config in `tauri.conf.json` |
-| Upstream diff summary in Issue body | Weekly action posts a one-liner count of new commits and top 5 commit messages; maintainer can assess merge urgency without opening GitHub manually | LOW | `git log --oneline upstream/main ^<tracked-base> | head -5` in the action |
-| Labeled upstream issue (`upstream-sync`, `maintenance`) | Issues without labels get lost in triage; a consistent label makes it easy to query all sync history | LOW | One `labels:` field in the issue creation step |
-| Idempotent weekly action (no duplicate issues) | If no upstream changes exist, the action does nothing; if an open issue already exists, it does not create a second one | MEDIUM | Query open issues by label before creating; skip if found |
+| Two-agent Claude Code review on upstream sync PRs | Agent 1 adapts the PR (identity preservation per UPSTREAM.md rules). Agent 2 independently audits Agent 1's work for anything missed. Human approves and merges. Reduces regression risk on each upstream sync without requiring human expertise to re-check every conflict zone. | HIGH | Two sequential `anthropics/claude-code-action@v1` steps in one GitHub Actions job. Different `prompt` per agent. No shared conversation state — each is a fresh Claude Code invocation. Agent 2 must run after Agent 1 (sequential dependency by design). Neither agent can auto-merge; human merge is mandatory. |
+| Local-first visual hierarchy in provider settings | Cloud providers (OpenAI, Anthropic, Groq, Gemini) are listed without visual distinction from local providers (Ollama, Apple Intelligence). A "External — data leaves this device" section label makes the local-first posture legible to privacy-sensitive users. | MEDIUM | Frontend-only settings component refactor. No Rust backend changes. Modeled on Obsidian/Logseq pattern: local is the unremarkable default (no badge), cloud is a labeled secondary section. |
+| Network surface transparency doc | Users have no way to know what endpoints Dictus contacts and under what conditions. A `PRIVACY.md` or in-app Privacy settings section listing all external calls (updater check, LLM post-processing endpoints, model CDN) provides concrete transparency. | LOW | Grep-based audit of `reqwest` calls in Rust + `fetch` in frontend. Document each endpoint: when triggered, what data leaves the device, how to disable. One-time authoring task. |
+| PR checklist template for upstream syncs | Replaces ad-hoc GSD-phase-per-sync with a reusable `.github/pull_request_template/upstream-sync.md`. Items: cap-at-SHA decision, commit risk ratings, `verify-sync.sh` green, Claude agent review complete, human test checklist. | LOW | Static file. High leverage: makes each sync repeatable without a GSD planning phase (~30 min saved per sync). |
 
----
+### Anti-Features (Commonly Requested, Often Problematic)
 
-## Anti-Features
-
-Features to explicitly NOT build in this milestone.
-
-| Anti-Feature | Why It Seems Reasonable | Why to Avoid | What to Do Instead |
-|--------------|------------------------|--------------|-------------------|
-| Auto-merge upstream without human review | Reduces manual work | Dictus has 52 commits of divergence (branding, config, workflow changes); an auto-merge would silently overwrite Dictus identity with Handy defaults, breaking the rebrand | Always open a PR for review; never push upstream changes directly to main |
-| Built-in update dialog/modal (replacing UpdateChecker.tsx) | Tauri v2 has a built-in dialog API for updates | The existing custom UpdateChecker.tsx already handles all UX states (checking, progress, up-to-date, available) with i18n in 20 locales; the built-in dialog is English-only with no customization | Keep UpdateChecker.tsx; just fix the endpoint and Handy URL reference |
-| Delta/patch updates | Reduces download size for users | Not natively supported by tauri-plugin-updater v2; requires custom update server (CrabNebula Cloud or similar); the full installer approach is simpler and sufficient at this scale | Ship full installers; revisit if binary size becomes a user complaint |
-| Code-signing on macOS/Windows in this milestone | Avoids Gatekeeper / SmartScreen warnings | Code signing requires Apple Developer Program enrollment (paid), Azure Trusted Signing (paid), or notarization pipeline work — scope is separate from updater mechanics; already deferred as INFR-03 | `signingIdentity: "-"` (ad-hoc) on macOS stays; Windows signing deferred to V2/INFR-03 |
-| Semantic changelog auto-generation | Nice release notes in update dialog | Requires conventional commit tooling setup and a changelog template; not worth the setup time in this milestone | GitHub's built-in `generate_release_notes: true` in `release.yml` already provides this at zero cost |
-| Automated upstream cherry-pick for specific commits only | Lets you merge just the bug fixes without the new features | Requires manual commit curation, high conflict risk, and no tooling supports it reliably; cherry-pick approach fragments history and makes future merges harder | Full branch merge/rebase per release; use feature flags or reverts if specific Handy features are unwanted |
-| Self-hosted update server (e.g. CrabNebula Cloud) | Avoids GitHub rate limits, adds analytics | Zero evidence of GitHub rate limit issues at current scale; adds infra dependency, cost, and operational burden with no benefit at this stage | GitHub Releases + `latest.json` is the standard Tauri community pattern and is sufficient |
+| Feature | Why Requested | Why Problematic | Alternative |
+|---------|---------------|-----------------|-------------|
+| Auto-merge upstream PRs | Eliminate human merge step; fully automate sync | Dictus brand assertions conflict with upstream identity fields in the same files (tauri.conf.json, llm_client.rs, 22 locale files). Merge conflicts require human judgment ("keep Dictus pubkey, accept upstream reasoning_effort"). Explicitly out of scope per PROJECT.md. | Automate everything up to the merge commit; keep human approval as the final gate. |
+| `std::process::exit(0)` as default shutdown fix | Quick one-liner fix for the macOS crash dialog | Bypasses all Rust destructors — audio buffers not flushed, model state not released, plugin teardown skipped. Acceptable only as a last resort if the root cause is an upstream-unfixable bug. | Diagnose the actual crashing thread via Console.app crash report first. Add explicit drop ordering for managers. Escalate to hard exit only if Tauri bug is confirmed and unactionable. |
+| Fixing DebugPaths.tsx as a display-only string change | Cosmetic fix, low effort | If the actual data dir on disk is still `handy` (not `dictus`), fixing only the display string creates a misleading UI that shows a path the user cannot find. | Read the actual value from `appDataDir()` Tauri API. Track data-dir migration (if needed) separately as a scoped future item. |
+| Global `grep -r handy \| sed` brand replacement | Complete brand cleanliness in one pass | `handy_keys` / `handy-keys` is the name of an external crate dependency. A blanket replace breaks the build. | Use targeted replacements that explicitly exclude `handy_keys` and `handy-keys` patterns. Extend `verify-sync.sh` exclusion list to match. |
 
 ---
 
 ## Feature Dependencies
 
 ```
-[Ed25519 keypair generated]
-    └──required by──> [tauri.conf.json pubkey field]
-    └──required by──> [TAURI_SIGNING_PRIVATE_KEY repo secret]
-                           └──required by──> [build.yml signs artifacts]
-                                                └──required by──> [latest.json contains valid signatures]
-                                                                        └──required by──> [UpdateChecker.tsx can verify and install]
+[Linux/Windows icon fix]
+    └──independent──> pure asset + config change; no runtime dependencies
 
-[createUpdaterArtifacts: true]
-    └──required by──> [.sig files exist in GitHub Release]
-    └──required by──> [latest.json references valid artifact URLs]
+[Brand cleanup: recording filenames, portable mode string]
+    └──independent of other v1.2 features
+    └──should extend──> [verify-sync.sh assertions] (catch regressions in future syncs)
+    └──may expose──> [data-dir migration decision] (higher scope; defer)
 
-[asset-prefix: "dictus" in release.yml]
-    └──required by──> [artifact filenames match latest.json URLs]
-    └──required by──> [UpdateChecker.tsx portable dialog shows correct URL]
+[verify-sync.sh UPDT-03/UPDT-05 extension]
+    └──prerequisite──> [verify-sync.sh moved to .github/scripts/]
 
-[includeUpdaterJson: true in tauri-action]
-    └──required by──> [latest.json uploaded to GitHub Release]
-    └──required by──> [updater endpoint returns valid manifest]
+[verify-sync.yml CI gate]
+    └──requires──> [verify-sync.sh at .github/scripts/ path]
+    └──triggered by──> [upstream-sync PR label]
 
-[All four above complete]
-    └──enables──> [Auto-update end-to-end functional for users]
+[Upstream sync community action (draft PR)]
+    └──enables──> [verify-sync.yml CI gate to run on those PRs]
+    └──enables──> [Claude agent review workflow trigger]
 
-[Fork point documented (85a8ed77)]
-    └──required by──> [First upstream merge (v0.8.0-v0.8.2)]
-    └──required by──> [Weekly detection action knows the tracked base]
+[Claude Agent 1 — Adaptation]
+    └──requires──> [upstream-sync draft PR exists and is open]
+    └──requires──> [ANTHROPIC_API_KEY in repo secrets]
+    └──produces──> [adapted commits pushed to PR branch]
 
-[Weekly detection action]
-    └──independent of──> [auto-updater config] (can ship in either order)
-    └──feeds into──> [First upstream merge workflow (human-triggered)]
+[Claude Agent 2 — Audit]
+    └──requires──> [Claude Agent 1 step complete] (sequential within same job)
+    └──requires──> [ANTHROPIC_API_KEY in repo secrets]
+    └──produces──> [audit review comment on PR; no commits]
 
-[First upstream merge]
-    └──depends on──> [Fork point documented]
-    └──depends on──> [Merge strategy documented]
-    └──risk of conflict with──> [Any Dictus-specific files: tauri.conf.json, release.yml, icons, i18n locales, UpdateChecker.tsx]
+[Privacy UX: provider picker reordering]
+    └──independent──> frontend settings component refactor only
+    └──informed by──> [network surface audit] (know what calls exist before writing disclosure text)
+
+[macOS clean shutdown fix]
+    └──investigation-first──> Console.app crash report diagnosis determines fix strategy
+    └──independent──> no dependency on other v1.2 features
 ```
 
 ### Dependency Notes
 
-- **Keypair → everything:** The keypair is the critical path gate for the entire auto-updater feature. It must be generated first, stored as a secret, and committed to `tauri.conf.json` before any other updater work can be verified end-to-end.
-- **`createUpdaterArtifacts` and `asset-prefix` are build-time:** These changes only take effect on the next release build. They cannot be tested without running a full release workflow.
-- **UpdateChecker.tsx fixes are decoupled:** The portable dialog URL fix and any future cosmetic changes to UpdateChecker.tsx are independent of the build pipeline changes. They can ship in any order.
-- **Upstream merge is highest-risk:** The 69 upstream commits touch files that Dictus has already modified (tauri.conf.json, release.yml, i18n locales, possibly components). Conflicts are expected. The merge must happen on a dedicated branch with careful review before merging to main.
-- **Weekly action is low-risk and independent:** It reads remote state and opens issues. It does not modify the codebase. It can be shipped in a standalone PR with no dependency on the updater config work.
+- **verify-sync.sh path move is a hard prerequisite for the CI gate.** The file currently lives at `.planning/phases/05-upstream-sync/scripts/verify-sync.sh`. The CI workflow needs a stable non-planning path. Move to `.github/scripts/verify-sync.sh` first; update all UPSTREAM.md references and any direct invocations.
+- **Claude Agent 2 must run after Agent 1.** Agent 2's audit prompt reads the PR diff including Agent 1's adaptation commits. Sequential steps within a single GitHub Actions job handle this naturally — no inter-workflow messaging or polling needed.
+- **Community action must be configured for draft-PR-only mode.** Every reviewed fork-sync action (aormsby, tgymnich, Upstream Sync marketplace action) either direct-merges or opens a PR. For Dictus, the action must be configured to open a draft PR only. Real merge conflicts (tauri.conf.json, locale files) may still fall back to manual branch setup — action is a convenience, not a conflict-resolver.
+- **Privacy UX and network audit are independent but logically ordered.** Do the grep audit first to know what endpoints exist; write disclosure text only after the audit is complete.
 
 ---
 
 ## MVP Definition
 
-### Must Ship for v1.1
+### v1.2 Launch With
 
-Minimum for the milestone goals to be met: "the app can update itself and we don't fall further behind upstream."
+- [ ] **Linux/Windows icon fix** — visible quality issue; low risk; asset + config
+- [ ] **Brand cleanup: recording filenames + portable mode string** — user-visible leaks; extend `verify-sync.sh` for each
+- [ ] **DebugPaths display fix** — show `appDataDir()` value; low scope; no migration
+- [ ] **verify-sync.sh moved to `.github/scripts/`** — prerequisite for CI gate
+- [ ] **verify-sync.sh extended: UPDT-03/UPDT-05 assertions** — closes updater regression gap
+- [ ] **verify-sync.yml CI gate** — automatic identity check on all `upstream-sync` PRs
+- [ ] **macOS clean shutdown** — investigate first; fix if root cause found; document if upstream bug
 
-- [ ] Ed25519 keypair generated; `TAURI_SIGNING_PRIVATE_KEY` stored as GitHub secret
-- [ ] `tauri.conf.json`: `pubkey` populated, `endpoints` set to Dictus GitHub Releases `latest.json` URL, `createUpdaterArtifacts: true`
-- [ ] `release.yml`: `asset-prefix` changed from `"handy"` to `"dictus"`
-- [ ] `build.yml`: `includeUpdaterJson: true` added to tauri-action step
-- [ ] UpdateChecker.tsx portable dialog URL changed from `cjpais/Handy` to `getdictus/dictus-desktop`
-- [ ] First release cut with the above changes to validate the pipeline end-to-end
-- [ ] First upstream merge (v0.8.0–v0.8.2) completed on a feature branch, reviewed, merged
-- [ ] Weekly upstream detection GitHub Action live (scheduled + manual dispatch)
-- [ ] `UPSTREAM.md` written: fork point, merge history, strategy
+### Add After Validation (still v1.2 if time allows)
 
-### Add After Core Ships
+- [ ] **Community action draft PR** — replace custom detection workflow; ship before Sync #2
+- [ ] **PR checklist template** — static file; pairs naturally with community action
+- [ ] **Claude Agent 1 + Agent 2 workflow** — high maintenance value; add once community action flow is proven
 
-- [ ] Windows `installMode: passive` in updater config (low friction, can go in same PR as config changes)
-- [ ] Idempotent check in weekly action (skip issue creation if open issue already exists)
-- [ ] Upstream diff summary in issue body (commit count + top 5 commit titles)
+### Future Consideration (v2+)
 
-### Future / Deferred
-
-- [ ] macOS/Windows code-signing for Gatekeeper/SmartScreen bypass (INFR-03, V2)
-- [ ] Delta/patch updates (requires self-hosted server, no current need)
-- [ ] CDN migration for models away from `blob.handy.computer` (INFR-01, V2)
+- [ ] **Privacy network surface doc** — no blocking urgency; transcription is local; post-processing opt-in/off by default
+- [ ] **Local-first provider picker redesign** — UX improvement; defer until user feedback surfaces actual confusion
+- [ ] **Data-dir migration (handy → dictus on disk)** — user-impacting; requires backup logic; defer until justified
+- [ ] **Onboarding local-first copy audit** — informational; defer until privacy UX audit complete
 
 ---
 
 ## Feature Prioritization Matrix
 
-| Feature | User Value | Maintainer Value | Implementation Cost | Priority |
-|---------|-----------|-----------------|--------------------:|---------|
-| Ed25519 keypair + tauri.conf.json config | HIGH (enables all updates) | HIGH | LOW | P1 |
-| `createUpdaterArtifacts: true` | HIGH (without it, no update payload) | HIGH | LOW | P1 |
-| `asset-prefix: "dictus"` in release.yml | HIGH (broken otherwise) | HIGH | LOW | P1 |
-| `includeUpdaterJson: true` in build.yml | HIGH (no manifest without it) | HIGH | LOW | P1 |
-| UpdateChecker.tsx portable URL fix | MEDIUM (affects portable users) | MEDIUM | LOW | P1 |
-| First upstream merge v0.8.0-v0.8.2 | MEDIUM (bug fixes, new features) | HIGH (reduces drift) | HIGH | P1 |
-| Weekly upstream detection action | LOW (invisible to users) | HIGH (prevents future 69-commit drift) | LOW | P1 |
-| `UPSTREAM.md` fork documentation | LOW (users) | HIGH (maintainers) | LOW | P1 |
-| Windows `installMode: passive` | MEDIUM (Windows UX) | LOW | LOW | P2 |
-| Idempotent weekly action | LOW | MEDIUM | MEDIUM | P2 |
-| Upstream issue diff summary | LOW | MEDIUM | LOW | P2 |
+| Feature | User Value | Implementation Cost | Priority |
+|---------|------------|---------------------|----------|
+| Linux/Windows icon fix | HIGH — visible brand quality gap | LOW — asset + config change | P1 |
+| Recording filename cleanup | HIGH — user-visible on export/history | LOW-MEDIUM — targeted string replace | P1 |
+| macOS clean shutdown fix | HIGH — erodes trust on every quit | MEDIUM-HIGH — investigation first | P1 |
+| UPDT-03/UPDT-05 in verify-sync.sh | HIGH — closes updater regression risk | LOW — two jq assertions | P1 |
+| verify-sync.sh path move | MEDIUM — prerequisite unblock | LOW — rename + update refs | P1 |
+| verify-sync.yml CI gate | HIGH — auto-enforces identity on sync PRs | LOW — single workflow file | P1 |
+| Portable mode string fix | MEDIUM — portable installs only | LOW — string replace + fallback | P1 |
+| DebugPaths display fix | MEDIUM — debug panel only | LOW — read actual API value | P2 |
+| Community action draft PR | HIGH — saves 30+ min per sync | MEDIUM — action selection + config | P2 |
+| PR checklist template | MEDIUM — process quality | LOW — static file | P2 |
+| Claude Agent 1 (adaptation) | HIGH — long-term maintenance velocity | HIGH — workflow + prompt engineering | P2 |
+| Claude Agent 2 (audit) | HIGH — regression safety net | MEDIUM — second sequential step | P2 |
+| Provider picker UX redesign | MEDIUM — positioning clarity | MEDIUM — settings component refactor | P3 |
+| Network surface privacy doc | LOW — no user complaint yet | LOW — grep audit + doc authoring | P3 |
 
 **Priority key:**
-- P1: Required for milestone to be complete
-- P2: Meaningfully improves quality; ship if time allows in same milestone
-- P3: Nice to have; background work, no urgency
+- P1: Must ship for milestone to be complete
+- P2: High value; include if time budget allows in v1.2
+- P3: Nice to have; defer to v1.3+
 
 ---
 
-## Known Conflict Zones for Upstream Merge
+## Technical Notes Per Feature Area
 
-The upstream v0.8.0–v0.8.2 merge will encounter conflicts in files Dictus has intentionally modified. These are not bugs — they require deliberate resolution.
+### Cross-Platform Icons
 
-| File | Dictus Change | Upstream Likely Change | Resolution Strategy |
-|------|--------------|----------------------|---------------------|
-| `src-tauri/tauri.conf.json` | `productName: "Dictus"`, `identifier: "com.dictus.desktop"`, `signingIdentity: "-"`, updater config | Version bump, possible new plugin config | Keep Dictus values; apply upstream config structure changes |
-| `.github/workflows/release.yml` | `asset-prefix: "handy"` (to be fixed to "dictus") | Possible runner changes, new signing steps | Keep Dictus asset-prefix; apply upstream CI improvements |
-| `.github/workflows/build.yml` | Minor Dictus additions | Possible new build matrix entries, ONNX updates | Merge carefully; upstream build improvements are valuable |
-| `src/i18n/locales/*/translation.json` | All strings rebranded Handy→Dictus | New translation keys from new features | Add upstream new keys; do not revert Dictus brand strings |
-| `src/components/update-checker/UpdateChecker.tsx` | Will have Handy URL fixed | Possible upstream UX changes | Keep Dictus URL; evaluate upstream UX changes individually |
-| `src-tauri/src-tauri/Cargo.toml` | `tauri-plugin-updater = "2.10.0"` (existing) | Possible version bumps | Take upstream version bumps |
+**Current state:** `tauri.conf.json` bundle.icon lists `32x32.png`, `128x128.png`, `128x128@2x.png`, `icon.icns`, `icon.ico`. No `512x512.png` in the manifest or on disk. The `icon.icns` is macOS-specific (rounded corners applied by macOS shell at system level) — it must not serve as the Linux source.
+
+**How Tauri 2 bundles icons per platform (HIGH confidence — official docs + GitHub issues):**
+- **Linux deb/AppImage:** Uses PNG files only. AppImage build scripts reference `usr/share/icons/hicolor/<size>/apps/`. A 256x256 PNG is the practical minimum. Tauri's AppImage bundler has historically expected a 256x256 PNG (Issue #749). Linux desktop environments accept square PNGs with transparent backgrounds — no rounded corners expected or desired.
+- **Windows:** Uses `icon.ico` embedded in the `.exe`. The `.ico` must contain layers at 16, 24, 32, 48, 64, 256 pixels. BMP format for small layers, PNG format for 256px layer. Inspect the existing `icon.ico` before deciding to regenerate — it may already be correct.
+- **macOS:** Uses `icon.icns` only. macOS applies rounded corners at OS level from a square source. The ICNS is not used on other platforms.
+
+**What to do:** Create a 1024x1024 square source PNG (Dictus logo centered, transparent or solid white background — not the macOS rounded-corner version). Run `bun run tauri icon [source.png]` — this CLI regenerates all sizes for all platforms from one file. Add `512x512.png` to the `bundle.icon` array in `tauri.conf.json` after generation.
+
+**Confidence:** HIGH for process. MEDIUM for whether existing `icon.ico` layers are sufficient without regeneration — inspect with an ICO analyzer tool before deciding.
+
+### Two-Agent Claude Code Review
+
+**Pattern (MEDIUM confidence — verified via official `anthropics/claude-code-action` docs + community examples):**
+
+Two sequential steps in one GitHub Actions job, both using `anthropics/claude-code-action@v1`, with distinct `prompt` values:
+
+Step 1 — Adaptation agent (can push commits, high turn budget):
+```yaml
+- uses: anthropics/claude-code-action@v1
+  with:
+    anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+    prompt: |
+      You are reviewing an upstream sync PR for Dictus Desktop (a fork of Handy).
+      Follow the rules in UPSTREAM.md exactly. Verify: tauri.conf.json has
+      productName=Dictus, identifier=com.dictus.desktop, and the correct updater
+      pubkey/endpoint. llm_client.rs has Dictus User-Agent and X-Title headers.
+      All 22 locale files have no "Handy" values in i18n keys. If regressions
+      found, push corrective commits to the PR branch.
+    claude_args: "--max-turns 15"
+```
+
+Step 2 — Audit agent (read-only, lower turn budget):
+```yaml
+- uses: anthropics/claude-code-action@v1
+  with:
+    anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+    prompt: |
+      You are an independent auditor on an upstream sync PR for Dictus Desktop.
+      A prior adaptation agent has already committed fixes. Your job: audit for
+      anything missed. Check recording filenames (should be dictus-*, not handy-*),
+      portable mode string, DebugPaths display, and any remaining Handy brand
+      strings in user-visible surfaces. Post findings as a PR review comment.
+      Do NOT push commits — report only.
+    claude_args: "--max-turns 5"
+```
+
+**Context isolation:** Each step is a fresh Claude Code invocation. No shared conversation state. Agent 2 reads the PR diff (including Agent 1's commits) as fresh input — structurally sound for independent audit.
+
+**Constraints:**
+- Neither agent can auto-merge. Human merge is mandatory (same-file conflicts require judgment).
+- Trigger: `on: pull_request` filtered to label `upstream-sync`.
+- Token cost: each invocation proportional to codebase context loaded. Set `--max-turns` conservatively. Agent 2 should be read-only (lower count).
+- Requires `ANTHROPIC_API_KEY` secret and the Claude GitHub App installed on the repo.
+
+### macOS Clean Shutdown
+
+**Root cause categories (MEDIUM confidence — Tauri GitHub issues #4159, #12978, Apple docs on SIGKILL):**
+
+1. `EXC_CRASH (SIGKILL)` — macOS killed a thread that did not respond to SIGTERM within the grace period. Most common cause in Tauri: tokio-runtime-worker blocked on an audio recording loop, VAD inference, or Whisper model unload that takes too long.
+2. `EXC_CRASH (SIGABRT)` — Rust panic during destructor teardown. Drop order for Tauri managed state is not guaranteed; a manager's Drop impl may panic if it tries to access already-dropped state.
+3. Tauri 2.x does not implement `applicationShouldTerminate` (macOS app delegate method for pre-exit cleanup). This is a confirmed open feature request (tauri-apps/tauri #12978, closed as duplicate of #9198). As of April 2026, macOS apps built with Tauri 2 cannot intercept termination requests to run cleanup before exit.
+4. Plugin teardown race: `tauri-plugin-global-shortcut` or `tauri-plugin-single-instance` socket file not cleaned up before process exit on macOS.
+
+**Diagnosis path:** Console.app → User Reports → Dictus → most recent crash report → read `Exception Type` and `Thread N Crashed` stack trace. If `tokio-runtime-worker`, audio/VAD/ML is suspect. If `main thread`, it is Tauri's shutdown sequence. RUST_BACKTRACE=1 on a debug build provides additional context.
+
+**Fix options in priority order:**
+1. Add explicit stop/cleanup calls for each manager (audio, transcription, model) before `app.exit(0)` in the shutdown handler in `lib.rs`.
+2. Use `tauri::async_runtime::block_on` to await all pending async tasks before triggering exit.
+3. If the crash is traced to a specific Tauri plugin: file upstream issue on tauri-apps/plugins-workspace; consider disabling or replacing the plugin.
+4. `std::process::exit(0)` as last resort only — acceptable if root cause is confirmed as an upstream unfixable bug and the tradeoff (no graceful cleanup) is acceptable. Document the decision explicitly if this path is taken.
+
+### Post-Sync Regression Gate
+
+**Standard GitHub Actions pattern (HIGH confidence):**
+
+Trigger:
+```yaml
+on:
+  pull_request:
+    types: [opened, synchronize, labeled]
+```
+
+Gate condition:
+```yaml
+if: contains(github.event.pull_request.labels.*.name, 'upstream-sync')
+```
+
+Gate step:
+```yaml
+- run: bash .github/scripts/verify-sync.sh
+```
+
+Branch protection enforcement: mark the status check as "required" in repo settings for the `main` branch. This prevents merging any upstream sync PR where identity assertions fail — no manual memory required.
+
+### Local-First Provider UX
+
+**Pattern (MEDIUM confidence — inferred from Obsidian and Logseq product design, no official design spec):**
+
+Both Obsidian and Logseq use the same structural principle: local storage is the baseline, unremarkable default with no badge. Cloud sync is a separate, clearly labeled opt-in section:
+- **Obsidian:** "Sync" is a named plugin section in settings, labeled "Obsidian Sync." No badge on local vault files — they are simply the default.
+- **Logseq:** Local graph needs no label; sync options appear under a distinct section.
+
+**For Dictus provider picker:** Group the list into two visually distinct sections — "Local" (Ollama, Apple Intelligence) at top with no badge, and "External providers" (OpenAI, Anthropic, Groq, Gemini) below with a section label "External — transcription data leaves this device." Consider a small cloud icon or neutral color shift rather than a warning-red badge (which implies danger rather than information).
+
+**What to avoid:**
+- Per-item modal warning dialogs on every cloud provider selection — intrusive, repeated friction
+- Hiding cloud providers entirely — users should be able to find them; just not defaulted into them
+- Warning-red color for cloud providers — implies security problem rather than privacy preference
 
 ---
 
 ## Sources
 
-- [Tauri v2 Updater Plugin documentation](https://v2.tauri.app/plugin/updater/) — official, HIGH confidence
-- [Tauri v2 GitHub Releases pipeline](https://v2.tauri.app/distribute/pipelines/github/) — official, HIGH confidence
-- [tauri-action v0.5.24 release notes — `includeUpdaterJson`](https://github.com/tauri-apps/tauri-action/releases) — HIGH confidence
-- [Tauri updater with GitHub Releases — community guide](https://thatgurjot.com/til/tauri-auto-updater/) — MEDIUM confidence
-- [aormsby/Fork-Sync-With-Upstream-action](https://github.com/aormsby/Fork-Sync-With-Upstream-action) — MEDIUM confidence
-- [GitHub Actions fork sync best practices discussion](https://github.com/orgs/community/discussions/153608) — MEDIUM confidence
-- Verified directly in codebase: `src-tauri/tauri.conf.json`, `.github/workflows/release.yml`, `.github/workflows/build.yml`, `src/components/update-checker/UpdateChecker.tsx`, `src-tauri/Cargo.toml`
+- Tauri 2.x official icon docs: https://v2.tauri.app/develop/icons/
+- Freedesktop hicolor icon theme specification: https://specifications.freedesktop.org/icon-theme/latest/
+- Tauri GitHub issue #749 (AppImage 256x256 icon requirement): https://github.com/tauri-apps/tauri/issues/749
+- Tauri GitHub issue #12978 (applicationShouldTerminate feature request): https://github.com/tauri-apps/tauri/issues/12978
+- Tauri GitHub issue #4159 (segfault during termination on macOS): https://github.com/tauri-apps/tauri/issues/4159
+- Claude Code GitHub Actions official docs: https://code.claude.com/docs/en/github-actions
+- anthropics/claude-code-action repository: https://github.com/anthropics/claude-code-action
+- Three-body agent orchestration pattern: https://leocardz.com/2026/04/08/orchestrating-agents-with-github-actions
+- GitHub Marketplace — Upstream Sync action: https://github.com/marketplace/actions/upstream-sync
+- GitHub Marketplace — aormsby/Fork-Sync-With-Upstream-action: https://github.com/aormsby/Fork-Sync-With-Upstream-action
+- Microsoft ICO icon construction guide: https://learn.microsoft.com/en-us/windows/apps/design/iconography/app-icon-construction
+- Project context files read: `.planning/PROJECT.md`, `UPSTREAM.md`, `src-tauri/tauri.conf.json`, `.planning/todos/pending/*.md`
 
 ---
 
-_Feature research for: Dictus Desktop v1.1 — Auto-Update & Upstream Sync_
-_Researched: 2026-04-10_
+*Feature research for: Dictus Desktop v1.2 Polish & Automation milestone*
+*Researched: 2026-04-15*

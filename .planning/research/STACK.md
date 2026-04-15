@@ -259,3 +259,303 @@ Setting these secrets does not require any workflow changes — they are already
 
 _Stack research for: Dictus Desktop v1.1 — Auto-Updater + Upstream Sync_
 _Researched: 2026-04-10_
+
+---
+---
+
+# Stack Research — v1.2 Polish & Automation (Addendum)
+
+**Project:** Dictus Desktop v1.2
+**Researched:** 2026-04-15
+**Scope:** NEW CI/tooling additions only. Core app stack (Tauri 2.x, Rust, React 18, TypeScript, Tailwind, Zustand, Vite) and auto-updater stack unchanged.
+**Confidence:** HIGH for GitHub Actions versions; MEDIUM for macOS shutdown fix pattern; LOW for OAuth billing status (see note)
+
+---
+
+## Scope Note
+
+v1.2 adds no new frontend packages and no new Rust audio/ML crates. All additions are either:
+- GitHub Actions workflow files
+- Icon asset regeneration (no tooling install, CLI already present)
+- Rust code pattern changes (no new crates if `tokio-util` is already transitive)
+
+---
+
+## New Stack Additions
+
+### 1. Upstream Sync Refactor — `peter-evans/create-pull-request@v8`
+
+**Version:** v8.1.1 (released April 10, 2026). Use pinned `v8` major tag.
+
+**What it adds:** Replaces the custom SHA-tracking detection workflow with a workflow that opens a draft PR when upstream differs from main. The human still merges manually (mandatory for Dictus — conflict zones are always present), but the PR is pre-created so there is nothing to set up per sync.
+
+**Why this action over alternatives:**
+
+| Action | Verdict | Reason |
+|--------|---------|--------|
+| `peter-evans/create-pull-request@v8` | Use this | Actively maintained, supports `draft: true`, `labels`, idempotent branch handling |
+| `aormsby/Fork-Sync-With-Upstream-action@v3.4.3` | Do not use | Performs direct branch merges, no PR creation, no human review gate — incompatible with Dictus's mandatory conflict resolution |
+| Native GitHub fork-sync API | Do not use | Auto-merges without PR, upstream wins on conflicts — would clobber `tauri.conf.json` identity fields |
+| Custom `gh pr create` shell step | Acceptable fallback | Works if the upstream/sync branch already exists; `peter-evans` is cleaner (idempotent) |
+
+**Integration point:** Replaces `.github/workflows/upstream-sync.yml`. Requires `contents: write` and `pull-requests: write` permissions (upgrade from current `contents: read, issues: write`).
+
+**Key inputs used:**
+
+```yaml
+- uses: peter-evans/create-pull-request@v8
+  with:
+    token: ${{ secrets.GITHUB_TOKEN }}
+    base: main
+    branch: upstream/sync-YYYY-MM-DD     # set via env step
+    draft: true
+    labels: upstream-sync
+    title: "chore(upstream): sync cjpais/Handy upstream"
+    body: |
+      Automated weekly upstream sync.
+      Follow UPSTREAM.md to resolve conflicts.
+      Run bash .github/scripts/verify-sync.sh before marking ready for review.
+```
+
+**Workflow structure note:** `peter-evans/create-pull-request` works by committing local workspace changes to a branch and opening a PR. For an upstream merge (which requires conflict resolution), the recommended approach is:
+1. Shell steps: `git remote add upstream`, `git fetch upstream main`, `git checkout -b upstream/sync-DATE upstream/main`
+2. Push the branch: `git push origin upstream/sync-DATE`
+3. Call `peter-evans/create-pull-request` for the PR creation step only (or use `gh pr create` directly after push)
+
+The action also handles the case where the branch already exists (idempotent).
+
+**Files changed:** `.github/workflows/upstream-sync.yml` (replace entirely), delete `.github/upstream-sha.txt`.
+
+---
+
+### 2. CI Gate for Upstream PRs — No New Action
+
+**What it adds:** A new workflow file `.github/workflows/verify-sync.yml` that runs `verify-sync.sh` automatically on any PR labeled `upstream-sync`. Currently `verify-sync.sh` is run manually — making it a CI gate eliminates the human step of "remember to run the script."
+
+**No new actions needed.** Uses only `actions/checkout@v4` (already in use) and a bash step.
+
+```yaml
+on:
+  pull_request:
+    types: [labeled, synchronize]
+
+jobs:
+  verify:
+    if: contains(github.event.pull_request.labels.*.name, 'upstream-sync')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash .github/scripts/verify-sync.sh
+```
+
+**Files changed:** `.github/workflows/verify-sync.yml` (new), `.github/scripts/verify-sync.sh` (moved from `.planning/phases/05-upstream-sync/scripts/verify-sync.sh` — same file, new location).
+
+**Also add:** `.github/pull_request_template/upstream-sync.md` — checklist PR template for upstream sync PRs (cap-at-SHA decision, risk rating, verify-sync.sh result). No action required; GitHub picks up templates from this path automatically for PRs using the `?template=upstream-sync.md` query parameter (or can be the default template).
+
+---
+
+### 3. Claude Code Agent Layer — `anthropics/claude-code-action@v1`
+
+**Version:** Latest patch is `v1.0.96` (April 15, 2026). Pin to `v1` major tag (Anthropic publishes frequent patch releases; the major tag is stable).
+
+**What it adds:** Two agent roles on upstream-sync PRs:
+- **Adapt agent** (optional, later): could propose conflict resolutions
+- **Audit agent** (v1.2 scope): reads the diff, checks identity fields, posts a structured comment
+
+For v1.2, implement audit-only. The adapt agent (automated conflict resolution) is SYNC-A1, deferred per PROJECT.md.
+
+**Trigger modes relevant for v1.2:**
+
+| Mode | How | Use case |
+|------|-----|---------|
+| `label_trigger` | Fires when a label is applied to a PR | Audit fires automatically when `upstream-sync` label is applied |
+| `@claude` mention | Comment `@claude` in a PR to trigger interactive session | Ad-hoc investigation |
+| `prompt` input with `schedule` trigger | Cron-based automation | Not needed for v1.2 |
+
+**Auth modes — critical decision:**
+
+| Auth Method | Secret Name | Cost Model | Recommendation |
+|-------------|-------------|-----------|----------------|
+| OAuth token | `CLAUDE_CODE_OAUTH_TOKEN` | Counts against Claude Max subscription quota — no per-run metered charge | **Use this.** Generated once with `claude setup-token` locally. |
+| API key | `ANTHROPIC_API_KEY` | Pay-per-token on every CI run — metered billing regardless of subscription | **Do not use.** Contradicts user's stated cost constraint. |
+
+**OAuth billing caveat (LOW confidence):** As of April 4, 2026, Anthropic restricted OAuth tokens for third-party tools. Whether `anthropics/claude-code-action` (Anthropic's own first-party official action) is exempt from this restriction is not conclusively documented in official sources. Evidence from the KissAPI guide (April 2026) suggests OAuth still works for the official action and recommends staying on the OAuth path. If OAuth stops working, the fallback is local Claude Code invocation only — no CI agent — until Anthropic clarifies the policy. Do not switch to API key billing as a workaround.
+
+**GitHub App prerequisite:** Install the [Claude GitHub App](https://github.com/apps/claude) on `getdictus/dictus-desktop` before the action can post comments on PRs.
+
+**Required GitHub permissions for the workflow:**
+
+```yaml
+permissions:
+  contents: read
+  pull-requests: write    # to post comments
+  issues: write           # if also responding to issues
+```
+
+**Minimal audit workflow (`.github/workflows/claude-audit.yml`):**
+
+```yaml
+name: Claude Upstream Audit
+
+on:
+  pull_request:
+    types: [labeled]
+
+jobs:
+  audit:
+    if: contains(github.event.pull_request.labels.*.name, 'upstream-sync')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            Review this upstream sync PR for Dictus identity regressions.
+            Check:
+            1. tauri.conf.json: productName == "Dictus", identifier == "com.dictus.desktop"
+            2. llm_client.rs: User-Agent header contains "Dictus/1.0", X-Title header == "Dictus"
+            3. No "handy.computer" string in src/ or src-tauri/src/ (except handy_keys module — that's an external crate name, ignore it)
+            4. No "Handy" value in i18n locale JSON files (attribution prose is OK, string values are not)
+            Summarize what functional changes this PR adds from upstream.
+            Post your findings as a PR comment.
+          claude_args: --max-turns 5
+```
+
+**Files changed:** `.github/workflows/claude-audit.yml` (new), add repo secret `CLAUDE_CODE_OAUTH_TOKEN`.
+
+---
+
+### 4. Icon Tooling — `tauri icon` CLI (Already Installed)
+
+**No new installation.** The `tauri icon` subcommand ships with `@tauri-apps/cli`, which is already in `devDependencies`.
+
+**What it adds:** Regenerates all platform icons from a single source image, fixing the black-corner problem on Linux and Windows caused by macOS-specific rounded-corner pixels baked into the current `icon.png`.
+
+**Command:**
+
+```bash
+bunx tauri icon app-icon.png
+# or: cargo tauri icon app-icon.png
+```
+
+**Source image requirements (verified from official Tauri 2.x docs):**
+- Square (equal width and height)
+- RGBA format (transparency channel required)
+- 32-bit per pixel
+- 1024x1024 recommended
+- No macOS-style rounded corners baked into the pixels — corners must be transparent
+
+**What `tauri icon` generates (Tauri 2.x output):**
+
+| Output File | Platform | Notes |
+|-------------|---------|-------|
+| `src-tauri/icons/32x32.png` | Linux | Square, transparent background |
+| `src-tauri/icons/128x128.png` | Linux | Square, transparent background |
+| `src-tauri/icons/128x128@2x.png` | Linux HiDPI | Square, transparent background |
+| `src-tauri/icons/icon.png` | Linux general | Square, transparent background |
+| `src-tauri/icons/icon.icns` | macOS | macOS applies its own rounded-corner mask at system level |
+| `src-tauri/icons/icon.ico` | Windows | Multi-resolution: 16, 24, 32, 48, 64, 256px embedded in single file |
+
+**`tauri.conf.json` is unchanged** — the `bundle.icon` array already references all these paths. Running `tauri icon` regenerates them in place.
+
+**macOS behavior:** A square transparent source with no baked-in rounding looks correct on all three platforms. macOS applies its own rounded mask at the system level — the source does not need to simulate this.
+
+**Files changed:** `app-icon.png` (new at repo root — the source), `src-tauri/icons/*.png`, `src-tauri/icons/icon.ico`, `src-tauri/icons/icon.icns` (all regenerated). Commit all regenerated files.
+
+---
+
+### 5. macOS "Quit Unexpectedly" Fix — No New Crates
+
+**No new Rust crates required.** This is a code pattern fix using existing Tauri APIs.
+
+**Root cause (from Tauri issue #12534):** `cleanup_before_exit()` is called from a Tokio worker thread on macOS. AppKit requires tray icon removal (`removeFromSuperview`) to happen on the main thread. Calling it from a worker thread causes `_AssertAutoLayoutOnAllowedThreadsOnly` assertion failure — macOS reports this as a crash.
+
+**Diagnosis first (mandatory before writing code):** Read the crash report:
+
+```bash
+ls ~/Library/Logs/DiagnosticReports/Dictus*.ips | tail -1 | xargs open
+```
+
+Or open Console.app → User Reports → Dictus. The crash report identifies the exact thread and frame. The fix below applies only if the stack trace confirms it's a tray cleanup threading issue.
+
+**Fix pattern — `run_on_main_thread` dispatch:**
+
+```rust
+// In tray.rs quit handler, replace direct app.exit(0) with:
+let app_handle = app.app_handle().clone();
+app_handle.run_on_main_thread(move || {
+    app_handle.cleanup_before_exit();
+    std::process::exit(0);
+}).expect("failed to dispatch cleanup to main thread");
+```
+
+**Fallback pattern (if `run_on_main_thread` is not available in the handler context):**
+
+```rust
+// Hard exit — bypasses Rust drop glue, avoids the crash
+// Acceptable for a cosmetic fix on a pre-existing upstream bug
+std::process::exit(0);
+```
+
+**Files to check:** `src-tauri/src/tray.rs:129-130` (tray quit handler), `src-tauri/src/lib.rs:254-255` (tray quit path), `src-tauri/src/lib.rs:622-623` (no-tray close path).
+
+**Background thread investigation:** If the crash report points to a Tokio worker (not the tray cleanup), the pattern is `tokio_util::sync::CancellationToken` for graceful task shutdown. Check whether `tokio-util` is already a transitive dependency before adding it:
+
+```bash
+cd src-tauri && cargo tree | grep tokio-util
+```
+
+If present, no `Cargo.toml` change needed. If absent, add `tokio-util = { version = "0.7", features = ["sync"] }` to `src-tauri/Cargo.toml`.
+
+---
+
+## Alternatives Considered
+
+| Recommended | Alternative | When Alternative is Better |
+|-------------|-------------|---------------------------|
+| `peter-evans/create-pull-request@v8` | Custom `gh pr create` shell step | If the workflow already pushes the upstream branch, `gh pr create` is marginally simpler. Either works; `peter-evans` handles idempotency and branch conflicts automatically. |
+| `anthropics/claude-code-action@v1` with OAuth | Local Claude Code invocation only | If Anthropic's OAuth policy change breaks the action, fall back to local invocation. Do not switch to API key. |
+| `tauri icon` CLI regeneration | Manually export per-platform icons in Figma/Inkscape | Never — manual export risks size and format inconsistencies across the six output variants |
+| `run_on_main_thread` pattern for quit fix | `tokio-graceful-shutdown` crate | Over-engineered for a one-line threading fix. Only if background tasks need coordinated shutdown, not for tray cleanup. |
+
+---
+
+## What NOT to Use
+
+| Avoid | Why | Use Instead |
+|-------|-----|-------------|
+| `ANTHROPIC_API_KEY` for claude-code-action | Metered per-token billing on every weekly sync audit run | `CLAUDE_CODE_OAUTH_TOKEN` (Max subscription quota, no per-run charge) |
+| `aormsby/Fork-Sync-With-Upstream-action` | Direct merge, no PR, no human review — would auto-accept upstream identity regressions | `peter-evans/create-pull-request` with `draft: true` |
+| Auto-merge on `upstream-sync` PRs | `tauri.conf.json`, i18n files, and `llm_client.rs` are always conflict zones between upstream and Dictus rebrand | Human merge + `verify-sync.sh` gate always |
+| `std::process::exit(0)` everywhere as default | Skips all Rust destructors — use only as last resort when `run_on_main_thread` is not available | `app_handle.run_on_main_thread()` → `cleanup_before_exit()` → `exit(0)` |
+| New Rust crates for shutdown (e.g., `tokio-graceful-shutdown`) | Complexity not justified unless crash report confirms it's a multi-task coordination problem | Check `tokio-util` transitive dep first; use `CancellationToken` if already available |
+
+---
+
+## New GitHub Secrets Required for v1.2
+
+| Secret Name | Value | Notes |
+|-------------|-------|-------|
+| `CLAUDE_CODE_OAUTH_TOKEN` | Output of `claude setup-token` run locally | Requires Claude Max or Pro subscription. Regenerate if expired. |
+
+No other new secrets. `GITHUB_TOKEN` already available in Actions context for PR creation.
+
+---
+
+## Sources
+
+- [peter-evans/create-pull-request GitHub](https://github.com/peter-evans/create-pull-request) — v8.1.1 confirmed April 10, 2026. `draft: true`, `labels` inputs verified. HIGH confidence.
+- [aormsby/Fork-Sync-With-Upstream-action GitHub](https://github.com/aormsby/Fork-Sync-With-Upstream-action) — v3.4.3 (April 5, 2026), direct merge confirmed (no PR creation). HIGH confidence.
+- [anthropics/claude-code-action GitHub](https://github.com/anthropics/claude-code-action) — v1.0.96 latest tag (April 15, 2026). Trigger modes, `label_trigger`, `prompt` input verified. HIGH confidence.
+- [claude-code-action docs/setup.md](https://github.com/anthropics/claude-code-action/blob/main/docs/setup.md) — `CLAUDE_CODE_OAUTH_TOKEN` auth mode, `claude setup-token` generation verified. HIGH confidence.
+- [Claude Code Action with OAuth — GitHub Marketplace](https://github.com/marketplace/actions/claude-code-action-with-oauth) — OAuth mode availability confirmed. MEDIUM confidence.
+- [KissAPI blog April 2026](https://kissapi.ai/blog/claude-code-github-actions-setup-guide-2026.html) — OAuth vs API key billing in 2026, "stay on OAuth path" recommendation. LOW confidence (single non-official source).
+- [Tauri 2.x Icon docs](https://v2.tauri.app/develop/icons/) — Input format (RGBA, square, 1024x1024), output files, CLI command. HIGH confidence.
+- [Tauri issue #12534](https://github.com/tauri-apps/tauri/issues/12534) — `cleanup_before_exit()` main-thread crash on macOS, root cause confirmed. `run_on_main_thread` fix pattern extrapolated. MEDIUM confidence.
+
+_Stack research for: Dictus Desktop v1.2 — Polish & Automation addendum_
+_Researched: 2026-04-15_
