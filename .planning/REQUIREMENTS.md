@@ -98,42 +98,42 @@ Explicitly excluded from v1.2. Documented to prevent scope creep.
 
 ## Traceability
 
-Which phases cover which requirements. Populated by roadmap creation.
+Which phases cover which requirements.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BRAND-01 | Phase [N] | Pending |
-| BRAND-02 | Phase [N] | Pending |
-| BRAND-03 | Phase [N] | Pending |
-| BRAND-04 | Phase [N] | Pending |
-| ICON-01 | Phase [N] | Pending |
-| ICON-02 | Phase [N] | Pending |
-| ICON-03 | Phase [N] | Pending |
-| ICON-04 | Phase [N] | Pending |
-| SYNC-06 | Phase [N] | Pending |
-| SYNC-07 | Phase [N] | Pending |
-| SYNC-08 | Phase [N] | Pending |
-| SYNC-09 | Phase [N] | Pending |
-| SYNC-10 | Phase [N] | Pending |
-| SYNC-11 | Phase [N] | Pending |
-| AGENT-01 | Phase [N] | Pending |
-| AGENT-02 | Phase [N] | Pending |
-| AGENT-03 | Phase [N] | Pending |
-| AGENT-04 | Phase [N] | Pending |
-| AGENT-05 | Phase [N] | Pending |
-| AGENT-06 | Phase [N] | Pending |
-| SHUT-01 | Phase [N] | Pending |
-| SHUT-02 | Phase [N] | Pending |
-| SHUT-03 | Phase [N] | Pending |
-| PRIV-01 | Phase [N] | Pending |
-| PRIV-02 | Phase [N] | Pending |
-| PRIV-03 | Phase [N] | Pending |
+| BRAND-01 | Phase 6 | Pending |
+| BRAND-02 | Phase 6 | Pending |
+| BRAND-03 | Phase 6 | Pending |
+| BRAND-04 | Phase 6 | Pending |
+| ICON-01 | Phase 6 | Pending |
+| ICON-02 | Phase 6 | Pending |
+| ICON-03 | Phase 6 | Pending |
+| ICON-04 | Phase 6 | Pending |
+| SYNC-06 | Phase 9 | Pending |
+| SYNC-07 | Phase 9 | Pending |
+| SYNC-08 | Phase 9 | Pending |
+| SYNC-09 | Phase 9 | Pending |
+| SYNC-10 | Phase 9 | Pending |
+| SYNC-11 | Phase 9 | Pending |
+| AGENT-01 | Phase 10 | Pending |
+| AGENT-02 | Phase 10 | Pending |
+| AGENT-03 | Phase 10 | Pending |
+| AGENT-04 | Phase 10 | Pending |
+| AGENT-05 | Phase 10 | Pending |
+| AGENT-06 | Phase 10 | Pending |
+| SHUT-01 | Phase 7 | Pending |
+| SHUT-02 | Phase 7 | Pending |
+| SHUT-03 | Phase 7 | Pending |
+| PRIV-01 | Phase 8 | Pending |
+| PRIV-02 | Phase 8 | Pending |
+| PRIV-03 | Phase 8 | Pending |
 
 **Coverage:**
 - v1.2 requirements: 26 total
-- Mapped to phases: 0 (to be filled by roadmapper)
-- Unmapped: 26 ⚠️
+- Mapped to phases: 26 ✓
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-04-15*
-*Last updated: 2026-04-15 after initial definition*
+*Last updated: 2026-04-15 — traceability populated after roadmap creation*
