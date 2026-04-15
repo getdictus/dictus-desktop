@@ -561,13 +561,13 @@
     url = "https://registry.npmjs.org/@tauri-apps/plugin-clipboard-manager/-/plugin-clipboard-manager-2.3.2.tgz";
     hash = "sha512-CUlb5Hqi2oZbcZf4VUyUH53XWPPdtpw43EUpCza5HWZJwxEoDowFzNUDt1tRUXA8Uq+XPn17Ysfptip33sG4eQ==";
   };
-  "@tauri-apps/plugin-dialog@2.6.0" = fetchurl {
-    url = "https://registry.npmjs.org/@tauri-apps/plugin-dialog/-/plugin-dialog-2.6.0.tgz";
-    hash = "sha512-q4Uq3eY87TdcYzXACiYSPhmpBA76shgmQswGkSVio4C82Sz2W4iehe9TnKYwbq7weHiL88Yw19XZm7v28+Micg==";
+  "@tauri-apps/plugin-dialog@2.7.0" = fetchurl {
+    url = "https://registry.npmjs.org/@tauri-apps/plugin-dialog/-/plugin-dialog-2.7.0.tgz";
+    hash = "sha512-4nS/hfGMGCXiAS3LtVjH9AgsSAPJeG/7R+q8agTFqytjnMa4Zq95Bq8WzVDkckpanX+yyRHXnRtrKXkANKDHvw==";
   };
-  "@tauri-apps/plugin-fs@2.4.4" = fetchurl {
-    url = "https://registry.npmjs.org/@tauri-apps/plugin-fs/-/plugin-fs-2.4.4.tgz";
-    hash = "sha512-MTorXxIRmOnOPT1jZ3w96vjSuScER38ryXY88vl5F0uiKdnvTKKTtaEjTEo8uPbl4e3gnUtfsDVwC7h77GQLvQ==";
+  "@tauri-apps/plugin-fs@2.5.0" = fetchurl {
+    url = "https://registry.npmjs.org/@tauri-apps/plugin-fs/-/plugin-fs-2.5.0.tgz";
+    hash = "sha512-c83kbz61AK+rKjhS+je9+stIO27nXj7p9cqeg36TwkIUtxpCFTttlHHtqon6h6FN54cXjyAjlMPOJcW3mwE5XQ==";
   };
   "@tauri-apps/plugin-global-shortcut@2.3.1" = fetchurl {
     url = "https://registry.npmjs.org/@tauri-apps/plugin-global-shortcut/-/plugin-global-shortcut-2.3.1.tgz";
