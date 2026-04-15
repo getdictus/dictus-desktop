@@ -29,7 +29,7 @@
 
 **Milestone Goal:** Polish Dictus identity across all user-visible surfaces, fix platform icon artifacts, resolve the macOS clean-shutdown crash, harden the upstream sync CI gate, and layer Claude Code agents onto the sync workflow so future merges get automated identity remediation and an independent audit.
 
-- [ ] **Phase 6: Brand & Icon Polish** - Fix all remaining Handy brand leaks and platform icon artifacts; extend verify-sync.sh to guard them
+- [ ] **Phase 6: Brand & Icon Polish** - Fix all remaining Handy brand leaks and platform icon artifacts; extend verify-sync.sh to guard them (absorbs SYNC-06 from Phase 9)
 - [ ] **Phase 7: macOS Clean Shutdown** - Diagnose and fix the "Dictus quit unexpectedly" crash dialog on macOS Sequoia
 - [ ] **Phase 8: Privacy / Local-First UX** - Reorder post-process providers (local first) and document the app's network surface
 - [ ] **Phase 9: Sync Infrastructure Refactor** - Replace issue-based detection with community-action draft PRs and promote verify-sync.sh to a required CI gate
@@ -38,15 +38,21 @@
 ## Phase Details
 
 ### Phase 6: Brand & Icon Polish
-**Goal**: Dictus identity is complete and verifiable — no Handy strings appear in recording filenames, portable mode detection, or the debug path display; platform icons render correctly on Linux and Windows; verify-sync.sh guards all three surfaces.
+**Goal**: Dictus identity is complete and verifiable — no Handy strings appear in recording filenames, portable mode detection, or the debug path display; platform icons render correctly on Linux and Windows; verify-sync.sh guards all three surfaces and lives at its permanent home `.github/scripts/`.
 **Depends on**: Nothing (independent of all v1.2 phases)
-**Requirements**: BRAND-01, BRAND-02, BRAND-03, BRAND-04, ICON-01, ICON-02, ICON-03, ICON-04
+**Requirements**: BRAND-01, BRAND-02, BRAND-03, BRAND-04, ICON-01, ICON-02, ICON-03, ICON-04 (+ SYNC-06 pulled forward from Phase 9 per CONTEXT.md roadmap ripple)
 **Success Criteria** (what must be TRUE):
   1. New recordings created by the app are named `dictus-{timestamp}.wav` — no `handy-` prefix appears in the filesystem or history panel
   2. DebugPaths settings panel shows the real data directory path (e.g., `/Users/name/Library/Application Support/com.dictus.desktop`) instead of the hardcoded `%APPDATA%/handy` string
   3. Linux app launcher and taskbar show the Dictus icon with no black corner artifact; Windows executable embeds a multi-resolution `.ico` with Dictus logo at every required layer
   4. Running `verify-sync.sh` on a branch that reintroduces `handy-*.wav`, `"Handy Portable Mode"`, or the hardcoded debug path causes the script to exit non-zero
-**Plans**: TBD
+**Plans**: 4 plans
+  - [ ] 06-01-PLAN.md — Relocate verify-sync.sh to .github/scripts/ and extend with BRAND-01a/02a/03a/ICON-02a assertions (SYNC-06, BRAND-04, ICON-02 verification surface)
+  - [ ] 06-02-PLAN.md — Replace handy- filename prefix and "Handy Portable Mode" marker in Rust backend (BRAND-01, BRAND-02)
+  - [ ] 06-03-PLAN.md — Rewrite DebugPaths.tsx to render backend-provided portable-aware path (BRAND-03)
+  - [ ] 06-04-PLAN.md — Regenerate platform icons from square transparent source and extend bundle.icon config (ICON-01, ICON-02, ICON-03, ICON-04) [has checkpoints]
+
+**Note:** After Phase 6 ships, run `/gsd:roadmap-update` to reflect SYNC-06 completion — Phase 9 scope will reduce to SYNC-07/08/09/10/11 only.
 
 ### Phase 7: macOS Clean Shutdown
 **Goal**: Quitting Dictus on macOS (via tray menu or post-update relaunch) no longer triggers the OS "quit unexpectedly" crash dialog — root cause is diagnosed before a fix is committed.
@@ -102,7 +108,7 @@ v1.2 phases execute in order: 6 → 7 → 8 → 9 → 10
 | 3. Documentation and Cleanup | v1.0 | 2/2 | Complete | 2026-04-09 |
 | 4. Updater Infrastructure | v1.1 | 4/4 | Complete | 2026-04-13 |
 | 5. Upstream Sync | v1.1 | 3/3 | Complete | 2026-04-14 |
-| 6. Brand & Icon Polish | v1.2 | 0/TBD | Not started | - |
+| 6. Brand & Icon Polish | v1.2 | 0/4 | Planned | - |
 | 7. macOS Clean Shutdown | v1.2 | 0/TBD | Not started | - |
 | 8. Privacy / Local-First UX | v1.2 | 0/TBD | Not started | - |
 | 9. Sync Infrastructure Refactor | v1.2 | 0/TBD | Not started | - |
