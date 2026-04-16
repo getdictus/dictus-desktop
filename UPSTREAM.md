@@ -277,6 +277,7 @@ Phase 6 replaces this manual runbook with an AI-driven pipeline: Claude Code age
 | `src-tauri/Cargo.lock` | Never manually resolve — run `cargo generate-lockfile` | MEDIUM |
 | `flake.nix` | `git checkout --theirs` — Nix is not Dictus-branded | NONE |
 | `README.md` | Accept upstream typo fix; keep Dictus sections | LOW |
+| `src-tauri/src/lib.rs` (quit-exit handlers + log-flush) | Keep Dictus version: `log::logger().flush()` plus diagnosis-directed cleanup before any exit at the tray-quit and no-tray CloseRequested sites (SHUT-02) | MEDIUM — shutdown correctness |
 
 **Key files:**
 - `.github/upstream-sha.txt` — source of truth for last synced upstream SHA
