@@ -62,7 +62,8 @@
   1. A Console.app crash report is read and the crashing thread identified; the diagnosis (suspect plugin and fix strategy chosen) is committed to the phase plan before any code changes
   2. Clicking "Quit Dictus" in the system tray on macOS Sequoia 15.x dismisses the app cleanly — the "Dictus quit unexpectedly — Reopen / Report / Ignore" OS dialog does not appear
   3. Post-auto-update relaunch on macOS completes without triggering the crash dialog
-**Plans**: TBD
+**Plans**: 1 plan (iteration 1; CONTEXT.md caps at 2 iterations max — Plan 2 only opens if Task 5 reports the dialog still appears)
+  - [ ] 07-01-PLAN.md — Diagnose `.ips` crash report, apply graceful-cleanup + log-flush at both `lib.rs` exit sites, add debug-only `simulate_updater_restart` trigger, append `UPSTREAM.md` conflict-rules row (SHUT-01, SHUT-02, SHUT-03) [has checkpoint]
 
 ### Phase 8: Privacy / Local-First UX
 **Goal**: The settings UI and onboarding flow communicate clearly that Dictus is a local-first app — local post-process providers appear before external ones, the network surface is documented, and onboarding copy presents cloud as opt-in.
