@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Polish & Automation
 status: planning
-stopped_at: Completed 06-03-PLAN.md
-last_updated: "2026-04-16T05:33:57.451Z"
+stopped_at: Completed 06-04-PLAN.md
+last_updated: "2026-04-16T12:00:00.000Z"
 last_activity: 2026-04-15 — Roadmap created, 26/26 requirements mapped across Phases 6-10
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
   percent: 0
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-04-15 at v1.2 kickoff)
 ## Current Position
 
 Phase: 6 of 10 overall (Phase 1 of 5 in v1.2)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-04-15 — Roadmap created, 26/26 requirements mapped across Phases 6-10
+Plan: 04 complete (all 4 plans done)
+Status: Phase 6 complete
+Last activity: 2026-04-16 — Plan 06-04 complete; all Phase 6 plans done (ICON-01/02/03/04, BRAND-01/02/03/04)
 
 Progress: [░░░░░░░░░░] 0% (v1.2 starting — 5 phases, 0 plans complete)
 
@@ -50,6 +50,7 @@ Progress: [░░░░░░░░░░] 0% (v1.2 starting — 5 phases, 0 pla
 | Phase 06-brand-icon-polish P01 | 3 | 3 tasks | 2 files |
 | Phase 06-brand-icon-polish P02 | 3 | 2 tasks | 6 files |
 | Phase 06-brand-icon-polish P03 | 8 | 1 tasks | 1 files |
+| Phase 06-brand-icon-polish P04 | ~60min | 4 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -65,6 +66,9 @@ Progress: [░░░░░░░░░░] 0% (v1.2 starting — 5 phases, 0 pla
 - [Phase 06-brand-icon-polish]: BRAND-01a filter uses underscore grep -v handy_keys: hyphenated handy-keys in comments must use HandyKeys capitalized form
 - [Phase 06-brand-icon-polish]: Pre-compute modelsPath/settingsPath as template literals before JSX render to satisfy i18next/no-literal-string ESLint rule when concatenating path suffixes
 - [Phase 06-brand-icon-polish]: Reused existing get_app_dir_path Tauri command for DebugPaths — no new backend command created (RESEARCH.md Pitfall 1 honored)
+  - [Phase 06-brand-icon-polish P04]: ICON-01 resolved via opaque-navy-tile variant — source PNG has zero transparent pixels, making Linux black-corners artifact physically impossible (approved by Pierre as Option A)
+  - [Phase 06-brand-icon-polish P04]: tauri icon CLI does not output 256x256.png/512x512.png; ImageMagick fallback required (convert from 1024 source)
+  - [Phase 06-brand-icon-polish P04]: Linux (ICON-01) and Windows (ICON-02) visual verification deferred — macOS approved; automated backstops in place
 
 ### Pending Todos
 
@@ -84,6 +88,6 @@ v1.2-specific research flags:
 
 ## Session Continuity
 
-Last session: 2026-04-16T05:33:57.449Z
-Stopped at: Completed 06-03-PLAN.md
+Last session: 2026-04-16T12:00:00.000Z
+Stopped at: Completed 06-04-PLAN.md
 Resume file: None

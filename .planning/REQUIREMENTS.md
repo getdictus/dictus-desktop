@@ -21,10 +21,10 @@ Requirements for the Polish & Automation milestone. Each maps to a roadmap phase
 
 <!-- Fix Linux black-corners artifact and verify Windows icon integrity. -->
 
-- [ ] **ICON-01**: Linux package (deb/AppImage) ships a square 256×256 PNG icon with transparent background (no rounded corners baked in) — no black corners visible in app launcher or taskbar
+- [x] **ICON-01**: Linux package (deb/AppImage) ships a square 256×256 PNG icon with transparent background (no rounded corners baked in) — no black corners visible in app launcher or taskbar
 - [x] **ICON-02**: Windows `.exe` embeds an `icon.ico` containing layers at 16, 24, 32, 48, 64, and 256 pixels (verified via ICO analyzer), with Dictus logo at each layer
-- [ ] **ICON-03**: `tauri.conf.json > bundle.icon` lists all required platform variants (macOS `.icns`, Windows `.ico`, Linux PNG sizes including 256×256 and 512×512)
-- [ ] **ICON-04**: Single 1024×1024 square RGBA source PNG committed under `src-tauri/icons/` (or referenced from `dictus-brand` repo) as the source-of-truth for regenerating all platform icons via `bun run tauri icon`
+- [x] **ICON-03**: `tauri.conf.json > bundle.icon` lists all required platform variants (macOS `.icns`, Windows `.ico`, Linux PNG sizes including 256×256 and 512×512)
+- [x] **ICON-04**: Single 1024×1024 square RGBA source PNG committed under `src-tauri/icons/` (or referenced from `dictus-brand` repo) as the source-of-truth for regenerating all platform icons via `bun run tauri icon`
 
 ### Sync Infrastructure (SYNC)
 
@@ -106,10 +106,10 @@ Which phases cover which requirements.
 | BRAND-02 | Phase 6 | Complete |
 | BRAND-03 | Phase 6 | Complete |
 | BRAND-04 | Phase 6 | Complete |
-| ICON-01 | Phase 6 | Pending |
+| ICON-01 | Phase 6 | Complete |
 | ICON-02 | Phase 6 | Complete |
-| ICON-03 | Phase 6 | Pending |
-| ICON-04 | Phase 6 | Pending |
+| ICON-03 | Phase 6 | Complete |
+| ICON-04 | Phase 6 | Complete |
 | SYNC-06 | Phase 9 | Complete |
 | SYNC-07 | Phase 9 | Pending |
 | SYNC-08 | Phase 9 | Pending |
