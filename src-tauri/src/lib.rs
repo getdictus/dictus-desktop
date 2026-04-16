@@ -62,6 +62,48 @@ fn level_filter_from_u8(value: u8) -> log::LevelFilter {
     }
 }
 
+/// SHUT-02: Flush logs, unregister global shortcuts on the macOS main thread
+/// (so CGEventTap is released cleanly while the runloop is still alive),
+/// then call `app.exit(code)`. Both clean-quit sites — the tray "quit"
+/// menu (`lib.rs` `"quit" =>` arm) and the no-tray `CloseRequested` branch
+/// — MUST funnel through this helper.
+///
+/// Diagnosis (see `.planning/phases/07-macos-clean-shutdown/07-01-PLAN.md`
+/// `## Diagnosis`) implicates `tauri-plugin-global-shortcut`'s macOS Drop
+/// running from `__cxa_finalize_ranges` on the main thread (Suspect A).
+/// Performing the unregister explicitly here, on the main thread, before
+/// `app.exit()` avoids the late atexit-driven CGEventTap teardown abort.
+///
+/// This is intentional fork divergence vs upstream Handy. The
+/// `UPSTREAM.md` conflict-rules table flags this helper + its two call
+/// sites as "Dictus version wins (SHUT-02)" so future upstream syncs do
+/// not silently revert it.
+fn flush_and_exit(app: &AppHandle, code: i32) {
+    log::info!("SHUT-02: flush_and_exit invoked (code={})", code);
+    log::logger().flush();
+    #[cfg(target_os = "macos")]
+    {
+        use tauri_plugin_global_shortcut::GlobalShortcutExt;
+        let app_for_cleanup = app.clone();
+        if let Err(e) = app.run_on_main_thread(move || {
+            if let Err(err) = app_for_cleanup.global_shortcut().unregister_all() {
+                log::warn!("SHUT-02: unregister_all failed during shutdown: {}", err);
+            }
+        }) {
+            log::warn!(
+                "SHUT-02: run_on_main_thread for unregister_all failed: {}",
+                e
+            );
+        }
+        // `run_on_main_thread` is fire-and-forget. Yield briefly so the
+        // closure has a chance to execute on the runloop before `app.exit`
+        // posts the quit event and Tauri begins teardown.
+        std::thread::sleep(std::time::Duration::from_millis(50));
+        log::logger().flush();
+    }
+    app.exit(code);
+}
+
 fn build_console_filter() -> env_filter::Filter {
     let mut builder = EnvFilterBuilder::new();
 
@@ -252,7 +294,11 @@ fn initialize_core_logic(app_handle: &AppHandle) {
                 cancel_current_operation(app);
             }
             "quit" => {
-                app.exit(0);
+                // SHUT-02: graceful shutdown via shared helper. See
+                // ## Diagnosis in 07-01-PLAN.md and the doc-comment on
+                // flush_and_exit() above for why this funnels through
+                // a helper instead of calling app.exit(0) directly.
+                flush_and_exit(app, 0);
             }
             id if id.starts_with("model_select:") => {
                 let model_id = id.strip_prefix("model_select:").unwrap().to_string();
@@ -619,8 +665,12 @@ pub fn run(cli_args: CliArgs) {
                         }
                     }
                 } else {
-                    // No tray: actually quit so the user doesn't get a zombie process
-                    window.app_handle().exit(0);
+                    // No tray: actually quit so the user doesn't get a zombie process.
+                    // SHUT-02: route through flush_and_exit so the no-tray path gets
+                    // the same log-flush + main-thread global-shortcut unregister as
+                    // the tray "quit" menu (Pitfall 3 in 07-RESEARCH.md — symmetric fix).
+                    let app_handle = window.app_handle().clone();
+                    flush_and_exit(&app_handle, 0);
                 }
             }
             tauri::WindowEvent::ThemeChanged(theme) => {
