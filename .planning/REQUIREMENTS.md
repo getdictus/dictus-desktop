@@ -14,7 +14,7 @@ Requirements for the Polish & Automation milestone. Each maps to a roadmap phase
 
 - [x] **BRAND-01**: New recording files are named `dictus-{timestamp}.wav` instead of `handy-{timestamp}.wav` (`actions.rs:538`, `history.rs:689`, `tray.rs:273`)
 - [x] **BRAND-02**: Portable mode detection marker uses the literal string `"Dictus Portable Mode"` while still recognizing legacy `"Handy Portable Mode"` on existing installs (`portable.rs:30,98`)
-- [ ] **BRAND-03**: DebugPaths settings panel displays the real data-dir path from Tauri `appDataDir()` API instead of the hardcoded `%APPDATA%/handy` string (`DebugPaths.tsx:29-46`)
+- [x] **BRAND-03**: DebugPaths settings panel displays the real data-dir path from Tauri `appDataDir()` API instead of the hardcoded `%APPDATA%/handy` string (`DebugPaths.tsx:29-46`)
 - [x] **BRAND-04**: `verify-sync.sh` gains one assertion per BRAND-01/02/03 surface so future upstream syncs cannot silently reintroduce `handy-*.wav`, `"Handy Portable Mode"`, or the hardcoded debug path
 
 ### Cross-Platform Icons (ICON)
@@ -104,7 +104,7 @@ Which phases cover which requirements.
 |-------------|-------|--------|
 | BRAND-01 | Phase 6 | Complete |
 | BRAND-02 | Phase 6 | Complete |
-| BRAND-03 | Phase 6 | Pending |
+| BRAND-03 | Phase 6 | Complete |
 | BRAND-04 | Phase 6 | Complete |
 | ICON-01 | Phase 6 | Pending |
 | ICON-02 | Phase 6 | Complete |

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Polish & Automation
 status: planning
-stopped_at: Completed 06-02-PLAN.md
-last_updated: "2026-04-16T05:31:38.036Z"
+stopped_at: Completed 06-03-PLAN.md
+last_updated: "2026-04-16T05:33:57.451Z"
 last_activity: 2026-04-15 — Roadmap created, 26/26 requirements mapped across Phases 6-10
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 4
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -49,6 +49,7 @@ Progress: [░░░░░░░░░░] 0% (v1.2 starting — 5 phases, 0 pla
 *Updated after each plan completion*
 | Phase 06-brand-icon-polish P01 | 3 | 3 tasks | 2 files |
 | Phase 06-brand-icon-polish P02 | 3 | 2 tasks | 6 files |
+| Phase 06-brand-icon-polish P03 | 8 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -62,6 +63,8 @@ Progress: [░░░░░░░░░░] 0% (v1.2 starting — 5 phases, 0 pla
 - [Phase 06-brand-icon-polish]: ICON-02a passes immediately — icon.ico already has all 6 required layer sizes; BRAND-01a/02a/03a expected to fail until Plans 06-02/03 land
 - [Phase 06-brand-icon-polish]: No dual-read fallback for Handy Portable Mode marker: CONTEXT.md override, Pierre is sole user
 - [Phase 06-brand-icon-polish]: BRAND-01a filter uses underscore grep -v handy_keys: hyphenated handy-keys in comments must use HandyKeys capitalized form
+- [Phase 06-brand-icon-polish]: Pre-compute modelsPath/settingsPath as template literals before JSX render to satisfy i18next/no-literal-string ESLint rule when concatenating path suffixes
+- [Phase 06-brand-icon-polish]: Reused existing get_app_dir_path Tauri command for DebugPaths — no new backend command created (RESEARCH.md Pitfall 1 honored)
 
 ### Pending Todos
 
@@ -81,6 +84,6 @@ v1.2-specific research flags:
 
 ## Session Continuity
 
-Last session: 2026-04-16T05:31:31.045Z
-Stopped at: Completed 06-02-PLAN.md
+Last session: 2026-04-16T05:33:57.449Z
+Stopped at: Completed 06-03-PLAN.md
 Resume file: None
