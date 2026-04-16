@@ -16,8 +16,9 @@ check() {
 }
 
 command -v jq >/dev/null 2>&1 || { echo "jq required — brew install jq"; exit 2; }
+command -v identify >/dev/null 2>&1 || { echo "imagemagick required — brew install imagemagick"; exit 2; }
 
-echo "Phase 5 — Upstream Sync identity + build assertions"
+echo "Phase 5+6 — Upstream Sync + Brand/Icon identity assertions"
 echo
 
 check "SYNC-05a productName is Dictus" \
@@ -53,11 +54,23 @@ check "SYNC-05j cargo build succeeds" \
 check "SYNC-05k upstream-sha.txt is full 40-char SHA" \
   "[ \$(tr -d '[:space:]' < .github/upstream-sha.txt | wc -c) -eq 40 ]"
 
+check "BRAND-01a no handy- filename prefix in src-tauri (except handy_keys crate)" \
+  "! grep -rn 'handy-' src-tauri/src/ | grep -v handy_keys | grep -q ."
+
+check "BRAND-02a no legacy Handy Portable Mode string in portable.rs" \
+  "! grep -q '\"Handy Portable Mode\"' src-tauri/src/portable.rs"
+
+check "BRAND-03a no hardcoded %APPDATA%/handy path in DebugPaths.tsx" \
+  "! grep -q '%APPDATA%/handy' src/components/settings/debug/DebugPaths.tsx"
+
+check "ICON-02a icon.ico contains all 6 required layer sizes (16,24,32,48,64,256)" \
+  "[ \$(identify -format '%w\n' src-tauri/icons/icon.ico 2>/dev/null | sort -u | grep -cE '^(16|24|32|48|64|256)$') -eq 6 ]"
+
 echo
 if [ $FAIL -eq 0 ]; then
-  echo "All Phase 5 checks passed."
+  echo "All Phase 5+6 checks passed."
   exit 0
 else
-  echo "One or more Phase 5 checks FAILED."
+  echo "One or more Phase 5+6 checks FAILED."
   exit 1
 fi
