@@ -108,7 +108,7 @@ v1.2 phases execute in order: 6 → 7 → 8 → 9 → 10
 | 3. Documentation and Cleanup | v1.0 | 2/2 | Complete | 2026-04-09 |
 | 4. Updater Infrastructure | v1.1 | 4/4 | Complete | 2026-04-13 |
 | 5. Upstream Sync | v1.1 | 3/3 | Complete | 2026-04-14 |
-| 6. Brand & Icon Polish | 1/4 | In Progress|  | - |
+| 6. Brand & Icon Polish | 2/4 | In Progress|  | - |
 | 7. macOS Clean Shutdown | v1.2 | 0/TBD | Not started | - |
 | 8. Privacy / Local-First UX | v1.2 | 0/TBD | Not started | - |
 | 9. Sync Infrastructure Refactor | v1.2 | 0/TBD | Not started | - |

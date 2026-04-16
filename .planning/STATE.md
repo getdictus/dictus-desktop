@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Polish & Automation
 status: planning
-stopped_at: Completed 06-01-PLAN.md
-last_updated: "2026-04-16T05:27:53.033Z"
+stopped_at: Completed 06-02-PLAN.md
+last_updated: "2026-04-16T05:31:38.036Z"
 last_activity: 2026-04-15 — Roadmap created, 26/26 requirements mapped across Phases 6-10
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 4
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -48,6 +48,7 @@ Progress: [░░░░░░░░░░] 0% (v1.2 starting — 5 phases, 0 pla
 
 *Updated after each plan completion*
 | Phase 06-brand-icon-polish P01 | 3 | 3 tasks | 2 files |
+| Phase 06-brand-icon-polish P02 | 3 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -59,6 +60,8 @@ Progress: [░░░░░░░░░░] 0% (v1.2 starting — 5 phases, 0 pla
 - [Phase 05]: UPSTREAM.md §6 post-sync gate missing UPDT-03/UPDT-05 — SYNC-07 in Phase 9 closes this
 - [Phase 06-brand-icon-polish]: SYNC-06 completed in Phase 6 Plan 01 ahead of Phase 9 schedule; .github/scripts/verify-sync.sh is now the permanent script location
 - [Phase 06-brand-icon-polish]: ICON-02a passes immediately — icon.ico already has all 6 required layer sizes; BRAND-01a/02a/03a expected to fail until Plans 06-02/03 land
+- [Phase 06-brand-icon-polish]: No dual-read fallback for Handy Portable Mode marker: CONTEXT.md override, Pierre is sole user
+- [Phase 06-brand-icon-polish]: BRAND-01a filter uses underscore grep -v handy_keys: hyphenated handy-keys in comments must use HandyKeys capitalized form
 
 ### Pending Todos
 
@@ -78,6 +81,6 @@ v1.2-specific research flags:
 
 ## Session Continuity
 
-Last session: 2026-04-16T05:27:53.031Z
-Stopped at: Completed 06-01-PLAN.md
+Last session: 2026-04-16T05:31:31.045Z
+Stopped at: Completed 06-02-PLAN.md
 Resume file: None
