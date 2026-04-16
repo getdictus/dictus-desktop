@@ -213,7 +213,7 @@ The merge message was set in Step 3. Git will open your editor to confirm — sa
 
 Run the Phase 5 validator:
 ```bash
-bash .planning/phases/05-upstream-sync/scripts/verify-sync.sh
+bash .github/scripts/verify-sync.sh
 ```
 
 Expected output: all check lines show `ok`, ending with `All Phase 5 checks passed.`
@@ -236,7 +236,7 @@ git push -u origin upstream/sync-$(date +%Y-%m-%d)
 gh pr create \
   --base main \
   --title "chore(upstream): merge cjpais/Handy post-v0.8.2 delta" \
-  --body "Follows UPSTREAM.md. All SYNC-05 post-merge checks green locally. See .planning/phases/05-upstream-sync/ for context."
+  --body "Follows UPSTREAM.md. All SYNC-05 post-merge checks green locally. See .planning/phases/05-upstream-sync/ for historical context; script now lives at .github/scripts/verify-sync.sh."
 ```
 
 Review in GitHub UI. After CI passes, merge with **"Create a merge commit"** (preserves upstream history — do not squash or rebase).
@@ -281,4 +281,4 @@ Phase 6 replaces this manual runbook with an AI-driven pipeline: Claude Code age
 **Key files:**
 - `.github/upstream-sha.txt` — source of truth for last synced upstream SHA
 - `.github/workflows/upstream-sync.yml` — weekly detection action
-- `.planning/phases/05-upstream-sync/scripts/verify-sync.sh` — post-merge identity gate
+- `.github/scripts/verify-sync.sh` — post-merge identity gate
