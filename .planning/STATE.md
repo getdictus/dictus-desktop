@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Polish & Automation
 status: planning
-stopped_at: Phase 6 context gathered
-last_updated: "2026-04-15T21:02:12.942Z"
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-04-16T05:27:53.033Z"
 last_activity: 2026-04-15 — Roadmap created, 26/26 requirements mapped across Phases 6-10
 progress:
   total_phases: 5
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 4
+  completed_plans: 1
   percent: 0
 ---
 
@@ -47,6 +47,7 @@ Progress: [░░░░░░░░░░] 0% (v1.2 starting — 5 phases, 0 pla
 | 4-5 (v1.1) | 7 | - | - |
 
 *Updated after each plan completion*
+| Phase 06-brand-icon-polish P01 | 3 | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -56,6 +57,8 @@ Progress: [░░░░░░░░░░] 0% (v1.2 starting — 5 phases, 0 pla
 - v1.2: Phases 6, 7, 8 are independent; can run on separate branches simultaneously
 - v1.2: Phase 10 hard-depends on Phase 9 (no labeled draft PRs = agent never fires)
 - [Phase 05]: UPSTREAM.md §6 post-sync gate missing UPDT-03/UPDT-05 — SYNC-07 in Phase 9 closes this
+- [Phase 06-brand-icon-polish]: SYNC-06 completed in Phase 6 Plan 01 ahead of Phase 9 schedule; .github/scripts/verify-sync.sh is now the permanent script location
+- [Phase 06-brand-icon-polish]: ICON-02a passes immediately — icon.ico already has all 6 required layer sizes; BRAND-01a/02a/03a expected to fail until Plans 06-02/03 land
 
 ### Pending Todos
 
@@ -75,6 +78,6 @@ v1.2-specific research flags:
 
 ## Session Continuity
 
-Last session: 2026-04-15T21:02:12.940Z
-Stopped at: Phase 6 context gathered
-Resume file: .planning/phases/06-brand-icon-polish/06-CONTEXT.md
+Last session: 2026-04-16T05:27:53.031Z
+Stopped at: Completed 06-01-PLAN.md
+Resume file: None

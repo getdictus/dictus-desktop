@@ -15,14 +15,14 @@ Requirements for the Polish & Automation milestone. Each maps to a roadmap phase
 - [ ] **BRAND-01**: New recording files are named `dictus-{timestamp}.wav` instead of `handy-{timestamp}.wav` (`actions.rs:538`, `history.rs:689`, `tray.rs:273`)
 - [ ] **BRAND-02**: Portable mode detection marker uses the literal string `"Dictus Portable Mode"` while still recognizing legacy `"Handy Portable Mode"` on existing installs (`portable.rs:30,98`)
 - [ ] **BRAND-03**: DebugPaths settings panel displays the real data-dir path from Tauri `appDataDir()` API instead of the hardcoded `%APPDATA%/handy` string (`DebugPaths.tsx:29-46`)
-- [ ] **BRAND-04**: `verify-sync.sh` gains one assertion per BRAND-01/02/03 surface so future upstream syncs cannot silently reintroduce `handy-*.wav`, `"Handy Portable Mode"`, or the hardcoded debug path
+- [x] **BRAND-04**: `verify-sync.sh` gains one assertion per BRAND-01/02/03 surface so future upstream syncs cannot silently reintroduce `handy-*.wav`, `"Handy Portable Mode"`, or the hardcoded debug path
 
 ### Cross-Platform Icons (ICON)
 
 <!-- Fix Linux black-corners artifact and verify Windows icon integrity. -->
 
 - [ ] **ICON-01**: Linux package (deb/AppImage) ships a square 256×256 PNG icon with transparent background (no rounded corners baked in) — no black corners visible in app launcher or taskbar
-- [ ] **ICON-02**: Windows `.exe` embeds an `icon.ico` containing layers at 16, 24, 32, 48, 64, and 256 pixels (verified via ICO analyzer), with Dictus logo at each layer
+- [x] **ICON-02**: Windows `.exe` embeds an `icon.ico` containing layers at 16, 24, 32, 48, 64, and 256 pixels (verified via ICO analyzer), with Dictus logo at each layer
 - [ ] **ICON-03**: `tauri.conf.json > bundle.icon` lists all required platform variants (macOS `.icns`, Windows `.ico`, Linux PNG sizes including 256×256 and 512×512)
 - [ ] **ICON-04**: Single 1024×1024 square RGBA source PNG committed under `src-tauri/icons/` (or referenced from `dictus-brand` repo) as the source-of-truth for regenerating all platform icons via `bun run tauri icon`
 
@@ -30,7 +30,7 @@ Requirements for the Polish & Automation milestone. Each maps to a roadmap phase
 
 <!-- Refactor upstream-sync from custom detection+issue to community-action draft-PR + CI gate. -->
 
-- [ ] **SYNC-06**: `verify-sync.sh` relocated to `.github/scripts/verify-sync.sh` (out of `.planning/` tree); all references in UPSTREAM.md updated
+- [x] **SYNC-06**: `verify-sync.sh` relocated to `.github/scripts/verify-sync.sh` (out of `.planning/` tree); all references in UPSTREAM.md updated
 - [ ] **SYNC-07**: `verify-sync.sh` extended with UPDT-03 assertion (`plugins.updater.pubkey` present and non-empty) and UPDT-05 assertion (`plugins.updater.endpoints[0]` contains `getdictus/dictus-desktop`)
 - [ ] **SYNC-08**: `verify-sync.yml` CI workflow runs `verify-sync.sh` on every PR labeled `upstream-sync`, set as a required status check for merges to `main`
 - [ ] **SYNC-09**: `upstream-sync.yml` replaced: uses `peter-evans/create-pull-request@v8` (or equivalent) to open a labeled draft PR with upstream commits on a weekly cron, instead of creating a tracking issue
@@ -105,12 +105,12 @@ Which phases cover which requirements.
 | BRAND-01 | Phase 6 | Pending |
 | BRAND-02 | Phase 6 | Pending |
 | BRAND-03 | Phase 6 | Pending |
-| BRAND-04 | Phase 6 | Pending |
+| BRAND-04 | Phase 6 | Complete |
 | ICON-01 | Phase 6 | Pending |
-| ICON-02 | Phase 6 | Pending |
+| ICON-02 | Phase 6 | Complete |
 | ICON-03 | Phase 6 | Pending |
 | ICON-04 | Phase 6 | Pending |
-| SYNC-06 | Phase 9 | Pending |
+| SYNC-06 | Phase 9 | Complete |
 | SYNC-07 | Phase 9 | Pending |
 | SYNC-08 | Phase 9 | Pending |
 | SYNC-09 | Phase 9 | Pending |
