@@ -185,3 +185,22 @@ pub fn initialize_shortcuts(app: AppHandle) -> Result<(), String> {
     log::info!("Shortcuts initialized successfully");
     Ok(())
 }
+
+/// Simulate the post-auto-update relaunch path (SHUT-03).
+///
+/// Calls `AppHandle::restart()` — the same entrypoint
+/// `tauri-plugin-updater` invokes after applying an update. Used to
+/// manually verify that the clean-shutdown fix (SHUT-02) also covers
+/// the restart path, without cutting a throwaway test release.
+///
+/// The button that triggers this command lives in `DebugSettings.tsx`
+/// and is only rendered when `settings.debug_mode == true`. The Rust
+/// symbol itself is built unconditionally (NOT gated by
+/// `#[cfg(debug_assertions)]`) so Pierre can validate SHUT-03 from a
+/// production build via the same UI gate.
+#[tauri::command]
+#[specta::specta]
+pub fn simulate_updater_restart(app: AppHandle) {
+    log::info!("SHUT-03: simulating updater restart via AppHandle::restart()");
+    app.restart();
+}

@@ -471,6 +471,7 @@ pub fn run(cli_args: CliArgs) {
             commands::check_apple_intelligence_available,
             commands::initialize_enigo,
             commands::initialize_shortcuts,
+            commands::simulate_updater_restart,
             commands::models::get_available_models,
             commands::models::get_model_info,
             commands::models::download_model,
