@@ -1,6 +1,6 @@
 [package]
 name = "dictus"
-version = "0.1.1"
+version = "0.1.2"
 description = "Dictus Desktop — open-source speech-to-text for your desktop"
 authors = ["Dictus", "cjpais"]
 edition = "2021"
