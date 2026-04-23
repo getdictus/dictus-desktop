@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Polish & Automation
-status: completed
-stopped_at: Phase 7 context gathered
-last_updated: "2026-04-16T10:04:33.076Z"
-last_activity: 2026-04-16 — Plan 06-04 complete; all Phase 6 plans done (ICON-01/02/03/04, BRAND-01/02/03/04)
+status: in_progress
+stopped_at: Phase 7 complete — ready for Phase 8
+last_updated: "2026-04-23T22:40:00.000Z"
+last_activity: 2026-04-23 — Plan 07-01 complete (SHUT-01/02/03); Phase 6.1 icon regression fixed a posteriori (commit 34de33e)
 progress:
   total_phases: 5
-  completed_phases: 1
-  total_plans: 4
-  completed_plans: 4
-  percent: 0
+  completed_phases: 2
+  total_plans: 5
+  completed_plans: 5
+  percent: 40
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-15 at v1.2 kickoff)
 
 **Core value:** L'application doit être identifiable et utilisable comme Dictus Desktop — pas comme Handy — et rester vivante sans décrocher du upstream Handy.
-**Current focus:** v1.2 Phase 6 — Brand & Icon Polish (ready to plan)
+**Current focus:** v1.2 Phase 8 — Privacy / Local-First UX (next up, ready to discuss/plan)
 
 ## Current Position
 
-Phase: 6 of 10 overall (Phase 1 of 5 in v1.2)
-Plan: 04 complete (all 4 plans done)
-Status: Phase 6 complete
-Last activity: 2026-04-16 — Plan 06-04 complete; all Phase 6 plans done (ICON-01/02/03/04, BRAND-01/02/03/04)
+Phase: 7 of 10 overall (Phase 2 of 5 in v1.2) — complete
+Plan: 07-01 complete (SHUT-01/02/03)
+Status: Phase 7 complete; validation window closed with no crash reproduction
+Last activity: 2026-04-23 — Plan 07-01 SUMMARY written; Phase 6.1 icon regression fixed (commit 34de33e)
 
-Progress: [░░░░░░░░░░] 0% (v1.2 starting — 5 phases, 0 plans complete)
+Progress: [████░░░░░░] 40% (v1.2 — 2 of 5 phases complete, 5 of 5 planned plans executed)
 
 ## Performance Metrics
 
@@ -51,6 +51,7 @@ Progress: [░░░░░░░░░░] 0% (v1.2 starting — 5 phases, 0 pla
 | Phase 06-brand-icon-polish P02 | 3 | 2 tasks | 6 files |
 | Phase 06-brand-icon-polish P03 | 8 | 1 tasks | 1 files |
 | Phase 06-brand-icon-polish P04 | ~60min | 4 tasks | 12 files |
+| Phase 07-macos-clean-shutdown P01 | ~1h coding + multi-day validation | 4 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -69,10 +70,15 @@ Progress: [░░░░░░░░░░] 0% (v1.2 starting — 5 phases, 0 pla
   - [Phase 06-brand-icon-polish P04]: ICON-01 resolved via opaque-navy-tile variant — source PNG has zero transparent pixels, making Linux black-corners artifact physically impossible (approved by Pierre as Option A)
   - [Phase 06-brand-icon-polish P04]: tauri icon CLI does not output 256x256.png/512x512.png; ImageMagick fallback required (convert from 1024 source)
   - [Phase 06-brand-icon-polish P04]: Linux (ICON-01) and Windows (ICON-02) visual verification deferred — macOS approved; automated backstops in place
+  - [Phase 06.1 follow-up]: Icon regression fixed 2026-04-23 (commit 34de33e) — Phase 6 rasterization dropped the middle blue bar; re-rendered dictus-brand source and regenerated full platform icon set; legacy Handy `logo.png` removed
+  - [Phase 07-macos-clean-shutdown P01]: Path (a) graceful cleanup chosen over path (b) std::process::exit — diagnosis pointed at tauri-plugin-global-shortcut Drop releasing CGEventTap from atexit on main thread; flush_and_exit helper releases CGEventTap while runloop is still alive
+  - [Phase 07-macos-clean-shutdown P01]: simulate_updater_restart ships in release builds, UI-gated by settings.debug_mode (not #[cfg(debug_assertions)]) so production installs can validate updater-relaunch path
+  - [Phase 07-macos-clean-shutdown P01]: Crash non-reproducible after fix over multi-day validation window; phase closed without a second-reproduction checkpoint
 
 ### Pending Todos
 
-4 pending — see `.planning/todos/pending/` for details.
+3 pending — see `.planning/todos/pending/` for details.
+(2 moved to done/ on 2026-04-23: icon regression + macOS quit-unexpectedly)
 
 ### Blockers/Concerns
 
