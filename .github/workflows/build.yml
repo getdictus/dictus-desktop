@@ -370,10 +370,9 @@ jobs:
           args: ${{ inputs.build-args }}
           includeUpdaterJson: true
 
-      # NOTE: The binary is named 'handy' (not 'dictus') because TECH-03 (binary rename)
-      # is deferred post-v1.1 per .planning/phases/04-updater-infrastructure/04-CONTEXT.md.
-      # Do NOT change 'Contents/MacOS/handy' below to 'Contents/MacOS/dictus' until TECH-03
-      # is explicitly un-deferred. Also keep the '|| true' tolerance on the `otool` calls.
+      # Binary name is 'dictus' since the Handy→Dictus rebrand in commit 81d39f2
+      # (v1.0 milestone). The earlier note claiming TECH-03 was deferred is
+      # obsolete — the binary was renamed and Cargo.toml sets default-run = "dictus".
       - name: Verify macOS dylib bundling
         if: inputs.target == 'x86_64-apple-darwin'
         shell: bash
@@ -382,10 +381,10 @@ jobs:
           echo "=== Frameworks contents ==="
           ls -la "$APP/Contents/Frameworks/" | grep onnx || true
           echo "=== Binary linked libs ==="
-          otool -L "$APP/Contents/MacOS/handy" | grep onnx || true
+          otool -L "$APP/Contents/MacOS/dictus" | grep onnx || true
           echo "=== Checking all @rpath deps are satisfied ==="
           # Extract every @rpath lib the binary needs
-          otool -L "$APP/Contents/MacOS/handy" | grep '@rpath/' | awk '{print $1}' | while read dep; do
+          otool -L "$APP/Contents/MacOS/dictus" | grep '@rpath/' | awk '{print $1}' | while read dep; do
             libname=$(basename "$dep")
             if [ ! -f "$APP/Contents/Frameworks/$libname" ]; then
               echo "MISSING: $libname not found in Frameworks/"
