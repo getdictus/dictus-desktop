@@ -1,0 +1,21 @@
+name: "Trigger getdictus.com rebuild"
+
+# Fires when a GitHub Release is published (moved from draft to public).
+# This is the correct trigger — release.yml creates a DRAFT and Pierre
+# publishes manually via the GitHub UI. Only after the "Publish release"
+# click does latest.json become accessible at
+# https://github.com/getdictus/dictus-desktop/releases/latest/download/latest.json
+# and the release show up in the public API. Rebuilding the site any
+# earlier would serve stale release data to visitors.
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  trigger-rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger getdictus.com rebuild
+        if: success()
+        run: curl -fsSL -X POST "${{ secrets.VERCEL_WEBSITE_DEPLOY_HOOK }}"
