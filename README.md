@@ -50,23 +50,27 @@
 3. Whisper or Parakeet transcribes locally — GPU when available, CPU otherwise.
 4. Transcribed text is pasted into the focused application.
 
+## Privacy
+
+Dictus runs locally by default. Transcription never leaves your device. Cloud post-processing is OFF by default and opt-in. For the complete list of every outbound network endpoint the app can contact (with how to disable each), see [`docs/PRIVACY.md`](docs/PRIVACY.md).
+
 ## How Dictus compares
 
-| Feature | **Dictus Desktop** | SuperWhisper | Wispr Flow | MacWhisper |
-| --- | :---: | :---: | :---: | :---: |
-| Price | **Free** | Free / $8.49/mo | Free / $15/mo | Free / $6.99/mo |
-| 100% offline | ✅ | ⚠️ | ❌ | ⚠️ |
-| Privacy-first | ✅ | ⚠️ | ❌ | ⚠️ |
-| Open source | ✅ | ❌ | ❌ | ❌ |
-| Platforms | macOS · Windows · Linux | iOS · macOS · Win | iOS · macOS · Win · Android | iOS · macOS |
-| Mobile companion | ✅ ([iOS](https://github.com/getdictus/dictus-ios) · [Android](https://github.com/getdictus/dictus-android)) | macOS-only ecosystem | partial | macOS-only ecosystem |
+| Feature          |                                              **Dictus Desktop**                                              |     SuperWhisper     |         Wispr Flow          |      MacWhisper      |
+| ---------------- | :----------------------------------------------------------------------------------------------------------: | :------------------: | :-------------------------: | :------------------: |
+| Price            |                                                   **Free**                                                   |   Free / $8.49/mo    |        Free / $15/mo        |   Free / $6.99/mo    |
+| 100% offline     |                                                      ✅                                                      |          ⚠️          |             ❌              |          ⚠️          |
+| Privacy-first    |                                                      ✅                                                      |          ⚠️          |             ❌              |          ⚠️          |
+| Open source      |                                                      ✅                                                      |          ❌          |             ❌              |          ❌          |
+| Platforms        |                                           macOS · Windows · Linux                                            |  iOS · macOS · Win   | iOS · macOS · Win · Android |     iOS · macOS      |
+| Mobile companion | ✅ ([iOS](https://github.com/getdictus/dictus-ios) · [Android](https://github.com/getdictus/dictus-android)) | macOS-only ecosystem |           partial           | macOS-only ecosystem |
 
 ## Models
 
-| Model | CPU | GPU | Notes |
-| --- | :---: | :---: | --- |
-| Whisper Small / Medium / Turbo / Large | ✓ | ⭐ | GPU recommended for Medium+ |
-| Parakeet V3 | ⭐ | — | CPU-optimized, ~5× realtime, auto language detection |
+| Model                                  | CPU | GPU | Notes                                                |
+| -------------------------------------- | :-: | :-: | ---------------------------------------------------- |
+| Whisper Small / Medium / Turbo / Large |  ✓  | ⭐  | GPU recommended for Medium+                          |
+| Parakeet V3                            | ⭐  |  —  | CPU-optimized, ~5× realtime, auto language detection |
 
 ## Architecture
 
@@ -98,11 +102,11 @@ Open an issue with a [feature request](https://github.com/getdictus/dictus-deskt
 
 For reliable text input, install the right tool for your display server:
 
-| Display Server | Tool | Install |
-| --- | --- | --- |
-| X11 | `xdotool` | `sudo apt install xdotool` |
-| Wayland | `wtype` | `sudo apt install wtype` |
-| Both | `dotool` | `sudo apt install dotool` (add user to `input` group) |
+| Display Server | Tool      | Install                                               |
+| -------------- | --------- | ----------------------------------------------------- |
+| X11            | `xdotool` | `sudo apt install xdotool`                            |
+| Wayland        | `wtype`   | `sudo apt install wtype`                              |
+| Both           | `dotool`  | `sudo apt install dotool` (add user to `input` group) |
 
 **Runtime library:** if startup fails with `libgtk-layer-shell.so.0`, install your distro's package (`libgtk-layer-shell0` on Debian/Ubuntu, `gtk-layer-shell` on Fedora/Arch).
 
@@ -158,11 +162,13 @@ handy --help                    # Show all flags
 ## System requirements
 
 **Whisper (GPU recommended for Medium+):**
+
 - macOS — Apple Silicon or Intel
 - Windows — Intel / AMD / NVIDIA GPU
 - Linux — Intel / AMD / NVIDIA GPU (Ubuntu 22.04 / 24.04 tested)
 
 **Parakeet V3 (CPU-only):**
+
 - Intel Skylake (6th gen) / AMD equivalent or newer
 
 ## Known issues

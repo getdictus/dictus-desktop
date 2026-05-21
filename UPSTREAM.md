@@ -8,11 +8,11 @@ Read this top to bottom before starting a merge. Every command is copy-paste rea
 
 ## Fork Point and Current State
 
-| Reference | SHA | Meaning |
-|-----------|-----|---------|
-| Fork point | `85a8ed77` | Commit where Dictus forked from Handy |
-| Merge-base (v0.8.2) | `39e855d` | Last shared ancestor — Handy's v0.8.2 release; seed of `.github/upstream-sha.txt` |
-| Last sync | see `.github/upstream-sha.txt` | Updated after each merge lands on main |
+| Reference           | SHA                            | Meaning                                                                           |
+| ------------------- | ------------------------------ | --------------------------------------------------------------------------------- |
+| Fork point          | `85a8ed77`                     | Commit where Dictus forked from Handy                                             |
+| Merge-base (v0.8.2) | `39e855d`                      | Last shared ancestor — Handy's v0.8.2 release; seed of `.github/upstream-sha.txt` |
+| Last sync           | see `.github/upstream-sha.txt` | Updated after each merge lands on main                                            |
 
 The file `.github/upstream-sha.txt` is the single source of truth for "where are we." The weekly detection action (`.github/workflows/upstream-sync.yml`) reads it and opens a tracking issue when upstream has new commits.
 
@@ -51,12 +51,12 @@ Review each commit. For each one, decide: do we want it? (Answer is usually yes 
 
 **Known post-v0.8.2 upstream delta (4 commits):**
 
-| SHA | Title | Risk |
-|-----|-------|------|
-| `c1697b2` | nix: use symlinkJoin for ALSA_PLUGIN_DIR | NONE — accept upstream |
-| `84d88f9` | perf: add reasoning_effort passthrough | MEDIUM — accept reasoning additions, keep Dictus HTTP headers |
-| `30b57c4` | fix(issue 522): surface paste errors as UI toast | HIGH — 22 i18n files + App.tsx; accept new keys, keep Dictus strings |
-| `fdc8cb7` | correct typo in library name (transcription-rs → transcribe-rs) | LOW — accept upstream |
+| SHA       | Title                                                           | Risk                                                                 |
+| --------- | --------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `c1697b2` | nix: use symlinkJoin for ALSA_PLUGIN_DIR                        | NONE — accept upstream                                               |
+| `84d88f9` | perf: add reasoning_effort passthrough                          | MEDIUM — accept reasoning additions, keep Dictus HTTP headers        |
+| `30b57c4` | fix(issue 522): surface paste errors as UI toast                | HIGH — 22 i18n files + App.tsx; accept new keys, keep Dictus strings |
+| `fdc8cb7` | correct typo in library name (transcription-rs → transcribe-rs) | LOW — accept upstream                                                |
 
 ### 2. Create the sync branch
 
@@ -92,6 +92,7 @@ Always keep Dictus values:
 - Discard any upstream Windows `signCommand` (we do not code-sign on Windows yet — see INFR-03)
 
 Verify after edit:
+
 ```bash
 jq -e '.productName == "Dictus"' src-tauri/tauri.conf.json
 jq -e '.identifier == "com.dictus.desktop"' src-tauri/tauri.conf.json
@@ -105,10 +106,12 @@ jq -e '.plugins.updater.endpoints[0] | test("getdictus/dictus-desktop")' src-tau
 Accept all of upstream's `ReasoningConfig` / `reasoning_effort` struct and function additions — those are new features we want.
 
 REJECT upstream's reversion of our HTTP headers. Keep:
+
 - `User-Agent: "Dictus/1.0 (+https://github.com/getdictus/dictus-desktop)"`
 - `X-Title: "Dictus"`
 
 The current correct values in `llm_client.rs`:
+
 ```rust
 headers.insert(
     USER_AGENT,
@@ -118,6 +121,7 @@ headers.insert("X-Title", HeaderValue::from_static("Dictus"));
 ```
 
 After resolving:
+
 ```bash
 grep -q 'Dictus/1.0' src-tauri/src/llm_client.rs && echo "ok User-Agent"
 grep -q '"X-Title"' src-tauri/src/llm_client.rs && grep -q '"Dictus"' src-tauri/src/llm_client.rs && echo "ok X-Title"
@@ -128,6 +132,7 @@ grep -q '"X-Title"' src-tauri/src/llm_client.rs && grep -q '"Dictus"' src-tauri/
 Accept upstream's functional additions (paste-error emit, reasoning_effort plumbing). Then update any comment that says "logged to handy.log on the Rust side" to reference the Dictus log path (or "the app log").
 
 Verify:
+
 ```bash
 ! grep -i 'handy\.log' src-tauri/src/actions.rs && echo "ok no handy.log reference"
 ! grep 'handy\.computer' src-tauri/src/actions.rs && echo "ok no handy.computer reference"
@@ -140,6 +145,7 @@ Upstream's `30b57c4` adds `pasteFailedTitle` and `pasteFailed` keys in all 22 lo
 Rule: for every conflicting key, keep the Dictus value.
 
 After resolving all locales:
+
 ```bash
 ! grep '"Handy"' src/i18n/locales/en/translation.json && echo "ok en locale"
 for f in src/i18n/locales/*/translation.json; do
@@ -163,6 +169,7 @@ Upstream adds a `PasteErrorEvent` interface. This file may already exist in Dict
 #### 4.7 `src-tauri/Cargo.lock` — NEVER manually resolve
 
 After resolving `Cargo.toml` (if it conflicts), regenerate:
+
 ```bash
 cd src-tauri
 cargo generate-lockfile
@@ -175,6 +182,7 @@ Do not hand-edit `Cargo.lock`. Hand-edits produce subtle version mismatches that
 #### 4.8 `flake.nix`
 
 Accept upstream — Nix config is not Dictus-branded:
+
 ```bash
 git checkout --theirs flake.nix
 git add flake.nix
@@ -183,6 +191,7 @@ git add flake.nix
 #### 4.9 `README.md`
 
 Accept upstream typo fix (transcription-rs → transcribe-rs). Other Dictus-specific README changes are in different sections and should not conflict. If they do conflict, keep Dictus text:
+
 ```bash
 # If README.md conflicts and upstream change is clearly a neutral typo fix:
 # Manually edit to accept the typo fix while keeping Dictus sections intact.
@@ -212,6 +221,7 @@ The merge message was set in Step 3. Git will open your editor to confirm — sa
 ### 6. Post-Merge Verification Checklist
 
 Run the Phase 5 validator:
+
 ```bash
 bash .github/scripts/verify-sync.sh
 ```
@@ -220,14 +230,14 @@ Expected output: all check lines show `ok`, ending with `All Phase 5 checks pass
 
 If any check fails, fix it before pushing the branch. Common fixes:
 
-| Failing check | Fix |
-|---------------|-----|
-| `SYNC-05a/b/c FAIL` | Re-resolve `src-tauri/tauri.conf.json` per Section 4.1 |
-| `SYNC-05d FAIL` | An i18n locale still has `"Handy"` — check all 22 locales per Section 4.4 |
-| `SYNC-05e/f FAIL` | `src-tauri/src/llm_client.rs` headers reverted — re-apply per Section 4.2 |
-| `SYNC-05g/h FAIL` | `handy.computer` reference slipped in — remove per Section 4.3 |
-| `SYNC-05i FAIL` | `handy.log` comment not updated — fix per Section 4.3 |
-| `SYNC-05j FAIL` | `cargo build` broken — read the compiler error; likely a type mismatch from partial conflict resolution |
+| Failing check       | Fix                                                                                                     |
+| ------------------- | ------------------------------------------------------------------------------------------------------- |
+| `SYNC-05a/b/c FAIL` | Re-resolve `src-tauri/tauri.conf.json` per Section 4.1                                                  |
+| `SYNC-05d FAIL`     | An i18n locale still has `"Handy"` — check all 22 locales per Section 4.4                               |
+| `SYNC-05e/f FAIL`   | `src-tauri/src/llm_client.rs` headers reverted — re-apply per Section 4.2                               |
+| `SYNC-05g/h FAIL`   | `handy.computer` reference slipped in — remove per Section 4.3                                          |
+| `SYNC-05i FAIL`     | `handy.log` comment not updated — fix per Section 4.3                                                   |
+| `SYNC-05j FAIL`     | `cargo build` broken — read the compiler error; likely a type mismatch from partial conflict resolution |
 
 ### 7. Push and open PR
 
@@ -245,14 +255,14 @@ Review in GitHub UI. After CI passes, merge with **"Create a merge commit"** (pr
 
 ## Anti-Patterns (Do NOT do these)
 
-| Anti-pattern | Why it's wrong | What to do instead |
-|---|---|---|
-| `git checkout --theirs src-tauri/tauri.conf.json` | Accepts Handy identity fields (productName, identifier, pubkey, endpoints) | Resolve manually, field by field — keep Dictus values |
-| `git cherry-pick c1697b2 84d88f9 30b57c4 fdc8cb7` | Loses the merge relationship; creates separate commits instead of one merge commit preserving upstream history | Use `git merge upstream/main --no-ff` |
-| Hand-edit `Cargo.lock` | Machine-generated format; manual edits introduce subtle version conflicts | Run `cargo generate-lockfile` after resolving `Cargo.toml` |
-| Update `upstream-sha.txt` from the detection workflow | Causes tracking issue to disappear before the merge is done (Pitfall 2) | Only update `upstream-sha.txt` as part of the merge commit landing on main |
-| Skip `verify-sync.sh` before pushing | Identity regressions silently land on main | Always run the validator; fix all failures before pushing |
-| Use `git merge --abort` on first conflict | Abandons the entire merge; you lose the branch state | Resolve conflicts file by file — see Section 4 |
+| Anti-pattern                                          | Why it's wrong                                                                                                 | What to do instead                                                         |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `git checkout --theirs src-tauri/tauri.conf.json`     | Accepts Handy identity fields (productName, identifier, pubkey, endpoints)                                     | Resolve manually, field by field — keep Dictus values                      |
+| `git cherry-pick c1697b2 84d88f9 30b57c4 fdc8cb7`     | Loses the merge relationship; creates separate commits instead of one merge commit preserving upstream history | Use `git merge upstream/main --no-ff`                                      |
+| Hand-edit `Cargo.lock`                                | Machine-generated format; manual edits introduce subtle version conflicts                                      | Run `cargo generate-lockfile` after resolving `Cargo.toml`                 |
+| Update `upstream-sha.txt` from the detection workflow | Causes tracking issue to disappear before the merge is done (Pitfall 2)                                        | Only update `upstream-sha.txt` as part of the merge commit landing on main |
+| Skip `verify-sync.sh` before pushing                  | Identity regressions silently land on main                                                                     | Always run the validator; fix all failures before pushing                  |
+| Use `git merge --abort` on first conflict             | Abandons the entire merge; you lose the branch state                                                           | Resolve conflicts file by file — see Section 4                             |
 
 ---
 
@@ -266,20 +276,36 @@ Phase 6 replaces this manual runbook with an AI-driven pipeline: Claude Code age
 
 **Conflict files and their rules:**
 
-| File | Rule | Risk |
-|------|------|------|
-| `src-tauri/tauri.conf.json` | Keep Dictus: productName, identifier, version, pubkey, endpoints | CRITICAL — identity |
-| `src-tauri/src/llm_client.rs` | Accept reasoning additions; keep `Dictus/1.0` User-Agent and `Dictus` X-Title | HIGH — branding |
-| `src-tauri/src/actions.rs` | Accept upstream; remove `handy.log` comment reference | MEDIUM — comment cleanup |
-| `src/i18n/locales/*/translation.json` | Accept new keys (paste-error); keep Dictus values for conflicting keys | HIGH — 22 files |
-| `src/App.tsx` | Accept upstream (paste-error useEffect is clean addition) | LOW |
-| `src/lib/types/events.ts` | Merge both sides; keep Dictus exports + add upstream PasteErrorEvent | LOW |
-| `src-tauri/Cargo.lock` | Never manually resolve — run `cargo generate-lockfile` | MEDIUM |
-| `flake.nix` | `git checkout --theirs` — Nix is not Dictus-branded | NONE |
-| `README.md` | Accept upstream typo fix; keep Dictus sections | LOW |
+| File                                                    | Rule                                                                                                                                                     | Risk                          |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| `src-tauri/tauri.conf.json`                             | Keep Dictus: productName, identifier, version, pubkey, endpoints                                                                                         | CRITICAL — identity           |
+| `src-tauri/src/llm_client.rs`                           | Accept reasoning additions; keep `Dictus/1.0` User-Agent and `Dictus` X-Title                                                                            | HIGH — branding               |
+| `src-tauri/src/actions.rs`                              | Accept upstream; remove `handy.log` comment reference                                                                                                    | MEDIUM — comment cleanup      |
+| `src/i18n/locales/*/translation.json`                   | Accept new keys (paste-error); keep Dictus values for conflicting keys                                                                                   | HIGH — 22 files               |
+| `src/App.tsx`                                           | Accept upstream (paste-error useEffect is clean addition)                                                                                                | LOW                           |
+| `src/lib/types/events.ts`                               | Merge both sides; keep Dictus exports + add upstream PasteErrorEvent                                                                                     | LOW                           |
+| `src-tauri/Cargo.lock`                                  | Never manually resolve — run `cargo generate-lockfile`                                                                                                   | MEDIUM                        |
+| `flake.nix`                                             | `git checkout --theirs` — Nix is not Dictus-branded                                                                                                      | NONE                          |
+| `README.md`                                             | Accept upstream typo fix; keep Dictus sections                                                                                                           | LOW                           |
 | `src-tauri/src/lib.rs` (quit-exit handlers + log-flush) | Keep Dictus version: `log::logger().flush()` plus diagnosis-directed cleanup before any exit at the tray-quit and no-tray CloseRequested sites (SHUT-02) | MEDIUM — shutdown correctness |
 
 **Key files:**
+
 - `.github/upstream-sha.txt` — source of truth for last synced upstream SHA
 - `.github/workflows/upstream-sync.yml` — weekly detection action
 - `.github/scripts/verify-sync.sh` — post-merge identity gate
+
+---
+
+## Privacy / Network Surface Hook
+
+Any upstream commit that adds a new outbound HTTP endpoint — model URL, API base URL, telemetry, analytics, crash reporter, anything that hits the network — REQUIRES a corresponding row in [`docs/PRIVACY.md`](docs/PRIVACY.md) as part of the same merge.
+
+Quick check before merging:
+
+```bash
+grep -nE 'https?://' src-tauri/src/managers/model.rs src-tauri/src/settings.rs src-tauri/src/llm_client.rs | \
+  grep -v -F -f <(grep -oE 'https?://[^ )]+' docs/PRIVACY.md | sort -u)
+```
+
+If the grep returns any URL not in `docs/PRIVACY.md`, add a row before completing the merge.

@@ -518,7 +518,14 @@ fn default_show_tray_icon() -> bool {
 }
 
 fn default_post_process_provider_id() -> String {
-    "openai".to_string()
+    #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+    {
+        APPLE_INTELLIGENCE_PROVIDER_ID.to_string()
+    }
+    #[cfg(not(all(target_os = "macos", target_arch = "aarch64")))]
+    {
+        "custom".to_string()
+    }
 }
 
 fn default_post_process_providers() -> Vec<PostProcessProvider> {
@@ -592,7 +599,7 @@ fn default_post_process_providers() -> Vec<PostProcessProvider> {
     // Custom provider always comes last
     providers.push(PostProcessProvider {
         id: "custom".to_string(),
-        label: "Custom".to_string(),
+        label: "Custom (local)".to_string(),
         base_url: "http://localhost:11434/v1".to_string(),
         allow_base_url_edit: true,
         models_endpoint: Some("/models".to_string()),
@@ -975,5 +982,27 @@ mod tests {
         let out = format!("{:?}", map);
         assert!(!out.contains("secret"));
         assert!(out.contains("[REDACTED]"));
+    }
+
+    #[test]
+    fn default_post_process_provider_id_returns_apple_on_macos_arm64() {
+        let id = default_post_process_provider_id();
+        if cfg!(all(target_os = "macos", target_arch = "aarch64")) {
+            assert_eq!(id, APPLE_INTELLIGENCE_PROVIDER_ID);
+        } else {
+            assert_eq!(id, "custom");
+        }
+    }
+
+    #[test]
+    fn default_post_process_providers_includes_custom_with_stable_id() {
+        let providers = default_post_process_providers();
+        let custom = providers
+            .iter()
+            .find(|p| p.id == "custom")
+            .expect("custom provider must exist");
+        assert_eq!(custom.id, "custom", "Persisted id MUST remain stable");
+        assert_eq!(custom.label, "Custom (local)");
+        assert_eq!(custom.base_url, "http://localhost:11434/v1");
     }
 }
