@@ -89,6 +89,24 @@ export const AboutSettings: React.FC = () => {
         </SettingContainer>
 
         <SettingContainer
+          title={t("settings.about.networkSurface.title")}
+          description={t("settings.about.networkSurface.description")}
+          grouped={true}
+        >
+          <Button
+            variant="secondary"
+            size="md"
+            onClick={() =>
+              openUrl(
+                "https://github.com/getdictus/dictus-desktop/blob/main/docs/PRIVACY.md",
+              )
+            }
+          >
+            {t("settings.about.networkSurface.button")}
+          </Button>
+        </SettingContainer>
+
+        <SettingContainer
           title={t("settings.about.ecosystem.title")}
           description={t("settings.about.ecosystem.description")}
           grouped={true}

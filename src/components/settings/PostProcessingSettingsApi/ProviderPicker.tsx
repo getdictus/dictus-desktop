@@ -21,10 +21,7 @@ export const ProviderPicker: React.FC<ProviderPickerProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  const renderSection = (
-    title: string,
-    options: GroupedProviderOption[],
-  ) => (
+  const renderSection = (title: string, options: GroupedProviderOption[]) => (
     <fieldset className="space-y-1 border-0 p-0 m-0">
       <legend className="text-xs font-medium text-mid-gray uppercase tracking-wide mb-2">
         {title}
@@ -53,9 +50,7 @@ export const ProviderPicker: React.FC<ProviderPickerProps> = ({
               <span className="text-sm font-medium">{option.label}</span>
             </div>
             {option.description ? (
-              <p className="text-xs text-mid-gray pl-7">
-                {option.description}
-              </p>
+              <p className="text-xs text-mid-gray pl-7">{option.description}</p>
             ) : null}
             {checked && renderRowExtras ? (
               <div className="pl-7 mt-1">{renderRowExtras(option)}</div>

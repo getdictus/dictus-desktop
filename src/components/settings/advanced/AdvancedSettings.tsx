@@ -49,6 +49,10 @@ export const AdvancedSettings: React.FC = () => {
         <AppendTrailingSpace descriptionMode="tooltip" grouped={true} />
       </SettingsGroup>
 
+      <SettingsGroup title={t("settings.advanced.groups.postProcessing")}>
+        <PostProcessingToggle descriptionMode="tooltip" grouped={true} />
+      </SettingsGroup>
+
       <SettingsGroup title={t("settings.advanced.groups.history")}>
         <HistoryLimit descriptionMode="tooltip" grouped={true} />
         <RecordingRetentionPeriodSelector
@@ -59,7 +63,6 @@ export const AdvancedSettings: React.FC = () => {
 
       {experimentalEnabled && (
         <SettingsGroup title={t("settings.advanced.groups.experimental")}>
-          <PostProcessingToggle descriptionMode="tooltip" grouped={true} />
           <KeyboardImplementationSelector
             descriptionMode="tooltip"
             grouped={true}

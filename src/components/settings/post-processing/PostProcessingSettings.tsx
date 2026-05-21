@@ -14,8 +14,10 @@ import { Button } from "../../ui/Button";
 import { ResetButton } from "../../ui/ResetButton";
 import { Input } from "../../ui/Input";
 
-import { ProviderSelect } from "../PostProcessingSettingsApi/ProviderSelect";
+import { ProviderPicker } from "../PostProcessingSettingsApi/ProviderPicker";
+import { TestConnectionButton } from "../PostProcessingSettingsApi/TestConnectionButton";
 import { BaseUrlField } from "../PostProcessingSettingsApi/BaseUrlField";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { ApiKeyField } from "../PostProcessingSettingsApi/ApiKeyField";
 import { ModelSelect } from "../PostProcessingSettingsApi/ModelSelect";
 import { usePostProcessProviderState } from "../PostProcessingSettingsApi/usePostProcessProviderState";
@@ -32,16 +34,50 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
         title={t("settings.postProcessing.api.provider.title")}
         description={t("settings.postProcessing.api.provider.description")}
         descriptionMode="tooltip"
-        layout="horizontal"
+        layout="stacked"
         grouped={true}
       >
-        <div className="flex items-center gap-2">
-          <ProviderSelect
-            options={state.providerOptions}
-            value={state.selectedProviderId}
-            onChange={state.handleProviderSelect}
-          />
-        </div>
+        <ProviderPicker
+          localOptions={state.groupedProviderOptions.local}
+          externalOptions={state.groupedProviderOptions.external}
+          value={state.selectedProviderId}
+          onChange={state.handleProviderSelect}
+          renderRowExtras={(option) => {
+            if (option.value !== "custom") return null;
+            return (
+              <div className="space-y-2 mt-2">
+                <p className="text-xs text-mid-gray/80">
+                  <Trans
+                    i18nKey="settings.postProcessing.api.custom.ollamaTip"
+                    components={{
+                      link: (
+                        <a
+                          role="link"
+                          tabIndex={0}
+                          className="text-logo-primary hover:underline cursor-pointer"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            void openUrl("https://ollama.com");
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              void openUrl("https://ollama.com");
+                            }
+                          }}
+                        />
+                      ),
+                      code: (
+                        <code className="font-mono text-xs bg-mid-gray/10 px-1 rounded" />
+                      ),
+                    }}
+                  />
+                </p>
+                <TestConnectionButton baseUrl={state.baseUrl} />
+              </div>
+            );
+          }}
+        />
       </SettingContainer>
 
       {state.isAppleProvider ? (

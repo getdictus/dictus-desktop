@@ -58,10 +58,9 @@ export const TestConnectionButton: React.FC<TestConnectionButtonProps> = ({
       {status.kind === "error" ? (
         <Alert variant="error" contained>
           <span>
-            {t(
-              "settings.postProcessing.api.custom.testConnection.errorTitle",
-              { baseUrl },
-            )}
+            {t("settings.postProcessing.api.custom.testConnection.errorTitle", {
+              baseUrl,
+            })}
           </span>
           <details className="mt-1 text-xs opacity-80">
             <summary className="cursor-pointer">
