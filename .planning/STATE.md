@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Polish & Local-First UX
 status: executing
-stopped_at: Completed 08-privacy-local-first-ux-08-01-PLAN.md
-last_updated: "2026-05-21T15:34:34.434Z"
-last_activity: "2026-05-21 — 08-02 complete: docs/PRIVACY.md created, README and UPSTREAM linked"
+stopped_at: Completed 08-03-PLAN.md
+last_updated: "2026-05-21T15:56:10Z"
+last_activity: "2026-05-21 — 08-03 complete: ProviderPicker, TestConnectionButton, Advanced toggle promotion, About network surface link"
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 10
-  completed_plans: 7
-  percent: 73
+  completed_plans: 8
+  percent: 80
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-15 at v1.2 kickoff)
 ## Current Position
 
 Phase: 8 of 8 overall (Phase 3 of 3 in v1.2) — in progress
-Plan: 08-02 complete (PRIV-02); 08-01 complete; next: 08-03 (About panel + post-processing UI)
-Status: Phase 8 in progress — Plan 02 (PRIVACY.md network surface audit) complete
-Last activity: 2026-05-21 — 08-02 complete: docs/PRIVACY.md created, README and UPSTREAM linked
+Plan: 08-03 complete (PRIV-01/02/03 frontend); next: 08-04 (i18n locale propagation)
+Status: Phase 8 in progress — Plan 03 (frontend UI surface) complete
+Last activity: 2026-05-21 — 08-03 complete: ProviderPicker, TestConnectionButton, Advanced toggle promotion, About network surface link
 
-Progress: [████████░░] 73% (v1.2 — 2 of 3 phases complete + Phase 8 in progress, 2 of ~4 Phase 8 plans executed)
+Progress: [████████░░] 80% (v1.2 — 2 of 3 phases complete + Phase 8 in progress, 3 of 5 Phase 8 plans executed)
 
 ## Performance Metrics
 
@@ -55,6 +55,7 @@ _Updated after each plan completion_
 | Phase 07-macos-clean-shutdown P01 | ~1h coding + multi-day validation | 4 tasks | 7 files |
 | Phase 08-privacy-local-first-ux P02 | ~5min | 2 tasks | 3 files |
 | Phase 08-privacy-local-first-ux P01 | 4min | 1 tasks | 1 files |
+| Phase 08-privacy-local-first-ux P03 | ~25min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -80,6 +81,9 @@ _Updated after each plan completion_
   - [Phase 08-privacy-local-first-ux P02]: docs/PRIVACY.md is single source of truth for network surface — no in-app Privacy page; blob.handy.computer CDN documented as-is (INFR-01 deferred); legacy Referer header flagged but not changed in Phase 8
 - [Phase 08-privacy-local-first-ux]: Platform-aware default: macOS ARM64 gets apple_intelligence, all other platforms get custom (local) — cfg gate matches existing pattern at line 580
 - [Phase 08-privacy-local-first-ux]: Custom provider id stays 'custom' (stable for persisted settings); only label changed to 'Custom (local)'
+  - [Phase 08-privacy-local-first-ux P03]: ProviderSelect.tsx left in place as unused export — deletion deferred to keep diff small; no callers remain
+  - [Phase 08-privacy-local-first-ux P03]: PRIV-03 satisfied by existing Onboarding state — zero post_process references in onboarding components; no code change required
+  - [Phase 08-privacy-local-first-ux P03]: renderRowExtras prop pattern established for injecting row-level extras inside selected radio card
 
 ### Pending Todos
 
@@ -97,6 +101,6 @@ Carried from v1.1 audit:
 
 ## Session Continuity
 
-Last session: 2026-05-21T15:34:34.432Z
-Stopped at: Completed 08-privacy-local-first-ux-08-01-PLAN.md
+Last session: 2026-05-21T15:56:10Z
+Stopped at: Completed 08-03-PLAN.md
 Resume file: None
