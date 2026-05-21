@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Polish & Local-First UX
-status: in_progress
-stopped_at: Phase 7 complete — ready for Phase 8
-last_updated: "2026-05-21T11:39:37.516Z"
-last_activity: 2026-05-21 — Phases 9 & 10 removed (automation ambitions cancelled); milestone v1.2 renamed to "Polish & Local-First UX"
+status: completed
+stopped_at: Phase 8 context gathered
+last_updated: "2026-05-21T14:05:55.625Z"
+last_activity: 2026-05-21 — Phases 9 & 10 removed (automation ambitions cancelled); milestone renamed to "Polish & Local-First UX"
 progress:
   total_phases: 3
   completed_phases: 2
@@ -90,6 +90,6 @@ Carried from v1.1 audit:
 
 ## Session Continuity
 
-Last session: 2026-04-16T10:04:33.074Z
-Stopped at: Phase 7 context gathered
-Resume file: .planning/phases/07-macos-clean-shutdown/07-CONTEXT.md
+Last session: 2026-05-21T14:05:55.618Z
+Stopped at: Phase 8 context gathered
+Resume file: .planning/phases/08-privacy-local-first-ux/08-CONTEXT.md
