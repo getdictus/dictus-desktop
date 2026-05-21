@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Polish & Local-First UX
 status: completed
-stopped_at: Phase 8 context gathered
-last_updated: "2026-05-21T14:05:55.625Z"
+stopped_at: Phase 8 UI-SPEC approved
+last_updated: "2026-05-21T14:36:19.650Z"
 last_activity: 2026-05-21 — Phases 9 & 10 removed (automation ambitions cancelled); milestone renamed to "Polish & Local-First UX"
 progress:
   total_phases: 3
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-15 at v1.2 kickoff)
 
 ## Current Position
 
-Phase: 7 of 8 overall (Phase 2 of 3 in v1.2) — complete
-Plan: 07-01 complete (SHUT-01/02/03)
-Status: Phase 7 complete; validation window closed with no crash reproduction
-Last activity: 2026-05-21 — Phases 9 & 10 removed (automation ambitions cancelled); milestone renamed to "Polish & Local-First UX"
+Phase: 8 of 8 overall (Phase 3 of 3 in v1.2) — in progress
+Plan: 08-02 complete (PRIV-02); 08-01 complete; next: 08-03 (About panel + post-processing UI)
+Status: Phase 8 in progress — Plan 02 (PRIVACY.md network surface audit) complete
+Last activity: 2026-05-21 — 08-02 complete: docs/PRIVACY.md created, README and UPSTREAM linked
 
-Progress: [███████░░░] 67% (v1.2 — 2 of 3 phases complete, 5 of 5 planned plans executed)
+Progress: [████████░░] 73% (v1.2 — 2 of 3 phases complete + Phase 8 in progress, 2 of ~4 Phase 8 plans executed)
 
 ## Performance Metrics
 
@@ -52,6 +52,7 @@ Progress: [███████░░░] 67% (v1.2 — 2 of 3 phases complete,
 | Phase 06-brand-icon-polish P03 | 8 | 1 tasks | 1 files |
 | Phase 06-brand-icon-polish P04 | ~60min | 4 tasks | 12 files |
 | Phase 07-macos-clean-shutdown P01 | ~1h coding + multi-day validation | 4 tasks | 7 files |
+| Phase 08-privacy-local-first-ux P02 | ~5min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,7 @@ Progress: [███████░░░] 67% (v1.2 — 2 of 3 phases complete,
   - [Phase 07-macos-clean-shutdown P01]: Path (a) graceful cleanup chosen over path (b) std::process::exit — diagnosis pointed at tauri-plugin-global-shortcut Drop releasing CGEventTap from atexit on main thread; flush_and_exit helper releases CGEventTap while runloop is still alive
   - [Phase 07-macos-clean-shutdown P01]: simulate_updater_restart ships in release builds, UI-gated by settings.debug_mode (not #[cfg(debug_assertions)]) so production installs can validate updater-relaunch path
   - [Phase 07-macos-clean-shutdown P01]: Crash non-reproducible after fix over multi-day validation window; phase closed without a second-reproduction checkpoint
+  - [Phase 08-privacy-local-first-ux P02]: docs/PRIVACY.md is single source of truth for network surface — no in-app Privacy page; blob.handy.computer CDN documented as-is (INFR-01 deferred); legacy Referer header flagged but not changed in Phase 8
 
 ### Pending Todos
 
@@ -90,6 +92,6 @@ Carried from v1.1 audit:
 
 ## Session Continuity
 
-Last session: 2026-05-21T14:05:55.618Z
-Stopped at: Phase 8 context gathered
-Resume file: .planning/phases/08-privacy-local-first-ux/08-CONTEXT.md
+Last session: 2026-05-21T14:45:00Z
+Stopped at: Completed 08-02-PLAN.md
+Resume file: .planning/phases/08-privacy-local-first-ux/08-03-PLAN.md
