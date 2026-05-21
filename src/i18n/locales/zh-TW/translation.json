@@ -107,7 +107,9 @@
       },
       "accessibility": {
         "title": "輔助使用存取",
-        "description": "需要將轉錄文字輸入到您的應用程式中"
+        "description": "需要將轉錄文字輸入到您的應用程式中",
+        "restartHint": "macOS 需要重新啟動應用程式以偵測輔助功能變更。",
+        "restart": "重新啟動 Dictus"
       },
       "grant": "授予權限",
       "granted": "已授予",
@@ -244,6 +246,7 @@
         "app": "應用程式",
         "output": "輸出",
         "transcription": "轉錄",
+        "postProcessing": "後處理",
         "history": "歷史",
         "experimental": "實驗性"
       },
@@ -368,6 +371,26 @@
         "provider": {
           "title": "供應商",
           "description": "選擇一個相容 OpenAI 的供應商"
+        },
+        "providers": {
+          "sectionLocal": "在你的裝置上",
+          "sectionExternal": "外部 — 資料離開此裝置",
+          "labels": {
+            "custom": "Custom (本機)"
+          },
+          "descriptions": {
+            "apple_intelligence": "免費 • 裝置上 • macOS Apple Silicon",
+            "custom": "localhost 上的 Ollama / LM Studio"
+          }
+        },
+        "custom": {
+          "ollamaTip": "提示：安裝 <link>Ollama</link> 並執行 <code>ollama serve</code> 即可使用本機模型。",
+          "testConnection": {
+            "button": "測試連線",
+            "success": "已連線 — 可用 {{count}} 個模型",
+            "errorTitle": "無法連線至 {{baseUrl}}",
+            "errorDetails": "詳細資訊"
+          }
         },
         "appleIntelligence": {
           "title": "Apple Intelligence",
@@ -507,6 +530,11 @@
       "recordingBuffer": {
         "title": "額外錄音緩衝",
         "description": "放開按鍵後繼續錄音的額外時間（毫秒），以捕捉尾音。0 = 無額外緩衝。"
+      },
+      "simulateUpdaterRestart": {
+        "title": "Simulate Updater Restart",
+        "description": "Relaunches Dictus via the same API tauri-plugin-updater uses after applying an update. Use this to validate SHUT-03 (clean post-update relaunch) without publishing a throwaway test release.",
+        "button": "Simulate Restart"
       }
     },
     "about": {
@@ -533,6 +561,11 @@
         "title": "Privacy Policy",
         "description": "Your voice stays on your device. Read our privacy policy.",
         "button": "View Privacy Policy"
+      },
+      "networkSurface": {
+        "title": "網路範圍",
+        "description": "此應用程式可連線的每個出站端點，以及如何停用每個端點。",
+        "button": "檢視隱私文件"
       },
       "ecosystem": {
         "title": "Dictus Ecosystem",

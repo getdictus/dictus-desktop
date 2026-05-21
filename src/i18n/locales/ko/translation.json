@@ -107,7 +107,9 @@
       },
       "accessibility": {
         "title": "접근성 권한",
-        "description": "녹음된 텍스트를 애플리케이션에 입력하기 위해 필요합니다."
+        "description": "녹음된 텍스트를 애플리케이션에 입력하기 위해 필요합니다.",
+        "restartHint": "macOS가 접근성 변경 사항을 감지하려면 앱을 재시작해야 합니다.",
+        "restart": "Dictus 재시작"
       },
       "grant": "권한 부여",
       "granted": "승인됨",
@@ -244,6 +246,7 @@
         "app": "앱",
         "output": "출력",
         "transcription": "전사",
+        "postProcessing": "후처리",
         "history": "히스토리",
         "experimental": "실험적"
       },
@@ -368,6 +371,26 @@
         "provider": {
           "title": "제공자",
           "description": "OpenAI 호환 제공자를 선택하세요."
+        },
+        "providers": {
+          "sectionLocal": "내 기기에서",
+          "sectionExternal": "외부 — 데이터가 이 기기를 떠남",
+          "labels": {
+            "custom": "Custom (local)"
+          },
+          "descriptions": {
+            "apple_intelligence": "무료 • 기기 내 • macOS Apple Silicon",
+            "custom": "localhost의 Ollama / LM Studio"
+          }
+        },
+        "custom": {
+          "ollamaTip": "팁: <link>Ollama</link>를 설치하고 <code>ollama serve</code>를 실행하여 로컬 모델을 사용하세요.",
+          "testConnection": {
+            "button": "연결 테스트",
+            "success": "연결됨 — {{count}}개 모델 사용 가능",
+            "errorTitle": "{{baseUrl}}에 연결할 수 없습니다",
+            "errorDetails": "세부 정보"
+          }
         },
         "appleIntelligence": {
           "title": "Apple Intelligence",
@@ -507,6 +530,11 @@
         "appData": "앱 데이터:",
         "models": "모델:",
         "settings": "설정:"
+      },
+      "simulateUpdaterRestart": {
+        "title": "Simulate Updater Restart",
+        "description": "Relaunches Dictus via the same API tauri-plugin-updater uses after applying an update. Use this to validate SHUT-03 (clean post-update relaunch) without publishing a throwaway test release.",
+        "button": "Simulate Restart"
       }
     },
     "about": {
@@ -533,6 +561,11 @@
         "title": "Privacy Policy",
         "description": "Your voice stays on your device. Read our privacy policy.",
         "button": "View Privacy Policy"
+      },
+      "networkSurface": {
+        "title": "네트워크 표면",
+        "description": "이 앱이 연결할 수 있는 모든 외부 엔드포인트와 각각을 비활성화하는 방법.",
+        "button": "개인정보 문서 보기"
       },
       "ecosystem": {
         "title": "Dictus Ecosystem",

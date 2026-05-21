@@ -107,7 +107,9 @@
       },
       "accessibility": {
         "title": "Erişilebilirlik Erişimi",
-        "description": "Transkribe edilen metni uygulamalarınıza yazabilmek için gereklidir."
+        "description": "Transkribe edilen metni uygulamalarınıza yazabilmek için gereklidir.",
+        "restartHint": "macOS, erişilebilirlik değişikliklerini algılamak için uygulamanın yeniden başlatılmasını gerektirir.",
+        "restart": "Dictus'u yeniden başlat"
       },
       "grant": "İzin Ver",
       "granted": "Verildi",
@@ -244,6 +246,7 @@
         "app": "Uygulama",
         "output": "Çıktı",
         "transcription": "Transkripsiyon",
+        "postProcessing": "Son işleme",
         "history": "Geçmiş",
         "experimental": "Deneysel"
       },
@@ -368,6 +371,26 @@
         "provider": {
           "title": "Sağlayıcı",
           "description": "OpenAI uyumlu bir sağlayıcı seçin."
+        },
+        "providers": {
+          "sectionLocal": "Cihazında",
+          "sectionExternal": "Harici — veriler bu cihazdan çıkar",
+          "labels": {
+            "custom": "Custom (yerel)"
+          },
+          "descriptions": {
+            "apple_intelligence": "Ücretsiz • cihazda • macOS Apple Silicon",
+            "custom": "localhost üzerinde Ollama / LM Studio"
+          }
+        },
+        "custom": {
+          "ollamaTip": "İpucu: yerel modelleri kullanmak için <link>Ollama</link>'yı yükleyin ve <code>ollama serve</code> komutunu çalıştırın.",
+          "testConnection": {
+            "button": "Bağlantıyı test et",
+            "success": "Bağlandı — {{count}} model kullanılabilir",
+            "errorTitle": "{{baseUrl}} adresine ulaşılamadı",
+            "errorDetails": "Ayrıntılar"
+          }
         },
         "appleIntelligence": {
           "title": "Apple Intelligence",
@@ -507,6 +530,11 @@
       "recordingBuffer": {
         "title": "Ekstra kayıt tamponu",
         "description": "Tuşu bıraktıktan sonra arka plandaki sesi yakalamak için kaydı sürdürme süresi (milisaniye). 0 = ekstra tampon yok."
+      },
+      "simulateUpdaterRestart": {
+        "title": "Simulate Updater Restart",
+        "description": "Relaunches Dictus via the same API tauri-plugin-updater uses after applying an update. Use this to validate SHUT-03 (clean post-update relaunch) without publishing a throwaway test release.",
+        "button": "Simulate Restart"
       }
     },
     "about": {
@@ -533,6 +561,11 @@
         "title": "Privacy Policy",
         "description": "Your voice stays on your device. Read our privacy policy.",
         "button": "View Privacy Policy"
+      },
+      "networkSurface": {
+        "title": "Ağ yüzeyi",
+        "description": "Bu uygulamanın ulaşabileceği her giden uç nokta ve her birini nasıl devre dışı bırakacağınız.",
+        "button": "Gizlilik belgesini görüntüle"
       },
       "ecosystem": {
         "title": "Dictus Ecosystem",

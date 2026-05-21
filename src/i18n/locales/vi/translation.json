@@ -107,7 +107,9 @@
       },
       "accessibility": {
         "title": "Quyền truy cập Trợ năng",
-        "description": "Cần thiết để nhập văn bản đã chuyển đổi vào các ứng dụng của bạn."
+        "description": "Cần thiết để nhập văn bản đã chuyển đổi vào các ứng dụng của bạn.",
+        "restartHint": "macOS yêu cầu khởi động lại ứng dụng để nhận diện thay đổi trợ năng.",
+        "restart": "Khởi động lại Dictus"
       },
       "grant": "Cấp quyền",
       "granted": "Đã cấp",
@@ -244,6 +246,7 @@
         "app": "Ứng dụng",
         "output": "Đầu ra",
         "transcription": "Chuyển đổi",
+        "postProcessing": "Hậu xử lý",
         "history": "Lịch sử",
         "experimental": "Thử nghiệm"
       },
@@ -368,6 +371,26 @@
         "provider": {
           "title": "Nhà cung cấp",
           "description": "Chọn một nhà cung cấp tương thích OpenAI."
+        },
+        "providers": {
+          "sectionLocal": "Trên thiết bị của bạn",
+          "sectionExternal": "Bên ngoài — dữ liệu rời khỏi thiết bị này",
+          "labels": {
+            "custom": "Custom (cục bộ)"
+          },
+          "descriptions": {
+            "apple_intelligence": "Miễn phí • trên thiết bị • macOS Apple Silicon",
+            "custom": "Ollama / LM Studio trên localhost"
+          }
+        },
+        "custom": {
+          "ollamaTip": "Mẹo: cài đặt <link>Ollama</link> và chạy <code>ollama serve</code> để dùng các mô hình cục bộ.",
+          "testConnection": {
+            "button": "Kiểm tra kết nối",
+            "success": "Đã kết nối — {{count}} mô hình khả dụng",
+            "errorTitle": "Không thể truy cập {{baseUrl}}",
+            "errorDetails": "Chi tiết"
+          }
         },
         "appleIntelligence": {
           "title": "Apple Intelligence",
@@ -507,6 +530,11 @@
       "recordingBuffer": {
         "title": "Bộ đệm ghi âm thêm",
         "description": "Thời gian thêm (tính bằng mili giây) để tiếp tục ghi âm sau khi nhả phím, để thu âm thanh cuối. 0 = không có bộ đệm thêm."
+      },
+      "simulateUpdaterRestart": {
+        "title": "Simulate Updater Restart",
+        "description": "Relaunches Dictus via the same API tauri-plugin-updater uses after applying an update. Use this to validate SHUT-03 (clean post-update relaunch) without publishing a throwaway test release.",
+        "button": "Simulate Restart"
       }
     },
     "about": {
@@ -533,6 +561,11 @@
         "title": "Privacy Policy",
         "description": "Your voice stays on your device. Read our privacy policy.",
         "button": "View Privacy Policy"
+      },
+      "networkSurface": {
+        "title": "Bề mặt mạng",
+        "description": "Mọi điểm cuối đi mà ứng dụng có thể liên hệ, và cách vô hiệu hóa từng điểm.",
+        "button": "Xem tài liệu bảo mật"
       },
       "ecosystem": {
         "title": "Dictus Ecosystem",

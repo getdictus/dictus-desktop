@@ -107,7 +107,9 @@
       },
       "accessibility": {
         "title": "Hjälpmedelsåtkomst",
-        "description": "Krävs för att skriva transkriberad text i dina program."
+        "description": "Krävs för att skriva transkriberad text i dina program.",
+        "restartHint": "macOS kräver en app-omstart för att identifiera tillgänglighetsändringar.",
+        "restart": "Starta om Dictus"
       },
       "grant": "Bevilja behörighet",
       "granted": "Beviljad",
@@ -244,6 +246,7 @@
         "app": "App",
         "output": "Utmatning",
         "transcription": "Transkription",
+        "postProcessing": "Efterbehandling",
         "history": "Historik",
         "experimental": "Experimentellt"
       },
@@ -368,6 +371,26 @@
         "provider": {
           "title": "Leverantör",
           "description": "Välj en OpenAI-kompatibel leverantör."
+        },
+        "providers": {
+          "sectionLocal": "På din enhet",
+          "sectionExternal": "Externt — data lämnar denna enhet",
+          "labels": {
+            "custom": "Custom (lokalt)"
+          },
+          "descriptions": {
+            "apple_intelligence": "Gratis • på enheten • macOS Apple Silicon",
+            "custom": "Ollama / LM Studio på localhost"
+          }
+        },
+        "custom": {
+          "ollamaTip": "Tips: installera <link>Ollama</link> och kör <code>ollama serve</code> för att använda lokala modeller.",
+          "testConnection": {
+            "button": "Testa anslutning",
+            "success": "Ansluten — {{count}} modeller tillgängliga",
+            "errorTitle": "Kunde inte nå {{baseUrl}}",
+            "errorDetails": "Detaljer"
+          }
         },
         "appleIntelligence": {
           "title": "Apple Intelligence",
@@ -507,6 +530,11 @@
       "recordingBuffer": {
         "title": "Extra inspelningsbuffert",
         "description": "Extra tid (i millisekunder) för att fortsätta spela in efter att du släppt tangenten, för att fånga upp avslutande ljud. 0 = ingen extra buffert."
+      },
+      "simulateUpdaterRestart": {
+        "title": "Simulate Updater Restart",
+        "description": "Relaunches Dictus via the same API tauri-plugin-updater uses after applying an update. Use this to validate SHUT-03 (clean post-update relaunch) without publishing a throwaway test release.",
+        "button": "Simulate Restart"
       }
     },
     "about": {
@@ -533,6 +561,11 @@
         "title": "Privacy Policy",
         "description": "Your voice stays on your device. Read our privacy policy.",
         "button": "View Privacy Policy"
+      },
+      "networkSurface": {
+        "title": "Nätverksyta",
+        "description": "Varje utgående slutpunkt som denna app kan kontakta, och hur du inaktiverar var och en.",
+        "button": "Visa integritetsdokument"
       },
       "ecosystem": {
         "title": "Dictus Ecosystem",

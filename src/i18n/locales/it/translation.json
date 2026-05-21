@@ -107,7 +107,9 @@
       },
       "accessibility": {
         "title": "Accesso all'Accessibilità",
-        "description": "Necessario per digitare il testo trascritto nelle tue applicazioni."
+        "description": "Necessario per digitare il testo trascritto nelle tue applicazioni.",
+        "restartHint": "macOS richiede il riavvio dell'app per rilevare le modifiche all'accessibilità.",
+        "restart": "Riavvia Dictus"
       },
       "grant": "Concedi Permesso",
       "granted": "Concesso",
@@ -244,6 +246,7 @@
         "app": "App",
         "output": "Output",
         "transcription": "Trascrizione",
+        "postProcessing": "Post-elaborazione",
         "history": "Cronologia",
         "experimental": "Sperimentale"
       },
@@ -368,6 +371,26 @@
         "provider": {
           "title": "Provider",
           "description": "Seleziona un provider compatibile con OpenAI."
+        },
+        "providers": {
+          "sectionLocal": "Sul tuo dispositivo",
+          "sectionExternal": "Esterno — i dati lasciano questo dispositivo",
+          "labels": {
+            "custom": "Custom (local)"
+          },
+          "descriptions": {
+            "apple_intelligence": "Gratuito • sul dispositivo • macOS Apple Silicon",
+            "custom": "Ollama / LM Studio su localhost"
+          }
+        },
+        "custom": {
+          "ollamaTip": "Suggerimento: installa <link>Ollama</link> ed esegui <code>ollama serve</code> per usare modelli locali.",
+          "testConnection": {
+            "button": "Testa connessione",
+            "success": "Connesso — {{count}} modelli disponibili",
+            "errorTitle": "Impossibile raggiungere {{baseUrl}}",
+            "errorDetails": "Dettagli"
+          }
         },
         "appleIntelligence": {
           "title": "Apple Intelligence",
@@ -507,6 +530,11 @@
       "recordingBuffer": {
         "title": "Buffer di registrazione extra",
         "description": "Tempo extra (in millisecondi) per continuare a registrare dopo aver rilasciato il tasto, per catturare l'audio finale. 0 = nessun buffer extra."
+      },
+      "simulateUpdaterRestart": {
+        "title": "Simulate Updater Restart",
+        "description": "Relaunches Dictus via the same API tauri-plugin-updater uses after applying an update. Use this to validate SHUT-03 (clean post-update relaunch) without publishing a throwaway test release.",
+        "button": "Simulate Restart"
       }
     },
     "about": {
@@ -533,6 +561,11 @@
         "title": "Privacy Policy",
         "description": "Your voice stays on your device. Read our privacy policy.",
         "button": "View Privacy Policy"
+      },
+      "networkSurface": {
+        "title": "Superficie di rete",
+        "description": "Ogni endpoint in uscita che questa app può contattare, e come disabilitare ciascuno.",
+        "button": "Visualizza doc privacy"
       },
       "ecosystem": {
         "title": "Dictus Ecosystem",

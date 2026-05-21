@@ -107,7 +107,9 @@
       },
       "accessibility": {
         "title": "Dostęp do dostępności",
-        "description": "Wymagany do wpisywania transkrybowanego tekstu w Twoich aplikacjach."
+        "description": "Wymagany do wpisywania transkrybowanego tekstu w Twoich aplikacjach.",
+        "restartHint": "macOS wymaga ponownego uruchomienia aplikacji, aby wykryć zmiany ułatwień dostępu.",
+        "restart": "Uruchom ponownie Dictus"
       },
       "grant": "Przyznaj uprawnienie",
       "granted": "Przyznano",
@@ -244,6 +246,7 @@
         "app": "Aplikacja",
         "output": "Wyjście",
         "transcription": "Transkrypcja",
+        "postProcessing": "Przetwarzanie końcowe",
         "history": "Historia",
         "experimental": "Eksperymentalne"
       },
@@ -368,6 +371,26 @@
         "provider": {
           "title": "Dostawca",
           "description": "Wybierz dostawcę zgodnego z OpenAI."
+        },
+        "providers": {
+          "sectionLocal": "Na twoim urządzeniu",
+          "sectionExternal": "Zewnętrzne — dane opuszczają to urządzenie",
+          "labels": {
+            "custom": "Custom (lokalnie)"
+          },
+          "descriptions": {
+            "apple_intelligence": "Bezpłatnie • na urządzeniu • macOS Apple Silicon",
+            "custom": "Ollama / LM Studio na localhost"
+          }
+        },
+        "custom": {
+          "ollamaTip": "Wskazówka: zainstaluj <link>Ollama</link> i uruchom <code>ollama serve</code>, aby używać lokalnych modeli.",
+          "testConnection": {
+            "button": "Testuj połączenie",
+            "success": "Połączono — dostępnych {{count}} modeli",
+            "errorTitle": "Nie można połączyć się z {{baseUrl}}",
+            "errorDetails": "Szczegóły"
+          }
         },
         "appleIntelligence": {
           "title": "Apple Intelligence",
@@ -507,6 +530,11 @@
       "recordingBuffer": {
         "title": "Dodatkowy bufor nagrywania",
         "description": "Dodatkowy czas (w milisekundach) na kontynuowanie nagrywania po zwolnieniu klawisza, aby przechwycić końcowy dźwięk. 0 = brak dodatkowego bufora."
+      },
+      "simulateUpdaterRestart": {
+        "title": "Simulate Updater Restart",
+        "description": "Relaunches Dictus via the same API tauri-plugin-updater uses after applying an update. Use this to validate SHUT-03 (clean post-update relaunch) without publishing a throwaway test release.",
+        "button": "Simulate Restart"
       }
     },
     "about": {
@@ -533,6 +561,11 @@
         "title": "Privacy Policy",
         "description": "Your voice stays on your device. Read our privacy policy.",
         "button": "View Privacy Policy"
+      },
+      "networkSurface": {
+        "title": "Powierzchnia sieciowa",
+        "description": "Każdy zewnętrzny punkt końcowy, z którym aplikacja może się skontaktować, i jak go wyłączyć.",
+        "button": "Zobacz dokument prywatności"
       },
       "ecosystem": {
         "title": "Dictus Ecosystem",

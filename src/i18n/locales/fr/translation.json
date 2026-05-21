@@ -107,7 +107,9 @@
       },
       "accessibility": {
         "title": "Accès à l'accessibilité",
-        "description": "Nécessaire pour taper le texte transcrit dans vos applications."
+        "description": "Nécessaire pour taper le texte transcrit dans vos applications.",
+        "restartHint": "macOS nécessite un redémarrage de l'application pour détecter les changements d'accessibilité.",
+        "restart": "Redémarrer Dictus"
       },
       "grant": "Accorder l'autorisation",
       "granted": "Accordé",
@@ -244,6 +246,7 @@
         "app": "Application",
         "output": "Sortie",
         "transcription": "Transcription",
+        "postProcessing": "Post-traitement",
         "history": "Historique",
         "experimental": "Expérimental"
       },
@@ -368,6 +371,26 @@
         "provider": {
           "title": "Fournisseur",
           "description": "Sélectionnez un fournisseur compatible OpenAI."
+        },
+        "providers": {
+          "sectionLocal": "Sur votre appareil",
+          "sectionExternal": "Externe — les données quittent cet appareil",
+          "labels": {
+            "custom": "Custom (local)"
+          },
+          "descriptions": {
+            "apple_intelligence": "Gratuit • sur l'appareil • macOS Apple Silicon",
+            "custom": "Ollama / LM Studio sur localhost"
+          }
+        },
+        "custom": {
+          "ollamaTip": "Astuce : installez <link>Ollama</link> et lancez <code>ollama serve</code> pour utiliser des modèles locaux.",
+          "testConnection": {
+            "button": "Tester la connexion",
+            "success": "Connecté — {{count}} modèles disponibles",
+            "errorTitle": "Impossible d'atteindre {{baseUrl}}",
+            "errorDetails": "Détails"
+          }
         },
         "appleIntelligence": {
           "title": "Apple Intelligence",
@@ -507,6 +530,11 @@
       "recordingBuffer": {
         "title": "Tampon d'enregistrement supplémentaire",
         "description": "Temps supplémentaire (en millisecondes) pour continuer l'enregistrement après avoir relâché la touche, pour capturer l'audio restant. 0 = pas de tampon supplémentaire."
+      },
+      "simulateUpdaterRestart": {
+        "title": "Simulate Updater Restart",
+        "description": "Relaunches Dictus via the same API tauri-plugin-updater uses after applying an update. Use this to validate SHUT-03 (clean post-update relaunch) without publishing a throwaway test release.",
+        "button": "Simulate Restart"
       }
     },
     "about": {
@@ -530,12 +558,17 @@
         "button": "Faire un don"
       },
       "privacy": {
-        "title": "Politique de confidentialit\u00e9",
-        "description": "Votre voix reste sur votre appareil. Consultez notre politique de confidentialit\u00e9.",
+        "title": "Politique de confidentialité",
+        "description": "Votre voix reste sur votre appareil. Consultez notre politique de confidentialité.",
         "button": "Voir la politique"
       },
+      "networkSurface": {
+        "title": "Surface réseau",
+        "description": "Chaque point de terminaison sortant que cette application peut contacter, et comment le désactiver.",
+        "button": "Voir le document de confidentialité"
+      },
       "ecosystem": {
-        "title": "\u00c9cosyst\u00e8me Dictus",
+        "title": "Écosystème Dictus",
         "description": "Dictus est disponible sur iOS, Android et Desktop.",
         "button": "En savoir plus"
       },

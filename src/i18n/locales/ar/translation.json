@@ -107,7 +107,9 @@
       },
       "accessibility": {
         "title": "إمكانية الوصول",
-        "description": ".مطلوب لكتابة النص المفرغ في تطبيقاتك"
+        "description": ".مطلوب لكتابة النص المفرغ في تطبيقاتك",
+        "restartHint": "يتطلب macOS إعادة تشغيل التطبيق لاكتشاف تغييرات إمكانية الوصول.",
+        "restart": "أعد تشغيل Dictus"
       },
       "grant": "منح الإذن",
       "granted": "تم المنح",
@@ -222,6 +224,7 @@
         "app": "التطبيق",
         "output": "الإخراج",
         "transcription": "التفريغ الصوتي",
+        "postProcessing": "المعالجة اللاحقة",
         "history": "السجل",
         "experimental": "تجريبي"
       },
@@ -346,6 +349,26 @@
         "provider": {
           "title": "المزود",
           "description": "اختر مزوداً متوافقاً مع OpenAI."
+        },
+        "providers": {
+          "sectionLocal": "على جهازك",
+          "sectionExternal": "خارجي — تغادر البيانات هذا الجهاز",
+          "labels": {
+            "custom": "Custom (محلي)"
+          },
+          "descriptions": {
+            "apple_intelligence": "مجاني • على الجهاز • macOS Apple Silicon",
+            "custom": "Ollama / LM Studio على localhost"
+          }
+        },
+        "custom": {
+          "ollamaTip": "نصيحة: ثبّت <link>Ollama</link> وشغّل <code>ollama serve</code> لاستخدام النماذج المحلية.",
+          "testConnection": {
+            "button": "اختبار الاتصال",
+            "success": "متصل — {{count}} نماذج متاحة",
+            "errorTitle": "تعذر الوصول إلى {{baseUrl}}",
+            "errorDetails": "التفاصيل"
+          }
         },
         "appleIntelligence": {
           "title": "Apple Intelligence",
@@ -485,6 +508,11 @@
       "recordingBuffer": {
         "title": "مخزن التسجيل الإضافي",
         "description": "وقت إضافي (بالمللي ثانية) للاستمرار في التسجيل بعد تحرير المفتاح، لالتقاط الصوت المتبقي. 0 = لا مخزن إضافي."
+      },
+      "simulateUpdaterRestart": {
+        "title": "Simulate Updater Restart",
+        "description": "Relaunches Dictus via the same API tauri-plugin-updater uses after applying an update. Use this to validate SHUT-03 (clean post-update relaunch) without publishing a throwaway test release.",
+        "button": "Simulate Restart"
       }
     },
     "about": {
@@ -511,6 +539,11 @@
         "title": "Privacy Policy",
         "description": "Your voice stays on your device. Read our privacy policy.",
         "button": "View Privacy Policy"
+      },
+      "networkSurface": {
+        "title": "السطح الشبكي",
+        "description": "كل نقطة نهاية صادرة يمكن لهذا التطبيق الاتصال بها، وكيفية تعطيل كل منها.",
+        "button": "عرض وثيقة الخصوصية"
       },
       "ecosystem": {
         "title": "Dictus Ecosystem",

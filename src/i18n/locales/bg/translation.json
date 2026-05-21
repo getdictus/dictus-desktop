@@ -107,7 +107,9 @@
       },
       "accessibility": {
         "title": "Достъп за достъпност",
-        "description": "Необходим е, за да въвежда транскрибирания текст във вашите приложения."
+        "description": "Необходим е, за да въвежда транскрибирания текст във вашите приложения.",
+        "restartHint": "macOS изисква рестартиране на приложението за откриване на промени в достъпността.",
+        "restart": "Рестартирайте Dictus"
       },
       "grant": "Даване на разрешение",
       "granted": "Разрешено",
@@ -244,6 +246,7 @@
         "app": "Приложение",
         "output": "Изход",
         "transcription": "Транскрипция",
+        "postProcessing": "Последваща обработка",
         "history": "История",
         "experimental": "Експериментални"
       },
@@ -368,6 +371,26 @@
         "provider": {
           "title": "Доставчик",
           "description": "Изберете доставчик, съвместим с OpenAI."
+        },
+        "providers": {
+          "sectionLocal": "На вашето устройство",
+          "sectionExternal": "Външни — данните напускат това устройство",
+          "labels": {
+            "custom": "Custom (локално)"
+          },
+          "descriptions": {
+            "apple_intelligence": "Безплатно • на устройството • macOS Apple Silicon",
+            "custom": "Ollama / LM Studio на localhost"
+          }
+        },
+        "custom": {
+          "ollamaTip": "Съвет: инсталирайте <link>Ollama</link> и стартирайте <code>ollama serve</code>, за да използвате локални модели.",
+          "testConnection": {
+            "button": "Тествай връзка",
+            "success": "Свързано — налични {{count}} модела",
+            "errorTitle": "Не може да се достигне до {{baseUrl}}",
+            "errorDetails": "Подробности"
+          }
         },
         "appleIntelligence": {
           "title": "Apple Intelligence",
@@ -507,6 +530,11 @@
       "recordingBuffer": {
         "title": "Допълнителен буфер на записа",
         "description": "Допълнително време (в милисекунди) за запис след пускане на клавиша, за да се улови краят на аудиото. 0 = без допълнителен буфер."
+      },
+      "simulateUpdaterRestart": {
+        "title": "Simulate Updater Restart",
+        "description": "Relaunches Dictus via the same API tauri-plugin-updater uses after applying an update. Use this to validate SHUT-03 (clean post-update relaunch) without publishing a throwaway test release.",
+        "button": "Simulate Restart"
       }
     },
     "about": {
@@ -533,6 +561,11 @@
         "title": "Privacy Policy",
         "description": "Your voice stays on your device. Read our privacy policy.",
         "button": "View Privacy Policy"
+      },
+      "networkSurface": {
+        "title": "Мрежова повърхност",
+        "description": "Всяка изходяща крайна точка, с която приложението може да се свърже, и как да я деактивирате.",
+        "button": "Виж документа за поверителност"
       },
       "ecosystem": {
         "title": "Dictus Ecosystem",
