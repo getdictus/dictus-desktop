@@ -1,8 +1,15 @@
 import { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useSettings } from "../../../hooks/useSettings";
 import { commands, type PostProcessProvider } from "@/bindings";
 import type { ModelOption } from "./types";
 import type { DropdownOption } from "../../ui/Dropdown";
+
+export interface GroupedProviderOption {
+  value: string;
+  label: string;
+  description?: string;
+}
 
 type PostProcessProviderState = {
   providerOptions: DropdownOption[];
@@ -26,11 +33,17 @@ type PostProcessProviderState = {
   handleModelSelect: (value: string) => void;
   handleModelCreate: (value: string) => void;
   handleRefreshModels: () => void;
+  groupedProviderOptions: {
+    local: GroupedProviderOption[];
+    external: GroupedProviderOption[];
+  };
 };
 
 const APPLE_PROVIDER_ID = "apple_intelligence";
+const LOCAL_PROVIDER_IDS = new Set(["apple_intelligence", "custom"]);
 
 export const usePostProcessProviderState = (): PostProcessProviderState => {
+  const { t } = useTranslation();
   const {
     settings,
     isUpdating,
@@ -71,6 +84,35 @@ export const usePostProcessProviderState = (): PostProcessProviderState => {
       label: provider.label,
     }));
   }, [providers]);
+
+  const groupedProviderOptions = useMemo(() => {
+    const local: GroupedProviderOption[] = [];
+    const external: GroupedProviderOption[] = [];
+    for (const provider of providers) {
+      const opt: GroupedProviderOption = {
+        value: provider.id,
+        label: provider.label,
+        description:
+          t(
+            `settings.postProcessing.api.providers.descriptions.${provider.id}`,
+            { defaultValue: "" },
+          ) || undefined,
+      };
+      if (LOCAL_PROVIDER_IDS.has(provider.id)) {
+        local.push(opt);
+      } else {
+        external.push(opt);
+      }
+    }
+    // Local order: apple_intelligence first (if present), then custom
+    local.sort((a, b) => {
+      if (a.value === "apple_intelligence") return -1;
+      if (b.value === "apple_intelligence") return 1;
+      return 0;
+    });
+    // External: preserve provider array order (already correct in settings.rs)
+    return { local, external };
+  }, [providers, t]);
 
   const handleProviderSelect = useCallback(
     async (providerId: string) => {
@@ -231,5 +273,6 @@ export const usePostProcessProviderState = (): PostProcessProviderState => {
     handleModelSelect,
     handleModelCreate,
     handleRefreshModels,
+    groupedProviderOptions,
   };
 };

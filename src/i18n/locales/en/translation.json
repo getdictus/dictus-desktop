@@ -246,6 +246,7 @@
         "app": "App",
         "output": "Output",
         "transcription": "Transcription",
+        "postProcessing": "Post Processing",
         "history": "History",
         "experimental": "Experimental"
       },
@@ -370,6 +371,26 @@
         "provider": {
           "title": "Provider",
           "description": "Select an OpenAI-compatible provider."
+        },
+        "providers": {
+          "sectionLocal": "On your device",
+          "sectionExternal": "External — data leaves this device",
+          "labels": {
+            "custom": "Custom (local)"
+          },
+          "descriptions": {
+            "apple_intelligence": "Free • on-device • macOS Apple Silicon",
+            "custom": "Ollama / LM Studio on localhost"
+          }
+        },
+        "custom": {
+          "ollamaTip": "Tip: install <link>Ollama</link> and run <code>ollama serve</code> to use local models.",
+          "testConnection": {
+            "button": "Test connection",
+            "success": "Connected — {{count}} models available",
+            "errorTitle": "Could not reach {{baseUrl}}",
+            "errorDetails": "Details"
+          }
         },
         "appleIntelligence": {
           "title": "Apple Intelligence",
@@ -540,6 +561,11 @@
         "title": "Privacy Policy",
         "description": "Your voice stays on your device. Read our privacy policy.",
         "button": "View Privacy Policy"
+      },
+      "networkSurface": {
+        "title": "Network surface",
+        "description": "Every outbound endpoint this app can contact, and how to disable each.",
+        "button": "View privacy doc"
       },
       "ecosystem": {
         "title": "Dictus Ecosystem",
