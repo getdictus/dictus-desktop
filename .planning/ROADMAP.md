@@ -71,4 +71,9 @@
   1. The post-process provider dropdown renders Ollama, Apple Intelligence, and Custom local providers above a visible "External — data leaves this device" section that groups OpenAI, Anthropic, Groq, and Gemini
   2. A `docs/PRIVACY.md` file exists listing every outbound endpoint the app can contact, what data leaves the device, and how to disable each connection
   3. Onboarding screens present local transcription as the primary path; any cloud post-processing option is visibly labeled as an opt-in external service
-**Plans**: TBD
+**Plans**: 5 plans
+  - [ ] 08-01-PLAN.md — Platform-aware default + relabel `Custom (local)` + Rust unit tests (PRIV-01)
+  - [ ] 08-02-PLAN.md — Author `docs/PRIVACY.md` + README link + UPSTREAM maintenance hook (PRIV-02)
+  - [ ] 08-03-PLAN.md — ProviderPicker, TestConnectionButton, Ollama tip, hook extension, toggle promotion, About panel link, English i18n keys (PRIV-01, PRIV-02, PRIV-03)
+  - [ ] 08-04-PLAN.md — Replicate 14 new i18n keys across 19 sibling locales (PRIV-01, PRIV-02)
+  - [ ] 08-05-PLAN.md — Human UAT — visual verification of stacked picker, Test connection, About link, toggle relocation, onboarding, PRIVACY.md rendering [has checkpoint]
