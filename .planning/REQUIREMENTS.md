@@ -32,7 +32,7 @@ Requirements for the Polish & Local-First UX milestone. Each maps to a roadmap p
 <!-- Originally planned automated upstream-sync workflow (draft PRs + CI gate). -->
 <!-- Rescoped 2026-05-21: SYNC-06 absorbed by Phase 6; SYNC-07..11 cancelled — manual workflow chosen. See "Future Requirements > Sync Automation" below and todo 2026-05-21-upstream-sync-strategy-review.md. -->
 
-- [x] **SYNC-06**: `verify-sync.sh` relocated to `.github/scripts/verify-sync.sh` (out of `.planning/` tree); all references in UPSTREAM.md updated *(absorbed by Phase 6)*
+- [x] **SYNC-06**: `verify-sync.sh` relocated to `.github/scripts/verify-sync.sh` (out of `.planning/` tree); all references in UPSTREAM.md updated _(absorbed by Phase 6)_
 
 ### macOS Clean Shutdown (SHUT)
 
@@ -46,7 +46,7 @@ Requirements for the Polish & Local-First UX milestone. Each maps to a roadmap p
 
 <!-- Reorder post-process providers and document network surface. -->
 
-- [ ] **PRIV-01**: Post-process provider list in settings UI renders local providers (Ollama, Apple Intelligence, Custom local) at the top of the Dropdown, external providers (OpenAI, Anthropic, Groq, Gemini) grouped under a neutral "External — data leaves this device" section label
+- [x] **PRIV-01**: Post-process provider list in settings UI renders local providers (Ollama, Apple Intelligence, Custom local) at the top of the Dropdown, external providers (OpenAI, Anthropic, Groq, Gemini) grouped under a neutral "External — data leaves this device" section label
 - [x] **PRIV-02**: Network surface audit documented as `docs/PRIVACY.md` (or in-app Privacy section) listing every outbound endpoint the app can contact (updater check, LLM post-process, model CDN), what data leaves the device, and how to disable each
 - [ ] **PRIV-03**: Onboarding copy reviewed — local transcription presented as the primary path, cloud post-processing clearly labeled as opt-in external service (minor i18n additions if needed across 20 locales)
 
@@ -75,44 +75,46 @@ Originally planned in v1.2 but removed as over-engineered relative to actual ups
 
 Explicitly excluded from v1.2. Documented to prevent scope creep.
 
-| Feature | Reason |
-|---------|--------|
-| Auto-merge upstream PRs | Dictus rebrand affects same files upstream modifies — human merge gate is mandatory per local-first policy |
-| Global `grep handy \| sed` brand replacement | `handy_keys` / `handy-keys` is an external crate dep — blanket replace breaks the build |
-| Per-item modal warning on cloud provider selection | Intrusive repeated friction; section-level labeling is sufficient |
-| Hiding cloud providers entirely | Users should be able to find them; opt-in, not invisible |
-| Data-dir migration (handy → dictus on disk) | User-impacting, requires backup logic — defer until justified |
-| API-metered Claude agent billing (`ANTHROPIC_API_KEY`) | Cost unacceptable for weekly runs — OAuth Max subscription is mandated |
-| Replacing `handy-keys` external crate | Build-breaking; out of scope |
-| Mobile ↔ desktop sync, cloud accounts, Nostr | PROJECT.md long-term out of scope |
+| Feature                                                | Reason                                                                                                     |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| Auto-merge upstream PRs                                | Dictus rebrand affects same files upstream modifies — human merge gate is mandatory per local-first policy |
+| Global `grep handy \| sed` brand replacement           | `handy_keys` / `handy-keys` is an external crate dep — blanket replace breaks the build                    |
+| Per-item modal warning on cloud provider selection     | Intrusive repeated friction; section-level labeling is sufficient                                          |
+| Hiding cloud providers entirely                        | Users should be able to find them; opt-in, not invisible                                                   |
+| Data-dir migration (handy → dictus on disk)            | User-impacting, requires backup logic — defer until justified                                              |
+| API-metered Claude agent billing (`ANTHROPIC_API_KEY`) | Cost unacceptable for weekly runs — OAuth Max subscription is mandated                                     |
+| Replacing `handy-keys` external crate                  | Build-breaking; out of scope                                                                               |
+| Mobile ↔ desktop sync, cloud accounts, Nostr          | PROJECT.md long-term out of scope                                                                          |
 
 ## Traceability
 
 Which phases cover which requirements.
 
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| BRAND-01 | Phase 6 | Complete |
-| BRAND-02 | Phase 6 | Complete |
-| BRAND-03 | Phase 6 | Complete |
-| BRAND-04 | Phase 6 | Complete |
-| ICON-01 | Phase 6 | Complete |
-| ICON-02 | Phase 6 | Complete |
-| ICON-03 | Phase 6 | Complete |
-| ICON-04 | Phase 6 | Complete |
-| SYNC-06 | Phase 6 *(absorbed)* | Complete |
-| SHUT-01 | Phase 7 | Complete |
-| SHUT-02 | Phase 7 | Complete |
-| SHUT-03 | Phase 7 | Complete |
-| PRIV-01 | Phase 8 | Pending |
-| PRIV-02 | Phase 8 | Complete |
-| PRIV-03 | Phase 8 | Pending |
+| Requirement | Phase                | Status   |
+| ----------- | -------------------- | -------- |
+| BRAND-01    | Phase 6              | Complete |
+| BRAND-02    | Phase 6              | Complete |
+| BRAND-03    | Phase 6              | Complete |
+| BRAND-04    | Phase 6              | Complete |
+| ICON-01     | Phase 6              | Complete |
+| ICON-02     | Phase 6              | Complete |
+| ICON-03     | Phase 6              | Complete |
+| ICON-04     | Phase 6              | Complete |
+| SYNC-06     | Phase 6 _(absorbed)_ | Complete |
+| SHUT-01     | Phase 7              | Complete |
+| SHUT-02     | Phase 7              | Complete |
+| SHUT-03     | Phase 7              | Complete |
+| PRIV-01     | Phase 8              | Complete |
+| PRIV-02     | Phase 8              | Complete |
+| PRIV-03     | Phase 8              | Pending  |
 
 **Coverage:**
+
 - v1.2 active requirements: 15 total (after 2026-05-21 rescope: 11 cancelled — SYNC-07..11 + AGENT-01..06)
 - Mapped to phases: 15 ✓
 - Unmapped: 0 ✓
 
 ---
-*Requirements defined: 2026-04-15*
-*Last updated: 2026-05-21 — milestone renamed to "Polish & Local-First UX"; SYNC-07..11 + AGENT-01..06 cancelled; SHUT-01..03 marked Complete (Phase 7 closed 2026-04-23)*
+
+_Requirements defined: 2026-04-15_
+_Last updated: 2026-05-21 — milestone renamed to "Polish & Local-First UX"; SYNC-07..11 + AGENT-01..06 cancelled; SHUT-01..03 marked Complete (Phase 7 closed 2026-04-23)_

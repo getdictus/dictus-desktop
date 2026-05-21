@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Polish & Local-First UX
-status: completed
-stopped_at: Phase 8 UI-SPEC approved
-last_updated: "2026-05-21T14:36:19.650Z"
-last_activity: 2026-05-21 — Phases 9 & 10 removed (automation ambitions cancelled); milestone renamed to "Polish & Local-First UX"
+status: executing
+stopped_at: Completed 08-privacy-local-first-ux-08-01-PLAN.md
+last_updated: "2026-05-21T15:34:34.434Z"
+last_activity: "2026-05-21 — 08-02 complete: docs/PRIVACY.md created, README and UPSTREAM linked"
 progress:
   total_phases: 3
   completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
-  percent: 67
+  total_plans: 10
+  completed_plans: 7
+  percent: 73
 ---
 
 # Project State
@@ -35,24 +35,26 @@ Progress: [████████░░] 73% (v1.2 — 2 of 3 phases complete 
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed: 15 (v1.0 + v1.1 combined)
 - Average duration: unknown
 - Total execution time: unknown
 
 **By Phase:**
 
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 1-3 (v1.0) | 8 | - | - |
-| 4-5 (v1.1) | 7 | - | - |
+| Phase      | Plans | Total | Avg/Plan |
+| ---------- | ----- | ----- | -------- |
+| 1-3 (v1.0) | 8     | -     | -        |
+| 4-5 (v1.1) | 7     | -     | -        |
 
-*Updated after each plan completion*
+_Updated after each plan completion_
 | Phase 06-brand-icon-polish P01 | 3 | 3 tasks | 2 files |
 | Phase 06-brand-icon-polish P02 | 3 | 2 tasks | 6 files |
 | Phase 06-brand-icon-polish P03 | 8 | 1 tasks | 1 files |
 | Phase 06-brand-icon-polish P04 | ~60min | 4 tasks | 12 files |
 | Phase 07-macos-clean-shutdown P01 | ~1h coding + multi-day validation | 4 tasks | 7 files |
 | Phase 08-privacy-local-first-ux P02 | ~5min | 2 tasks | 3 files |
+| Phase 08-privacy-local-first-ux P01 | 4min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -76,6 +78,8 @@ Progress: [████████░░] 73% (v1.2 — 2 of 3 phases complete 
   - [Phase 07-macos-clean-shutdown P01]: simulate_updater_restart ships in release builds, UI-gated by settings.debug_mode (not #[cfg(debug_assertions)]) so production installs can validate updater-relaunch path
   - [Phase 07-macos-clean-shutdown P01]: Crash non-reproducible after fix over multi-day validation window; phase closed without a second-reproduction checkpoint
   - [Phase 08-privacy-local-first-ux P02]: docs/PRIVACY.md is single source of truth for network surface — no in-app Privacy page; blob.handy.computer CDN documented as-is (INFR-01 deferred); legacy Referer header flagged but not changed in Phase 8
+- [Phase 08-privacy-local-first-ux]: Platform-aware default: macOS ARM64 gets apple_intelligence, all other platforms get custom (local) — cfg gate matches existing pattern at line 580
+- [Phase 08-privacy-local-first-ux]: Custom provider id stays 'custom' (stable for persisted settings); only label changed to 'Custom (local)'
 
 ### Pending Todos
 
@@ -85,6 +89,7 @@ Progress: [████████░░] 73% (v1.2 — 2 of 3 phases complete 
 ### Blockers/Concerns
 
 Carried from v1.1 audit:
+
 - UPSTREAM.md §6 post-sync gate missing UPDT-03/UPDT-05 re-assertion (deferred — captured in `.planning/todos/pending/2026-05-21-upstream-sync-strategy-review.md` for the manual-workflow simplification path)
 - Phase 5 VALIDATION.md draft → run `/gsd:validate-phase 5` to close
 - `blob.handy.computer` CDN for onnxruntime (INFR-01, deferred)
@@ -92,6 +97,6 @@ Carried from v1.1 audit:
 
 ## Session Continuity
 
-Last session: 2026-05-21T14:45:00Z
-Stopped at: Completed 08-02-PLAN.md
-Resume file: .planning/phases/08-privacy-local-first-ux/08-03-PLAN.md
+Last session: 2026-05-21T15:34:34.432Z
+Stopped at: Completed 08-privacy-local-first-ux-08-01-PLAN.md
+Resume file: None

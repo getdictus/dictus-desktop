@@ -38,42 +38,51 @@
 ## Phase Details
 
 ### Phase 6: Brand & Icon Polish
+
 **Goal**: Dictus identity is complete and verifiable — no Handy strings appear in recording filenames, portable mode detection, or the debug path display; platform icons render correctly on Linux and Windows; verify-sync.sh guards all three surfaces and lives at its permanent home `.github/scripts/`.
 **Depends on**: Nothing (independent of all v1.2 phases)
 **Requirements**: BRAND-01, BRAND-02, BRAND-03, BRAND-04, ICON-01, ICON-02, ICON-03, ICON-04 (+ SYNC-06 pulled forward from Phase 9 per CONTEXT.md roadmap ripple)
 **Success Criteria** (what must be TRUE):
-  1. New recordings created by the app are named `dictus-{timestamp}.wav` — no `handy-` prefix appears in the filesystem or history panel
-  2. DebugPaths settings panel shows the real data directory path (e.g., `/Users/name/Library/Application Support/com.dictus.desktop`) instead of the hardcoded `%APPDATA%/handy` string
-  3. Linux app launcher and taskbar show the Dictus icon with no black corner artifact; Windows executable embeds a multi-resolution `.ico` with Dictus logo at every required layer
-  4. Running `verify-sync.sh` on a branch that reintroduces `handy-*.wav`, `"Handy Portable Mode"`, or the hardcoded debug path causes the script to exit non-zero
-**Plans**: 4 plans
-  - [x] 06-01-PLAN.md — Relocate verify-sync.sh to .github/scripts/ and extend with BRAND-01a/02a/03a/ICON-02a assertions (SYNC-06, BRAND-04, ICON-02 verification surface)
-  - [x] 06-02-PLAN.md — Replace handy- filename prefix and "Handy Portable Mode" marker in Rust backend (BRAND-01, BRAND-02)
-  - [x] 06-03-PLAN.md — Rewrite DebugPaths.tsx to render backend-provided portable-aware path (BRAND-03)
-  - [x] 06-04-PLAN.md — Regenerate platform icons from square transparent source and extend bundle.icon config (ICON-01, ICON-02, ICON-03, ICON-04) [has checkpoints]
+
+1. New recordings created by the app are named `dictus-{timestamp}.wav` — no `handy-` prefix appears in the filesystem or history panel
+2. DebugPaths settings panel shows the real data directory path (e.g., `/Users/name/Library/Application Support/com.dictus.desktop`) instead of the hardcoded `%APPDATA%/handy` string
+3. Linux app launcher and taskbar show the Dictus icon with no black corner artifact; Windows executable embeds a multi-resolution `.ico` with Dictus logo at every required layer
+4. Running `verify-sync.sh` on a branch that reintroduces `handy-*.wav`, `"Handy Portable Mode"`, or the hardcoded debug path causes the script to exit non-zero
+   **Plans**: 4 plans
+
+- [x] 06-01-PLAN.md — Relocate verify-sync.sh to .github/scripts/ and extend with BRAND-01a/02a/03a/ICON-02a assertions (SYNC-06, BRAND-04, ICON-02 verification surface)
+- [x] 06-02-PLAN.md — Replace handy- filename prefix and "Handy Portable Mode" marker in Rust backend (BRAND-01, BRAND-02)
+- [x] 06-03-PLAN.md — Rewrite DebugPaths.tsx to render backend-provided portable-aware path (BRAND-03)
+- [x] 06-04-PLAN.md — Regenerate platform icons from square transparent source and extend bundle.icon config (ICON-01, ICON-02, ICON-03, ICON-04) [has checkpoints]
 
 ### Phase 7: macOS Clean Shutdown
+
 **Goal**: Quitting Dictus on macOS (via tray menu or post-update relaunch) no longer triggers the OS "quit unexpectedly" crash dialog — root cause is diagnosed before a fix is committed.
 **Depends on**: Nothing (fully independent)
 **Requirements**: SHUT-01, SHUT-02, SHUT-03
 **Success Criteria** (what must be TRUE):
-  1. A Console.app crash report is read and the crashing thread identified; the diagnosis (suspect plugin and fix strategy chosen) is committed to the phase plan before any code changes
-  2. Clicking "Quit Dictus" in the system tray on macOS Sequoia 15.x dismisses the app cleanly — the "Dictus quit unexpectedly — Reopen / Report / Ignore" OS dialog does not appear
-  3. Post-auto-update relaunch on macOS completes without triggering the crash dialog
-**Plans**: 1 plan (iteration 1; CONTEXT.md caps at 2 iterations max — Plan 2 only opens if Task 5 reports the dialog still appears)
-  - [ ] 07-01-PLAN.md — Diagnose `.ips` crash report, apply graceful-cleanup + log-flush at both `lib.rs` exit sites, add debug-only `simulate_updater_restart` trigger, append `UPSTREAM.md` conflict-rules row (SHUT-01, SHUT-02, SHUT-03) [has checkpoint]
+
+1. A Console.app crash report is read and the crashing thread identified; the diagnosis (suspect plugin and fix strategy chosen) is committed to the phase plan before any code changes
+2. Clicking "Quit Dictus" in the system tray on macOS Sequoia 15.x dismisses the app cleanly — the "Dictus quit unexpectedly — Reopen / Report / Ignore" OS dialog does not appear
+3. Post-auto-update relaunch on macOS completes without triggering the crash dialog
+   **Plans**: 1 plan (iteration 1; CONTEXT.md caps at 2 iterations max — Plan 2 only opens if Task 5 reports the dialog still appears)
+
+- [ ] 07-01-PLAN.md — Diagnose `.ips` crash report, apply graceful-cleanup + log-flush at both `lib.rs` exit sites, add debug-only `simulate_updater_restart` trigger, append `UPSTREAM.md` conflict-rules row (SHUT-01, SHUT-02, SHUT-03) [has checkpoint]
 
 ### Phase 8: Privacy / Local-First UX
+
 **Goal**: The settings UI and onboarding flow communicate clearly that Dictus is a local-first app — local post-process providers appear before external ones, the network surface is documented, and onboarding copy presents cloud as opt-in.
 **Depends on**: Nothing (fully independent)
 **Requirements**: PRIV-01, PRIV-02, PRIV-03
 **Success Criteria** (what must be TRUE):
-  1. The post-process provider dropdown renders Ollama, Apple Intelligence, and Custom local providers above a visible "External — data leaves this device" section that groups OpenAI, Anthropic, Groq, and Gemini
-  2. A `docs/PRIVACY.md` file exists listing every outbound endpoint the app can contact, what data leaves the device, and how to disable each connection
-  3. Onboarding screens present local transcription as the primary path; any cloud post-processing option is visibly labeled as an opt-in external service
-**Plans**: 5 plans
-  - [ ] 08-01-PLAN.md — Platform-aware default + relabel `Custom (local)` + Rust unit tests (PRIV-01)
-  - [ ] 08-02-PLAN.md — Author `docs/PRIVACY.md` + README link + UPSTREAM maintenance hook (PRIV-02)
-  - [ ] 08-03-PLAN.md — ProviderPicker, TestConnectionButton, Ollama tip, hook extension, toggle promotion, About panel link, English i18n keys (PRIV-01, PRIV-02, PRIV-03)
-  - [ ] 08-04-PLAN.md — Replicate 14 new i18n keys across 19 sibling locales (PRIV-01, PRIV-02)
-  - [ ] 08-05-PLAN.md — Human UAT — visual verification of stacked picker, Test connection, About link, toggle relocation, onboarding, PRIVACY.md rendering [has checkpoint]
+
+1. The post-process provider dropdown renders Ollama, Apple Intelligence, and Custom local providers above a visible "External — data leaves this device" section that groups OpenAI, Anthropic, Groq, and Gemini
+2. A `docs/PRIVACY.md` file exists listing every outbound endpoint the app can contact, what data leaves the device, and how to disable each connection
+3. Onboarding screens present local transcription as the primary path; any cloud post-processing option is visibly labeled as an opt-in external service
+   **Plans**: 5 plans
+
+- [ ] 08-01-PLAN.md — Platform-aware default + relabel `Custom (local)` + Rust unit tests (PRIV-01)
+- [ ] 08-02-PLAN.md — Author `docs/PRIVACY.md` + README link + UPSTREAM maintenance hook (PRIV-02)
+- [ ] 08-03-PLAN.md — ProviderPicker, TestConnectionButton, Ollama tip, hook extension, toggle promotion, About panel link, English i18n keys (PRIV-01, PRIV-02, PRIV-03)
+- [ ] 08-04-PLAN.md — Replicate 14 new i18n keys across 19 sibling locales (PRIV-01, PRIV-02)
+- [ ] 08-05-PLAN.md — Human UAT — visual verification of stacked picker, Test connection, About link, toggle relocation, onboarding, PRIVACY.md rendering [has checkpoint]
