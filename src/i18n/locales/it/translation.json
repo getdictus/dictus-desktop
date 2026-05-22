@@ -419,6 +419,50 @@
           "refreshModels": "Aggiorna modelli"
         }
       },
+      "cloudToggle": {
+        "label": "Abilita modelli cloud",
+        "description": "Mostra i fornitori cloud (OpenAI, Anthropic, Groq, Cerebras, OpenRouter, Z.AI). Disabilitato per impostazione predefinita per preservare la privacy."
+      },
+      "modelsAndLocalProcessing": {
+        "title": "Modelli ed elaborazione locale",
+        "subtitle": "Dictus privilegia i modelli locali per garantire la tua privacy.",
+        "learnMore": "Scopri di più",
+        "statusBadge": {
+          "ready_one": "{{count}} modello pronto",
+          "ready_other": "{{count}} modelli pronti"
+        },
+        "selectedModel": {
+          "title": "Modello di post-elaborazione",
+          "recommendedBadge": "Consigliato",
+          "tags": {
+            "local": "Locale",
+            "private": "Privato",
+            "noDataSent": "Nessun dato inviato",
+            "offlineCapable": "Funziona offline"
+          },
+          "cloudSelectedNotice": "Il modello selezionato è un fornitore cloud. Abilita i modelli cloud qui sotto per vederlo, o scegli un modello locale."
+        },
+        "library": {
+          "title": "Libreria di modelli locali",
+          "comingSoonBadge": "Prossimamente",
+          "comingSoonBody": "La libreria locale arriva nel prossimo passo: download integrato di modelli GGUF (consigliato: gemma3:4b), gestione offline ed esecuzione incorporata.",
+          "currentBridge": "Nel frattempo, usa Custom (local) con Ollama per eseguire i tuoi modelli localmente."
+        },
+        "pillars": {
+          "privacy": {
+            "title": "Privacy per impostazione predefinita",
+            "body": "Le tue trascrizioni non lasciano mai il dispositivo. I fornitori cloud sono opt-in e chiaramente etichettati."
+          },
+          "control": {
+            "title": "Controllo utente",
+            "body": "Decidi tu quali modelli vengono eseguiti e dove. Nessuna telemetria, nessun account richiesto."
+          },
+          "simplicity": {
+            "title": "Esperienza semplificata",
+            "body": "Apple Intelligence e Ollama sono pronti all'uso. Il resto è opzionale."
+          }
+        }
+      },
       "prompts": {
         "title": "Prompt",
         "selectedPrompt": {

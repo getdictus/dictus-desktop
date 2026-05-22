@@ -419,6 +419,50 @@
           "refreshModels": "Làm mới mô hình"
         }
       },
+      "cloudToggle": {
+        "label": "Bật mô hình đám mây",
+        "description": "Hiển thị các nhà cung cấp đám mây (OpenAI, Anthropic, Groq, Cerebras, OpenRouter, Z.AI). Tắt theo mặc định để bảo vệ quyền riêng tư."
+      },
+      "modelsAndLocalProcessing": {
+        "title": "Mô hình và xử lý cục bộ",
+        "subtitle": "Dictus ưu tiên các mô hình cục bộ để đảm bảo quyền riêng tư của bạn.",
+        "learnMore": "Tìm hiểu thêm",
+        "statusBadge": {
+          "ready_one": "{{count}} mô hình sẵn sàng",
+          "ready_other": "{{count}} mô hình sẵn sàng"
+        },
+        "selectedModel": {
+          "title": "Mô hình xử lý hậu kỳ",
+          "recommendedBadge": "Được khuyến nghị",
+          "tags": {
+            "local": "Cục bộ",
+            "private": "Riêng tư",
+            "noDataSent": "Không gửi dữ liệu",
+            "offlineCapable": "Hoạt động ngoại tuyến"
+          },
+          "cloudSelectedNotice": "Mô hình bạn chọn là nhà cung cấp đám mây. Bật mô hình đám mây bên dưới để xem nó, hoặc chọn mô hình cục bộ."
+        },
+        "library": {
+          "title": "Thư viện mô hình cục bộ",
+          "comingSoonBadge": "Sắp ra mắt",
+          "comingSoonBody": "Thư viện cục bộ sẽ ra mắt ở bước tiếp theo: tải xuống mô hình GGUF tích hợp (khuyến nghị: gemma3:4b), quản lý ngoại tuyến và thực thi nhúng.",
+          "currentBridge": "Trong thời gian này, hãy sử dụng Custom (local) với Ollama để chạy mô hình của bạn cục bộ."
+        },
+        "pillars": {
+          "privacy": {
+            "title": "Quyền riêng tư mặc định",
+            "body": "Các bản ghi của bạn không bao giờ rời khỏi thiết bị. Các nhà cung cấp đám mây là opt-in và được gắn nhãn rõ ràng."
+          },
+          "control": {
+            "title": "Quyền kiểm soát của người dùng",
+            "body": "Bạn quyết định mô hình nào chạy và ở đâu. Không có telemetry, không cần tài khoản."
+          },
+          "simplicity": {
+            "title": "Trải nghiệm đơn giản hóa",
+            "body": "Apple Intelligence và Ollama sẵn sàng sử dụng. Phần còn lại là tùy chọn."
+          }
+        }
+      },
       "prompts": {
         "title": "Prompt",
         "selectedPrompt": {

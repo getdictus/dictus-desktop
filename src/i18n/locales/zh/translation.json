@@ -419,6 +419,50 @@
           "refreshModels": "刷新模型"
         }
       },
+      "cloudToggle": {
+        "label": "启用云端模型",
+        "description": "显示云端提供商（OpenAI、Anthropic、Groq、Cerebras、OpenRouter、Z.AI）。默认禁用以保护隐私。"
+      },
+      "modelsAndLocalProcessing": {
+        "title": "模型与本地处理",
+        "subtitle": "Dictus 优先使用本地模型以保障您的隐私。",
+        "learnMore": "了解更多",
+        "statusBadge": {
+          "ready_one": "{{count}} 个模型就绪",
+          "ready_other": "{{count}} 个模型就绪"
+        },
+        "selectedModel": {
+          "title": "后处理模型",
+          "recommendedBadge": "推荐",
+          "tags": {
+            "local": "本地",
+            "private": "私密",
+            "noDataSent": "无数据发送",
+            "offlineCapable": "可离线使用"
+          },
+          "cloudSelectedNotice": "您选择的模型是云端提供商。在下方启用云端模型以查看，或选择本地模型。"
+        },
+        "library": {
+          "title": "本地模型库",
+          "comingSoonBadge": "即将推出",
+          "comingSoonBody": "本地库将在下一步推出：集成下载 GGUF 模型（推荐：gemma3:4b）、离线管理和嵌入式运行。",
+          "currentBridge": "在此期间，使用 Custom (local) 配合 Ollama 在本地运行您的模型。"
+        },
+        "pillars": {
+          "privacy": {
+            "title": "默认隐私保护",
+            "body": "您的转录内容永远不会离开设备。云端提供商是可选的，且有明确标注。"
+          },
+          "control": {
+            "title": "用户控制",
+            "body": "您决定哪些模型在哪里运行。无遥测，无需账户。"
+          },
+          "simplicity": {
+            "title": "简化体验",
+            "body": "Apple Intelligence 和 Ollama 开箱即用。其余是可选项。"
+          }
+        }
+      },
       "prompts": {
         "title": "提示词",
         "selectedPrompt": {

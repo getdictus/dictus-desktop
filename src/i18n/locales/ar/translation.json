@@ -397,6 +397,50 @@
           "refreshModels": "تحديث النماذج"
         }
       },
+      "cloudToggle": {
+        "label": "تفعيل النماذج السحابية",
+        "description": "يعرض مزودي الخدمة السحابية (OpenAI، Anthropic، Groq، Cerebras، OpenRouter، Z.AI). معطّل افتراضيًا للحفاظ على الخصوصية."
+      },
+      "modelsAndLocalProcessing": {
+        "title": "النماذج والمعالجة المحلية",
+        "subtitle": "يعطي Dictus الأولوية للنماذج المحلية لضمان خصوصيتك.",
+        "learnMore": "اعرف المزيد",
+        "statusBadge": {
+          "ready_one": "{{count}} نموذج جاهز",
+          "ready_other": "{{count}} نماذج جاهزة"
+        },
+        "selectedModel": {
+          "title": "نموذج المعالجة اللاحقة",
+          "recommendedBadge": "موصى به",
+          "tags": {
+            "local": "محلي",
+            "private": "خاص",
+            "noDataSent": "لا يتم إرسال بيانات",
+            "offlineCapable": "يعمل بلا إنترنت"
+          },
+          "cloudSelectedNotice": "النموذج المحدد هو مزود سحابي. فعّل النماذج السحابية أدناه لرؤيته، أو اختر نموذجًا محليًا."
+        },
+        "library": {
+          "title": "مكتبة النماذج المحلية",
+          "comingSoonBadge": "قريبًا",
+          "comingSoonBody": "تأتي المكتبة المحلية في الخطوة التالية: تنزيل متكامل لنماذج GGUF (موصى به: gemma3:4b)، إدارة بلا إنترنت، وتشغيل مدمج.",
+          "currentBridge": "في الوقت الحالي، استخدم Custom (local) مع Ollama لتشغيل نماذجك محليًا."
+        },
+        "pillars": {
+          "privacy": {
+            "title": "الخصوصية افتراضيًا",
+            "body": "نصوصك المُحوَّلة لا تغادر الجهاز أبدًا. مزودو الخدمة السحابية اختياريون وموضحون بوضوح."
+          },
+          "control": {
+            "title": "تحكم المستخدم",
+            "body": "أنت تقرر أي النماذج تعمل وأين. لا تتبع، لا حساب مطلوب."
+          },
+          "simplicity": {
+            "title": "تجربة مبسطة",
+            "body": "Apple Intelligence وOllama جاهزان للاستخدام. الباقي اختياري."
+          }
+        }
+      },
       "prompts": {
         "title": "المطالبة",
         "selectedPrompt": {

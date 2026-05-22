@@ -419,6 +419,50 @@
           "refreshModels": "モデルを更新"
         }
       },
+      "cloudToggle": {
+        "label": "クラウドモデルを有効にする",
+        "description": "クラウドプロバイダー（OpenAI、Anthropic、Groq、Cerebras、OpenRouter、Z.AI）を表示します。プライバシーを保護するためデフォルトで無効になっています。"
+      },
+      "modelsAndLocalProcessing": {
+        "title": "モデルとローカル処理",
+        "subtitle": "Dictusはあなたのプライバシーを保証するためにローカルモデルを優先します。",
+        "learnMore": "詳細はこちら",
+        "statusBadge": {
+          "ready_one": "{{count}} モデル準備完了",
+          "ready_other": "{{count}} モデル準備完了"
+        },
+        "selectedModel": {
+          "title": "後処理モデル",
+          "recommendedBadge": "おすすめ",
+          "tags": {
+            "local": "ローカル",
+            "private": "プライベート",
+            "noDataSent": "データ送信なし",
+            "offlineCapable": "オフライン動作可能"
+          },
+          "cloudSelectedNotice": "選択したモデルはクラウドプロバイダーです。表示するには下のクラウドモデルを有効にするか、ローカルモデルを選択してください。"
+        },
+        "library": {
+          "title": "ローカルモデルライブラリ",
+          "comingSoonBadge": "近日公開",
+          "comingSoonBody": "ローカルライブラリは次のステップで登場します：GGUFモデルの統合ダウンロード（推奨：gemma3:4b）、オフライン管理、および組み込み実行。",
+          "currentBridge": "それまでの間、Custom (local) と Ollama を使用してモデルをローカルで実行してください。"
+        },
+        "pillars": {
+          "privacy": {
+            "title": "デフォルトでプライバシー",
+            "body": "あなたのトランスクリプションはデバイスから外に出ることはありません。クラウドプロバイダーはオプトインで明確にラベル付けされています。"
+          },
+          "control": {
+            "title": "ユーザーコントロール",
+            "body": "どのモデルをどこで実行するかはあなたが決めます。テレメトリーなし、アカウント不要。"
+          },
+          "simplicity": {
+            "title": "シンプルな体験",
+            "body": "Apple Intelligence と Ollama はすぐに使えます。残りはオプションです。"
+          }
+        }
+      },
       "prompts": {
         "title": "プロンプト",
         "selectedPrompt": {

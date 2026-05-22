@@ -419,6 +419,50 @@
           "refreshModels": "רענן מודלים"
         }
       },
+      "cloudToggle": {
+        "label": "הפעלת מודלים בענן",
+        "description": "מציג ספקי ענן (OpenAI, Anthropic, Groq, Cerebras, OpenRouter, Z.AI). מושבת כברירת מחדל לשמירה על הפרטיות."
+      },
+      "modelsAndLocalProcessing": {
+        "title": "מודלים ועיבוד מקומי",
+        "subtitle": "Dictus מעדיף מודלים מקומיים כדי להבטיח את הפרטיות שלך.",
+        "learnMore": "למידע נוסף",
+        "statusBadge": {
+          "ready_one": "{{count}} מודל מוכן",
+          "ready_other": "{{count}} מודלים מוכנים"
+        },
+        "selectedModel": {
+          "title": "מודל עיבוד לאחר תמלול",
+          "recommendedBadge": "מומלץ",
+          "tags": {
+            "local": "מקומי",
+            "private": "פרטי",
+            "noDataSent": "לא נשלחים נתונים",
+            "offlineCapable": "עובד ללא חיבור לאינטרנט"
+          },
+          "cloudSelectedNotice": "המודל שנבחר הוא ספק ענן. הפעל מודלים בענן למטה כדי לראותו, או בחר מודל מקומי."
+        },
+        "library": {
+          "title": "ספריית מודלים מקומית",
+          "comingSoonBadge": "בקרוב",
+          "comingSoonBody": "הספרייה המקומית תגיע בשלב הבא: הורדה משולבת של מודלים GGUF (מומלץ: gemma3:4b), ניהול במצב לא מקוון, והרצה משובצת.",
+          "currentBridge": "בינתיים, השתמש ב-Custom (local) עם Ollama להרצת המודלים שלך מקומית."
+        },
+        "pillars": {
+          "privacy": {
+            "title": "פרטיות כברירת מחדל",
+            "body": "התמלולים שלך לעולם לא עוזבים את המכשיר. ספקי הענן הם opt-in ומסומנים בבירור."
+          },
+          "control": {
+            "title": "שליטת משתמש",
+            "body": "אתה מחליט אילו מודלים פועלים והיכן. ללא טלמטריה, ללא חשבון נדרש."
+          },
+          "simplicity": {
+            "title": "חוויה פשוטה",
+            "body": "Apple Intelligence ו-Ollama מוכנים לשימוש. השאר הוא אופציונלי."
+          }
+        }
+      },
       "prompts": {
         "title": "פרומפט",
         "selectedPrompt": {
