@@ -33,7 +33,7 @@
 
 - [x] **Phase 6: Brand & Icon Polish** - Fix all remaining Handy brand leaks and platform icon artifacts; extend verify-sync.sh to guard them (absorbs SYNC-06 from Phase 9) — completed 2009-04-16
 - [x] **Phase 7: macOS Clean Shutdown** - Diagnose and fix the "Dictus quit unexpectedly" crash dialog on macOS Sequoia — completed 2009-04-23
-- [ ] **Phase 8: Privacy / Local-First UX** - Reorder post-process providers (local first) and document the app's network surface
+- [x] **Phase 8: Privacy / Local-First UX** - Reorder post-process providers (local first) and document the app's network surface (completed 2026-05-22)
 
 ## Phase Details
 
