@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Polish & Local-First UX
 status: executing
-stopped_at: Completed 08-06-PLAN.md
-last_updated: "2026-05-22T16:07:49.563Z"
+stopped_at: Completed 08-07-PLAN.md
+last_updated: "2026-05-22T16:14:04.201Z"
 last_activity: "2026-05-21 — 08-03 complete: ProviderPicker, TestConnectionButton, Advanced toggle promotion, About network surface link"
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 12
-  completed_plans: 10
+  completed_plans: 11
   percent: 80
 ---
 
@@ -58,6 +58,7 @@ _Updated after each plan completion_
 | Phase 08-privacy-local-first-ux P03 | ~25min | 3 tasks | 7 files |
 | Phase 08-privacy-local-first-ux P04 | ~4min | 1 tasks | 19 files |
 | Phase 08-privacy-local-first-ux P06 | ~6min | 3 tasks | 8 files |
+| Phase 08-privacy-local-first-ux P07 | ~5min | 1 tasks | 19 files |
 
 ## Accumulated Context
 
@@ -89,6 +90,8 @@ _Updated after each plan completion_
 - [Phase 08-privacy-local-first-ux P04]: simulateUpdaterRestart keys kept in English across all locales (technical debug feature — fallback acceptable per CONTRIBUTING_TRANSLATIONS.md)
 - [Phase 08-privacy-local-first-ux]: enable_cloud_providers is UI visibility filter only — does NOT mutate post_process_provider_id; cloud providers hidden by default (false), toggle shows/hides External section in ProviderPicker
 - [Phase 08-privacy-local-first-ux]: Library placeholder card is intentional Coming-soon preview of Local-First Models milestone — not scope creep; previews gemma3:4b + GGUF downloader coming in next milestone
+- [Phase 08-privacy-local-first-ux]: fr/translation.json carries verbatim French copy of cloudToggle + modelsAndLocalProcessing — source values are canonical French per mockup product intent
+- [Phase 08-privacy-local-first-ux]: Brand names (OpenAI, Anthropic, Groq, Cerebras, OpenRouter, Z.AI, Apple Intelligence, Ollama, gemma3:4b, GGUF, Custom (local)) preserved verbatim across all 19 locales in 08-07
 
 ### Pending Todos
 
@@ -106,6 +109,6 @@ Carried from v1.1 audit:
 
 ## Session Continuity
 
-Last session: 2026-05-22T16:07:49.561Z
-Stopped at: Completed 08-06-PLAN.md
+Last session: 2026-05-22T16:14:04.200Z
+Stopped at: Completed 08-07-PLAN.md
 Resume file: None
