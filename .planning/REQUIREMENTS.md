@@ -48,7 +48,7 @@ Requirements for the Polish & Local-First UX milestone. Each maps to a roadmap p
 
 - [x] **PRIV-01**: Post-process provider list in settings UI renders local providers (Ollama, Apple Intelligence, Custom local) at the top of the Dropdown, external providers (OpenAI, Anthropic, Groq, Gemini) grouped under a neutral "External — data leaves this device" section label
 - [x] **PRIV-02**: Network surface audit documented as `docs/PRIVACY.md` (or in-app Privacy section) listing every outbound endpoint the app can contact (updater check, LLM post-process, model CDN), what data leaves the device, and how to disable each
-- [ ] **PRIV-03**: Onboarding copy reviewed — local transcription presented as the primary path, cloud post-processing clearly labeled as opt-in external service (minor i18n additions if needed across 20 locales)
+- [x] **PRIV-03**: Onboarding copy reviewed — local transcription presented as the primary path, cloud post-processing clearly labeled as opt-in external service (minor i18n additions if needed across 20 locales)
 
 ## Future Requirements (deferred beyond v1.2)
 
@@ -106,7 +106,7 @@ Which phases cover which requirements.
 | SHUT-03     | Phase 7              | Complete |
 | PRIV-01     | Phase 8              | Complete |
 | PRIV-02     | Phase 8              | Complete |
-| PRIV-03     | Phase 8              | Pending  |
+| PRIV-03     | Phase 8              | Complete |
 
 **Coverage:**
 

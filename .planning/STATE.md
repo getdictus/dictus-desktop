@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Polish & Local-First UX
 status: executing
-stopped_at: Completed 08-08-PLAN.md
-last_updated: "2026-05-22T20:09:13.012Z"
-last_activity: "2026-05-22 — 08-08 complete: gap-closure 1a/2a/2b fixed (Apple Intelligence Alert inlined via renderRowExtras, Ollama link underlined at rest, API key hidden for Custom (local)); ready for 08-09 tabs restructure"
+stopped_at: Completed 08-09-PLAN.md
+last_updated: "2026-05-22T20:18:01.317Z"
+last_activity: "2026-05-22 — 08-09 complete: ProviderPicker Local/Cloud tabs (segmented control, role=tablist) replace cloud opt-in toggle, Library SettingsGroup hoisted to first-block-under-header, three-pillar marketing grid removed entirely, en/translation.json updated (tabs.local/.cloud added, cloudToggle.* and pillars.* dropped, cloudSelectedNotice copy aligned to tabs); check:translations red by design until 08-10 closes sibling-locale parity"
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 15
-  completed_plans: 13
-  percent: 87
+  completed_plans: 14
+  percent: 93
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-15 at v1.2 kickoff)
 ## Current Position
 
 Phase: 8 of 8 overall (Phase 3 of 3 in v1.2) — in progress
-Plan: 08-08 complete (gap-closure for UAT 1a/2a/2b); 08-09 (tabs restructure) and 08-10 (locale propagation) still pending
-Status: Phase 8 in progress — 3 of 6 remaining UAT gaps closed (bugs 1a/2a/2b); design pivots 5/6/7 remain (handled by 08-09 + 08-10)
-Last activity: 2026-05-22 — 08-08 complete: Apple Intelligence Alert inlined via renderRowExtras, Ollama link underlined at rest, API key field hidden for Custom (local); ProviderPicker now invokes renderRowExtras for every row
+Plan: 08-09 complete (tabs restructure + library hoist + pillars removed); 08-10 (locale propagation) still pending
+Status: Phase 8 in progress — all 6 UAT gaps closed in source: bugs 1a/2a/2b via 08-08, design pivots 5/6/7 via 08-09; sibling-locale parity for tabs.* / removed cloudToggle.*/pillars.* pending 08-10
+Last activity: 2026-05-22 — 08-09 complete: ProviderPicker Local/Cloud tabs (segmented control, role=tablist) replace cloud opt-in toggle, Library SettingsGroup hoisted to first-block-under-header, three-pillar marketing grid removed entirely, en/translation.json updated (tabs.local/.cloud added, cloudToggle.* and pillars.* dropped, cloudSelectedNotice copy aligned to tabs); check:translations red by design until 08-10 closes sibling-locale parity
 
-Progress: [█████████░] 87% (v1.2 — 2 of 3 phases complete + Phase 8 in progress, 8 of 10 Phase 8 plans executed)
+Progress: [█████████░] 93% (v1.2 — 2 of 3 phases complete + Phase 8 in progress, 9 of 10 Phase 8 plans executed)
 
 ## Performance Metrics
 
@@ -61,6 +61,7 @@ _Updated after each plan completion_
 | Phase 08-privacy-local-first-ux P07 | ~5min | 1 tasks | 19 files |
 | Phase 08-privacy-local-first-ux P05 | ~30min (UAT) | 1 task (checkpoint) | 0 files (verification-only) |
 | Phase 08-privacy-local-first-ux P08 | 2 min | 2 tasks | 2 files |
+| Phase 08-privacy-local-first-ux P09 | 3m 29s | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -99,6 +100,9 @@ _Updated after each plan completion_
 - [Phase 08-privacy-local-first-ux P05]: Pillars block (Confidentialité / Contrôle / Expérience) confirmed as user-rejected UI pattern — will be fully removed including all 20 locale keys
 - [Phase 08-privacy-local-first-ux P08]: Gap-closure for UAT 1a/2a/2b — Apple Intelligence Alert inlined via renderRowExtras, Ollama link underlined at rest, API key field hidden for Custom (local). Option A chosen for 2b (no i18n change).
 - [Phase 08-privacy-local-first-ux P08]: ProviderPicker.renderRowExtras now invoked for every row (caller controls null-vs-content) — establishes generic per-row extras pattern that survives 08-09 tabs restructure.
+- [Phase 08-privacy-local-first-ux]: P09 — ProviderPicker tabs (Local/Cloud) replace the cloud opt-in toggle; default tab derived from persisted provider id; useEffect keeps tab synced with selection — closes UAT design pivot 5
+- [Phase 08-privacy-local-first-ux]: P09 — Library SettingsGroup hoisted to first content block under page header; three-pillar marketing grid removed entirely (JSX + en pillars.* keys) — closes UAT design pivots 6 & 7
+- [Phase 08-privacy-local-first-ux]: P09 — enable_cloud_providers Rust field kept vestigial (no schema migration); UI no longer reads/writes; settings tests still pass; cleanup deferrable to a dedicated migration plan
 
 ### Pending Todos
 
@@ -125,6 +129,6 @@ Carried from v1.1 audit:
 
 ## Session Continuity
 
-Last session: 2026-05-22T20:09:04.281Z
-Stopped at: Completed 08-08-PLAN.md
+Last session: 2026-05-22T20:18:01.315Z
+Stopped at: Completed 08-09-PLAN.md
 Resume file: None
