@@ -9,6 +9,9 @@ interface ProviderPickerProps {
   onChange: (value: string) => void;
   disabled?: boolean;
   renderRowExtras?: (option: GroupedProviderOption) => React.ReactNode;
+  enableCloudProviders?: boolean;
+  onToggleCloudProviders?: (enabled: boolean) => void;
+  isUpdatingCloudToggle?: boolean;
 }
 
 export const ProviderPicker: React.FC<ProviderPickerProps> = ({
@@ -18,6 +21,9 @@ export const ProviderPicker: React.FC<ProviderPickerProps> = ({
   onChange,
   disabled,
   renderRowExtras,
+  enableCloudProviders = false,
+  onToggleCloudProviders,
+  isUpdatingCloudToggle = false,
 }) => {
   const { t } = useTranslation();
 
@@ -69,7 +75,33 @@ export const ProviderPicker: React.FC<ProviderPickerProps> = ({
             localOptions,
           )
         : null}
-      {externalOptions.length > 0
+
+      {onToggleCloudProviders ? (
+        <div className="flex items-start justify-between gap-3 p-3 rounded-md border border-mid-gray/20 bg-mid-gray/5">
+          <div className="flex flex-col gap-1">
+            <span className="text-sm font-medium">
+              {t("settings.postProcessing.cloudToggle.label")}
+            </span>
+            <span className="text-xs text-mid-gray">
+              {t("settings.postProcessing.cloudToggle.description")}
+            </span>
+          </div>
+          <label
+            className={`inline-flex items-center ${isUpdatingCloudToggle ? "cursor-not-allowed" : "cursor-pointer"}`}
+          >
+            <input
+              type="checkbox"
+              className="sr-only peer"
+              checked={enableCloudProviders}
+              disabled={isUpdatingCloudToggle}
+              onChange={(e) => onToggleCloudProviders(e.target.checked)}
+            />
+            <div className="relative w-11 h-6 bg-mid-gray/20 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-logo-primary rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-background-ui peer-disabled:opacity-50"></div>
+          </label>
+        </div>
+      ) : null}
+
+      {enableCloudProviders && externalOptions.length > 0
         ? renderSection(
             t("settings.postProcessing.api.providers.sectionExternal"),
             externalOptions,
