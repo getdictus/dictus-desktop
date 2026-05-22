@@ -430,6 +430,7 @@ pub fn run(cli_args: CliArgs) {
             shortcut::change_auto_submit_key_setting,
             shortcut::change_post_process_enabled_setting,
             shortcut::change_experimental_enabled_setting,
+            shortcut::change_enable_cloud_providers_setting,
             shortcut::change_post_process_base_url_setting,
             shortcut::change_post_process_api_key_setting,
             shortcut::change_post_process_model_setting,
