@@ -23,13 +23,83 @@ import { ModelSelect } from "../PostProcessingSettingsApi/ModelSelect";
 import { usePostProcessProviderState } from "../PostProcessingSettingsApi/usePostProcessProviderState";
 import { ShortcutInput } from "../ShortcutInput";
 import { useSettings } from "../../../hooks/useSettings";
+import type { PostProcessProvider } from "@/bindings";
+
+const LOCAL_PROVIDER_IDS_SET = new Set(["apple_intelligence", "custom"]);
+const RECOMMENDED_PROVIDER_ID = "apple_intelligence";
 
 const PostProcessingSettingsApiComponent: React.FC = () => {
   const { t } = useTranslation();
   const state = usePostProcessProviderState();
+  const { getSetting, updateSetting, isUpdating } = useSettings();
+
+  const enableCloudProviders = getSetting("enable_cloud_providers") ?? false;
+  const onToggleCloudProviders = (value: boolean) =>
+    void updateSetting("enable_cloud_providers", value);
+  const isUpdatingCloudToggle = isUpdating("enable_cloud_providers");
+  const selectedIsCloud =
+    state.selectedProviderId !== "" &&
+    !LOCAL_PROVIDER_IDS_SET.has(state.selectedProviderId);
+  const showCloudSelectedNotice = selectedIsCloud && !enableCloudProviders;
 
   return (
     <>
+      {/* Selected model card */}
+      <div className="rounded-md border border-mid-gray/20 bg-background p-4 space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-medium">
+              {t(
+                "settings.postProcessing.modelsAndLocalProcessing.selectedModel.title",
+              )}
+            </h3>
+            {state.selectedProvider ? (
+              <p className="text-base font-medium mt-1">
+                {state.selectedProvider.label}
+              </p>
+            ) : null}
+          </div>
+          {state.selectedProvider?.id === RECOMMENDED_PROVIDER_ID ? (
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full border border-logo-primary text-logo-primary">
+              {t(
+                "settings.postProcessing.modelsAndLocalProcessing.selectedModel.recommendedBadge",
+              )}
+            </span>
+          ) : null}
+        </div>
+        {!selectedIsCloud ? (
+          <div className="flex flex-wrap gap-1.5">
+            <span className="text-xs px-2 py-0.5 rounded-full bg-mid-gray/10 text-mid-gray">
+              {t(
+                "settings.postProcessing.modelsAndLocalProcessing.selectedModel.tags.local",
+              )}
+            </span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-mid-gray/10 text-mid-gray">
+              {t(
+                "settings.postProcessing.modelsAndLocalProcessing.selectedModel.tags.private",
+              )}
+            </span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-mid-gray/10 text-mid-gray">
+              {t(
+                "settings.postProcessing.modelsAndLocalProcessing.selectedModel.tags.noDataSent",
+              )}
+            </span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-mid-gray/10 text-mid-gray">
+              {t(
+                "settings.postProcessing.modelsAndLocalProcessing.selectedModel.tags.offlineCapable",
+              )}
+            </span>
+          </div>
+        ) : null}
+        {showCloudSelectedNotice ? (
+          <Alert variant="error" contained>
+            {t(
+              "settings.postProcessing.modelsAndLocalProcessing.selectedModel.cloudSelectedNotice",
+            )}
+          </Alert>
+        ) : null}
+      </div>
+
       <SettingContainer
         title={t("settings.postProcessing.api.provider.title")}
         description={t("settings.postProcessing.api.provider.description")}
@@ -42,6 +112,9 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
           externalOptions={state.groupedProviderOptions.external}
           value={state.selectedProviderId}
           onChange={state.handleProviderSelect}
+          enableCloudProviders={enableCloudProviders}
+          onToggleCloudProviders={onToggleCloudProviders}
+          isUpdatingCloudToggle={isUpdatingCloudToggle}
           renderRowExtras={(option) => {
             if (option.value !== "custom") return null;
             return (
@@ -461,9 +534,69 @@ PostProcessingSettingsPrompts.displayName = "PostProcessingSettingsPrompts";
 
 export const PostProcessingSettings: React.FC = () => {
   const { t } = useTranslation();
+  const { getSetting } = useSettings();
+  const providers =
+    (getSetting("post_process_providers") as PostProcessProvider[] | undefined) ??
+    [];
+  // Count of LOCAL providers that are present and considered "ready" (visible by default).
+  // For Phase 8 gap-closure: a local provider is "ready" if it exists in settings (Apple Intelligence
+  // is only inserted on macOS ARM64; custom is always present). Runtime availability of Apple Intelligence
+  // is not probed here to avoid the SIGABRT race documented in settings.rs.
+  const readyCount = providers.filter((p) =>
+    LOCAL_PROVIDER_IDS_SET.has(p.id),
+  ).length;
+
+  const handleLearnMore = () => {
+    void openUrl(
+      "https://github.com/getdictus/dictus-desktop/blob/main/docs/PRIVACY.md",
+    );
+  };
 
   return (
     <div className="max-w-3xl w-full mx-auto space-y-6">
+      {/* Header — title + status badge */}
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-medium">
+            {t("settings.postProcessing.modelsAndLocalProcessing.title")}
+          </h1>
+          <p className="text-sm text-mid-gray mt-1">
+            {t("settings.postProcessing.modelsAndLocalProcessing.subtitle")}{" "}
+            <a
+              role="link"
+              tabIndex={0}
+              className="text-logo-primary hover:underline cursor-pointer"
+              onClick={(e) => {
+                e.preventDefault();
+                handleLearnMore();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleLearnMore();
+                }
+              }}
+            >
+              {t(
+                "settings.postProcessing.modelsAndLocalProcessing.learnMore",
+              )}
+            </a>
+          </p>
+        </div>
+        <span className="shrink-0 text-xs font-medium px-2 py-1 rounded-full border border-logo-primary/40 bg-logo-primary/10 text-logo-primary">
+          {readyCount === 1
+            ? t(
+                "settings.postProcessing.modelsAndLocalProcessing.statusBadge.ready_one",
+                { count: readyCount },
+              )
+            : t(
+                "settings.postProcessing.modelsAndLocalProcessing.statusBadge.ready_other",
+                { count: readyCount },
+              )}
+        </span>
+      </div>
+
+      {/* Hotkey */}
       <SettingsGroup title={t("settings.postProcessing.hotkey.title")}>
         <ShortcutInput
           shortcutId="transcribe_with_post_process"
@@ -472,13 +605,63 @@ export const PostProcessingSettings: React.FC = () => {
         />
       </SettingsGroup>
 
+      {/* API (includes selected model card + ProviderPicker w/ cloud toggle) */}
       <SettingsGroup title={t("settings.postProcessing.api.title")}>
         <PostProcessingSettingsApi />
       </SettingsGroup>
 
+      {/* Local model library — coming-soon placeholder */}
+      <SettingsGroup
+        title={t(
+          "settings.postProcessing.modelsAndLocalProcessing.library.title",
+        )}
+      >
+        <div className="rounded-md border border-dashed border-mid-gray/40 bg-mid-gray/5 p-4 space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-logo-primary/10 text-logo-primary border border-logo-primary/40">
+              {t(
+                "settings.postProcessing.modelsAndLocalProcessing.library.comingSoonBadge",
+              )}
+            </span>
+          </div>
+          <p className="text-sm text-mid-gray">
+            {t(
+              "settings.postProcessing.modelsAndLocalProcessing.library.comingSoonBody",
+            )}
+          </p>
+          <p className="text-xs text-mid-gray/80">
+            {t(
+              "settings.postProcessing.modelsAndLocalProcessing.library.currentBridge",
+            )}
+          </p>
+        </div>
+      </SettingsGroup>
+
+      {/* Prompts */}
       <SettingsGroup title={t("settings.postProcessing.prompts.title")}>
         <PostProcessingSettingsPrompts />
       </SettingsGroup>
+
+      {/* Three pillars */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
+        {(["privacy", "control", "simplicity"] as const).map((pillar) => (
+          <div
+            key={pillar}
+            className="rounded-md border border-mid-gray/20 bg-background p-4 space-y-2"
+          >
+            <h4 className="text-sm font-medium">
+              {t(
+                `settings.postProcessing.modelsAndLocalProcessing.pillars.${pillar}.title`,
+              )}
+            </h4>
+            <p className="text-xs text-mid-gray">
+              {t(
+                `settings.postProcessing.modelsAndLocalProcessing.pillars.${pillar}.body`,
+              )}
+            </p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
