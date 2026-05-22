@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Polish & Local-First UX
 status: executing
-stopped_at: "08-05 UAT partial-pass recorded — awaiting gap-closure plan"
-last_updated: "2026-05-22T17:00:00.000Z"
-last_activity: "2026-05-22 — 08-05 UAT complete: partial pass, 3 bugs + 3 design pivots documented in 08-05-SUMMARY.md; gap-closure plan required"
+stopped_at: Completed 08-08-PLAN.md
+last_updated: "2026-05-22T20:09:13.012Z"
+last_activity: "2026-05-22 — 08-08 complete: gap-closure 1a/2a/2b fixed (Apple Intelligence Alert inlined via renderRowExtras, Ollama link underlined at rest, API key hidden for Custom (local)); ready for 08-09 tabs restructure"
 progress:
   total_phases: 3
   completed_phases: 2
-  total_plans: 12
-  completed_plans: 11
-  percent: 80
+  total_plans: 15
+  completed_plans: 13
+  percent: 87
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-15 at v1.2 kickoff)
 ## Current Position
 
 Phase: 8 of 8 overall (Phase 3 of 3 in v1.2) — in progress
-Plan: 08-05 UAT partial pass — 6 gaps (3 bugs + 3 design pivots) block Phase 8 from shipping
-Status: Phase 8 in progress — blocked on gap-closure plan (see 08-05-SUMMARY.md § Gaps)
-Last activity: 2026-05-22 — 08-05 UAT: partial pass — Ollama link invisible (2a), API key field confusing for Custom/local (2b), Apple Intelligence banner misplaced (1a); user requests tabs pattern (5), pillar block removal (6), library placeholder moved to top (7)
+Plan: 08-08 complete (gap-closure for UAT 1a/2a/2b); 08-09 (tabs restructure) and 08-10 (locale propagation) still pending
+Status: Phase 8 in progress — 3 of 6 remaining UAT gaps closed (bugs 1a/2a/2b); design pivots 5/6/7 remain (handled by 08-09 + 08-10)
+Last activity: 2026-05-22 — 08-08 complete: Apple Intelligence Alert inlined via renderRowExtras, Ollama link underlined at rest, API key field hidden for Custom (local); ProviderPicker now invokes renderRowExtras for every row
 
-Progress: [████████░░] 80% (v1.2 — 2 of 3 phases complete + Phase 8 in progress, 3 of 5 Phase 8 plans executed)
+Progress: [█████████░] 87% (v1.2 — 2 of 3 phases complete + Phase 8 in progress, 8 of 10 Phase 8 plans executed)
 
 ## Performance Metrics
 
@@ -60,6 +60,7 @@ _Updated after each plan completion_
 | Phase 08-privacy-local-first-ux P06 | ~6min | 3 tasks | 8 files |
 | Phase 08-privacy-local-first-ux P07 | ~5min | 1 tasks | 19 files |
 | Phase 08-privacy-local-first-ux P05 | ~30min (UAT) | 1 task (checkpoint) | 0 files (verification-only) |
+| Phase 08-privacy-local-first-ux P08 | 2 min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -96,6 +97,8 @@ _Updated after each plan completion_
 - [Phase 08-privacy-local-first-ux P05]: UAT partial-pass (2026-05-22) — 3 bugs + 3 design pivots documented; gap-closure plan required before Phase 8 ships; phase stays at 08, no advancement
 - [Phase 08-privacy-local-first-ux P05]: Tabs pattern chosen over cloud toggle (user direction) — enable_cloud_providers setting to be repurposed or removed in gap-closure plan
 - [Phase 08-privacy-local-first-ux P05]: Pillars block (Confidentialité / Contrôle / Expérience) confirmed as user-rejected UI pattern — will be fully removed including all 20 locale keys
+- [Phase 08-privacy-local-first-ux P08]: Gap-closure for UAT 1a/2a/2b — Apple Intelligence Alert inlined via renderRowExtras, Ollama link underlined at rest, API key field hidden for Custom (local). Option A chosen for 2b (no i18n change).
+- [Phase 08-privacy-local-first-ux P08]: ProviderPicker.renderRowExtras now invoked for every row (caller controls null-vs-content) — establishes generic per-row extras pattern that survives 08-09 tabs restructure.
 
 ### Pending Todos
 
@@ -104,14 +107,14 @@ _Updated after each plan completion_
 
 ### Blockers/Concerns
 
-**Phase 8 gap-closure required (2026-05-22):** 08-05 UAT partial pass — 6 gaps block Phase 8 from shipping:
-- Bug 1a: Apple Intelligence error banner renders at bottom of page instead of inline with Apple Intelligence card
-- Bug 2a: Ollama link not visually distinguishable (no underline at rest; color shift invisible in hint text)
-- Bug 2b: API key field shown for Custom (local) provider with mandatory-looking placeholder — functionally optional but UI implies required
-- Design pivot 5: Replace cloud toggle with tabs pattern (Local / Cloud tabs; user-directed)
-- Design pivot 6: Remove three-pillar privacy block from post-processing page (user-directed)
-- Design pivot 7: Move "Bibliothèque de modèles locaux" placeholder to top of page (user-directed)
-See `.planning/phases/08-privacy-local-first-ux/08-05-SUMMARY.md § Gaps` for full root causes and proposed fix scopes.
+**Phase 8 gap-closure in progress (2026-05-22):** 08-05 UAT partial pass — 3 of 6 gaps now closed by 08-08; 3 design pivots remain for 08-09 + 08-10:
+- ~~Bug 1a: Apple Intelligence error banner renders at bottom of page instead of inline with Apple Intelligence card~~ — **closed in 08-08 (bbe82db)** — Alert inlined via ProviderPicker.renderRowExtras
+- ~~Bug 2a: Ollama link not visually distinguishable~~ — **closed in 08-08 (bbe82db)** — className changed to `underline underline-offset-2 hover:opacity-80`
+- ~~Bug 2b: API key field shown for Custom (local) provider~~ — **closed in 08-08 (bbe82db)** — Option A: ApiKeyField gated on `selectedProvider?.id !== "custom"` (no i18n change)
+- Design pivot 5: Replace cloud toggle with tabs pattern (Local / Cloud tabs; user-directed) — 08-09 scope
+- Design pivot 6: Remove three-pillar privacy block from post-processing page (user-directed) — 08-09 scope (locale sweep in 08-10)
+- Design pivot 7: Move "Bibliothèque de modèles locaux" placeholder to top of page (user-directed) — 08-09 scope
+See `.planning/phases/08-privacy-local-first-ux/08-05-SUMMARY.md § Gaps` and `08-08-SUMMARY.md` for full closure detail.
 
 Carried from v1.1 audit:
 
@@ -122,6 +125,6 @@ Carried from v1.1 audit:
 
 ## Session Continuity
 
-Last session: 2026-05-22T16:14:04.200Z
-Stopped at: Completed 08-07-PLAN.md
+Last session: 2026-05-22T20:09:04.281Z
+Stopped at: Completed 08-08-PLAN.md
 Resume file: None
