@@ -419,9 +419,9 @@
           "refreshModels": "Actualiser les modèles"
         }
       },
-      "cloudToggle": {
-        "label": "Activer les modèles cloud",
-        "description": "Affiche les fournisseurs cloud (OpenAI, Anthropic, Groq, Cerebras, OpenRouter, Z.AI). Désactivé par défaut pour préserver la confidentialité."
+      "tabs": {
+        "local": "Local",
+        "cloud": "Cloud"
       },
       "modelsAndLocalProcessing": {
         "title": "Modèles et traitement local",
@@ -440,27 +440,13 @@
             "noDataSent": "Aucune donnée envoyée",
             "offlineCapable": "Fonctionne hors ligne"
           },
-          "cloudSelectedNotice": "Votre modèle sélectionné est un fournisseur cloud. Activez les modèles cloud ci-dessous pour le voir, ou choisissez un modèle local."
+          "cloudSelectedNotice": "Votre modèle sélectionné est un fournisseur cloud. Cliquez sur l'onglet « Cloud » ci-dessous pour le voir, ou choisissez un modèle local."
         },
         "library": {
           "title": "Bibliothèque de modèles locaux",
           "comingSoonBadge": "Bientôt",
           "comingSoonBody": "La bibliothèque locale arrive dans la prochaine étape : téléchargement intégré de modèles GGUF (recommandé : gemma3:4b), gestion hors ligne, et exécution embarquée.",
           "currentBridge": "En attendant, utilisez Custom (local) avec Ollama pour exécuter vos modèles localement."
-        },
-        "pillars": {
-          "privacy": {
-            "title": "Confidentialité par défaut",
-            "body": "Vos transcriptions ne quittent jamais l'appareil. Les fournisseurs cloud sont opt-in et clairement étiquetés."
-          },
-          "control": {
-            "title": "Contrôle utilisateur",
-            "body": "Vous décidez quels modèles s'exécutent et où. Aucune télémétrie, aucun compte requis."
-          },
-          "simplicity": {
-            "title": "Expérience simplifiée",
-            "body": "Apple Intelligence et Ollama sont prêts à l'emploi. Le reste est optionnel."
-          }
         }
       },
       "prompts": {

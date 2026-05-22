@@ -419,9 +419,9 @@
           "refreshModels": "Obnovit modely"
         }
       },
-      "cloudToggle": {
-        "label": "Povolit cloudové modely",
-        "description": "Zobrazuje poskytovatele cloudu (OpenAI, Anthropic, Groq, Cerebras, OpenRouter, Z.AI). Ve výchozím nastavení zakázáno pro ochranu soukromí."
+      "tabs": {
+        "local": "Lokální",
+        "cloud": "Cloud"
       },
       "modelsAndLocalProcessing": {
         "title": "Modely a lokální zpracování",
@@ -440,27 +440,13 @@
             "noDataSent": "Žádná data odesílána",
             "offlineCapable": "Funguje offline"
           },
-          "cloudSelectedNotice": "Vybraný model je cloudový poskytovatel. Povolte cloudové modely níže, abyste ho viděli, nebo vyberte lokální model."
+          "cloudSelectedNotice": "Vámi vybraný model je cloudový poskytovatel. Klikněte na záložku „Cloud\" níže, abyste jej viděli, nebo zvolte lokální model."
         },
         "library": {
           "title": "Knihovna lokálních modelů",
           "comingSoonBadge": "Již brzy",
           "comingSoonBody": "Lokální knihovna přijde v dalším kroku: integrované stahování modelů GGUF (doporučeno: gemma3:4b), správa offline a vestavěné spouštění.",
           "currentBridge": "Mezitím použijte Custom (local) s Ollama pro spuštění modelů lokálně."
-        },
-        "pillars": {
-          "privacy": {
-            "title": "Soukromí ve výchozím nastavení",
-            "body": "Vaše přepisy nikdy neopustí zařízení. Cloudoví poskytovatelé jsou opt-in a jasně označeni."
-          },
-          "control": {
-            "title": "Uživatelská kontrola",
-            "body": "Vy rozhodujete, které modely kde běží. Žádná telemetrie, žádný účet není vyžadován."
-          },
-          "simplicity": {
-            "title": "Zjednodušený zážitek",
-            "body": "Apple Intelligence a Ollama jsou připraveny k použití. Zbytek je volitelný."
-          }
         }
       },
       "prompts": {

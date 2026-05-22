@@ -419,9 +419,9 @@
           "refreshModels": "Uppdatera modeller"
         }
       },
-      "cloudToggle": {
-        "label": "Aktivera molnmodeller",
-        "description": "Visar molnleverantörer (OpenAI, Anthropic, Groq, Cerebras, OpenRouter, Z.AI). Inaktiverat som standard för att skydda integriteten."
+      "tabs": {
+        "local": "Lokalt",
+        "cloud": "Moln"
       },
       "modelsAndLocalProcessing": {
         "title": "Modeller och lokal bearbetning",
@@ -440,27 +440,13 @@
             "noDataSent": "Ingen data skickad",
             "offlineCapable": "Fungerar offline"
           },
-          "cloudSelectedNotice": "Din valda modell är en molnleverantör. Aktivera molnmodeller nedan för att se den, eller välj en lokal modell."
+          "cloudSelectedNotice": "Din valda modell är en molnleverantör. Klicka på fliken ”Moln” nedan för att se den, eller välj en lokal modell."
         },
         "library": {
           "title": "Lokalt modellbibliotek",
           "comingSoonBadge": "Kommer snart",
           "comingSoonBody": "Det lokala biblioteket kommer i nästa steg: integrerad nedladdning av GGUF-modeller (rekommenderas: gemma3:4b), offline-hantering och inbyggd körning.",
           "currentBridge": "Använd tills vidare Custom (local) med Ollama för att köra dina modeller lokalt."
-        },
-        "pillars": {
-          "privacy": {
-            "title": "Integritet som standard",
-            "body": "Dina transkriptioner lämnar aldrig enheten. Molnleverantörer är opt-in och tydligt märkta."
-          },
-          "control": {
-            "title": "Användarkontroll",
-            "body": "Du bestämmer vilka modeller som körs och var. Ingen telemetri, inget konto krävs."
-          },
-          "simplicity": {
-            "title": "Förenklad upplevelse",
-            "body": "Apple Intelligence och Ollama är redo att användas. Resten är valfritt."
-          }
         }
       },
       "prompts": {

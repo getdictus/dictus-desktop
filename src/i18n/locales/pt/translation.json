@@ -419,9 +419,9 @@
           "refreshModels": "Atualizar modelos"
         }
       },
-      "cloudToggle": {
-        "label": "Ativar modelos cloud",
-        "description": "Exibe os provedores cloud (OpenAI, Anthropic, Groq, Cerebras, OpenRouter, Z.AI). Desativado por padrão para preservar a privacidade."
+      "tabs": {
+        "local": "Local",
+        "cloud": "Nuvem"
       },
       "modelsAndLocalProcessing": {
         "title": "Modelos e processamento local",
@@ -440,27 +440,13 @@
             "noDataSent": "Nenhum dado enviado",
             "offlineCapable": "Funciona offline"
           },
-          "cloudSelectedNotice": "Seu modelo selecionado é um provedor cloud. Ative os modelos cloud abaixo para vê-lo, ou escolha um modelo local."
+          "cloudSelectedNotice": "O modelo selecionado é um provedor de nuvem. Clique na guia «Nuvem» abaixo para vê-lo ou escolha um modelo local."
         },
         "library": {
           "title": "Biblioteca de modelos locais",
           "comingSoonBadge": "Em breve",
           "comingSoonBody": "A biblioteca local chega no próximo passo: download integrado de modelos GGUF (recomendado: gemma3:4b), gerenciamento offline e execução incorporada.",
           "currentBridge": "Enquanto isso, use Custom (local) com Ollama para executar seus modelos localmente."
-        },
-        "pillars": {
-          "privacy": {
-            "title": "Privacidade por padrão",
-            "body": "Suas transcrições nunca saem do dispositivo. Os provedores cloud são opt-in e claramente rotulados."
-          },
-          "control": {
-            "title": "Controle do usuário",
-            "body": "Você decide quais modelos são executados e onde. Sem telemetria, sem conta necessária."
-          },
-          "simplicity": {
-            "title": "Experiência simplificada",
-            "body": "Apple Intelligence e Ollama estão prontos para uso. O resto é opcional."
-          }
         }
       },
       "prompts": {
