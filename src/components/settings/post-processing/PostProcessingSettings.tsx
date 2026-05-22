@@ -116,6 +116,16 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
           onToggleCloudProviders={onToggleCloudProviders}
           isUpdatingCloudToggle={isUpdatingCloudToggle}
           renderRowExtras={(option) => {
+            if (option.value === "apple_intelligence") {
+              if (!state.appleIntelligenceUnavailable) return null;
+              return (
+                <Alert variant="error" contained>
+                  {t(
+                    "settings.postProcessing.api.appleIntelligence.unavailable",
+                  )}
+                </Alert>
+              );
+            }
             if (option.value !== "custom") return null;
             return (
               <div className="space-y-2 mt-2">
@@ -127,7 +137,7 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
                         <a
                           role="link"
                           tabIndex={0}
-                          className="text-logo-primary hover:underline cursor-pointer"
+                          className="text-logo-primary underline underline-offset-2 hover:opacity-80 cursor-pointer"
                           onClick={(e) => {
                             e.preventDefault();
                             void openUrl("https://ollama.com");
@@ -153,13 +163,7 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
         />
       </SettingContainer>
 
-      {state.isAppleProvider ? (
-        state.appleIntelligenceUnavailable ? (
-          <Alert variant="error" contained>
-            {t("settings.postProcessing.api.appleIntelligence.unavailable")}
-          </Alert>
-        ) : null
-      ) : (
+      {!state.isAppleProvider && (
         <>
           {state.selectedProvider?.id === "custom" && (
             <SettingContainer
@@ -183,25 +187,27 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
             </SettingContainer>
           )}
 
-          <SettingContainer
-            title={t("settings.postProcessing.api.apiKey.title")}
-            description={t("settings.postProcessing.api.apiKey.description")}
-            descriptionMode="tooltip"
-            layout="horizontal"
-            grouped={true}
-          >
-            <div className="flex items-center gap-2">
-              <ApiKeyField
-                value={state.apiKey}
-                onBlur={state.handleApiKeyChange}
-                placeholder={t(
-                  "settings.postProcessing.api.apiKey.placeholder",
-                )}
-                disabled={state.isApiKeyUpdating}
-                className="min-w-[320px]"
-              />
-            </div>
-          </SettingContainer>
+          {state.selectedProvider?.id !== "custom" && (
+            <SettingContainer
+              title={t("settings.postProcessing.api.apiKey.title")}
+              description={t("settings.postProcessing.api.apiKey.description")}
+              descriptionMode="tooltip"
+              layout="horizontal"
+              grouped={true}
+            >
+              <div className="flex items-center gap-2">
+                <ApiKeyField
+                  value={state.apiKey}
+                  onBlur={state.handleApiKeyChange}
+                  placeholder={t(
+                    "settings.postProcessing.api.apiKey.placeholder",
+                  )}
+                  disabled={state.isApiKeyUpdating}
+                  className="min-w-[320px]"
+                />
+              </div>
+            </SettingContainer>
+          )}
         </>
       )}
 
@@ -536,8 +542,9 @@ export const PostProcessingSettings: React.FC = () => {
   const { t } = useTranslation();
   const { getSetting } = useSettings();
   const providers =
-    (getSetting("post_process_providers") as PostProcessProvider[] | undefined) ??
-    [];
+    (getSetting("post_process_providers") as
+      | PostProcessProvider[]
+      | undefined) ?? [];
   // Count of LOCAL providers that are present and considered "ready" (visible by default).
   // For Phase 8 gap-closure: a local provider is "ready" if it exists in settings (Apple Intelligence
   // is only inserted on macOS ARM64; custom is always present). Runtime availability of Apple Intelligence
@@ -577,9 +584,7 @@ export const PostProcessingSettings: React.FC = () => {
                 }
               }}
             >
-              {t(
-                "settings.postProcessing.modelsAndLocalProcessing.learnMore",
-              )}
+              {t("settings.postProcessing.modelsAndLocalProcessing.learnMore")}
             </a>
           </p>
         </div>
