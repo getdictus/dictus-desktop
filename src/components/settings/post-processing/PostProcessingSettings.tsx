@@ -31,16 +31,26 @@ const RECOMMENDED_PROVIDER_ID = "apple_intelligence";
 const PostProcessingSettingsApiComponent: React.FC = () => {
   const { t } = useTranslation();
   const state = usePostProcessProviderState();
-  const { getSetting, updateSetting, isUpdating } = useSettings();
 
-  const enableCloudProviders = getSetting("enable_cloud_providers") ?? false;
-  const onToggleCloudProviders = (value: boolean) =>
-    void updateSetting("enable_cloud_providers", value);
-  const isUpdatingCloudToggle = isUpdating("enable_cloud_providers");
   const selectedIsCloud =
     state.selectedProviderId !== "" &&
     !LOCAL_PROVIDER_IDS_SET.has(state.selectedProviderId);
-  const showCloudSelectedNotice = selectedIsCloud && !enableCloudProviders;
+
+  const initialTab: "local" | "cloud" =
+    state.selectedProviderId !== "" &&
+    !LOCAL_PROVIDER_IDS_SET.has(state.selectedProviderId)
+      ? "cloud"
+      : "local";
+  const [activeTab, setActiveTab] = useState<"local" | "cloud">(initialTab);
+
+  // Keep tab in sync when the selected provider changes (e.g. user clicks a provider radio)
+  useEffect(() => {
+    if (state.selectedProviderId === "") return;
+    const isLocal = LOCAL_PROVIDER_IDS_SET.has(state.selectedProviderId);
+    setActiveTab(isLocal ? "local" : "cloud");
+  }, [state.selectedProviderId]);
+
+  const showCloudSelectedNotice = selectedIsCloud && activeTab === "local";
 
   return (
     <>
@@ -112,9 +122,8 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
           externalOptions={state.groupedProviderOptions.external}
           value={state.selectedProviderId}
           onChange={state.handleProviderSelect}
-          enableCloudProviders={enableCloudProviders}
-          onToggleCloudProviders={onToggleCloudProviders}
-          isUpdatingCloudToggle={isUpdatingCloudToggle}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
           renderRowExtras={(option) => {
             if (option.value === "apple_intelligence") {
               if (!state.appleIntelligenceUnavailable) return null;
@@ -601,21 +610,7 @@ export const PostProcessingSettings: React.FC = () => {
         </span>
       </div>
 
-      {/* Hotkey */}
-      <SettingsGroup title={t("settings.postProcessing.hotkey.title")}>
-        <ShortcutInput
-          shortcutId="transcribe_with_post_process"
-          descriptionMode="tooltip"
-          grouped={true}
-        />
-      </SettingsGroup>
-
-      {/* API (includes selected model card + ProviderPicker w/ cloud toggle) */}
-      <SettingsGroup title={t("settings.postProcessing.api.title")}>
-        <PostProcessingSettingsApi />
-      </SettingsGroup>
-
-      {/* Local model library — coming-soon placeholder */}
+      {/* Local model library — coming-soon placeholder (hoisted to top per Gap 7) */}
       <SettingsGroup
         title={t(
           "settings.postProcessing.modelsAndLocalProcessing.library.title",
@@ -642,31 +637,24 @@ export const PostProcessingSettings: React.FC = () => {
         </div>
       </SettingsGroup>
 
+      {/* Hotkey */}
+      <SettingsGroup title={t("settings.postProcessing.hotkey.title")}>
+        <ShortcutInput
+          shortcutId="transcribe_with_post_process"
+          descriptionMode="tooltip"
+          grouped={true}
+        />
+      </SettingsGroup>
+
+      {/* API (includes selected model card + ProviderPicker with tabs) */}
+      <SettingsGroup title={t("settings.postProcessing.api.title")}>
+        <PostProcessingSettingsApi />
+      </SettingsGroup>
+
       {/* Prompts */}
       <SettingsGroup title={t("settings.postProcessing.prompts.title")}>
         <PostProcessingSettingsPrompts />
       </SettingsGroup>
-
-      {/* Three pillars */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
-        {(["privacy", "control", "simplicity"] as const).map((pillar) => (
-          <div
-            key={pillar}
-            className="rounded-md border border-mid-gray/20 bg-background p-4 space-y-2"
-          >
-            <h4 className="text-sm font-medium">
-              {t(
-                `settings.postProcessing.modelsAndLocalProcessing.pillars.${pillar}.title`,
-              )}
-            </h4>
-            <p className="text-xs text-mid-gray">
-              {t(
-                `settings.postProcessing.modelsAndLocalProcessing.pillars.${pillar}.body`,
-              )}
-            </p>
-          </div>
-        ))}
-      </div>
     </div>
   );
 };
