@@ -58,7 +58,7 @@ export const ProviderPicker: React.FC<ProviderPickerProps> = ({
             {option.description ? (
               <p className="text-xs text-mid-gray pl-7">{option.description}</p>
             ) : null}
-            {checked && renderRowExtras ? (
+            {renderRowExtras ? (
               <div className="pl-7 mt-1">{renderRowExtras(option)}</div>
             ) : null}
           </label>
