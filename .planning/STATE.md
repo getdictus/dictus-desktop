@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Polish & Local-First UX
 status: executing
-stopped_at: Completed 08-07-PLAN.md
-last_updated: "2026-05-22T16:14:04.201Z"
-last_activity: "2026-05-21 — 08-03 complete: ProviderPicker, TestConnectionButton, Advanced toggle promotion, About network surface link"
+stopped_at: "08-05 UAT partial-pass recorded — awaiting gap-closure plan"
+last_updated: "2026-05-22T17:00:00.000Z"
+last_activity: "2026-05-22 — 08-05 UAT complete: partial pass, 3 bugs + 3 design pivots documented in 08-05-SUMMARY.md; gap-closure plan required"
 progress:
   total_phases: 3
   completed_phases: 2
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-04-15 at v1.2 kickoff)
 ## Current Position
 
 Phase: 8 of 8 overall (Phase 3 of 3 in v1.2) — in progress
-Plan: 08-03 complete (PRIV-01/02/03 frontend); next: 08-04 (i18n locale propagation)
-Status: Phase 8 in progress — Plan 03 (frontend UI surface) complete
-Last activity: 2026-05-21 — 08-03 complete: ProviderPicker, TestConnectionButton, Advanced toggle promotion, About network surface link
+Plan: 08-05 UAT partial pass — 6 gaps (3 bugs + 3 design pivots) block Phase 8 from shipping
+Status: Phase 8 in progress — blocked on gap-closure plan (see 08-05-SUMMARY.md § Gaps)
+Last activity: 2026-05-22 — 08-05 UAT: partial pass — Ollama link invisible (2a), API key field confusing for Custom/local (2b), Apple Intelligence banner misplaced (1a); user requests tabs pattern (5), pillar block removal (6), library placeholder moved to top (7)
 
 Progress: [████████░░] 80% (v1.2 — 2 of 3 phases complete + Phase 8 in progress, 3 of 5 Phase 8 plans executed)
 
@@ -59,6 +59,7 @@ _Updated after each plan completion_
 | Phase 08-privacy-local-first-ux P04 | ~4min | 1 tasks | 19 files |
 | Phase 08-privacy-local-first-ux P06 | ~6min | 3 tasks | 8 files |
 | Phase 08-privacy-local-first-ux P07 | ~5min | 1 tasks | 19 files |
+| Phase 08-privacy-local-first-ux P05 | ~30min (UAT) | 1 task (checkpoint) | 0 files (verification-only) |
 
 ## Accumulated Context
 
@@ -92,6 +93,9 @@ _Updated after each plan completion_
 - [Phase 08-privacy-local-first-ux]: Library placeholder card is intentional Coming-soon preview of Local-First Models milestone — not scope creep; previews gemma3:4b + GGUF downloader coming in next milestone
 - [Phase 08-privacy-local-first-ux]: fr/translation.json carries verbatim French copy of cloudToggle + modelsAndLocalProcessing — source values are canonical French per mockup product intent
 - [Phase 08-privacy-local-first-ux]: Brand names (OpenAI, Anthropic, Groq, Cerebras, OpenRouter, Z.AI, Apple Intelligence, Ollama, gemma3:4b, GGUF, Custom (local)) preserved verbatim across all 19 locales in 08-07
+- [Phase 08-privacy-local-first-ux P05]: UAT partial-pass (2026-05-22) — 3 bugs + 3 design pivots documented; gap-closure plan required before Phase 8 ships; phase stays at 08, no advancement
+- [Phase 08-privacy-local-first-ux P05]: Tabs pattern chosen over cloud toggle (user direction) — enable_cloud_providers setting to be repurposed or removed in gap-closure plan
+- [Phase 08-privacy-local-first-ux P05]: Pillars block (Confidentialité / Contrôle / Expérience) confirmed as user-rejected UI pattern — will be fully removed including all 20 locale keys
 
 ### Pending Todos
 
@@ -99,6 +103,15 @@ _Updated after each plan completion_
 (2 moved to done/ on 2026-04-23: icon regression + macOS quit-unexpectedly)
 
 ### Blockers/Concerns
+
+**Phase 8 gap-closure required (2026-05-22):** 08-05 UAT partial pass — 6 gaps block Phase 8 from shipping:
+- Bug 1a: Apple Intelligence error banner renders at bottom of page instead of inline with Apple Intelligence card
+- Bug 2a: Ollama link not visually distinguishable (no underline at rest; color shift invisible in hint text)
+- Bug 2b: API key field shown for Custom (local) provider with mandatory-looking placeholder — functionally optional but UI implies required
+- Design pivot 5: Replace cloud toggle with tabs pattern (Local / Cloud tabs; user-directed)
+- Design pivot 6: Remove three-pillar privacy block from post-processing page (user-directed)
+- Design pivot 7: Move "Bibliothèque de modèles locaux" placeholder to top of page (user-directed)
+See `.planning/phases/08-privacy-local-first-ux/08-05-SUMMARY.md § Gaps` for full root causes and proposed fix scopes.
 
 Carried from v1.1 audit:
 
