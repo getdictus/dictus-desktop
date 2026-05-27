@@ -43,14 +43,46 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
       : "local";
   const [activeTab, setActiveTab] = useState<"local" | "cloud">(initialTab);
 
-  // Keep tab in sync when the selected provider changes (e.g. user clicks a provider radio)
+  // Remember the last selected provider per tab so re-clicking a tab restores
+  // the user's prior choice in that tab instead of leaving them on a
+  // cross-tab selection that triggered the old "cloud selected" warning.
+  const [lastLocalId, setLastLocalId] = useState<string>(
+    initialTab === "local" ? state.selectedProviderId : "",
+  );
+  const [lastCloudId, setLastCloudId] = useState<string>(
+    initialTab === "cloud" ? state.selectedProviderId : "",
+  );
+
+  // Keep tab in sync when the selected provider changes (e.g. user clicks a
+  // provider radio inside the active tab) AND remember per-tab last selection.
   useEffect(() => {
     if (state.selectedProviderId === "") return;
     const isLocal = LOCAL_PROVIDER_IDS_SET.has(state.selectedProviderId);
     setActiveTab(isLocal ? "local" : "cloud");
+    if (isLocal) {
+      setLastLocalId(state.selectedProviderId);
+    } else {
+      setLastCloudId(state.selectedProviderId);
+    }
   }, [state.selectedProviderId]);
 
-  const showCloudSelectedNotice = selectedIsCloud && activeTab === "local";
+  const handleTabChange = (nextTab: "local" | "cloud") => {
+    if (nextTab === activeTab) return;
+    setActiveTab(nextTab);
+    const tabOptions =
+      nextTab === "local"
+        ? state.groupedProviderOptions.local
+        : state.groupedProviderOptions.external;
+    if (tabOptions.length === 0) return;
+    const preferred = nextTab === "local" ? lastLocalId : lastCloudId;
+    const targetId =
+      preferred && tabOptions.some((o) => o.value === preferred)
+        ? preferred
+        : tabOptions[0].value;
+    if (targetId !== state.selectedProviderId) {
+      void state.handleProviderSelect(targetId);
+    }
+  };
 
   return (
     <>
@@ -101,13 +133,6 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
             </span>
           </div>
         ) : null}
-        {showCloudSelectedNotice ? (
-          <Alert variant="error" contained>
-            {t(
-              "settings.postProcessing.modelsAndLocalProcessing.selectedModel.cloudSelectedNotice",
-            )}
-          </Alert>
-        ) : null}
       </div>
 
       <SettingContainer
@@ -123,7 +148,7 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
           value={state.selectedProviderId}
           onChange={state.handleProviderSelect}
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={handleTabChange}
           renderRowExtras={(option) => {
             if (option.value === "apple_intelligence") {
               if (!state.appleIntelligenceUnavailable) return null;
