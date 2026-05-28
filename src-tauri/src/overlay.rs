@@ -373,10 +373,13 @@ pub fn hide_recording_overlay(app_handle: &AppHandle) {
     if let Some(overlay_window) = app_handle.get_webview_window("recording_overlay") {
         // Emit event to trigger fade-out animation
         let _ = overlay_window.emit("hide-overlay", ());
-        // Hide the window after a short delay to allow animation to complete
+        // Sleep long enough for the longest frontend dismiss path: the processing
+        // state runs a ~700 ms outro before triggering CSS fade-out (~300 ms),
+        // so 1100 ms covers it with a small buffer. Non-processing paths are
+        // already opacity 0 long before this delay elapses.
         let window_clone = overlay_window.clone();
         std::thread::spawn(move || {
-            std::thread::sleep(std::time::Duration::from_millis(300));
+            std::thread::sleep(std::time::Duration::from_millis(1100));
             let _ = window_clone.hide();
         });
     }

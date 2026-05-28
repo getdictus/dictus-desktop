@@ -65,15 +65,27 @@ function transcribingEnergy(
   return 0.2 + 0.25 * (sineValue + 1.0);
 }
 
-function cylonPeak(barCount: number, phase: number): number[] {
+function cylonPeakAtPosition(barCount: number, peakPos: number): number[] {
   const halfWidth = 6.0;
-  const peakPos = ((barCount - 1) * (1 + Math.sin(2 * Math.PI * phase))) / 2;
   return Array.from({ length: barCount }, (_, i) => {
     const dist = Math.abs(i - peakPos);
     const v = Math.max(0.05, 1 - dist / halfWidth);
     return Math.round(v * 5) / 5;
   });
 }
+
+function cylonPeak(barCount: number, phase: number): number[] {
+  const peakPos = ((barCount - 1) * (1 + Math.sin(2 * Math.PI * phase))) / 2;
+  return cylonPeakAtPosition(barCount, peakPos);
+}
+
+function easeInOutCubic(t: number): number {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+const OUTRO_CENTER_MS = 300;
+const OUTRO_COLLAPSE_MS = 400;
+const OUTRO_TOTAL_MS = OUTRO_CENTER_MS + OUTRO_COLLAPSE_MS;
 
 function getBarColor(index: number, barCount: number): string {
   const center = (barCount - 1) / 2;
@@ -98,7 +110,19 @@ const RecordingOverlay: React.FC = () => {
   const phaseRef = useRef<number>(0);
   const rafIdRef = useRef<number>(0);
   const lastTimeRef = useRef<number>(0);
+  const stateRef = useRef<OverlayState>("recording");
+  const reducedMotionRef = useRef<boolean>(false);
+  const outroStartTimeRef = useRef<number | null>(null);
+  const outroStartPeakPosRef = useRef<number>(0);
   const direction = getLanguageDirection(i18n.language);
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+
+  useEffect(() => {
+    reducedMotionRef.current = reducedMotion;
+  }, [reducedMotion]);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -116,12 +140,30 @@ const RecordingOverlay: React.FC = () => {
         phaseRef.current = 0;
         smoothedLevelsRef.current = Array(BAR_COUNT).fill(0);
         targetLevelsRef.current = Array(BAR_COUNT).fill(0);
+        outroStartTimeRef.current = null;
         setIsVisible(true);
       });
 
       const unlistenHide = await listen("hide-overlay", () => {
-        cancelAnimationFrame(rafIdRef.current);
-        setIsVisible(false);
+        if (
+          stateRef.current === "processing" &&
+          !reducedMotionRef.current &&
+          outroStartTimeRef.current === null
+        ) {
+          // Outro path: bring peak to center, then collapse, then hide
+          const currentPeakPos =
+            ((BAR_COUNT - 1) * (1 + Math.sin(2 * Math.PI * phaseRef.current))) /
+            2;
+          outroStartPeakPosRef.current = currentPeakPos;
+          outroStartTimeRef.current = performance.now();
+          window.setTimeout(() => {
+            outroStartTimeRef.current = null;
+            setIsVisible(false);
+          }, OUTRO_TOTAL_MS);
+        } else {
+          cancelAnimationFrame(rafIdRef.current);
+          setIsVisible(false);
+        }
       });
 
       const unlistenLevel = await listen<number[]>("mic-level", (event) => {
@@ -149,6 +191,35 @@ const RecordingOverlay: React.FC = () => {
       lastTimeRef.current = timestamp;
 
       let targets: number[];
+
+      if (state === "processing" && outroStartTimeRef.current !== null) {
+        const elapsed = timestamp - outroStartTimeRef.current;
+        const centerPos = (BAR_COUNT - 1) / 2;
+        if (elapsed < OUTRO_CENTER_MS) {
+          // Outro phase 1: slide the peak from its current position to center
+          const t = elapsed / OUTRO_CENTER_MS;
+          const eased = easeInOutCubic(t);
+          const peakPos =
+            outroStartPeakPosRef.current +
+            (centerPos - outroStartPeakPosRef.current) * eased;
+          targets = cylonPeakAtPosition(BAR_COUNT, peakPos);
+        } else {
+          // Outro phase 2: collapse the centered peak to zero, re-quantized
+          const collapseT = Math.min(
+            1,
+            (elapsed - OUTRO_CENTER_MS) / OUTRO_COLLAPSE_MS,
+          );
+          const eased = easeInOutCubic(collapseT);
+          const scale = 1 - eased;
+          const base = cylonPeakAtPosition(BAR_COUNT, centerPos);
+          targets = base.map((v) => Math.round(v * scale * 5) / 5);
+        }
+        smoothedLevelsRef.current = targets;
+        setLevels([...smoothedLevelsRef.current]);
+        rafIdRef.current = requestAnimationFrame(animate);
+        return;
+      }
+
       if (state === "recording") {
         targets = targetLevelsRef.current;
       } else if (state === "transcribing") {
