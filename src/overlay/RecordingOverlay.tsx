@@ -235,7 +235,14 @@ const RecordingOverlay: React.FC = () => {
           const base = cylonPeakAtPosition(BAR_COUNT, centerPos);
           targets = base.map((v) => Math.round(v * scale * 5) / 5);
         }
-        smoothedLevelsRef.current = targets;
+        // Outro-only: bar heights glide toward quantized targets via attack/
+        // release lerp instead of snapping. Cubique palier targets stay, but
+        // when the cylon's slow-velocity moments would otherwise leave bar
+        // heights frozen for several frames, the lerp keeps them moving.
+        smoothedLevelsRef.current = tickLevels(
+          smoothedLevelsRef.current,
+          targets,
+        );
         setLevels([...smoothedLevelsRef.current]);
         rafIdRef.current = requestAnimationFrame(animate);
         return;
