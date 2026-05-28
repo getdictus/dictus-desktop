@@ -84,9 +84,7 @@ function easeInOutCubic(t: number): number {
 }
 
 const PROCESSING_PHASE_RATE = 0.7; // Hz
-const OUTRO_CENTER_MS = 300;
-const OUTRO_COLLAPSE_MS = 400;
-const OUTRO_TOTAL_MS = OUTRO_CENTER_MS + OUTRO_COLLAPSE_MS;
+const OUTRO_TOTAL_MS = 600;
 
 function getBarColor(index: number, barCount: number): string {
   const center = (barCount - 1) / 2;
@@ -210,36 +208,20 @@ const RecordingOverlay: React.FC = () => {
       let targets: number[];
 
       if (state === "processing" && outroStartTimeRef.current !== null) {
+        // Single-phase outro: the cylon keeps advancing at its natural rate
+        // while bar amplitudes fade to zero. We deliberately do NOT try to
+        // pull the peak to center — any trajectory that ends "stationary at
+        // center" starting from "moving away from center" must reverse
+        // direction, and that reversal point has genuine zero velocity that
+        // the eye reads as a "stop and resume" glitch. Letting the cylon
+        // play out naturally with fading amplitude keeps velocity continuous
+        // throughout — the only thing that changes is the bar amplitude.
         const elapsed = timestamp - outroStartTimeRef.current;
-        const centerPos = (BAR_COUNT - 1) / 2;
-        if (elapsed < OUTRO_CENTER_MS) {
-          // Outro phase 1: hybrid blend. The cylon keeps advancing as it
-          // normally would (so velocity is continuous at the handoff — same
-          // sine derivative as the previous frame), but the rendered peak
-          // position blends from the cylon's natural position toward center
-          // via easeInOutCubic. Both terms have zero time-derivative at t=1,
-          // so the peak arrives at center with zero velocity, ready to
-          // collapse. No artificial U-turn — the only direction changes are
-          // the cylon's own natural extremes, which read as familiar motion.
-          phaseRef.current += dt * PROCESSING_PHASE_RATE;
-          const naturalPeakPos =
-            ((BAR_COUNT - 1) * (1 + Math.sin(2 * Math.PI * phaseRef.current))) /
-            2;
-          const t = elapsed / OUTRO_CENTER_MS;
-          const eased = easeInOutCubic(t);
-          const peakPos = naturalPeakPos * (1 - eased) + centerPos * eased;
-          targets = cylonPeakAtPosition(BAR_COUNT, peakPos);
-        } else {
-          // Outro phase 2: collapse the centered peak to zero, re-quantized
-          const collapseT = Math.min(
-            1,
-            (elapsed - OUTRO_CENTER_MS) / OUTRO_COLLAPSE_MS,
-          );
-          const eased = easeInOutCubic(collapseT);
-          const scale = 1 - eased;
-          const base = cylonPeakAtPosition(BAR_COUNT, centerPos);
-          targets = base.map((v) => Math.round(v * scale * 5) / 5);
-        }
+        phaseRef.current += dt * PROCESSING_PHASE_RATE;
+        const t = Math.min(1, elapsed / OUTRO_TOTAL_MS);
+        const scale = 1 - easeInOutCubic(t);
+        const base = cylonPeak(BAR_COUNT, phaseRef.current);
+        targets = base.map((v) => Math.round(v * scale * 5) / 5);
         smoothedLevelsRef.current = targets;
         setLevels([...smoothedLevelsRef.current]);
         rafIdRef.current = requestAnimationFrame(animate);
