@@ -55,7 +55,7 @@ function tickLevels(current: number[], targets: number[]): number[] {
   });
 }
 
-function processingEnergy(
+function transcribingEnergy(
   index: number,
   barCount: number,
   phase: number,
@@ -63,6 +63,16 @@ function processingEnergy(
   const normalizedIndex = index / Math.max(barCount - 1, 1);
   const sineValue = Math.sin(2 * Math.PI * (normalizedIndex + phase));
   return 0.2 + 0.25 * (sineValue + 1.0);
+}
+
+function cylonPeak(barCount: number, phase: number): number[] {
+  const halfWidth = 6.0;
+  const peakPos = ((barCount - 1) * (1 + Math.sin(2 * Math.PI * phase))) / 2;
+  return Array.from({ length: barCount }, (_, i) => {
+    const dist = Math.abs(i - peakPos);
+    const v = Math.max(0.05, 1 - dist / halfWidth);
+    return Math.round(v * 5) / 5;
+  });
 }
 
 function getBarColor(index: number, barCount: number): string {
@@ -80,12 +90,24 @@ const RecordingOverlay: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [state, setState] = useState<OverlayState>("recording");
   const [levels, setLevels] = useState<number[]>(Array(BAR_COUNT).fill(0));
+  const [showProcessingAnimation, setShowProcessingAnimation] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(
+    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  );
   const smoothedLevelsRef = useRef<number[]>(Array(BAR_COUNT).fill(0));
   const targetLevelsRef = useRef<number[]>(Array(BAR_COUNT).fill(0));
   const phaseRef = useRef<number>(0);
   const rafIdRef = useRef<number>(0);
   const lastTimeRef = useRef<number>(0);
+  const flickerTimerRef = useRef<number | null>(null);
   const direction = getLanguageDirection(i18n.language);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   useEffect(() => {
     const setupEventListeners = async () => {
@@ -97,10 +119,29 @@ const RecordingOverlay: React.FC = () => {
         smoothedLevelsRef.current = Array(BAR_COUNT).fill(0);
         targetLevelsRef.current = Array(BAR_COUNT).fill(0);
         setIsVisible(true);
+
+        if (flickerTimerRef.current !== null) {
+          clearTimeout(flickerTimerRef.current);
+          flickerTimerRef.current = null;
+        }
+        if (overlayState === "processing") {
+          setShowProcessingAnimation(false);
+          flickerTimerRef.current = window.setTimeout(() => {
+            setShowProcessingAnimation(true);
+            flickerTimerRef.current = null;
+          }, 150);
+        } else {
+          setShowProcessingAnimation(false);
+        }
       });
 
       const unlistenHide = await listen("hide-overlay", () => {
         cancelAnimationFrame(rafIdRef.current);
+        if (flickerTimerRef.current !== null) {
+          clearTimeout(flickerTimerRef.current);
+          flickerTimerRef.current = null;
+        }
+        setShowProcessingAnimation(false);
         setIsVisible(false);
       });
 
@@ -131,18 +172,27 @@ const RecordingOverlay: React.FC = () => {
       let targets: number[];
       if (state === "recording") {
         targets = targetLevelsRef.current;
-      } else {
-        // Sine wave at 2x iOS speed (1 cycle/sec instead of 0.5)
+      } else if (state === "transcribing") {
+        // Sine wave sweep, 1 cycle/sec
         phaseRef.current += dt * 1.0;
         targets = Array.from({ length: BAR_COUNT }, (_, i) =>
-          processingEnergy(i, BAR_COUNT, phaseRef.current),
+          transcribingEnergy(i, BAR_COUNT, phaseRef.current),
         );
+      } else {
+        // processing: traveling peak, 0.7 Hz, 5-level quantization
+        phaseRef.current += dt * 0.7;
+        targets = cylonPeak(BAR_COUNT, phaseRef.current);
       }
 
-      smoothedLevelsRef.current = tickLevels(
-        smoothedLevelsRef.current,
-        targets,
-      );
+      if (state === "processing") {
+        // Direct assignment: smoothing would erase the cubique grain
+        smoothedLevelsRef.current = targets;
+      } else {
+        smoothedLevelsRef.current = tickLevels(
+          smoothedLevelsRef.current,
+          targets,
+        );
+      }
       setLevels([...smoothedLevelsRef.current]);
       rafIdRef.current = requestAnimationFrame(animate);
     };
@@ -156,11 +206,13 @@ const RecordingOverlay: React.FC = () => {
 
   return (
     <div dir={direction} style={{ display: "flex", alignItems: "center" }}>
-      <div
-        className={`recording-overlay ${isVisible ? "fade-in" : ""}`}
-      >
+      <div className={`recording-overlay ${isVisible ? "fade-in" : ""}`}>
         <div className="overlay-middle">
-          {(state === "recording" || state === "transcribing") && (
+          {(state === "recording" ||
+            state === "transcribing" ||
+            (state === "processing" &&
+              !reducedMotion &&
+              showProcessingAnimation)) && (
             <div className="bars-container">
               {levels.map((v, i) => (
                 <div
@@ -174,9 +226,10 @@ const RecordingOverlay: React.FC = () => {
               ))}
             </div>
           )}
-          {state === "processing" && (
-            <div className="transcribing-text">{t("overlay.processing")}</div>
-          )}
+          {state === "processing" &&
+            (reducedMotion || !showProcessingAnimation) && (
+              <div className="transcribing-text">{t("overlay.processing")}</div>
+            )}
         </div>
       </div>
 
