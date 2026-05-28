@@ -69,8 +69,13 @@ function cylonPeakAtPosition(barCount: number, peakPos: number): number[] {
   const halfWidth = 6.0;
   return Array.from({ length: barCount }, (_, i) => {
     const dist = Math.abs(i - peakPos);
-    const v = Math.max(0.05, 1 - dist / halfWidth);
-    return Math.round(v * 5) / 5;
+    if (dist >= halfWidth) return 0.05;
+    // Cosine bump: 1.0 at the peak (dist=0), smoothly decaying to 0 at the
+    // halfWidth edges. Replaces the previous triangular falloff + 5-palier
+    // quantization — gives a rounded, sinusoid-like wave that matches the
+    // smooth language of the transcribing state.
+    const t = dist / halfWidth;
+    return Math.max(0.05, 0.5 + 0.5 * Math.cos(Math.PI * t));
   });
 }
 
@@ -225,7 +230,7 @@ const RecordingOverlay: React.FC = () => {
           const peakPos = naturalPeakPos * (1 - eased) + centerPos * eased;
           targets = cylonPeakAtPosition(BAR_COUNT, peakPos);
         } else {
-          // Outro phase 2: collapse the centered peak to zero, re-quantized
+          // Outro phase 2: collapse the centered peak smoothly to zero
           const collapseT = Math.min(
             1,
             (elapsed - OUTRO_CENTER_MS) / OUTRO_COLLAPSE_MS,
@@ -233,7 +238,7 @@ const RecordingOverlay: React.FC = () => {
           const eased = easeInOutCubic(collapseT);
           const scale = 1 - eased;
           const base = cylonPeakAtPosition(BAR_COUNT, centerPos);
-          targets = base.map((v) => Math.round(v * scale * 5) / 5);
+          targets = base.map((v) => v * scale);
         }
         // Outro-only: bar heights glide toward quantized targets via attack/
         // release lerp instead of snapping. Cubique palier targets stay, but
