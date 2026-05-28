@@ -67,15 +67,17 @@ function transcribingEnergy(
 
 function cylonPeakAtPosition(barCount: number, peakPos: number): number[] {
   const halfWidth = 10.0;
+  // Match the transcribing sine's visual range (0.2 baseline → 0.7 crest) so
+  // the two states read as the same visual family. The cosine bump shape is
+  // unchanged; only the amplitude mapping is rescaled.
+  const baseline = 0.2;
+  const crest = 0.7;
   return Array.from({ length: barCount }, (_, i) => {
     const dist = Math.abs(i - peakPos);
-    if (dist >= halfWidth) return 0.05;
-    // Cosine bump: 1.0 at the peak (dist=0), smoothly decaying to 0 at the
-    // halfWidth edges. halfWidth=10 stretches the curve over 20 bars (out of
-    // 30), giving a gentler slope than narrower variants without reaching
-    // the full-width feel of the transcribing sine.
+    if (dist >= halfWidth) return baseline;
     const t = dist / halfWidth;
-    return Math.max(0.05, 0.5 + 0.5 * Math.cos(Math.PI * t));
+    const bump = 0.5 + 0.5 * Math.cos(Math.PI * t); // 0..1
+    return baseline + (crest - baseline) * bump;
   });
 }
 
