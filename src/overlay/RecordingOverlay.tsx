@@ -66,15 +66,14 @@ function transcribingEnergy(
 }
 
 function cylonPeakAtPosition(barCount: number, peakPos: number): number[] {
-  const halfWidth = 8.0;
+  const halfWidth = 10.0;
   return Array.from({ length: barCount }, (_, i) => {
     const dist = Math.abs(i - peakPos);
     if (dist >= halfWidth) return 0.05;
     // Cosine bump: 1.0 at the peak (dist=0), smoothly decaying to 0 at the
-    // halfWidth edges. The wider halfWidth (8 vs the previous 6) stretches
-    // the same curve over more bars, so the descent reads more gradually —
-    // closer to the transcribing sine's wave language without being as wide
-    // as a full sine across the whole bar array.
+    // halfWidth edges. halfWidth=10 stretches the curve over 20 bars (out of
+    // 30), giving a gentler slope than narrower variants without reaching
+    // the full-width feel of the transcribing sine.
     const t = dist / halfWidth;
     return Math.max(0.05, 0.5 + 0.5 * Math.cos(Math.PI * t));
   });
@@ -241,14 +240,14 @@ const RecordingOverlay: React.FC = () => {
           const base = cylonPeakAtPosition(BAR_COUNT, centerPos);
           targets = base.map((v) => v * scale);
         }
-        // Outro-only: bar heights glide toward quantized targets via attack/
-        // release lerp instead of snapping. Cubique palier targets stay, but
-        // when the cylon's slow-velocity moments would otherwise leave bar
-        // heights frozen for several frames, the lerp keeps them moving.
-        smoothedLevelsRef.current = tickLevels(
-          smoothedLevelsRef.current,
-          targets,
-        );
+        // Direct assignment, same as the processing path. tickLevels here
+        // was originally added to soften palier-stepping under the old
+        // cubique quantization; with continuous cosine heights it only
+        // introduces lag — specifically its release factor (0.85) makes
+        // shrinking bars linger for ~10 frames behind their targets, which
+        // reads as the "stop and resume" Pierre keeps perceiving at the
+        // cylon → outro handoff.
+        smoothedLevelsRef.current = targets;
         setLevels([...smoothedLevelsRef.current]);
         rafIdRef.current = requestAnimationFrame(animate);
         return;
