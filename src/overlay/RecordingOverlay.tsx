@@ -123,6 +123,7 @@ const RecordingOverlay: React.FC = () => {
   const stateRef = useRef<OverlayState>("recording");
   const reducedMotionRef = useRef<boolean>(false);
   const outroStartTimeRef = useRef<number | null>(null);
+  const outroStartPeakPosRef = useRef<number>(0);
   const direction = getLanguageDirection(i18n.language);
 
   useEffect(() => {
@@ -166,10 +167,16 @@ const RecordingOverlay: React.FC = () => {
           if (outroStartTimeRef.current !== null) return;
 
           if (stateRef.current === "processing" && !reducedMotionRef.current) {
-            // Outro: let the cylon keep advancing while the bar pattern blends
-            // toward a centered shape; then collapse heights to zero; then hide.
-            // No position/velocity capture needed — the hybrid blend in the
-            // animate loop reads phaseRef as it advances naturally.
+            // Outro: freeze the cylon's phase at the position it had at
+            // hide-time, then slide the peak from that frozen position to
+            // center over Phase 1, then collapse. Freezing the phase removes
+            // the cylon's natural slow-velocity moments near extremes from
+            // the outro entirely — bars near the peak no longer hang at
+            // sub-pixel changes for several frames in a row.
+            const currentPhase = phaseRef.current;
+            outroStartPeakPosRef.current =
+              ((BAR_COUNT - 1) * (1 + Math.sin(2 * Math.PI * currentPhase))) /
+              2;
             outroStartTimeRef.current = performance.now();
             window.setTimeout(() => {
               outroStartTimeRef.current = null;
@@ -222,16 +229,17 @@ const RecordingOverlay: React.FC = () => {
         const elapsed = timestamp - outroStartTimeRef.current;
         const centerPos = (BAR_COUNT - 1) / 2;
         if (elapsed < OUTRO_CENTER_MS) {
-          // Outro phase 1: hybrid blend — cylon keeps advancing naturally
-          // (velocity continuous at handoff), while the rendered peak
-          // position blends toward the centered shape via easeInOutCubic.
-          phaseRef.current += dt * PROCESSING_PHASE_RATE;
-          const naturalPeakPos =
-            ((BAR_COUNT - 1) * (1 + Math.sin(2 * Math.PI * phaseRef.current))) /
-            2;
+          // Outro phase 1: phase is frozen at hide-time (no cylon advance),
+          // and the peak slides from its captured position to center via
+          // easeInOutCubic. Freezing the phase eliminates the cylon's
+          // natural slow-velocity moments — the source of the perceived
+          // freeze — because the peak is now driven entirely by the ease
+          // curve, which has a monotone deceleration profile from start to
+          // end.
           const t = elapsed / OUTRO_CENTER_MS;
           const eased = easeInOutCubic(t);
-          const peakPos = naturalPeakPos * (1 - eased) + centerPos * eased;
+          const peakPos =
+            outroStartPeakPosRef.current * (1 - eased) + centerPos * eased;
           targets = cylonPeakAtPosition(BAR_COUNT, peakPos);
         } else {
           // Outro phase 2: collapse the centered peak smoothly to zero
