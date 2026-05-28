@@ -90,7 +90,6 @@ const RecordingOverlay: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [state, setState] = useState<OverlayState>("recording");
   const [levels, setLevels] = useState<number[]>(Array(BAR_COUNT).fill(0));
-  const [showProcessingAnimation, setShowProcessingAnimation] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(
     () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
@@ -99,7 +98,6 @@ const RecordingOverlay: React.FC = () => {
   const phaseRef = useRef<number>(0);
   const rafIdRef = useRef<number>(0);
   const lastTimeRef = useRef<number>(0);
-  const flickerTimerRef = useRef<number | null>(null);
   const direction = getLanguageDirection(i18n.language);
 
   useEffect(() => {
@@ -119,29 +117,10 @@ const RecordingOverlay: React.FC = () => {
         smoothedLevelsRef.current = Array(BAR_COUNT).fill(0);
         targetLevelsRef.current = Array(BAR_COUNT).fill(0);
         setIsVisible(true);
-
-        if (flickerTimerRef.current !== null) {
-          clearTimeout(flickerTimerRef.current);
-          flickerTimerRef.current = null;
-        }
-        if (overlayState === "processing") {
-          setShowProcessingAnimation(false);
-          flickerTimerRef.current = window.setTimeout(() => {
-            setShowProcessingAnimation(true);
-            flickerTimerRef.current = null;
-          }, 150);
-        } else {
-          setShowProcessingAnimation(false);
-        }
       });
 
       const unlistenHide = await listen("hide-overlay", () => {
         cancelAnimationFrame(rafIdRef.current);
-        if (flickerTimerRef.current !== null) {
-          clearTimeout(flickerTimerRef.current);
-          flickerTimerRef.current = null;
-        }
-        setShowProcessingAnimation(false);
         setIsVisible(false);
       });
 
@@ -210,9 +189,7 @@ const RecordingOverlay: React.FC = () => {
         <div className="overlay-middle">
           {(state === "recording" ||
             state === "transcribing" ||
-            (state === "processing" &&
-              !reducedMotion &&
-              showProcessingAnimation)) && (
+            (state === "processing" && !reducedMotion)) && (
             <div className="bars-container">
               {levels.map((v, i) => (
                 <div
@@ -226,10 +203,9 @@ const RecordingOverlay: React.FC = () => {
               ))}
             </div>
           )}
-          {state === "processing" &&
-            (reducedMotion || !showProcessingAnimation) && (
-              <div className="transcribing-text">{t("overlay.processing")}</div>
-            )}
+          {state === "processing" && reducedMotion && (
+            <div className="transcribing-text">{t("overlay.processing")}</div>
+          )}
         </div>
       </div>
 
