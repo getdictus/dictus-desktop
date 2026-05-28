@@ -83,6 +83,27 @@ function easeInOutCubic(t: number): number {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
+/**
+ * Cubic Hermite spline from (startPos, startVelocity) to (endPos, 0).
+ * t in [0, 1]; startVelocity expressed in position-units per normalized-time-unit
+ * (multiply real-time velocity by duration to get the correct scaling).
+ */
+function hermiteToTarget(
+  startPos: number,
+  startVelocity: number,
+  endPos: number,
+  t: number,
+): number {
+  const t2 = t * t;
+  const t3 = t2 * t;
+  const h00 = 2 * t3 - 3 * t2 + 1;
+  const h10 = t3 - 2 * t2 + t;
+  const h01 = -2 * t3 + 3 * t2;
+  return h00 * startPos + h10 * startVelocity + h01 * endPos;
+}
+
+const PROCESSING_PHASE_RATE = 0.7; // Hz — kept in one place since both the
+// animate loop and the outro velocity capture need it
 const OUTRO_CENTER_MS = 300;
 const OUTRO_COLLAPSE_MS = 400;
 const OUTRO_TOTAL_MS = OUTRO_CENTER_MS + OUTRO_COLLAPSE_MS;
@@ -114,6 +135,7 @@ const RecordingOverlay: React.FC = () => {
   const reducedMotionRef = useRef<boolean>(false);
   const outroStartTimeRef = useRef<number | null>(null);
   const outroStartPeakPosRef = useRef<number>(0);
+  const outroStartVelocityRef = useRef<number>(0);
   const direction = getLanguageDirection(i18n.language);
 
   useEffect(() => {
@@ -157,12 +179,23 @@ const RecordingOverlay: React.FC = () => {
           if (outroStartTimeRef.current !== null) return;
 
           if (stateRef.current === "processing" && !reducedMotionRef.current) {
-            // Outro: slide peak to center, collapse heights to zero, then hide
+            // Outro: slide peak to center, collapse heights to zero, then hide.
+            // Capture both position AND instantaneous velocity of the cylon
+            // so the Hermite spline can take over with no perceptible kink.
+            const currentPhase = phaseRef.current;
             const currentPeakPos =
-              ((BAR_COUNT - 1) *
-                (1 + Math.sin(2 * Math.PI * phaseRef.current))) /
+              ((BAR_COUNT - 1) * (1 + Math.sin(2 * Math.PI * currentPhase))) /
               2;
+            // d/dt of peakPos = (BAR_COUNT-1) * π * rate * cos(2π * phase)
+            const cylonVelocity =
+              (BAR_COUNT - 1) *
+              Math.PI *
+              PROCESSING_PHASE_RATE *
+              Math.cos(2 * Math.PI * currentPhase);
+            // Scale velocity into "bars per normalized [0,1] outro-phase unit"
+            const normalizedVelocity = cylonVelocity * (OUTRO_CENTER_MS / 1000);
             outroStartPeakPosRef.current = currentPeakPos;
+            outroStartVelocityRef.current = normalizedVelocity;
             outroStartTimeRef.current = performance.now();
             window.setTimeout(() => {
               outroStartTimeRef.current = null;
@@ -215,12 +248,17 @@ const RecordingOverlay: React.FC = () => {
         const elapsed = timestamp - outroStartTimeRef.current;
         const centerPos = (BAR_COUNT - 1) / 2;
         if (elapsed < OUTRO_CENTER_MS) {
-          // Outro phase 1: slide the peak from its current position to center
+          // Outro phase 1: Hermite spline from current peak (with its current
+          // cylon-driven velocity) to the centered peak (with zero velocity).
+          // Velocity-matched start eliminates the visible "stop and restart"
+          // that linear/easeInOut interpolation produces at the handoff.
           const t = elapsed / OUTRO_CENTER_MS;
-          const eased = easeInOutCubic(t);
-          const peakPos =
-            outroStartPeakPosRef.current +
-            (centerPos - outroStartPeakPosRef.current) * eased;
+          const peakPos = hermiteToTarget(
+            outroStartPeakPosRef.current,
+            outroStartVelocityRef.current,
+            centerPos,
+            t,
+          );
           targets = cylonPeakAtPosition(BAR_COUNT, peakPos);
         } else {
           // Outro phase 2: collapse the centered peak to zero, re-quantized
@@ -248,8 +286,8 @@ const RecordingOverlay: React.FC = () => {
           transcribingEnergy(i, BAR_COUNT, phaseRef.current),
         );
       } else {
-        // processing: traveling peak, 0.7 Hz, 5-level quantization
-        phaseRef.current += dt * 0.7;
+        // processing: traveling peak, PROCESSING_PHASE_RATE Hz, 5-level quantization
+        phaseRef.current += dt * PROCESSING_PHASE_RATE;
         targets = cylonPeak(BAR_COUNT, phaseRef.current);
       }
 
