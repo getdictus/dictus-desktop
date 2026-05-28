@@ -67,10 +67,12 @@ function transcribingEnergy(
 
 function cylonPeakAtPosition(barCount: number, peakPos: number): number[] {
   const halfWidth = 10.0;
-  // Match the transcribing sine's visual range (0.2 baseline → 0.7 crest) so
-  // the two states read as the same visual family. The cosine bump shape is
-  // unchanged; only the amplitude mapping is rescaled.
-  const baseline = 0.2;
+  // Crest matches transcribing's crest (0.7) so the transition reads as the
+  // same visual family. Baseline is much lower (close to the recording
+  // waveform's silent floor) because the cylon is a localized peak, not a
+  // continuous wave — bars far from the peak should genuinely drop, not sit
+  // at the transcribing sine's wave-trough height.
+  const baseline = 0.05;
   const crest = 0.7;
   return Array.from({ length: barCount }, (_, i) => {
     const dist = Math.abs(i - peakPos);
