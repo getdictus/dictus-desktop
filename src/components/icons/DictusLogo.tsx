@@ -56,7 +56,7 @@ const DictusLogo = ({
       fill="currentColor"
       opacity="0.65"
     />
-    {/* Dictus wordmark */}
+    {/* Dictus wordmark — brand name, intentionally not localized */}
     <text
       x="85"
       y="55"
@@ -65,7 +65,7 @@ const DictusLogo = ({
       fontSize="28"
       fill="currentColor"
     >
-      Dictus
+      {"Dictus"}
     </text>
   </svg>
 );
