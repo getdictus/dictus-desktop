@@ -65,7 +65,7 @@ completed: 2026-05-22
 
 # Phase 8 Plan 9: Post-Processing UI Tabs Restructure & Layout Cleanup Summary
 
-**Replaced cloud opt-in toggle with Local/Cloud tabs in ProviderPicker, hoisted local-models library teaser to first-block-under-header position, removed three-pillar marketing grid entirely, and updated English i18n source (tabs.* added; cloudToggle.* + pillars.* removed; cloudSelectedNotice copy aligned to the tabs mental model) — closing gaps 5/6/7 from the 08-05 UAT partial-pass.**
+**Replaced cloud opt-in toggle with Local/Cloud tabs in ProviderPicker, hoisted local-models library teaser to first-block-under-header position, removed three-pillar marketing grid entirely, and updated English i18n source (tabs._ added; cloudToggle._ + pillars.\* removed; cloudSelectedNotice copy aligned to the tabs mental model) — closing gaps 5/6/7 from the 08-05 UAT partial-pass.**
 
 ## Performance
 
@@ -90,7 +90,7 @@ Each task was committed atomically:
 
 1. **Task 1: Restructure ProviderPicker — Local/Cloud tabs replace cloud toggle** — `dd45f4f` (feat)
 2. **Task 2: Hoist library to top, remove pillars, wire tab state in PostProcessingSettings** — `3433f9e` (refactor)
-3. **Task 3: Update en/translation.json — add tabs.*, drop pillars.* + cloudToggle.*, update cloudSelectedNotice** — `4750bd2` (chore)
+3. **Task 3: Update en/translation.json — add tabs._, drop pillars._ + cloudToggle.\*, update cloudSelectedNotice** — `4750bd2` (chore)
 
 **Plan metadata:** _(committed after this SUMMARY lands via gsd-tools commit)_
 
@@ -186,6 +186,7 @@ None — no external service configuration.
 **Acceptance criteria spot-checks:**
 
 Task 1 (ProviderPicker.tsx):
+
 - `grep -c "enableCloudProviders\|onToggleCloudProviders\|isUpdatingCloudToggle"` → `0`
 - `grep -c "activeTab"` → `8` (≥4 required)
 - `grep -c "settings.postProcessing.tabs.local"` → `1`
@@ -199,6 +200,7 @@ Task 1 (ProviderPicker.tsx):
 - Scoped `bunx eslint` + `bunx prettier --check` → both exit 0
 
 Task 2 (PostProcessingSettings.tsx):
+
 - `grep -c "enable_cloud_providers"` → `0`
 - `grep -c "enableCloudProviders\|onToggleCloudProviders\|isUpdatingCloudToggle"` → `0`
 - `grep -c 'useState<"local" | "cloud">'` → `1`
@@ -212,6 +214,7 @@ Task 2 (PostProcessingSettings.tsx):
 - Scoped `bunx eslint` + `bunx prettier --check` → both exit 0
 
 Task 3 (en/translation.json):
+
 - `JSON.parse(...)` → `JSON_OK`
 - `t.settings.postProcessing.cloudToggle === undefined` → `true`
 - `t.settings.postProcessing.modelsAndLocalProcessing.pillars === undefined` → `true`
@@ -224,6 +227,7 @@ Task 3 (en/translation.json):
 - Scoped `bunx prettier --check` → exits 0
 
 Rust (vestigial-field validation):
+
 - `cargo fmt -- --check` → exits 0
 - `cargo test --lib settings::tests` → 7/7 pass (including `default_enable_cloud_providers_is_false` and `default_settings_have_cloud_providers_disabled`)
 

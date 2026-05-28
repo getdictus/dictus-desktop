@@ -76,7 +76,7 @@ completed: 2026-05-21
 - Wired ProviderPicker into PostProcessingSettings replacing flat `<ProviderSelect>` dropdown; Ollama tip uses `<Trans>` with accessible link (role=link, tabIndex, onKeyDown)
 - Promoted PostProcessingToggle from Experimental SettingsGroup to its own dedicated SettingsGroup in AdvancedSettings
 - Added Network surface SettingContainer to About panel linking to `docs/PRIVACY.md` on GitHub
-- Added all new English i18n keys to `src/i18n/locales/en/translation.json` (providers section, custom.ollamaTip, testConnection.*, networkSurface.*, advanced.groups.postProcessing)
+- Added all new English i18n keys to `src/i18n/locales/en/translation.json` (providers section, custom.ollamaTip, testConnection._, networkSurface._, advanced.groups.postProcessing)
 
 ## Task Commits
 
@@ -136,5 +136,6 @@ None — plan executed exactly as written. The Prettier format run after Task 3 
 - `ProviderSelect.tsx` remains in repo as unused export; consider deleting in a future cleanup plan
 
 ---
-*Phase: 08-privacy-local-first-ux*
-*Completed: 2026-05-21*
+
+_Phase: 08-privacy-local-first-ux_
+_Completed: 2026-05-21_

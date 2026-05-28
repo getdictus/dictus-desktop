@@ -92,7 +92,7 @@ Each task was committed atomically:
 
 ## Decisions Made
 
-- **Option A for gap 2b (hide field, not placeholder):** Chosen because (a) Option B would require new i18n keys propagated across 19 locales for marginal benefit, (b) hiding aligns with the local-first "trust users, avoid paternalistic UI" principle from 08-CONTEXT.md, and (c) the field is *functionally* optional for Custom — the call site never sends `sk-...` for local providers anyway. No `en/translation.json` change needed.
+- **Option A for gap 2b (hide field, not placeholder):** Chosen because (a) Option B would require new i18n keys propagated across 19 locales for marginal benefit, (b) hiding aligns with the local-first "trust users, avoid paternalistic UI" principle from 08-CONTEXT.md, and (c) the field is _functionally_ optional for Custom — the call site never sends `sk-...` for local providers anyway. No `en/translation.json` change needed.
 - **renderRowExtras gate moved out of ProviderPicker:** The picker no longer makes assumptions about when extras apply. This is a one-line behavior change that makes the picker truly generic and pushes the row-semantics decision to the only place that has the context to make it (PostProcessingSettings.tsx).
 - **Apple Intelligence Alert rendered via renderRowExtras (not adjacent):** The Alert sits inside the row's `pl-7 mt-1` column so it visually nests under the radio it describes, matching the gap 1a visual spec.
 - **No regression to "En savoir plus" header link:** The page-header "Learn more" anchor also uses the old `hover:underline` style. Plan explicitly scopes only the Ollama link inside renderRowExtras; the header anchor is out of scope.

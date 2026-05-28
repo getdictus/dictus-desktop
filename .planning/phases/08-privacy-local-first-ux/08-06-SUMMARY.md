@@ -5,11 +5,26 @@ subsystem: post-processing-settings
 tags: [local-first, privacy, cloud-toggle, settings, i18n]
 dependency_graph:
   requires: ["08-01", "08-02", "08-03", "08-04", "08-05"]
-  provides: ["enable_cloud_providers setting", "cloud-gated ProviderPicker", "model-first PostProcessingSettings page"]
-  affects: ["src-tauri/src/settings.rs", "src/components/settings/post-processing/PostProcessingSettings.tsx", "src/components/settings/PostProcessingSettingsApi/ProviderPicker.tsx"]
+  provides:
+    [
+      "enable_cloud_providers setting",
+      "cloud-gated ProviderPicker",
+      "model-first PostProcessingSettings page",
+    ]
+  affects:
+    [
+      "src-tauri/src/settings.rs",
+      "src/components/settings/post-processing/PostProcessingSettings.tsx",
+      "src/components/settings/PostProcessingSettingsApi/ProviderPicker.tsx",
+    ]
 tech_stack:
   added: []
-  patterns: ["OFF-by-default feature toggle", "i18next manual ternary pluralization", "non-destructive migration notice"]
+  patterns:
+    [
+      "OFF-by-default feature toggle",
+      "i18next manual ternary pluralization",
+      "non-destructive migration notice",
+    ]
 key_files:
   created: []
   modified:
@@ -82,6 +97,7 @@ Closed the UAT design gap on test 9: cloud providers are now hidden by default b
 ### Auto-fixed Issues
 
 **1. [Rule 1 - Bug] Manual bindings.ts sync required**
+
 - **Found during:** Task 2
 - **Issue:** `changeEnableCloudProvidersSetting` was not yet in `bindings.ts` — specta only auto-exports during `bun run tauri dev` (debug_assertions build), not during `cargo test` or `cargo build` alone
 - **Fix:** Manually added the binding following the exact pattern of adjacent `changeExperimentalEnabledSetting` binding; also added `enable_cloud_providers?: boolean` to the TypeScript `AppSettings` type
@@ -89,6 +105,7 @@ Closed the UAT design gap on test 9: cloud providers are now hidden by default b
 - **Commit:** `4ee6e64`
 
 **2. [Rule 1 - Bug] TypeScript type error in updateSetting call**
+
 - **Found during:** Task 3 — `bun run build` reported `Argument of type 'string' is not assignable to parameter of type 'boolean | undefined'`
 - **Issue:** Initial code used `value as unknown as string` cast which violated the generic constraint
 - **Fix:** Removed cast; used `void updateSetting("enable_cloud_providers", value)` directly since `enable_cloud_providers` is now properly typed as `boolean | undefined` in `AppSettings`
@@ -96,6 +113,7 @@ Closed the UAT design gap on test 9: cloud providers are now hidden by default b
 - **Commit:** `800f2e5`
 
 **3. [Rule 2 - Design] Used raw checkbox toggle in ProviderPicker instead of ToggleSwitch component**
+
 - **Found during:** Task 2 — read `ToggleSwitch.tsx` which wraps into `SettingContainer`
 - **Issue:** `ToggleSwitch` adds `SettingContainer` layout (full-width row with padding/border) which would create nested container layout in ProviderPicker's inline cloud-toggle row
 - **Fix:** Replicated the raw toggle markup from `ToggleSwitch` (same Tailwind classes, same `peer-checked` pattern) without the `SettingContainer` wrapper
@@ -109,6 +127,7 @@ This plan adds 25 new English i18n keys. Plan 08-07 will propagate these keys ve
 ## Self-Check: PASSED
 
 All 6 modified files exist on disk. All 3 per-task commits confirmed in git log:
+
 - `8e513ee` feat(08-06): backend setting
 - `4ee6e64` feat(08-06): store wiring + ProviderPicker
 - `800f2e5` feat(08-06): page reframe

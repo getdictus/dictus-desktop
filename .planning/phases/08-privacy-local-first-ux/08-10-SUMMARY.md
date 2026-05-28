@@ -61,7 +61,7 @@ key-decisions:
   - "Script-driven over manual Edit-tool: 19 files × 4 mutations = 76 surgical edits is too brittle for an Edit-tool sweep; a Node script with JSON.parse/stringify roundtrips guarantees JSON validity and atomic per-file writes. Re-validation via JSON.parse after stringify catches any object-shape regressions."
   - "Insertion position for `tabs` mirrors EN (between `api` and `modelsAndLocalProcessing`): keeps file diff minimal and review-friendly — reviewers see the same insertion shape in every locale, identical to the EN diff from 08-09."
   - "`tabs.local` / `tabs.cloud` translated per locale per the executor-authoritative table in 08-10-PLAN.md: word choice respects each locale's conventional UX vocabulary (e.g., `Cục bộ` not `Local` for Vietnamese; `本地`/`本地` for zh/zh-TW; `Lokalne`/`Chmura` for Polish; etc.)."
-  - "`cloudSelectedNotice` value mirrors the EN/FR source clause structure (you have cloud selected → switch to tab OR choose local), with locale-appropriate quotation conventions: « » for fr/es/it/pt; „\" for de/cs/pl/bg; \"\" for en/uk/sv; \"\" for ar/he/ja/ko/zh/vi/tr; 「」 for ja/zh-TW. Brand-name `Cloud` (as quoted tab name) MUST match each locale's `tabs.cloud` translation — script-enforced via post-write verification."
+  - '`cloudSelectedNotice` value mirrors the EN/FR source clause structure (you have cloud selected → switch to tab OR choose local), with locale-appropriate quotation conventions: « » for fr/es/it/pt; „" for de/cs/pl/bg; "" for en/uk/sv; "" for ar/he/ja/ko/zh/vi/tr; 「」 for ja/zh-TW. Brand-name `Cloud` (as quoted tab name) MUST match each locale''s `tabs.cloud` translation — script-enforced via post-write verification.'
   - "Per-locale failure isolation: script logs + continues per file rather than failing the batch. All 19 succeeded on first run; failure isolation was a safety net, not exercised."
   - "Trailing-newline preserved per-file: script reads the raw file, detects trailing `\\n`, and re-applies it after stringify so the diff stays focused on key changes (not whitespace drift)."
   - "Workspace hygiene: propagation script written to `/tmp/propagate-08-10.mjs` (not checked into repo) — pure execution tooling, no need to retain. Deleted on session end per rules."
@@ -108,29 +108,30 @@ Task 1 (atomic batch — single commit covers all 19 locale files):
 
 All 19 sibling locale JSON files received the same 4-edit batch (locale-translated values), executed atomically via `/tmp/propagate-08-10.mjs`:
 
-| Locale | tabs.local   | tabs.cloud  |
-| ------ | ------------ | ----------- |
-| ar     | محلي         | سحابي       |
-| bg     | Локални      | Облачни     |
-| cs     | Lokální      | Cloud       |
-| de     | Lokal        | Cloud       |
-| es     | Local        | Nube        |
-| fr     | Local        | Cloud       |
-| he     | מקומי        | ענן         |
-| it     | Locale       | Cloud       |
-| ja     | ローカル     | クラウド    |
-| ko     | 로컬         | 클라우드    |
-| pl     | Lokalne      | Chmura      |
-| pt     | Local        | Nuvem       |
-| ru     | Локальные    | Облако      |
-| sv     | Lokalt       | Moln        |
-| tr     | Yerel        | Bulut       |
-| uk     | Локальні     | Хмара       |
-| vi     | Cục bộ       | Đám mây     |
-| zh     | 本地         | 云端        |
-| zh-TW  | 本地         | 雲端        |
+| Locale | tabs.local | tabs.cloud |
+| ------ | ---------- | ---------- |
+| ar     | محلي       | سحابي      |
+| bg     | Локални    | Облачни    |
+| cs     | Lokální    | Cloud      |
+| de     | Lokal      | Cloud      |
+| es     | Local      | Nube       |
+| fr     | Local      | Cloud      |
+| he     | מקומי      | ענן        |
+| it     | Locale     | Cloud      |
+| ja     | ローカル   | クラウド   |
+| ko     | 로컬       | 클라우드   |
+| pl     | Lokalne    | Chmura     |
+| pt     | Local      | Nuvem      |
+| ru     | Локальные  | Облако     |
+| sv     | Lokalt     | Moln       |
+| tr     | Yerel      | Bulut      |
+| uk     | Локальні   | Хмара      |
+| vi     | Cục bộ     | Đám mây    |
+| zh     | 本地       | 云端       |
+| zh-TW  | 本地       | 雲端       |
 
 `cloudSelectedNotice` (translation approach):
+
 - Two-clause structure preserved (cloud-selected → switch to tab OR choose local).
 - Quotation style follows each locale's convention (« » for fr/es/it/pt; „ for de/cs/pl/bg; "" for ar/he/ja/ko; "" for tr/vi/zh/uk; 「」 for ja/zh-TW; ”” for sv).
 - Brand-name `Cloud` (when quoted as tab name) matches each locale's `tabs.cloud` translation exactly — script-verified.

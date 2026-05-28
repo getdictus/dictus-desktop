@@ -84,26 +84,26 @@ completed: 2026-05-21
 ## 19 Locale Files Modified
 
 | Locale | sectionLocal (translated) | groups.postProcessing |
-|--------|--------------------------|----------------------|
-| de | Auf deinem Gerät | Nachbearbeitung |
-| fr | Sur votre appareil | Post-traitement |
-| es | En tu dispositivo | Postprocesamiento |
-| it | Sul tuo dispositivo | Post-elaborazione |
-| pt | No seu dispositivo | Pós-processamento |
-| ja | お使いのデバイスで | 後処理 |
-| ko | 내 기기에서 | 후처리 |
-| zh | 在你的设备上 | 后处理 |
-| zh-TW | 在你的裝置上 | 後處理 |
-| ru | На вашем устройстве | Постобработка |
-| uk | На вашому пристрої | Постобробка |
-| pl | Na twoim urządzeniu | Przetwarzanie końcowe |
-| cs | Na vašem zařízení | Následné zpracování |
-| bg | На вашето устройство | Последваща обработка |
-| sv | På din enhet | Efterbehandling |
-| tr | Cihazında | Son işleme |
-| vi | Trên thiết bị của bạn | Hậu xử lý |
-| ar | على جهازك | المعالجة اللاحقة |
-| he | במכשיר שלך | עיבוד בדיעבד |
+| ------ | ------------------------- | --------------------- |
+| de     | Auf deinem Gerät          | Nachbearbeitung       |
+| fr     | Sur votre appareil        | Post-traitement       |
+| es     | En tu dispositivo         | Postprocesamiento     |
+| it     | Sul tuo dispositivo       | Post-elaborazione     |
+| pt     | No seu dispositivo        | Pós-processamento     |
+| ja     | お使いのデバイスで        | 後処理                |
+| ko     | 내 기기에서               | 후처리                |
+| zh     | 在你的设备上              | 后处理                |
+| zh-TW  | 在你的裝置上              | 後處理                |
+| ru     | На вашем устройстве       | Постобработка         |
+| uk     | На вашому пристрої        | Постобробка           |
+| pl     | Na twoim urządzeniu       | Przetwarzanie końcowe |
+| cs     | Na vašem zařízení         | Následné zpracování   |
+| bg     | На вашето устройство      | Последваща обработка  |
+| sv     | På din enhet              | Efterbehandling       |
+| tr     | Cihazında                 | Son işleme            |
+| vi     | Trên thiết bị của bạn     | Hậu xử lý             |
+| ar     | على جهازك                 | المعالجة اللاحقة      |
+| he     | במכשיר שלך                | עיבוד בדיעבד          |
 
 ## check:translations Output
 
@@ -160,5 +160,6 @@ These were pre-existing gaps that prevented `check:translations` from passing. F
 - No remaining i18n gaps known in the 20 managed locale files
 
 ---
-*Phase: 08-privacy-local-first-ux*
-*Completed: 2026-05-21*
+
+_Phase: 08-privacy-local-first-ux_
+_Completed: 2026-05-21_

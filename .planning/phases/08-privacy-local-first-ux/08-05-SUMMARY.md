@@ -2,7 +2,8 @@
 phase: 08-privacy-local-first-ux
 plan: 05
 subsystem: ui
-tags: [uat, verification, provider-picker, post-processing, privacy, local-first]
+tags:
+  [uat, verification, provider-picker, post-processing, privacy, local-first]
 status: failed
 
 # Dependency graph
@@ -63,23 +64,23 @@ completed: 2026-05-22
 
 ## UAT Results — Check-by-Check
 
-| # | Check | Outcome | Notes |
-|---|-------|---------|-------|
-| 1 | Post-process screen layout (PRIV-01 core) | PASS | Stacked picker renders; TWO sections visible; no flat dropdown |
-| 2a | Ollama link visually clickable | **FAIL** | Link not distinguishable — color shift invisible in hint text; users cannot identify it as a link |
-| 2b | Custom API key field communicates optional | **FAIL** | API key field shown with placeholder "sk-..." implying it is required for local Ollama usage |
-| 2c | Custom row accent border + Ollama tip text + Test button | PASS | Row card accented; tip text appears; Test connection button appears |
-| 3 | Test connection — success path | PASS (code-inspectable) | Verified earlier in automated code inspection |
-| 4 | Test connection — failure path | PASS (code-inspectable) | Verified earlier in automated code inspection |
-| 5a | Toggle promotion visible in Advanced without Experimental | PASS | Toggle present without enabling Experimental group |
-| 5b | Sidebar gating | PASS | Post Process tab appears/disappears correctly with toggle |
-| 6 | About panel "View privacy doc" link | PASS | Button present; links to correct GitHub URL |
-| 7 | Onboarding shows only transcription model picker | PASS | No cloud post-process surface in onboarding |
-| 8 | PRIVACY.md renders correctly | PASS | Table intact; all rows visible; appendix readable |
-| 1a | Apple Intelligence error banner position | **FAIL** | Banner placed at bottom of page below ALL providers; must be inline with Apple Intelligence card |
-| 5 (design) | Cloud toggle vs tabs | **FAIL (design pivot)** | User requests tabs pattern (Local / Cloud) instead of toggle; flat toggle creates confusing visual interleaving |
-| 6 (design) | Three-pillar privacy block | **FAIL (design pivot)** | User requests removal of privacy pillar cards (Confidentialité / Contrôle / Expérience); adds visual noise without value |
-| 7 (design) | Library placeholder position | **FAIL (design pivot)** | "Bibliothèque de modèles locaux" coming-soon block positioned mid-page; user requests it moved to top of screen |
+| #          | Check                                                     | Outcome                 | Notes                                                                                                                    |
+| ---------- | --------------------------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| 1          | Post-process screen layout (PRIV-01 core)                 | PASS                    | Stacked picker renders; TWO sections visible; no flat dropdown                                                           |
+| 2a         | Ollama link visually clickable                            | **FAIL**                | Link not distinguishable — color shift invisible in hint text; users cannot identify it as a link                        |
+| 2b         | Custom API key field communicates optional                | **FAIL**                | API key field shown with placeholder "sk-..." implying it is required for local Ollama usage                             |
+| 2c         | Custom row accent border + Ollama tip text + Test button  | PASS                    | Row card accented; tip text appears; Test connection button appears                                                      |
+| 3          | Test connection — success path                            | PASS (code-inspectable) | Verified earlier in automated code inspection                                                                            |
+| 4          | Test connection — failure path                            | PASS (code-inspectable) | Verified earlier in automated code inspection                                                                            |
+| 5a         | Toggle promotion visible in Advanced without Experimental | PASS                    | Toggle present without enabling Experimental group                                                                       |
+| 5b         | Sidebar gating                                            | PASS                    | Post Process tab appears/disappears correctly with toggle                                                                |
+| 6          | About panel "View privacy doc" link                       | PASS                    | Button present; links to correct GitHub URL                                                                              |
+| 7          | Onboarding shows only transcription model picker          | PASS                    | No cloud post-process surface in onboarding                                                                              |
+| 8          | PRIVACY.md renders correctly                              | PASS                    | Table intact; all rows visible; appendix readable                                                                        |
+| 1a         | Apple Intelligence error banner position                  | **FAIL**                | Banner placed at bottom of page below ALL providers; must be inline with Apple Intelligence card                         |
+| 5 (design) | Cloud toggle vs tabs                                      | **FAIL (design pivot)** | User requests tabs pattern (Local / Cloud) instead of toggle; flat toggle creates confusing visual interleaving          |
+| 6 (design) | Three-pillar privacy block                                | **FAIL (design pivot)** | User requests removal of privacy pillar cards (Confidentialité / Contrôle / Expérience); adds visual noise without value |
+| 7 (design) | Library placeholder position                              | **FAIL (design pivot)** | "Bibliothèque de modèles locaux" coming-soon block positioned mid-page; user requests it moved to top of screen          |
 
 **Summary: 8 PASS / 6 FAIL (3 bugs + 3 design pivots)**
 
@@ -196,6 +197,7 @@ None — this plan's sole task was a `checkpoint:human-verify`. The verification
 **BLOCKED on gap closure.** The gap-closure plan must address all 6 items (3 bugs + 3 design pivots) before Phase 8 can be verified as complete and merged.
 
 Suggested gap-closure plan sequence:
+
 1. Bug fixes first (1a, 2a, 2b) — targeted, low-risk.
 2. Design pivots (5, 6, 7) — larger scope; tabs pattern in particular requires ProviderPicker restructuring and i18n additions across 20 locales.
 
@@ -211,5 +213,5 @@ Suggested gap-closure plan sequence:
 
 ---
 
-*Phase: 08-privacy-local-first-ux*
-*Completed: 2026-05-22*
+_Phase: 08-privacy-local-first-ux_
+_Completed: 2026-05-22_

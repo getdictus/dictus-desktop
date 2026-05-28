@@ -102,7 +102,7 @@ _Updated after each plan completion_
 - [Phase 08-privacy-local-first-ux P08]: Gap-closure for UAT 1a/2a/2b — Apple Intelligence Alert inlined via renderRowExtras, Ollama link underlined at rest, API key field hidden for Custom (local). Option A chosen for 2b (no i18n change).
 - [Phase 08-privacy-local-first-ux P08]: ProviderPicker.renderRowExtras now invoked for every row (caller controls null-vs-content) — establishes generic per-row extras pattern that survives 08-09 tabs restructure.
 - [Phase 08-privacy-local-first-ux]: P09 — ProviderPicker tabs (Local/Cloud) replace the cloud opt-in toggle; default tab derived from persisted provider id; useEffect keeps tab synced with selection — closes UAT design pivot 5
-- [Phase 08-privacy-local-first-ux]: P09 — Library SettingsGroup hoisted to first content block under page header; three-pillar marketing grid removed entirely (JSX + en pillars.* keys) — closes UAT design pivots 6 & 7
+- [Phase 08-privacy-local-first-ux]: P09 — Library SettingsGroup hoisted to first content block under page header; three-pillar marketing grid removed entirely (JSX + en pillars.\* keys) — closes UAT design pivots 6 & 7
 - [Phase 08-privacy-local-first-ux]: P09 — enable_cloud_providers Rust field kept vestigial (no schema migration); UI no longer reads/writes; settings tests still pass; cleanup deferrable to a dedicated migration plan
 - [Phase 08-privacy-local-first-ux]: P10 — All 19 sibling locales now mirror EN i18n: tabs.local/.cloud translated and inserted between api and modelsAndLocalProcessing; cloudToggle and pillars blocks deleted; cloudSelectedNotice updated per locale with brand-name Cloud matching each locale's tabs.cloud value. check:translations exits 0 (19/19 pass). Phase 8 source-side gap closure complete; ready for re-UAT.
 - [Phase 08-privacy-local-first-ux]: P10 — Locale propagation done via one-shot Node script (JSON.parse/stringify roundtrip) over 19 files; per-locale failure isolation log+continue; all 19 succeeded first try. Insertion-order-preserving key add (reconstruct parent key-by-key) keeps file diffs structurally identical to EN diff from 08-09.
@@ -115,13 +115,14 @@ _Updated after each plan completion_
 ### Blockers/Concerns
 
 **Phase 8 gap-closure in progress (2026-05-22):** 08-05 UAT partial pass — 3 of 6 gaps now closed by 08-08; 3 design pivots remain for 08-09 + 08-10:
+
 - ~~Bug 1a: Apple Intelligence error banner renders at bottom of page instead of inline with Apple Intelligence card~~ — **closed in 08-08 (bbe82db)** — Alert inlined via ProviderPicker.renderRowExtras
 - ~~Bug 2a: Ollama link not visually distinguishable~~ — **closed in 08-08 (bbe82db)** — className changed to `underline underline-offset-2 hover:opacity-80`
 - ~~Bug 2b: API key field shown for Custom (local) provider~~ — **closed in 08-08 (bbe82db)** — Option A: ApiKeyField gated on `selectedProvider?.id !== "custom"` (no i18n change)
 - Design pivot 5: Replace cloud toggle with tabs pattern (Local / Cloud tabs; user-directed) — 08-09 scope
 - Design pivot 6: Remove three-pillar privacy block from post-processing page (user-directed) — 08-09 scope (locale sweep in 08-10)
 - Design pivot 7: Move "Bibliothèque de modèles locaux" placeholder to top of page (user-directed) — 08-09 scope
-See `.planning/phases/08-privacy-local-first-ux/08-05-SUMMARY.md § Gaps` and `08-08-SUMMARY.md` for full closure detail.
+  See `.planning/phases/08-privacy-local-first-ux/08-05-SUMMARY.md § Gaps` and `08-08-SUMMARY.md` for full closure detail.
 
 Carried from v1.1 audit:
 

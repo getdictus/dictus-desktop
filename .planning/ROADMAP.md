@@ -90,4 +90,4 @@
 - [x] 08-07-PLAN.md — **[Gap closure]** Replicate 25 new Phase 8 gap-closure i18n keys across 19 sibling locales (PRIV-01, PRIV-02, PRIV-03) (completed 2026-05-22)
 - [ ] 08-08-PLAN.md — **[Gap closure]** Bug fixes: inline Apple Intelligence Alert via renderRowExtras + Ollama link rest-state underline + hide API key field for Custom (local) — closes gaps 1a/2a/2b (PRIV-01)
 - [ ] 08-09-PLAN.md — **[Gap closure]** Design pivots: Local/Cloud tabs replace cloud toggle + remove three-pillar block + hoist library placeholder to top; English i18n source updates — closes gaps 5/6/7 (PRIV-01, PRIV-02, PRIV-03)
-- [ ] 08-10-PLAN.md — **[Gap closure]** Propagate tabs.*, removed pillars.*, removed cloudToggle.*, updated cloudSelectedNotice across 19 sibling locales (PRIV-01, PRIV-02, PRIV-03)
+- [ ] 08-10-PLAN.md — **[Gap closure]** Propagate tabs._, removed pillars._, removed cloudToggle.\*, updated cloudSelectedNotice across 19 sibling locales (PRIV-01, PRIV-02, PRIV-03)
