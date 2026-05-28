@@ -44,7 +44,9 @@ const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
   });
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const restartHintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const restartHintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const errorCountRef = useRef<number>(0);
   const [showRestartHint, setShowRestartHint] = useState(false);
   const MAX_POLLING_ERRORS = 3;

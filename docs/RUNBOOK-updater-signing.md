@@ -47,10 +47,12 @@ The Ed25519 private key must be stored in all three of the following locations b
    - **DO NOT store key material and passphrase in the same note.** This is defense in depth against partial vault compromise — if one note is somehow exposed, an attacker still cannot use the key without the passphrase.
 
 3. **Offline backup (redundancy)** — `age`-encrypted file on an external drive or USB stick:
+
    ```bash
    age -R <Pierre's YubiKey age pubkey> ~/.tauri/dictus.key > dictus.key.age
    # Move dictus.key.age to external drive / USB
    ```
+
    This is the designated use of Pierre's YubiKey pair in this project. The age encryption allows decrypting the offline backup using the YubiKey without requiring online access to any service.
 
 4. **Local disk** — `~/.tauri/dictus.key`:
@@ -99,6 +101,7 @@ rm ~/.tauri/dictus.key
 ```
 
 **Security rules:**
+
 - **Never commit** `~/.tauri/dictus.key` to any repository.
 - **Never paste** the private key into Slack, email, GitHub Issues, PR comments, or any CI log.
 - The **public key** (`~/.tauri/dictus.key.pub`) is safe to commit and is not sensitive.
@@ -115,6 +118,7 @@ If the Ed25519 private key is lost **after the first signed release ships**, eve
 **Manual reinstall fallback for users:** `UpdateChecker.tsx` opens `https://github.com/getdictus/dictus-desktop/releases/latest` in the browser when the updater flow fails. This path works independently of the Ed25519 key and is the fallback for all users. Stranded users can always manually download the latest installer from GitHub Releases.
 
 **Recovery procedure (if loss occurs):**
+
 1. Regenerate a new keypair (§3).
 2. Update `plugins.updater.pubkey` in `src-tauri/tauri.conf.json` with the NEW raw base64 pubkey.
 3. Update `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` in GitHub Secrets.
@@ -216,11 +220,11 @@ Must exit 0. A non-zero exit (404, empty JSON, malformed response, missing platf
 
 Cross-reference: `.planning/research/PITFALLS.md` §"Critical Pitfalls — Auto-Updater (v1.1)"
 
-| Code | Summary |
-|------|---------|
-| A1 | **Key loss post-release** — private key lost after first signed release ships → all installs permanently stranded. See §4. |
-| A2 | **Wrong asset-prefix** — release still produces `handy_*` artifacts if `release.yml:77` or `build.yml:22` is not updated to `dictus`. Both files must be changed. |
-| A3 | **Wrong config section for `createUpdaterArtifacts`** — must be in `bundle`, NOT in `plugins.updater`. Setting it in the wrong section silently has no effect; `.sig` files will not be generated. |
-| A4 | **PEM-wrapped pubkey** — `plugins.updater.pubkey` must be the raw base64 string from `.key.pub`, NOT a PEM-wrapped string. Paste the contents of the `.key.pub` file as-is. PEM-wrapped pubkey causes `UnexpectedKeyId` runtime error. |
-| A5 | **Endpoint 404 before first publish** — once `endpoints` is populated in `tauri.conf.json`, the app starts checking. The URL 404s until the first release is published. This is expected during development. |
-| A6 | **Stale local tags** — `git tag -d 0.1.0 v0.1.0-dictus` pre-flight in §6.1 prevents `release.yml` tag-creation failures. |
+| Code | Summary                                                                                                                                                                                                                                |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A1   | **Key loss post-release** — private key lost after first signed release ships → all installs permanently stranded. See §4.                                                                                                             |
+| A2   | **Wrong asset-prefix** — release still produces `handy_*` artifacts if `release.yml:77` or `build.yml:22` is not updated to `dictus`. Both files must be changed.                                                                      |
+| A3   | **Wrong config section for `createUpdaterArtifacts`** — must be in `bundle`, NOT in `plugins.updater`. Setting it in the wrong section silently has no effect; `.sig` files will not be generated.                                     |
+| A4   | **PEM-wrapped pubkey** — `plugins.updater.pubkey` must be the raw base64 string from `.key.pub`, NOT a PEM-wrapped string. Paste the contents of the `.key.pub` file as-is. PEM-wrapped pubkey causes `UnexpectedKeyId` runtime error. |
+| A5   | **Endpoint 404 before first publish** — once `endpoints` is populated in `tauri.conf.json`, the app starts checking. The URL 404s until the first release is published. This is expected during development.                           |
+| A6   | **Stale local tags** — `git tag -d 0.1.0 v0.1.0-dictus` pre-flight in §6.1 prevents `release.yml` tag-creation failures.                                                                                                               |

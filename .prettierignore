@@ -15,6 +15,9 @@ src-tauri/gen
 # Generated files
 src/bindings.ts
 
+# Planning docs — managed by GSD workflow, not subject to source code formatting
+.planning/
+
 # Misc
 .DS_Store
 *.log
