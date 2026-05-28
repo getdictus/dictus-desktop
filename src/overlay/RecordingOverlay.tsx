@@ -66,14 +66,15 @@ function transcribingEnergy(
 }
 
 function cylonPeakAtPosition(barCount: number, peakPos: number): number[] {
-  const halfWidth = 6.0;
+  const halfWidth = 8.0;
   return Array.from({ length: barCount }, (_, i) => {
     const dist = Math.abs(i - peakPos);
     if (dist >= halfWidth) return 0.05;
     // Cosine bump: 1.0 at the peak (dist=0), smoothly decaying to 0 at the
-    // halfWidth edges. Replaces the previous triangular falloff + 5-palier
-    // quantization — gives a rounded, sinusoid-like wave that matches the
-    // smooth language of the transcribing state.
+    // halfWidth edges. The wider halfWidth (8 vs the previous 6) stretches
+    // the same curve over more bars, so the descent reads more gradually —
+    // closer to the transcribing sine's wave language without being as wide
+    // as a full sine across the whole bar array.
     const t = dist / halfWidth;
     return Math.max(0.05, 0.5 + 0.5 * Math.cos(Math.PI * t));
   });
