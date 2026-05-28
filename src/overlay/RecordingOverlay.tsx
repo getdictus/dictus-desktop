@@ -132,53 +132,72 @@ const RecordingOverlay: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    // Track cancellation so a StrictMode cleanup that fires before the async
+    // setup finishes still tears down whichever listeners did register.
+    let cancelled = false;
+    let unlistenShow: (() => void) | undefined;
+    let unlistenHide: (() => void) | undefined;
+    let unlistenLevel: (() => void) | undefined;
+
     const setupEventListeners = async () => {
-      const unlistenShow = await listen("show-overlay", async (event) => {
-        await syncLanguageFromSettings();
-        const overlayState = event.payload as OverlayState;
-        setState(overlayState);
-        phaseRef.current = 0;
-        smoothedLevelsRef.current = Array(BAR_COUNT).fill(0);
-        targetLevelsRef.current = Array(BAR_COUNT).fill(0);
-        outroStartTimeRef.current = null;
-        setIsVisible(true);
-      });
+      const [us, uh, ul] = await Promise.all([
+        listen("show-overlay", async (event) => {
+          await syncLanguageFromSettings();
+          const overlayState = event.payload as OverlayState;
+          setState(overlayState);
+          phaseRef.current = 0;
+          smoothedLevelsRef.current = Array(BAR_COUNT).fill(0);
+          targetLevelsRef.current = Array(BAR_COUNT).fill(0);
+          outroStartTimeRef.current = null;
+          setIsVisible(true);
+        }),
+        listen("hide-overlay", () => {
+          // Defensive idempotency: if an outro is already in flight (e.g.
+          // duplicate-listener invocation under StrictMode), bail.
+          if (outroStartTimeRef.current !== null) return;
 
-      const unlistenHide = await listen("hide-overlay", () => {
-        if (
-          stateRef.current === "processing" &&
-          !reducedMotionRef.current &&
-          outroStartTimeRef.current === null
-        ) {
-          // Outro path: bring peak to center, then collapse, then hide
-          const currentPeakPos =
-            ((BAR_COUNT - 1) * (1 + Math.sin(2 * Math.PI * phaseRef.current))) /
-            2;
-          outroStartPeakPosRef.current = currentPeakPos;
-          outroStartTimeRef.current = performance.now();
-          window.setTimeout(() => {
-            outroStartTimeRef.current = null;
+          if (stateRef.current === "processing" && !reducedMotionRef.current) {
+            // Outro: slide peak to center, collapse heights to zero, then hide
+            const currentPeakPos =
+              ((BAR_COUNT - 1) *
+                (1 + Math.sin(2 * Math.PI * phaseRef.current))) /
+              2;
+            outroStartPeakPosRef.current = currentPeakPos;
+            outroStartTimeRef.current = performance.now();
+            window.setTimeout(() => {
+              outroStartTimeRef.current = null;
+              setIsVisible(false);
+            }, OUTRO_TOTAL_MS);
+          } else {
+            cancelAnimationFrame(rafIdRef.current);
             setIsVisible(false);
-          }, OUTRO_TOTAL_MS);
-        } else {
-          cancelAnimationFrame(rafIdRef.current);
-          setIsVisible(false);
-        }
-      });
+          }
+        }),
+        listen<number[]>("mic-level", (event) => {
+          const raw = event.payload as number[];
+          targetLevelsRef.current = interpolateLevels(raw, BAR_COUNT);
+        }),
+      ]);
 
-      const unlistenLevel = await listen<number[]>("mic-level", (event) => {
-        const raw = event.payload as number[];
-        targetLevelsRef.current = interpolateLevels(raw, BAR_COUNT);
-      });
-
-      return () => {
-        unlistenShow();
-        unlistenHide();
-        unlistenLevel();
-      };
+      if (cancelled) {
+        us();
+        uh();
+        ul();
+      } else {
+        unlistenShow = us;
+        unlistenHide = uh;
+        unlistenLevel = ul;
+      }
     };
 
     setupEventListeners();
+
+    return () => {
+      cancelled = true;
+      unlistenShow?.();
+      unlistenHide?.();
+      unlistenLevel?.();
+    };
   }, []);
 
   useEffect(() => {
