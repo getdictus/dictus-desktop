@@ -92,6 +92,23 @@ function easeInOutCubic(t: number): number {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
+// Cubic Hermite spline from (startPos, startVelocity) to (endPos, velocity=0).
+// startVelocity is in position-units per normalized-time-unit (multiply real-
+// time velocity by the duration in seconds to get the correct scaling).
+function hermiteToTarget(
+  startPos: number,
+  startVelocity: number,
+  endPos: number,
+  t: number,
+): number {
+  const t2 = t * t;
+  const t3 = t2 * t;
+  const h00 = 2 * t3 - 3 * t2 + 1;
+  const h10 = t3 - 2 * t2 + t;
+  const h01 = -2 * t3 + 3 * t2;
+  return h00 * startPos + h10 * startVelocity + h01 * endPos;
+}
+
 const PROCESSING_PHASE_RATE = 0.7; // Hz
 const OUTRO_CENTER_MS = 300;
 const OUTRO_COLLAPSE_MS = 400;
@@ -124,6 +141,7 @@ const RecordingOverlay: React.FC = () => {
   const reducedMotionRef = useRef<boolean>(false);
   const outroStartTimeRef = useRef<number | null>(null);
   const outroStartPeakPosRef = useRef<number>(0);
+  const outroStartVelocityRef = useRef<number>(0);
   const direction = getLanguageDirection(i18n.language);
 
   useEffect(() => {
@@ -167,16 +185,47 @@ const RecordingOverlay: React.FC = () => {
           if (outroStartTimeRef.current !== null) return;
 
           if (stateRef.current === "processing" && !reducedMotionRef.current) {
-            // Outro: freeze the cylon's phase at the position it had at
-            // hide-time, then slide the peak from that frozen position to
-            // center over Phase 1, then collapse. Freezing the phase removes
-            // the cylon's natural slow-velocity moments near extremes from
-            // the outro entirely — bars near the peak no longer hang at
-            // sub-pixel changes for several frames in a row.
+            // Outro: capture the cylon's current peak position AND its
+            // instantaneous velocity, then drive Phase 1 via a velocity-
+            // matched Hermite spline. Velocity continuity at the handoff
+            // eliminates the "abrupt stop" Pierre still perceives with the
+            // zero-derivative easeInOutCubic curve.
+            //
+            // Cap the velocity at 3 × distance-to-center in normalized time
+            // units — that's the largest velocity for which the Hermite
+            // remains monotonic. Above 3D the spline overshoots and
+            // U-turns, which reintroduces the perceived freeze at the
+            // U-turn point.
+            //
+            // If the cylon is moving away from center, we use velocity 0
+            // (any non-zero velocity in that direction guarantees a
+            // U-turn) — same visual as the previous purely-eased Phase 1
+            // for those cases, kept as a fallback.
             const currentPhase = phaseRef.current;
-            outroStartPeakPosRef.current =
+            const currentPeakPos =
               ((BAR_COUNT - 1) * (1 + Math.sin(2 * Math.PI * currentPhase))) /
               2;
+            const centerPosCapture = (BAR_COUNT - 1) / 2;
+            const directionToCenter = centerPosCapture - currentPeakPos;
+            const distanceToCenter = Math.abs(directionToCenter);
+            const cylonVelocity =
+              (BAR_COUNT - 1) *
+              Math.PI *
+              PROCESSING_PHASE_RATE *
+              Math.cos(2 * Math.PI * currentPhase);
+            const movingTowardCenter =
+              cylonVelocity * directionToCenter > 0 && distanceToCenter > 0.01;
+            let outroStartVelocity = 0;
+            if (movingTowardCenter) {
+              const cylonV_normalized =
+                cylonVelocity * (OUTRO_CENTER_MS / 1000);
+              const monotoneCap = 3 * distanceToCenter;
+              outroStartVelocity =
+                Math.sign(cylonV_normalized) *
+                Math.min(Math.abs(cylonV_normalized), monotoneCap);
+            }
+            outroStartPeakPosRef.current = currentPeakPos;
+            outroStartVelocityRef.current = outroStartVelocity;
             outroStartTimeRef.current = performance.now();
             window.setTimeout(() => {
               outroStartTimeRef.current = null;
@@ -229,17 +278,19 @@ const RecordingOverlay: React.FC = () => {
         const elapsed = timestamp - outroStartTimeRef.current;
         const centerPos = (BAR_COUNT - 1) / 2;
         if (elapsed < OUTRO_CENTER_MS) {
-          // Outro phase 1: phase is frozen at hide-time (no cylon advance),
-          // and the peak slides from its captured position to center via
-          // easeInOutCubic. Freezing the phase eliminates the cylon's
-          // natural slow-velocity moments — the source of the perceived
-          // freeze — because the peak is now driven entirely by the ease
-          // curve, which has a monotone deceleration profile from start to
-          // end.
+          // Outro phase 1: Hermite spline from (captured peak position with
+          // matched-and-capped cylon velocity) to (center with velocity 0).
+          // The captured starting velocity matches the cylon's instantaneous
+          // velocity at hide-time (when toward center, capped at 3*distance
+          // for monotonicity), so no perceptible velocity discontinuity at
+          // the handoff and no U-turn mid-trajectory.
           const t = elapsed / OUTRO_CENTER_MS;
-          const eased = easeInOutCubic(t);
-          const peakPos =
-            outroStartPeakPosRef.current * (1 - eased) + centerPos * eased;
+          const peakPos = hermiteToTarget(
+            outroStartPeakPosRef.current,
+            outroStartVelocityRef.current,
+            centerPos,
+            t,
+          );
           targets = cylonPeakAtPosition(BAR_COUNT, peakPos);
         } else {
           // Outro phase 2: collapse the centered peak smoothly to zero
