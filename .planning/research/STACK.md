@@ -559,3 +559,376 @@ No other new secrets. `GITHUB_TOKEN` already available in Actions context for PR
 
 _Stack research for: Dictus Desktop v1.2 — Polish & Automation addendum_
 _Researched: 2026-04-15_
+
+---
+---
+
+# Stack Research — v1.3 Smart Modes & Local LLM (Addendum)
+
+**Project:** Dictus Desktop v1.3
+**Researched:** 2026-05-29
+**Scope:** NEW Rust crate additions only — embedded LLM runtime, in-app model downloader extension, Smart Modes data model + shortcut binding, translation model recommendations. Core app stack (Tauri 2.x, Rust, React 18, TypeScript, Tailwind, Zustand) unchanged and not re-researched.
+**Confidence:** HIGH for llama-cpp-2 build system internals (verified against llama-cpp-sys-2 build.rs source); HIGH for shortcut dynamic registration (verified against codebase); MEDIUM for model quality recommendations (verified against HuggingFace model cards and community benchmarks); LOW for mistral.rs Vulkan maturity (single-source, contradictory signals)
+
+---
+
+## What Already Exists (Do Not Re-Add)
+
+| Component | Location | Relevance to v1.3 |
+|-----------|----------|--------------------|
+| `tauri-plugin-global-shortcut = "2.3.1"` | `Cargo.toml:87` | Smart Modes dynamic shortcut registration already works — same API, more binding IDs |
+| `reqwest = "0.12"` + `futures-util = "0.3"` | `Cargo.toml:62-63` | Download + streaming already used by `managers/model.rs` — reuse for LLM model downloader |
+| `sha2 = "0.10"` | `Cargo.toml:72` | SHA256 verification already implemented in `ModelManager::verify_sha256` |
+| `tar + flate2` | `Cargo.toml:73-74` | tar.gz extraction already implemented in `ModelManager::download_model` |
+| `transcribe-rs` with Metal/Vulkan per platform | `Cargo.toml:73,92-109` | Pattern for per-platform GPU feature gating already established in codebase |
+| `LLMPrompt`, `PostProcessProvider`, `ShortcutBinding` | `settings.rs` | Existing settings schema to extend for Smart Modes |
+| `register_shortcut` / `unregister_shortcut` | `shortcut/tauri_impl.rs` | Dynamic shortcut registration already proven working — Smart Modes just adds more binding IDs |
+| `llm_client.rs` (HTTP path) | `src-tauri/src/llm_client.rs` | Existing cloud/Ollama path stays as-is; embedded runtime is an additional local code path |
+
+---
+
+## Recommendation: Embedded LLM Runtime
+
+### Decision: `llama-cpp-2` (via `llama-cpp-sys-2`)
+
+**Use `llama-cpp-2 = "0.1.146"` (current as of 2026-05-29).**
+
+This is the Rust binding layer over llama.cpp. It is the correct choice for Dictus because:
+
+1. **GGUF is the only format that matters.** All downloadable community models use GGUF. `llama-cpp-2` is the canonical Rust GGUF loader — it wraps llama.cpp directly and is kept in sync with every llama.cpp release.
+
+2. **GPU backends match Dictus's existing pattern.** The build system (`llama-cpp-sys-2`) gates backends identically to how `transcribe-rs` is already gated:
+   - macOS: Metal enabled **automatically** (no Cargo feature flag needed, unconditional framework link in `build.rs`)
+   - Windows/Linux: `vulkan` Cargo feature → sets `GGML_VULKAN=ON`, requires `VULKAN_SDK` env var at build time
+   - CUDA: `cuda` Cargo feature, optional, not required for v1.3
+
+3. **No C++ build surprise.** The project already builds `transcribe-rs` which also wraps C/C++ via CMake. The Cargo build pipeline knows how to handle this. Adding another CMake-based crate is low-risk.
+
+4. **License:** Apache-2.0 OR MIT. Dictus is MIT. Compatible.
+
+5. **Grammar/structured output:** `llama-cpp-2` exposes the llama.cpp GBNF grammar API. JSON-schema-to-grammar conversion is available via the `gbnf` crate (`0.3.x`). Post-processing for Smart Modes does not require structured output — plain text response is sufficient — so this is optional.
+
+6. **Token streaming:** `llama-cpp-2` uses a synchronous token-by-token loop (call `decode()` then `sample()`). Wrap in `tokio::task::spawn_blocking` to avoid blocking the async runtime — same pattern already used in `ModelManager::verify_sha256`. Stream tokens to the frontend via Tauri's `app_handle.emit()` events, same as the existing `model-download-progress` pattern.
+
+---
+
+### Why Not the Alternatives
+
+**candle (Hugging Face):**
+- GGUF support exists but is described as partial and not primary. The candle team focuses on safetensors and its own quantization formats. Loading arbitrary community GGUF models (all Qwen3/Gemma3 variants) is unreliable.
+- Vulkan backend is not officially supported. Metal is supported for macOS ARM64 only; Intel Mac + non-NVIDIA GPU users fall back to CPU.
+- Requires building custom inference code per model architecture. `llama-cpp-2` handles all GGUF models generically.
+- Binary size is comparable but the programming model requires more integration work.
+- **Use candle if:** You are targeting a single known model architecture and want pure Rust with no C++ dependency chain. Not the right fit for Dictus's "user picks any GGUF" model.
+
+**mistral.rs:**
+- Built on top of candle — inherits candle's GGUF limitations.
+- GGUF support improved but still incomplete for arbitrary models (confirmed by community reports as of early 2026).
+- Vulkan: listed as supported in README but evidence for production quality on Windows/Linux is sparse (LOW confidence). All high-quality benchmarks are CUDA or Metal only.
+- v0.8.0 (April 2, 2026) is the latest release. Active but complex dependency tree adds significant binary size (100+ MB estimated for full feature set).
+- Server-first design — the Rust crate API is usable as a library but the intended usage model is running `mistralrs-server`. Embedding cleanly in a Tauri app requires more glue work.
+- **Use mistral.rs if:** You want streaming + PagedAttention for high-throughput multi-user serving. Not required for single-user desktop app with one inference at a time.
+
+**llama_cpp (separate crate, not the same as llama-cpp-2):**
+- Version 0.3.2 on crates.io. Older abstraction layer, less actively tracked to llama.cpp upstream. `llama-cpp-2` explicitly says it prioritizes staying current with llama.cpp changes.
+- Avoid — redundant with llama-cpp-2 and less maintained.
+
+---
+
+## Cargo.toml Changes Required
+
+Add to `src-tauri/Cargo.toml` under `[dependencies]`:
+
+```toml
+llama-cpp-2 = "0.1"
+```
+
+Add per-platform feature gates (following the existing transcribe-rs pattern at lines 91-109):
+
+```toml
+# macOS: Metal is automatic — no feature flag needed in llama-cpp-2.
+# The llama-cpp-sys-2 build.rs unconditionally links Metal frameworks on Apple targets.
+
+[target.'cfg(target_os = "macos")'.dependencies]
+llama-cpp-2 = { version = "0.1" }
+
+[target.'cfg(windows)'.dependencies]
+llama-cpp-2 = { version = "0.1", features = ["vulkan"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+llama-cpp-2 = { version = "0.1", features = ["vulkan"] }
+```
+
+**Vulkan build requirement for CI (Windows/Linux runners):** The Vulkan SDK must be installed on the build runner before `cargo build`. Add to `.github/workflows/build.yml` for Windows and Linux jobs:
+
+```yaml
+# Windows
+- name: Install Vulkan SDK
+  uses: humbletim/install-vulkan-sdk@v1.2.0
+  with:
+    version: latest
+    cache: true
+
+# Linux
+- name: Install Vulkan SDK
+  run: |
+    sudo apt-get update
+    sudo apt-get install -y libvulkan-dev vulkan-tools
+```
+
+**VULKAN_SDK environment variable:** The `llama-cpp-sys-2` build.rs checks `VULKAN_SDK`. On Linux it falls back to system Vulkan if unset. On Windows it panics if unset. Set it explicitly in CI:
+
+```yaml
+env:
+  VULKAN_SDK: ${{ steps.vulkan.outputs.VULKAN_SDK }}
+```
+
+**macOS build:** No additional CI changes. Metal is the automatic macOS GPU backend. The existing macOS runner builds `transcribe-rs` with Metal already — the same build environment works.
+
+**Binary size impact:** Adding `llama-cpp-2` adds the llama.cpp C++ library to the binary. Estimated addition to the compiled binary is 15-30 MB (comparable to the whisper.cpp component already shipped via `transcribe-rs`). The model files themselves are not bundled — they are downloaded to user app data, same as transcription models.
+
+---
+
+## Model Manager Extension
+
+### New LLM Model Type
+
+Add a new variant to the existing `EngineType` enum in `managers/model.rs`:
+
+```rust
+pub enum EngineType {
+    // ... existing variants ...
+    LocalLlm,  // llama-cpp-2 GGUF LLM models
+}
+```
+
+The `ModelInfo` struct and the entire download/verify/extract/cancel pipeline in `ModelManager` can be **reused without modification** for LLM models. LLM models are single GGUF files (`.gguf` extension, same byte-stream as `.bin` but different extension). The only code addition needed is:
+
+1. Registering initial LLM model entries in `ModelManager::new()` — same pattern as existing Whisper entries
+2. A new `get_llm_model_path(model_id)` helper that checks `EngineType::LocalLlm` entries specifically
+3. A new `managers/llm_runtime.rs` (see below)
+
+### Model Registry — Recommended Initial Entries
+
+Curated list of models to ship in v1.3. All are from official publisher repos on Hugging Face, available as GGUF, and verified to run on llama.cpp:
+
+| Model ID | Display Name | File | Size | Source | GPU VRAM (Q4_K_M) | Use Case |
+|----------|-------------|------|------|--------|-------------------|---------|
+| `qwen3-4b` | Qwen3 4B | `Qwen3-4B-Q4_K_M.gguf` | ~2.5 GB | `Qwen/Qwen3-4B-GGUF` | ~3 GB | General post-processing, Smart Modes default |
+| `qwen2.5-1.5b` | Qwen2.5 1.5B | `Qwen2.5-1.5B-Instruct-Q4_K_M.gguf` | ~1.0 GB | `Qwen/Qwen2.5-1.5B-Instruct-GGUF` | ~1.5 GB | Low-RAM fallback, older hardware |
+| `translate-gemma-4b` | TranslateGemma 4B | `translategemma-4b-it-Q4_K_M.gguf` | ~2.49 GB | `mradermacher/translategemma-4b-it-GGUF` | ~3 GB | Translation-specific Smart Mode |
+
+**Rationale:**
+- **Qwen3-4B** (Q4_K_M, ~2.5 GB): Best general-purpose choice for Smart Modes prompts. Supports 100+ languages, strong instruction following, near-lossless quality at Q4_K_M quantization. The thinking/non-thinking mode toggle is a bonus — use non-thinking (no `<think>` in prompt) for post-processing latency.
+- **Qwen2.5-1.5B** (Q4_K_M, ~1 GB): Fallback for users with 4 GB RAM devices or preference for speed over quality. Still supports 29+ languages.
+- **TranslateGemma 4B**: Google's translation-specialized variant of Gemma 3. Trained specifically for translation across 55 language pairs. Better translation quality than a general-purpose model of the same size. Q4_K_M is 2.49 GB. Available from `mradermacher/translategemma-4b-it-GGUF` on Hugging Face.
+
+**Model source strategy (MEDIUM confidence):** Hosting on Dictus's own CDN (per deferred INFR-01) is the correct long-term approach. For v1.3, download directly from HuggingFace CDN (`huggingface.co/.../.../resolve/main/...`). No authentication required for public repos. The existing `reqwest` HTTP client handles this correctly. No new download infrastructure needed.
+
+**SHA256:** Compute checksums from the downloaded files and embed in `ModelInfo.sha256` before shipping. HuggingFace does not provide SHA256 in a machine-readable format for arbitrary GGUF files — compute manually once and hardcode, same as existing transcription model entries.
+
+**Quantization presets — what to offer:**
+- Default: `Q4_K_M` — near-lossless quality, practical size (~2.5 GB for 4B models)
+- Optional larger: `Q5_K_M` or `Q8_0` — ship only if storage budget allows; not recommended for v1.3 scope
+- Do NOT offer Q2 or Q3 variants — quality degradation is noticeable for instruction-following tasks
+
+---
+
+## New Manager: `managers/llm_runtime.rs`
+
+Create a new `LlmRuntimeManager` that mirrors the lifecycle of the existing `TranscriptionManager`:
+
+```
+LlmRuntimeManager {
+    model_path: Option<PathBuf>,      // path to loaded .gguf file
+    model: Option<LlamaModel>,        // llama-cpp-2 model handle
+    context: Option<LlamaContext>,    // llama-cpp-2 context
+    unload_timer: Option<JoinHandle>, // for ModelUnloadTimeout
+}
+```
+
+**Key methods:**
+- `load_model(path: PathBuf) -> Result<()>` — load GGUF, create context, cancel existing unload timer
+- `unload_model()` — drop model + context, free VRAM
+- `run_prompt(system: Option<String>, user: String, tx: Sender<String>) -> Result<()>` — generate tokens, send via channel; call from `spawn_blocking`
+- `schedule_unload(timeout: ModelUnloadTimeout)` — schedule `unload_model` after inactivity timeout (reuse existing `ModelUnloadTimeout` enum from `settings.rs`)
+
+**Integration with post-processing pipeline:** The existing `transcription_coordinator.rs` calls `actions.rs` which calls `llm_client.rs`. For the embedded path, add a branch in `actions.rs`:
+
+```rust
+match provider.id.as_str() {
+    "embedded" => llm_runtime.run_prompt(system, user, ...).await,
+    _ => llm_client::send_chat_completion(...).await,
+}
+```
+
+The "embedded" provider ID would be a new `PostProcessProvider` entry in `settings.rs` `default_post_process_providers()`, placed first in the Local tab alongside Apple Intelligence and Custom (Ollama).
+
+---
+
+## Smart Modes — Settings Schema Extension
+
+### What Changes in `settings.rs`
+
+**Current state:** `LLMPrompt { id, name, prompt }` is a flat list with a single `post_process_selected_prompt_id`.
+
+**Required for Smart Modes:** Each mode needs its own optional shortcut binding. Extend `LLMPrompt`:
+
+```rust
+pub struct LLMPrompt {
+    pub id: String,
+    pub name: String,
+    pub prompt: String,
+    #[serde(default)]
+    pub shortcut: Option<String>,          // e.g. "option+shift+1"
+    #[serde(default)]
+    pub target_language: Option<String>,   // for translation modes, e.g. "fr", "zh"
+    #[serde(default)]
+    pub is_builtin: bool,                  // true = shipped default, not deletable
+}
+```
+
+The `shortcut` field maps directly to what `register_shortcut` expects in `binding.current_binding`. The binding ID for a Smart Mode shortcut is `"smart_mode:{mode_id}"` — a namespaced format that the shortcut handler can route to the correct mode.
+
+**`AppSettings` extension:**
+
+```rust
+// Replace post_process_selected_prompt_id with active_smart_mode_id for clarity
+// Keep old field with serde(rename) for backwards compat
+pub active_smart_mode_id: Option<String>,
+
+// Selected embedded LLM model
+pub embedded_llm_model_id: Option<String>,
+```
+
+No schema migration is needed for existing `LLMPrompt` records — the new fields have `#[serde(default)]` and will deserialize as `None`/`false` from existing stored JSON.
+
+### Dynamic Shortcut Registration for Smart Modes
+
+**This already works.** The existing `register_shortcut` / `unregister_shortcut` API in `src-tauri/src/shortcut/tauri_impl.rs` is the correct API. No changes to the shortcut infrastructure are needed.
+
+**Pattern for Smart Mode shortcut registration:**
+
+```rust
+// On app startup, after loading settings:
+for prompt in settings.post_process_prompts {
+    if let Some(shortcut_str) = prompt.shortcut {
+        let binding = ShortcutBinding {
+            id: format!("smart_mode:{}", prompt.id),
+            name: prompt.name.clone(),
+            description: format!("Apply '{}' Smart Mode", prompt.name),
+            default_binding: shortcut_str.clone(),
+            current_binding: shortcut_str,
+        };
+        let _ = register_shortcut(app, binding);
+    }
+}
+
+// In handler.rs, add routing for "smart_mode:" prefix:
+if binding_id.starts_with("smart_mode:") {
+    let mode_id = binding_id.trim_start_matches("smart_mode:");
+    coordinator.send_input_with_mode(mode_id, ...);
+    return;
+}
+```
+
+**Dynamic re-registration on settings change:** When the user changes a mode's shortcut, call `unregister_shortcut` for the old binding and `register_shortcut` for the new one. The existing Tauri command pattern in `commands/` handles this. No infrastructure change needed.
+
+**Linux caveat (already documented in codebase):** `register_cancel_shortcut` is skipped on Linux due to instability with dynamic registration (see comment in `tauri_impl.rs`). Smart Mode shortcuts should apply the same Linux skip for dynamic registration during active recording, but static registration at startup is safe on all platforms.
+
+---
+
+## Translation Smart Modes
+
+### Model Considerations
+
+Two strategies are valid:
+
+**Strategy A: Single multilingual model (Qwen3-4B or Qwen2.5-1.5B)**
+- Works for all language pairs
+- Model already downloaded for general post-processing
+- Quality is "good but not specialized" for translation
+- Prompt: `"Translate the following text to {target_language}. Return only the translation, no commentary.\n\n{output}"`
+- Recommended for v1.3 because it requires no additional model download
+
+**Strategy B: TranslateGemma 4B (separate download)**
+- Specialized for translation, trained on WMT25/WMT24++ datasets covering 55 language pairs
+- Q4_K_M is 2.49 GB — comparable to Qwen3-4B, so users need two 2.5 GB models if they want both
+- Superior translation quality, especially for less-common language pairs
+- Optional download in the model library; not a forced install
+
+**Recommendation:** Ship Strategy A as default (no extra download). Offer TranslateGemma as an optional model in the LLM model picker for users who want dedicated translation quality.
+
+### Translation Language Targets for v1.3
+
+Ship these as built-in translation Smart Modes (all use the active LLM, no dedicated model required):
+
+| Mode ID | Display Name | Target Code |
+|---------|-------------|-------------|
+| `translate_en` | Translate to English | `en` |
+| `translate_fr` | Translate to French | `fr` |
+| `translate_es` | Translate to Spanish | `es` |
+| `translate_zh` | Translate to Chinese | `zh` |
+| `translate_de` | Translate to German | `de` |
+| `translate_ja` | Translate to Japanese | `ja` |
+
+Users can add more via the Smart Mode editor (same as custom prompts). Translation modes are `is_builtin: true` — they appear in the UI but can be disabled, not deleted.
+
+---
+
+## Alternatives Considered
+
+| Category | Recommended | Alternative | Why Not |
+|----------|-------------|-------------|---------|
+| LLM runtime | `llama-cpp-2` (llama.cpp Rust bindings) | `candle` (HuggingFace pure Rust ML) | candle's GGUF support is incomplete for arbitrary community models; Vulkan backend missing; requires per-architecture inference code |
+| LLM runtime | `llama-cpp-2` | `mistral.rs` | Built on candle; Vulkan maturity is unverified; server-first design requires more embedding glue; larger dependency tree |
+| LLM runtime | `llama-cpp-2` | llama.cpp sidecar binary | Sidecar requires per-platform binary management, version tracking, and IPC — more complexity than Cargo dep, no type safety |
+| Default Smart Mode model | Qwen3-4B Q4_K_M | Llama 3.2 3B | Qwen3-4B outperforms on multilingual and instruction following at comparable size; Qwen family already used in Ollama/Handy ecosystem |
+| Translation model | Qwen3-4B (general) + optional TranslateGemma | TranslateGemma only | Forcing a dedicated translation model download for users who only want general Smart Modes is poor UX |
+| Model source | HuggingFace CDN (direct) | Bundle models in app | Models are 1-2.5 GB each — bundling is impractical. Download on demand, same as transcription models |
+| Model format | GGUF | safetensors | safetensors requires candle or PyTorch; GGUF is the llama.cpp native format and universally supported |
+
+---
+
+## What NOT to Add in v1.3
+
+| Item | Reason |
+|------|--------|
+| CUDA feature flag | Optional GPU for NVIDIA users — adds Windows/Linux CI complexity. Metal + Vulkan cover the mandatory GPU path. Defer to v1.4 if NVIDIA users request it. |
+| `hf-hub` crate | The existing `reqwest`-based downloader in `ModelManager` is sufficient for HuggingFace CDN URLs. `hf-hub` adds ~1 MB of dependencies for metadata features not needed. |
+| Streaming token display in overlay | Architecture change to overlay; v1.3 post-processing is fire-and-wait. Token streaming to overlay is a future UX enhancement. |
+| Per-mode provider selection | Each Smart Mode using a different provider (cloud vs embedded) adds significant UI and settings complexity. All Smart Modes use the active post-processing provider in v1.3. |
+| GGUF Q2/Q3 quantization presets | Quality is noticeably degraded for instruction-following at Q2/Q3. Only Q4_K_M, Q5_K_M, Q8_0 are worth offering. |
+| Model download via Torrents or P2P | Unnecessary complexity. HuggingFace CDN is reliable and free. |
+| Automatic model selection based on VRAM | Device VRAM detection is non-trivial cross-platform. Let the user choose; show model size clearly in the UI. |
+| `gbnf` crate for structured output | Smart Modes prompts return plain text. JSON schema constraints are not needed for post-processing. Add only if a future Smart Mode requires structured data extraction. |
+
+---
+
+## Version Compatibility
+
+| Package | Required Version | Notes |
+|---------|-----------------|-------|
+| `llama-cpp-2` | `0.1` (currently `0.1.146`) | Does not follow semver — tracks llama.cpp release cadence. Pin to `"0.1"` and expect frequent patch bumps. |
+| `llama-cpp-sys-2` | pulled as dependency of `llama-cpp-2` | Do not add directly; managed transitively. |
+| `tauri-plugin-global-shortcut` | `2.3.1` (already installed) | No change needed for Smart Mode shortcuts. |
+| Vulkan SDK (CI) | Latest (1.3.x) | Windows CI runner requires explicit install. Linux CI requires `libvulkan-dev`. |
+
+---
+
+## Sources
+
+- [`llama-cpp-sys-2` build.rs source at docs.rs](https://docs.rs/crate/llama-cpp-sys-2/latest/source/build.rs) — Metal auto-detection (unconditional framework link), Vulkan feature flag → `GGML_VULKAN=ON`, CUDA feature flag → `GGML_CUDA=ON`, VULKAN_SDK env var requirement on Windows. **HIGH confidence** — direct source code.
+- [`utilityai/llama-cpp-rs` GitHub](https://github.com/utilityai/llama-cpp-rs) — Apache-2.0/MIT license, 575 stars, 146+ releases, actively maintained. **HIGH confidence.**
+- [`EricLBuehler/mistral.rs` GitHub](https://github.com/EricLBuehler/mistral.rs) — v0.8.0 (April 2, 2026), MIT license. Feature summary: CUDA FlashAttention, Metal, PagedAttention. Vulkan claim in docs only. **MEDIUM confidence** on Vulkan quality.
+- [huggingface/candle GitHub](https://github.com/huggingface/candle) — GGUF support confirmed partial (Q2K/Q4K/Q5K), pure Rust, serverless-first design. No Vulkan. **HIGH confidence** on design philosophy and limitations.
+- [`Qwen/Qwen3-4B-GGUF` on Hugging Face](https://huggingface.co/Qwen/Qwen3-4B-GGUF) — Q4_K_M file size confirmed 2.5 GB, 100+ language support, official Qwen team publish. **HIGH confidence.**
+- [`Qwen/Qwen2.5-1.5B-Instruct-GGUF` on Hugging Face](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF) — Q4_K_M ~1 GB, 29+ language support, official. **HIGH confidence.**
+- [`mradermacher/translategemma-4b-it-GGUF` on Hugging Face](https://huggingface.co/mradermacher/translategemma-4b-it-GGUF) — Q4_K_M 2.49 GB, based on Google's TranslateGemma. **HIGH confidence** on file size; **MEDIUM confidence** on translation quality ranking vs Qwen3-4B (no head-to-head benchmark found).
+- [TranslateGemma Technical Report](https://arxiv.org/pdf/2601.09012) — 55 language pairs, WMT25/WMT24++ benchmarks, SFT + RL training methodology. **HIGH confidence** on translation specialization claims.
+- [tauri-plugin-global-shortcut docs.rs](https://docs.rs/tauri-plugin-global-shortcut) — `GlobalShortcutExt` trait, `on_shortcut`, `unregister` APIs confirmed. **HIGH confidence** — verified against existing working implementation in `shortcut/tauri_impl.rs`.
+- `src-tauri/src/shortcut/tauri_impl.rs` (codebase) — `register_shortcut` / `unregister_shortcut` / `on_shortcut` pattern confirmed working and already tested for dynamic per-binding closures. **HIGH confidence** — direct code inspection.
+- `src-tauri/src/managers/model.rs` (codebase) — SHA256 verify, partial-resume download, tar.gz extraction, cancel flags, progress events all confirmed working and reusable for LLM models. **HIGH confidence** — direct code inspection.
+
+_Stack research for: Dictus Desktop v1.3 — Smart Modes & Local LLM_
+_Researched: 2026-05-29_

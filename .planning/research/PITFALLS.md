@@ -790,3 +790,739 @@ _See git history for the full v1.1 pitfalls. Key items still active:_
 
 _Pitfalls research for: Tauri v2 fork — Dictus Desktop v1.2 Polish & Automation_
 _Researched: 2026-04-15_
+
+
+---
+---
+
+## v1.3 Scope — Smart Modes & Embedded Local LLM
+
+**Updated:** 2026-05-29
+**Confidence:** HIGH (build/signing/settings from direct codebase analysis + official docs); MEDIUM (LLM inference runtime, Vulkan fallback, translation quality from multiple sources); LOW where noted.
+
+This section adds pitfalls specific to v1.3: embedded LLM runtime (llama.cpp or candle/mistral.rs), in-app GGUF model downloader, Smart Modes (prompt↔shortcut bindings), multi-target translation, all on top of the existing Tauri 2.x / Rust / React codebase.
+
+Features added to an existing, shipping app (not greenfield), so migration risk is as important as feature risk.
+
+---
+
+## Critical Pitfalls — Cross-Platform Build & Bundling
+
+### Pitfall V3-B1: llama.cpp CMake Build System Invades Cargo Build
+
+**What goes wrong:**
+All major llama.cpp Rust bindings (`llama-cpp-2`, `llama_cpp`, `llama_cpp-rs`) shell out to CMake inside their `build.rs` to compile the C/C++ llama.cpp source tree. This means `cargo build` on a developer machine or CI runner silently requires CMake, a C++ compiler, and — for GPU backends — Metal shaders SDK (macOS) or the Vulkan SDK headers (`SPIRV-Headers`). On a fresh CI runner that only has Rust installed, the build will fail inside the `build.rs` with a CMake not-found error after a long compile attempt with zero useful output about what was missing.
+
+The existing `transcribe-rs` crate already does this for Whisper (Metal/Vulkan features per platform in Cargo.toml). Adding a second crate that also invokes CMake means two parallel CMake invocations during build — doubling build time and potential for CMake cache conflicts if both crates write to overlapping directories.
+
+**Why it happens:**
+Developers test on their own machine where CMake and Vulkan SDK are already installed. CI runners are fresh. The failure mode is a `build.rs` panic buried in hundreds of lines of CMake output.
+
+**How to avoid:**
+- Audit CI runner images for all required native tools before adding the LLM dependency: CMake 3.15+, a C++17 compiler, Vulkan SDK headers (Linux), Metal toolchain (macOS — already present via Xcode). Document in the repo's setup guide.
+- Add `SPIRV-Headers` installation to the Linux CI step explicitly: `apt-get install -y spirv-headers` is NOT pulled in by `libvulkan-dev` alone on Debian/Ubuntu.
+- Check if both `transcribe-rs` and the chosen LLM crate vendor the same llama.cpp version. Duplicate vendored copies of ggml/llama will cause linker symbol conflicts. Prefer a crate that allows sharing ggml with `transcribe-rs` or isolate via separate feature flags.
+- Test a clean CI build (no ccache, no cache restore) before declaring the CI matrix green.
+
+**Warning signs:**
+- CI build fails on Linux runners with "CMake not found" or "spirv.hpp not found" after adding the LLM crate.
+- `cargo build` produces linker errors about duplicate `ggml_*` symbols when both `transcribe-rs` and the LLM crate are active.
+- Build succeeds on the developer's machine but fails on every CI platform.
+
+**Phase to address:** LLM runtime integration — first CI pipeline run with the new dependency.
+
+---
+
+### Pitfall V3-B2: Metal Shader Compilation Not Included in Tauri Release Bundle
+
+**What goes wrong:**
+llama.cpp's Metal backend compiles MSL shaders at model load time on macOS (or at build time if precompiled). The runtime shader compilation path requires `metallib` to be accessible, and — depending on the binding crate — the `.metal` source files or pre-compiled `.metallib` files must be present in the app bundle's `Resources` directory. Tauri does not automatically include arbitrary native resources from Cargo dependency source trees.
+
+If these shader files are missing from the bundle, the Metal backend will silently fall back to CPU on macOS (best case) or crash with a Metal shader compilation error at model load time (worse case). This failure will not appear in the Xcode release build on the developer's machine (where the Cargo source tree is accessible), only in the distributed `.app` bundle.
+
+**Why it happens:**
+Tauri's `bundle.resources` array in `tauri.conf.json` must be explicitly populated. Resources from Cargo dependency directories are not auto-included. Developers test with `tauri dev` (not a bundled `.app`), where the source tree is present and Metal shaders are found.
+
+**How to avoid:**
+- After initial LLM runtime integration, test with a release build (`.app` from `tauri build`), not just `tauri dev`.
+- Add any required `.metallib` or `.metal` shader files to `tauri.conf.json` `bundle.resources`. The path must be relative and the file must be at the listed path at build time.
+- Prefer a Rust binding that pre-compiles Metal shaders to a `.metallib` at build time and places it in `OUT_DIR` — then copy from `OUT_DIR` into the bundle resource path.
+- Add a startup check: on macOS, detect whether Metal shader compilation succeeds and log a clear warning if falling back to CPU.
+
+**Warning signs:**
+- Release `.app` uses CPU-only inference on macOS M-series despite Metal being available.
+- Model load produces a `MTLCompileError` in Console.app logs.
+- `tauri dev` performance is GPU-accelerated but the distributed `.app` is CPU-only.
+
+**Phase to address:** LLM runtime integration — post-bundle smoke test required on macOS.
+
+---
+
+### Pitfall V3-B3: Vulkan Driver Absent on User Machines — Silent CPU Fallback or Crash
+
+**What goes wrong:**
+On Windows, Vulkan drivers ship with GPU drivers (NVIDIA, AMD, Intel). Most modern Windows machines have Vulkan. However, older Windows installs, VMs, or machines with only integrated graphics may have outdated GPU drivers without Vulkan support. On Linux, Vulkan is an optional install; a headless server or minimal desktop install will not have `libvulkan.so` at all.
+
+Behavior when Vulkan is requested but unavailable:
+- llama.cpp may segfault on CPU fallback if the Vulkan prebuilt binary is linked against `libvulkan.so.1` and that library is not present (dynamic linker error before inference starts).
+- Alternatively, the Vulkan backend silently falls back to CPU — inference works but is unexpectedly slow, with no notification to the user.
+- On AMD GPUs (Windows), driver version matters: AMD driver 25.11.1 has a known crash with Vulkan SDK 1.4.328.1 as of May 2026.
+
+**How to avoid:**
+- At LLM runtime startup, probe available backends before committing to one: attempt Vulkan device enumeration, catch the failure, fall back to CPU, and emit a log + user-visible warning.
+- On Windows, ship the Vulkan loader DLL (`vulkan-1.dll`) in the app bundle rather than relying on system installation. This is what llama.cpp's own Windows prebuilt packages do.
+- Add a settings UI indicator showing the active backend (Vulkan / Metal / CPU) so users can see what they got.
+- For Linux, use dynamic linking with a graceful load failure path: `dlopen("libvulkan.so.1")` and fall back to CPU if it returns null.
+
+**Warning signs:**
+- User reports LLM inference "not working" on Windows after installing a GPU driver update.
+- LLM inference is unexpectedly slow (CPU speeds) on machines that have GPUs.
+- App crashes on launch on Linux machines without Vulkan.
+
+**Phase to address:** LLM runtime integration — GPU backend abstraction layer.
+
+---
+
+### Pitfall V3-B4: Binary Size Explosion and Notarization Timeout
+
+**What goes wrong:**
+Adding a fully featured LLM runtime with GPU backends significantly increases the binary size:
+- llama.cpp statically linked: adds ~30-50MB to the Rust binary.
+- Metal shaders bundled: +5-10MB on macOS.
+- Vulkan SPIR-V shaders: +5MB on Linux/Windows.
+- GGUF model weights (if bundled): multi-GB (but models should NOT be bundled in the binary — only the runtime).
+
+The combined effect on the macOS `.app` bundle can push the binary over 100MB. Apple's notarization service uploads the entire `.app` for scanning. Documented cases show notarization hanging for 4+ hours on large bundles (Tauri issues #8630, #14579). The existing 7-platform CI matrix already uses macOS runners at 10x the cost of Linux runners. A larger binary means longer upload times and higher CI minutes consumed.
+
+On Windows, the INFR-03 unsigned-builds situation means Windows users already see SmartScreen warnings. A larger binary is more likely to be quarantined by antivirus scanners (heuristic-based detection treats large unknown binaries with suspicion).
+
+**How to avoid:**
+- Do NOT statically link the LLM runtime into the main Tauri binary. Use a sidecar binary pattern: the LLM runtime runs as a separate managed process, communicating with the Tauri backend via IPC/stdio or a local socket. This keeps the main binary small and the sidecar separately code-signed.
+- Alternatively, use dynamic linking for the llama.cpp backend (`dylib` on macOS, `so` on Linux, `dll` on Windows) and include the shared library in the bundle's `Frameworks/` (macOS) or alongside the binary. This keeps the main binary small.
+- Set a binary size budget before starting: define the maximum acceptable size increase (e.g., +25MB) and measure after each significant addition.
+- On CI, add a step that checks the resulting `.app` bundle size and fails if it exceeds the budget.
+
+**Warning signs:**
+- `tauri build` on macOS produces a binary >150MB.
+- macOS notarization step runs for more than 30 minutes in CI.
+- Windows installer size doubles.
+- CI costs increase noticeably on the macOS runner steps.
+
+**Phase to address:** LLM runtime architecture decision — before writing any inference code, decide sidecar vs. in-process and establish size budget.
+
+---
+
+### Pitfall V3-B5: Existing Tauri Runtime Patches Conflict with LLM Crate Dependencies
+
+**What goes wrong:**
+The current `Cargo.toml` patches `tauri-runtime`, `tauri-runtime-wry`, and `tauri-utils` to a custom fork (`cjpais/tauri.git` branch `handy-2.10.2`). LLM binding crates that depend on `tauri` (e.g., for command registration) may pull in vanilla `tauri-runtime` from crates.io, creating a dependency conflict: two versions of the same crate with incompatible types.
+
+Additionally, `transcribe-rs = { version = "0.3.8", features = ["whisper-cpp", "onnx"] }` and the platform-specific variants (`whisper-metal`, `whisper-vulkan`) are already pulling ggml as a vendored C dependency. If the chosen LLM crate also vendors ggml (llama.cpp vendors ggml internally), there will be duplicate C symbols at link time: `ggml_init`, `ggml_free`, etc. The linker may silently use one version's symbols for both, causing subtle inference bugs.
+
+**Why it happens:**
+The patched Tauri fork is a non-standard dependency graph that most crates don't test against. LLM crates assume vanilla Tauri.
+
+**How to avoid:**
+- Choose an LLM crate that does NOT depend on Tauri directly (pure Rust inference library, no Tauri integration built-in). Wire it into Tauri manually.
+- Before adding the LLM crate, run `cargo tree | grep ggml` and `cargo tree | grep tauri-runtime` to identify existing versions. After adding, run again and diff — any new version entries indicate a conflict.
+- If ggml duplication occurs, use `[patch.crates-io]` to force all crates to the same ggml source — but this requires compatibility between the versions expected by `transcribe-rs` and the LLM crate. May require forking one of them.
+- Prefer `mistral.rs` or `candle` which use pure-Rust tensor backends (no ggml) to avoid the symbol collision problem entirely, at the cost of potentially lower performance and GGUF format support gaps.
+
+**Warning signs:**
+- `cargo build` emits "multiple definition of `ggml_init`" linker errors.
+- `cargo tree` shows two incompatible versions of `tauri-runtime`.
+- Tests pass but inference produces nonsense output (silent symbol conflict using wrong ggml implementation).
+
+**Phase to address:** LLM runtime architecture — dependency audit before first integration PR.
+
+---
+
+### Pitfall V3-B6: CUDA Build Breaks Non-CUDA CI Runners
+
+**What goes wrong:**
+CUDA is optional for this milestone but the project scope says "CUDA optionnel." If CUDA is expressed as a Cargo feature (e.g., `features = ["cuda"]`) and this feature is accidentally included in the default feature set or in a CI matrix step without CUDA drivers, the build will fail because `libcuda.so` or `cuda.h` are not present on the runner.
+
+The existing CI matrix is 7-platform (macOS arm64, macOS x86_64, Windows, Linux x86_64, and variants). None of these have CUDA drivers by default. Adding CUDA to the `[features]` default set will break all Linux/Windows CI builds immediately.
+
+**How to avoid:**
+- CUDA must be a non-default, opt-in feature: `features = []` default, with `features = ["cuda"]` only explicitly enabled in CUDA-specific CI jobs or local developer builds.
+- CI matrix: add a separate job `build-linux-cuda` that runs on a CUDA-capable runner (self-hosted or GitHub-hosted `ubuntu-latest-gpu`) but make it non-blocking for the main release matrix.
+- Document in the contributing guide: CUDA builds require local CUDA toolkit installation; CUDA CI is advisory not gate.
+
+**Warning signs:**
+- All Linux/Windows CI jobs fail after the LLM feature is added with "cuda.h not found".
+- Developer adds `default = ["cuda"]` to `[features]` in `Cargo.toml` thinking it's local-only.
+
+**Phase to address:** LLM runtime integration — feature flags design.
+
+---
+
+## Critical Pitfalls — Runtime Stability
+
+### Pitfall V3-R1: Inference Blocks the Tauri Main Thread — UI Freeze
+
+**What goes wrong:**
+llama.cpp inference is synchronous and CPU/GPU-intensive. If called from a `#[tauri::command]` without `async` — or if called with `async` but using `tokio::spawn` without `tokio::task::spawn_blocking` — it blocks the tokio worker thread. Tauri's event loop and the UI thread share tokio's thread pool by default. Blocking a worker thread with inference will freeze the overlay, tray menu updates, and shortcut responsiveness while inference runs. On a 3B model, inference may run for 5-30 seconds on CPU.
+
+Even with `spawn_blocking`, the `JoinHandle` must be properly managed. Dropping it (by not awaiting) means the task continues running in the background even after a cancel event is emitted.
+
+**Why it happens:**
+Developers test with fast GPU inference (<2 seconds) and don't notice the blocking. On CPU (the fallback), the same code freezes the UI for 20+ seconds.
+
+**How to avoid:**
+- Always wrap LLM inference calls in `tokio::task::spawn_blocking`. This moves the blocking work off the async thread pool.
+- Implement a cancellation token: `tokio_util::CancellationToken` or a `Arc<AtomicBool>` that the inference loop checks between tokens. When the user cancels, the flag is set and inference exits early.
+- Add a progress event: emit intermediate tokens via `app.emit("llm-token", token)` so the UI shows live output rather than appearing frozen.
+- Test the UI responsiveness (shortcut firing, tray updates, overlay animation) while a CPU inference is running before merging.
+
+**Warning signs:**
+- Overlay pill freezes during post-processing.
+- Global shortcut (cancel, new recording) does not respond during inference.
+- Tray menu becomes unresponsive while LLM is running.
+
+**Phase to address:** LLM runtime integration — async architecture, first command implementation.
+
+---
+
+### Pitfall V3-R2: Whisper + LLM Simultaneously Loaded Exhausts RAM/VRAM
+
+**What goes wrong:**
+The existing transcription pipeline loads a Whisper or Parakeet model into GPU memory (Metal/Vulkan). Adding an LLM runtime that also loads a GGUF model means both models compete for the same GPU memory pool. On a MacBook Air M2 (8GB unified memory) or a machine with a 4GB dGPU:
+- Whisper large-v3: ~2-3GB VRAM
+- A 3B Q4_K_M GGUF model: ~2GB VRAM
+- Total: 4-5GB, potentially hitting the physical limit
+
+When VRAM is exhausted, the OS will either: (a) swap the least-recently-used model to main RAM (macOS unified memory behavior, slower but not a crash), or (b) fail the model load with an out-of-memory error (dedicated VRAM on Windows/Linux).
+
+If the LLM model load fails and the failure is not caught, the post-processing pipeline will silently use no LLM (or crash).
+
+**Why it happens:**
+Developers test on 16GB M2 Pros where there's headroom. The 8GB entry-level machines (the majority of the M1/M2 install base) hit the limit.
+
+**How to avoid:**
+- Implement sequential resource management: unload Whisper before loading the LLM, then reload Whisper after. The `ModelUnloadTimeout` mechanism already exists in `settings.rs` — extend it to coordinate between the transcription and LLM managers.
+- Alternatively, offer explicit memory presets: "Low RAM mode" (Whisper tiny + LLM unloaded when not needed), "Balanced" (Whisper base + LLM 3B), "Performance" (Whisper large + LLM unloaded except during post-process).
+- At LLM load time, query available GPU memory before attempting the load. On Metal, `MTLDevice.recommendedMaxWorkingSetSize` gives the available budget. On Vulkan, query `VkPhysicalDeviceMemoryProperties`.
+- Add a user-visible memory indicator in the model picker UI.
+
+**Warning signs:**
+- App crashes or becomes unresponsive on 8GB machines after selecting a 7B LLM.
+- Users on 16GB machines report no issues; users on 8GB machines report post-processing never completing.
+- Console.app shows `MTLCommandEncoder` errors or allocation failures.
+
+**Phase to address:** LLM runtime integration + model downloader UX — memory budget before launch.
+
+---
+
+### Pitfall V3-R3: Inference Crash Brings Down the Whole Tauri Process
+
+**What goes wrong:**
+Unlike Ollama (a separate process), in-process inference means a panic, segfault, or assertion failure in the C/C++ llama.cpp code aborts the entire Tauri process. The user loses their current dictation, the overlay disappears, and no error dialog appears (the process is dead). This is the primary stability argument against in-process inference.
+
+Specific crash vectors:
+- GGUF file corruption (partial download, disk error): llama.cpp's parser may segfault on a malformed file.
+- GPU out-of-memory during generation: GPU driver may call abort() rather than returning an error.
+- Model-context-length overflow: some bindings panic rather than returning an error when the context limit is exceeded.
+
+**How to avoid:**
+- Wrap the entire inference call in a Rust `catch_unwind` boundary. This catches Rust panics but NOT C/C++ signals (SIGSEGV from llama.cpp C code). For C-level crashes, the only safe option is a subprocess.
+- At GGUF load time, validate the file header and SHA256 before passing it to the inference engine. A corrupted file check costs <1 second and prevents the most common crash vector.
+- Set a hard context length limit: never pass more tokens than `n_ctx - safety_margin` to the model. Return a truncated result rather than risking an overflow crash.
+- Implement a watchdog: if the LLM inference subprocess (if using sidecar) goes silent for >60 seconds, assume it crashed and restart it. If in-process, emit a "LLM timeout" error and cancel gracefully.
+- Consider a hybrid: run inference in a `std::thread::spawn` (not tokio) with a timeout. If the thread panics, `thread::join()` returns an `Err(Box<dyn Any>)` that can be caught — at least for Rust panics.
+
+**Warning signs:**
+- App disappears silently (no crash dialog) when post-processing is triggered.
+- macOS Console.app shows a crash report for `dictus` originating in `llama_decode` or `ggml_metal_run_compute`.
+- Corrupted GGUF file causes crash during model selection screen.
+
+**Phase to address:** LLM runtime integration — stability hardening pass before public beta.
+
+---
+
+### Pitfall V3-R4: LLM Manager Not Thread-Safe with Tauri Managed State
+
+**What goes wrong:**
+Tauri's managed state (`app.manage(Arc<LLMManager>)`) wraps the manager in an `Arc`. If `LLMManager` contains a `Mutex<LlamaModel>` (the typical pattern), concurrent Tauri commands that call the LLM (e.g., a post-process command fired while a model load command is still running) will block on the mutex. This is correct behavior — but if any code path holds the mutex and calls back into Tauri (e.g., emits an event), and the event handler tries to acquire the same mutex, it deadlocks.
+
+The existing `TranscriptionManager` and `AudioManager` follow the `Arc<Mutex<...>>` pattern. The LLM manager must follow the same conventions, including: never holding the mutex across async awaits, never calling Tauri from within the locked section.
+
+**How to avoid:**
+- Follow the exact same `Arc<Manager>` pattern as `TranscriptionManager`: operations take `&self` not `&mut self`, use interior mutability only via `Mutex`, and never hold the lock across `.await` points.
+- Use `tokio::sync::Mutex` (not `std::sync::Mutex`) in async contexts to avoid deadlocking a tokio thread.
+- Add `#[must_use]` annotations and document the lock acquisition order in comments when multiple managers must be locked together.
+- Write a test that fires concurrent LLM start + LLM cancel commands to verify no deadlock.
+
+**Warning signs:**
+- App hangs after concurrent post-process requests.
+- `cargo test` with `--test-threads=8` passes but serial tests pass.
+- Debug logging shows "lock acquired" but never "lock released" in a log sequence.
+
+**Phase to address:** LLM runtime integration — state management design.
+
+---
+
+## Critical Pitfalls — Model Download
+
+### Pitfall V3-D1: Multi-GB Download Without Resume Causes Full Re-Download on Interruption
+
+**What goes wrong:**
+The existing model downloader (`managers/model.rs`) downloads Whisper models (~150MB-1.5GB). LLM models are 2-8GB (Q4_K_M 3B = ~2GB, Q4_K_M 7B = ~4GB). A user on a slow connection who interrupts a download (closes laptop lid, network outage) will restart and find the download starts from zero — wasting potentially hours of bandwidth. Many residential connections see intermittent drops that will trigger this repeatedly.
+
+The current downloader uses `reqwest` with `features = ["stream"]`. Resume requires:
+1. Persisting the partial file to disk (not a temp file that's deleted on process exit)
+2. On restart, checking the existing partial file size
+3. Sending a `Range: bytes=<offset>-` HTTP header in the next request
+4. Verifying the server returned `206 Partial Content` (not all servers support range requests)
+
+**How to avoid:**
+- Write partial downloads to a `.part` file (e.g., `model.gguf.part`). On completion, atomically rename to `model.gguf`. If the process is killed, the `.part` file persists.
+- At download start, check if a `.part` file exists and its size. Send `Range: bytes=<existing_size>-` to resume.
+- The server at `blob.handy.computer` (INFR-01) needs to support range requests. Validate this before relying on it. HuggingFace CDN supports range requests natively.
+- After download completion, verify SHA256 before the rename. If SHA256 fails, delete the `.part` file and restart from zero.
+- Emit download progress events with bytes downloaded and total — the UI already does this for Whisper models.
+
+**Warning signs:**
+- A 4GB download that was 90% complete restarts from 0% after a network blip.
+- Disk fills up with multiple partial `.gguf` files.
+- SHA256 check was removed "for performance" and a corrupted model crashes the app.
+
+**Phase to address:** Model downloader — before any LLM model is available for download.
+
+---
+
+### Pitfall V3-D2: Windows Antivirus Quarantines or Truncates GGUF Files
+
+**What goes wrong:**
+Windows Defender and third-party antivirus tools perform real-time scanning on file writes. A 4GB GGUF model being written to disk in chunks will be scanned incrementally. The antivirus may:
+1. Quarantine the file mid-download (false positive: large unknown binary in a new location)
+2. Lock the file for scanning, causing `reqwest`'s file write to fail with `ERROR_SHARING_VIOLATION`
+3. Truncate the file if it times out scanning
+
+This is a documented issue for GGUF downloads — the recommendation is to exclude the models directory from real-time scanning. However, Dictus cannot force this exclusion; it can only advise the user.
+
+Combined with the INFR-03 unsigned-builds situation (Windows builds are not OS-level signed), unsigned binaries are already viewed with more suspicion by Windows Defender. A large GGUF download initiated by an unsigned app is the highest-risk combination.
+
+**How to avoid:**
+- Store GGUF models in the Tauri app data directory (`app.path().app_data_dir()`), not in `Downloads` or `Desktop`. App data directories are less aggressively scanned.
+- On first LLM model download, show a brief one-time notice: "If download appears to hang or fail, add [path] to your antivirus exclusion list."
+- Implement download retry logic: on a file-write error matching Windows sharing violation codes, wait 2 seconds and retry up to 3 times.
+- INFR-03 (Azure Trusted Signing) should be treated as a blocker for v1.3's Windows LLM experience, not just a deferred item.
+
+**Warning signs:**
+- Windows users report downloads that stop at a random percentage and fail.
+- Windows Defender quarantine log shows `.gguf` files flagged.
+- GGUF file on disk is smaller than expected and SHA256 fails, but no download error was shown.
+
+**Phase to address:** Model downloader + INFR-03 prioritization for Windows.
+
+---
+
+### Pitfall V3-D3: GGUF Model Licensing Restrictions Not Surfaced to User
+
+**What goes wrong:**
+GGUF quantized models inherit their base model's license. Common LLM licenses have restrictions that an app distributor must surface to the user:
+- Meta's LLaMA 3 license: prohibits use if the product has >700M monthly active users (not relevant now, but terms must be accepted).
+- Mistral models: Apache 2.0 — permissive, no user-facing requirement.
+- Gemma: custom Google license requiring acceptance.
+- Many quantized GGUF conversions on HuggingFace add no new license but inherit restrictions.
+
+If Dictus presents a model library UI and downloads models without surfacing license terms, users may unknowingly be in violation of the model license. More practically, if the first batch of models includes a non-Apache/MIT license, the app could face a takedown request from the model owner.
+
+**How to avoid:**
+- Curate the initial model library to include only Apache 2.0 or MIT licensed models (Mistral, Phi-3-mini Apache 2.0, Qwen Apache 2.0).
+- Display the license type next to each model in the picker (e.g., "Mistral 7B — Apache 2.0").
+- For models requiring explicit acceptance (e.g., Gemma), show a one-time license acknowledgment before the download starts.
+- Document the license of each curated model in the app's `docs/MODELS.md`.
+
+**Warning signs:**
+- Model library includes LLaMA 3 without a license acceptance flow.
+- No license information shown in the model picker UI.
+- A model is added to the library and its HuggingFace page shows "Custom license" (not Apache/MIT).
+
+**Phase to address:** Model downloader UX — model curation before launch.
+
+---
+
+### Pitfall V3-D4: CDN Hosting Gap — blob.handy.computer Cannot Host LLM Weights (INFR-01)
+
+**What goes wrong:**
+INFR-01 is currently deferred: Dictus still uses `blob.handy.computer` to host onnxruntime and Silero VAD weights. LLM GGUF models are 2-8GB per file, compared to the <500MB Whisper/Parakeet models. Hosting multi-GB GGUF files on `blob.handy.computer` (a Handy-controlled CDN not owned by Dictus) creates:
+
+1. **Availability risk:** If `blob.handy.computer` is shut down or rate-limited, model downloads fail. Dictus has no control.
+2. **Bandwidth cost:** Multi-GB files at scale generate significant CDN egress charges. Handy's CDN pricing model was designed for their user base, not Dictus's.
+3. **Upstream-sync entanglement:** If Handy adds new models to their CDN that Dictus wants to use, but under different URLs or naming conventions, the downloader code diverges.
+
+The correct hosting for LLM models is HuggingFace Hub (free for open models, supports range requests, global CDN, SHA256 checksums published). This does not require a Dictus CDN at all.
+
+**How to avoid:**
+- Use HuggingFace Hub URLs directly for all GGUF model downloads. Format: `https://huggingface.co/{owner}/{repo}/resolve/main/{filename}`. SHA256 is published in the HuggingFace model card.
+- Do NOT host GGUF files on `blob.handy.computer`. This is a hard line.
+- v1.3 should also resolve INFR-01 for onnxruntime/Silero by migrating to a Dictus-owned S3 bucket or using the upstream provider's official CDN. INFR-01 is a prerequisite for v1.3's model download story, not just a deferred cleanup.
+- For the model library manifest (list of available models, their URLs, sizes, SHA256), host this JSON on GitHub Pages (`getdictus/dictus-desktop`) — no external CDN needed.
+
+**Warning signs:**
+- v1.3 model download implementation points to `blob.handy.computer` for any GGUF file.
+- INFR-01 is still marked deferred when the v1.3 model downloader is implemented.
+- Model library manifest is hardcoded in the app binary rather than fetched from a versioned URL.
+
+**Phase to address:** INFR-01 resolution is a prerequisite phase for v1.3 model downloads.
+
+---
+
+## Critical Pitfalls — Smart Modes
+
+### Pitfall V3-S1: Settings Migration Breaks Existing Users' Post-Processing Config
+
+**What goes wrong:**
+The current `AppSettings` has:
+- `post_process_prompts: Vec<LLMPrompt>` — list of prompts
+- `post_process_selected_prompt_id: Option<String>` — which prompt is active
+- `post_process_enabled: bool` — single toggle
+- One shortcut binding: `transcribe_with_post_process`
+
+Smart Modes replaces this with a richer model: each mode has its own `shortcut_binding: Option<String>`, modes can be disabled/enabled independently, the single "transcribe_with_post_process" shortcut becomes multiple per-mode shortcuts.
+
+If the migration from the old schema to the new schema is not implemented in `settings.rs`'s load function, existing users will experience:
+- Their configured prompt silently lost (old prompt list not mapped to new mode list)
+- Post-processing shortcut no longer registered (old binding key gone)
+- Post-processing appears disabled (old `post_process_enabled: false` not migrated to mode-level enable)
+
+`tauri-plugin-store` deserializes the persisted JSON into `AppSettings`. If new required fields are absent, `#[serde(default)]` provides defaults — but if the structure changes fundamentally (e.g., `post_process_prompts: Vec<LLMPrompt>` becomes `smart_modes: Vec<SmartMode>`), the old data is silently dropped.
+
+**Why it happens:**
+The `#[serde(default)]` pattern gives false safety: new fields get defaults, but RENAMED or RESTRUCTURED fields get dropped silently with no error.
+
+**How to avoid:**
+- Add an explicit settings schema version field: `settings_schema_version: u32` (default 1). On load, if version < current, run migration functions.
+- Migration for v1.3 (schema version 2): take existing `post_process_prompts` + `post_process_selected_prompt_id` + `post_process_enabled`, create one `SmartMode` per prompt with the existing shortcut assigned to the selected prompt's mode.
+- Write a test that loads a serialized v1 settings JSON and verifies the migration produces the expected v2 state.
+- Keep the old field names as `#[serde(default)]`-annotated optionals during the migration window, then remove them in a subsequent version.
+
+**Warning signs:**
+- After upgrading to v1.3, a user's custom prompt is gone.
+- Post-processing shortcut stops working after update.
+- The settings store contains the old `post_process_prompts` key but the UI shows no modes.
+
+**Phase to address:** Smart Modes settings redesign — migration MUST ship before any mode schema changes land in a release.
+
+---
+
+### Pitfall V3-S2: Global Shortcut Registration Fails Silently for Multiple Bindings
+
+**What goes wrong:**
+The current shortcut system registers 2-3 global shortcuts (transcribe, transcribe-with-post-process, cancel). Smart Modes introduces potentially 5-10+ shortcuts (one per mode). `tauri-plugin-global-shortcut` silently fails if another application has already claimed a shortcut — no error is returned to the caller in the current API (confirmed in plugin issues #2540, #2646). The shortcut is simply not fired.
+
+With 10 shortcuts registered, the probability that at least one conflicts with the OS or another app is significantly higher. macOS reserves Cmd+Option+Escape, Cmd+Space (Spotlight), and many Cmd+Shift+* combinations. Windows reserves Win+* shortcuts. The more shortcuts registered, the more likely a conflict.
+
+The existing code in `shortcut/mod.rs` handles registration errors by logging them. The UI does not display any indication that a shortcut failed to register.
+
+**How to avoid:**
+- After each shortcut registration, emit a `shortcut-registration-result` event to the frontend with success/failure status. The UI should display a warning badge on any mode whose shortcut failed to register.
+- Default shortcut assignments for Smart Modes must avoid OS-reserved combinations. Research the reserved lists for macOS (Cmd+Space, Cmd+Option+Esc, etc.) and Windows (Win+* combinations) and exclude them from the default binding set.
+- Allow users to clear (unassign) a shortcut from a mode — not all modes need shortcuts. Only modes the user intends to invoke by keyboard need them.
+- Add a "shortcut conflict" detection: before registering, check if the binding string matches any known OS-reserved combination and warn the user preemptively.
+- Cap the number of simultaneously registered shortcuts at a reasonable limit (e.g., 8). If users have more modes than this, suggest they use the main window to select and invoke.
+
+**Warning signs:**
+- User creates 8 Smart Modes but only 3 shortcuts fire.
+- No feedback in the UI about which shortcuts failed to register.
+- On macOS, a Cmd+Space binding is silently ignored (Spotlight takes it).
+
+**Phase to address:** Smart Modes shortcut binding — UI feedback and OS conflict handling.
+
+---
+
+### Pitfall V3-S3: i18n of Default Smart Mode Names Across 20 Locales
+
+**What goes wrong:**
+Smart Modes ships with curated default modes: "Polish", "Translate to French", "Summarize", "Action Items", etc. These names must be i18n'd in all 20 locales. Unlike functional UI strings (buttons, labels), prompt names have quality requirements — "Polish" in Spanish is "Pulir" but the translation must make sense as a one-word action label, not just a dictionary translation.
+
+The current i18n process: add keys to `en/translation.json`, propagate to 19 sibling locales. For 20 locale files × 5-10 default mode names = 100-200 new translation entries. Machine-translated strings for mode names may be technically correct but culturally awkward (e.g., "Translate to Spanish" in Spanish is "Traducir al español" — obvious — but less obvious for rarer language combinations).
+
+Additionally, user-created modes have user-supplied names. These are not translated. The UI must clearly distinguish between "built-in mode name (translated)" and "custom mode name (as entered)".
+
+**How to avoid:**
+- Use a two-tier naming strategy: default modes have a `name_key: "smart_modes.defaults.polish.name"` i18n key; custom modes have a `name: String` literal.
+- For the initial 20-locale propagation, use machine translation but tag the entries with a comment `// needs human review` and file localization issues for each language.
+- Test the Settings UI in at least French and Spanish (the two most-reviewed non-English locales) before launch to verify mode names don't overflow their containers.
+- ESLint will enforce that mode names shown in JSX come from `t()` for built-in modes — run `bun run lint` and fix any violations before release.
+
+**Warning signs:**
+- Default mode names appear in English in the French/Spanish/Vietnamese UI.
+- Mode name labels overflow their card/pill containers in languages with longer words (German, Finnish).
+- `translation.json` has new keys in `en` but not in `es` — `bun run lint` catches hardcoded fallbacks but not missing sibling keys.
+
+**Phase to address:** Smart Modes UI — i18n propagation in the same PR as the default mode definitions.
+
+---
+
+### Pitfall V3-S4: Translation Quality Limits of Small Quantized Local Models
+
+**What goes wrong:**
+Translation as a first-class mode using a small local LLM (3B-7B Q4_K_M) has well-documented quality limits:
+- Models <7B parameters show measurable degradation in translation quality for low-resource language pairs (Vietnamese, Chinese → English performs well; English → Vietnamese shows drift). Research shows models below 10B parameters have clear degradation in MT quality, especially for low-resource languages.
+- Q4 quantization introduces additional accuracy loss (~2-5% BLEU score reduction vs. F16). Q5_K_M retains >95% accuracy but increases model size ~25%.
+- A local 3B model will produce noticeably lower quality translations than cloud APIs (GPT-4o, DeepL) for complex sentences or domain-specific vocabulary.
+
+If the UI presents local translation as equivalent to cloud translation without caveats, users will feel the product is broken when they see poor output.
+
+**How to avoid:**
+- Label local translation modes with a quality indicator: "Local (Fast)" vs. cloud "Cloud (Higher quality)". Do not present them as equivalent.
+- Recommend Q5_K_M quantization (not Q4_K_M) for translation models — the extra size cost is justified by better accuracy.
+- For the initial launch, curate translation models that are specifically fine-tuned for translation tasks (OPUS-MT family, NLLB-200, or dedicated translation GGUF models) rather than general-purpose LLMs prompted to translate. Translation-specific models outperform general LLMs at the same parameter count.
+- Show a disclaimer for low-resource language pairs: "Translation quality for [language] may be limited. Consider using a cloud provider for professional use."
+- Do not market local translation as "as good as Google Translate" — it is not, at current model sizes that fit in 4GB.
+
+**Warning signs:**
+- Vietnamese or Chinese users report that translation output is grammatically incorrect.
+- Users compare local translation to Google Translate and find it substantially worse.
+- Translation mode is labeled in the UI without any quality caveat.
+
+**Phase to address:** Smart Modes translation feature — quality expectations and labeling before beta.
+
+---
+
+### Pitfall V3-S5: Prompt Quality Regression for Small Models vs. Cloud Providers
+
+**What goes wrong:**
+The existing default prompts (clean-up, summarize, etc.) were designed and tested against GPT-4o / Claude / Apple Intelligence — large models with strong instruction-following. A small local 3B LLM will follow the same prompts less reliably:
+- May not return clean output (adds preamble, explanation, markdown artifacts)
+- May truncate output if the context fills up before the response is complete
+- May refuse instructions that sound restrictive to RLHF-tuned models
+
+A prompt like "Return ONLY the cleaned-up text, no explanation" works well on GPT-4o. A 3B model may still add "Here is the cleaned text:" before the output.
+
+**How to avoid:**
+- Maintain separate default prompt variants: one optimized for cloud (instruction-following, concise), one optimized for local small models (more explicit output formatting, system prompt structure adapted to the model's training).
+- Test each default Smart Mode prompt against the specific models in the initial model library, not just against cloud providers.
+- Add an output sanitization step: strip common model preambles ("Sure, here is...", "Here is the result:") from the local LLM output before presenting to the user. This is a low-risk, high-value quality improvement.
+- Document that custom prompt quality will vary by model in the Smart Modes settings help text.
+
+**Warning signs:**
+- Local LLM post-processing output includes preamble text that ends up in the user's document.
+- "Clean up" mode output includes markdown formatting (** bold **) that was not in the original transcription.
+- Users report local LLM "not working" when it is actually working but the output format is wrong.
+
+**Phase to address:** Smart Modes prompts — local model testing pass before release.
+
+---
+
+## Critical Pitfalls — Local-First Philosophy & Upstream Sync
+
+### Pitfall V3-L1: Embedded LLM Accidentally Makes Cloud More Prominent
+
+**What goes wrong:**
+The local-first principle (enforced since v1.2 via Local/Cloud tabs) could be undermined by how the embedded LLM is introduced. Specific failure modes:
+- The model picker UI emphasizes cloud providers first (existing layout pattern) while the local LLM option is buried in a "Library" section.
+- When no local model is downloaded, the UI defaults to showing cloud providers as the only available options — effectively making cloud the path of least resistance.
+- The onboarding flow, when extended to cover the LLM runtime, presents "Use OpenAI" or "Use Ollama" before "Download a local model" because the download requires waiting.
+- A settings migration (V3-S1) sets `post_process_provider_id` to an existing cloud provider as the fallback when no local model is present.
+
+**How to avoid:**
+- When no local LLM is downloaded, show a "Download a local model" CTA as the primary option in the Smart Modes settings, not a cloud provider fallback.
+- The platform-aware default pattern (macOS arm64 → Apple Intelligence, others → Custom/local) should extend to the LLM: default should be the embedded runtime on all platforms, with a download prompt, not a cloud provider.
+- Add `verify-sync.sh` assertion: `grep -q 'localFirst' src/components/settings/smart-modes` to catch if an upstream merge introduces a cloud-default layout in these new components.
+- Post-v1.3 launch: do a UI audit (matching the v1.2 Privacy UX audit) specifically checking whether the LLM settings UI respects the local-first hierarchy.
+
+**Warning signs:**
+- Smart Modes settings page shows OpenAI/Anthropic providers before the local runtime option.
+- When no local model is downloaded, the UI silently uses a cloud provider.
+- v1.3 onboarding step presents "Connect to AI service" before "Download local model".
+
+**Phase to address:** Smart Modes UI design — local-first audit before each release candidate.
+
+---
+
+### Pitfall V3-L2: Large New Rust Modules Create Upstream Merge Complexity
+
+**What goes wrong:**
+v1.3 adds substantial new Rust files: `managers/llm_runtime.rs`, `managers/model_library.rs`, `commands/smart_modes.rs`, likely 500-2000 new LOC. The upstream Handy project is actively developed. When Sync #2 is executed after v1.3 lands, the git diff between `upstream/main` and `dictus/main` will be significantly larger than Sync #1 (4 commits).
+
+If Handy also adds LLM-related features between Sync #1 (April 2026) and Sync #2 (post-v1.3), both repositories will have modified the same conceptual area — the post-processing pipeline, the LLM client, and the model downloader. This creates a 3-way merge conflict in files that are identity-critical (the Dictus rebrand touches the same files Handy's LLM changes will touch).
+
+Specifically: `src-tauri/src/llm_client.rs` already exists in both repos (Handy's version, Dictus's modified version). Any upstream change to `llm_client.rs` will be a conflict that requires careful per-line triage.
+
+**Why it happens:**
+The upstream Handy project is actively adding LLM features — this is the same codebase Dictus forked. The more Dictus diverges by adding its own LLM implementation, the harder future merges become.
+
+**How to avoid:**
+- Execute Sync #2 BEFORE v1.3 feature development starts, not after. Getting current on upstream reduces the merge surface.
+- Structure new Dictus LLM modules to minimize overlap with existing `llm_client.rs`. The new embedded runtime should be in `managers/llm_runtime.rs` (new file, no upstream conflict) rather than extending `llm_client.rs` (shared conflict zone).
+- Add new Dictus-specific files to the `verify-sync.sh` "new file" watchlist: if upstream adds a file with the same name as a Dictus-new file, surface the conflict explicitly.
+- Document in `UPSTREAM.md`: "v1.3 adds LLM runtime — if upstream adds LLM features in sync #2+, review for functional overlap before merging."
+- If Handy's upstream adds a `managers/llm_manager.rs` that is functionally equivalent to Dictus's implementation, consider adopting it (with identity patches) rather than maintaining a parallel implementation.
+
+**Warning signs:**
+- Sync #2 diff touches `llm_client.rs` with upstream changes AND Dictus has also modified `llm_client.rs`.
+- `git merge upstream/main` produces conflicts in more than 10 files (sign that divergence has grown too large for easy resolution).
+- Upstream adds `src-tauri/src/managers/llm_manager.rs` before Dictus's v1.3 lands — must decide: adopt or parallel-track.
+
+**Phase to address:** Upstream sync — execute Sync #2 before v1.3 feature work as a prerequisite gate.
+
+---
+
+### Pitfall V3-L3: TECH-04 (`llm_client.rs` 8-Arg Refactor) Collides with v1.3 LLM Work
+
+**What goes wrong:**
+TECH-04 is deferred: `src-tauri/src/llm_client.rs:137 send_chat_completion_with_schema` has 8 arguments, currently suppressed by `#[allow(clippy::too_many_arguments)]`. v1.3 will add a new LLM runtime path through the same module (or alongside it). If TECH-04's refactor (8-arg → struct) is done mid-v1.3 after other Smart Modes code already calls the 8-arg signature, the refactor causes a cascade of call-site updates across all newly written v1.3 code.
+
+Conversely, if TECH-04 is deferred beyond v1.3, the suppression annotation will be carried on a function that v1.3 code also calls, and `cargo clippy -- -D warnings` (the CI gate added in v1.2 AUDIT-01) will fail unless the new call sites also add `#[allow(clippy::too_many_arguments)]`.
+
+**How to avoid:**
+- Resolve TECH-04 as the FIRST task of v1.3 before any new Smart Modes code is written. Refactor `send_chat_completion_with_schema` to accept a `ChatCompletionRequest` struct. All existing callers are updated. Then v1.3's new code uses the clean API from the start.
+- This is a low-risk refactor with a clear scope: one function signature, known callers. The risk of doing it mid-v1.3 is much higher.
+- The `#[allow(clippy::too_many_arguments)]` suppression must be removed when TECH-04 is resolved — verify `cargo clippy --all-targets -- -D warnings` passes cleanly.
+
+**Warning signs:**
+- v1.3 PR adds a new call to `send_chat_completion_with_schema` with 8 arguments without refactoring.
+- `cargo clippy` CI gate starts failing on v1.3 PRs because new call sites trigger the 8-arg warning.
+- TECH-04 is still suppressed after v1.3 ships.
+
+**Phase to address:** v1.3 kickoff — TECH-04 is a prerequisite, not a parallel track.
+
+---
+
+## Technical Debt Patterns (v1.3 additions)
+
+| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
+|---|---|---|---|
+| In-process LLM (vs. sidecar subprocess) | Simpler IPC, no process management | A C-level crash in llama.cpp kills the whole app | Only acceptable if build includes robust `catch_unwind` + GGUF validation + timeout watchdog |
+| Hardcode GGUF URLs in app binary | No manifest server needed | Model library can't be updated without an app release | Never for a curated library; use a fetched manifest |
+| Defer INFR-01 CDN migration for v1.3 LLM downloads | Less work upfront | LLM weights on `blob.handy.computer` — availability + cost risk not owned by Dictus | Not acceptable for multi-GB files; INFR-01 is a prerequisite |
+| Use cloud provider as fallback when no local model downloaded | Better out-of-box experience for impatient users | Violates local-first philosophy; normalizes cloud as default | Not acceptable; show download prompt instead |
+| Skip settings migration; let old fields be dropped silently | Zero migration code | Existing users lose their custom prompts + shortcuts after update | Never acceptable; silent data loss on upgrade |
+| Share ggml between `transcribe-rs` and LLM crate via common version | Smaller binary, no duplicate symbols | Requires both crates to be compatible with the same ggml version | Preferred if achievable; document the constraint |
+
+---
+
+## Integration Gotchas (v1.3 additions)
+
+| Integration | Common Mistake | Correct Approach |
+|---|---|---|
+| `transcribe-rs` + LLM crate | Both vendor ggml, causing linker symbol conflicts | Choose an LLM crate that shares ggml with transcribe-rs, or use a pure-Rust backend (candle) |
+| `tauri-plugin-global-shortcut` + many shortcuts | Silent registration failure for conflicting shortcuts | Check each registration result, emit failure event to UI, display warning badge |
+| HuggingFace GGUF downloads | Downloading without range-request resume support | Use `Range: bytes=<offset>-` header; validate SHA256 on completion; write to `.part` file |
+| macOS Metal + Tauri bundle | Metal shaders missing from `.app` bundle | Add `.metallib` to `bundle.resources` in `tauri.conf.json`; test with release build not `tauri dev` |
+| Windows Defender + GGUF files | Large GGUF quarantined mid-download | Store in app data dir; show guidance for antivirus exclusion; prioritize INFR-03 (code signing) |
+| `tauri-plugin-store` + settings schema change | Old field names silently dropped | Add `settings_schema_version` field; implement explicit migration functions |
+
+---
+
+## Performance Traps (v1.3 additions)
+
+| Trap | Symptoms | Prevention | When It Breaks |
+|---|---|---|---|
+| Whisper + 7B LLM both loaded on 8GB machine | App hangs or crashes during post-processing | Sequential resource management; unload Whisper before LLM load | All 8GB M1/M2 users, all Windows machines with 4GB dGPU |
+| Synchronous inference on tokio thread | UI freeze, shortcut unresponsive during inference | `spawn_blocking` for all inference calls; streaming token events | CPU inference on any machine (5-30 second operations) |
+| LLM cold load on every post-process call | 5-15 second delay before inference starts | Keep model loaded with `ModelUnloadTimeout`; extend existing mechanism to LLM manager | Every user on first post-process after idle period |
+| Model library manifest hardcoded in binary | New models require app update | Fetch manifest from `getdictus/dictus-desktop` GitHub Pages at startup | When model library grows beyond the initial curated set |
+
+---
+
+## Security Mistakes (v1.3 additions)
+
+| Mistake | Risk | Prevention |
+|---|---|---|
+| Running LLM inference on user-supplied prompt without sanitization | Prompt injection if transcription text contains jailbreak instructions | The threat model is local only — user controls both input and model. Lower risk than cloud. Still: document this is local processing and no prompt leaves the device. |
+| Downloading GGUF from arbitrary user-supplied URLs | Malicious model weights; path traversal if URL can specify local paths | Restrict downloads to curated manifest URLs; validate URL scheme (https only); validate destination path is within app data dir |
+| Storing LLM API keys in plaintext `tauri-plugin-store` | Keys readable if device is compromised | No cloud API keys needed for embedded local inference — this is the point. For cloud providers that remain, existing `SecretMap` pattern is sufficient |
+
+---
+
+## "Looks Done But Isn't" Checklist (v1.3)
+
+**LLM Runtime:**
+- [ ] `cargo build` passes on a clean CI runner (no pre-installed CMake, Vulkan SDK, Metal toolchain)
+- [ ] Release `.app` bundle tested on macOS — not only `tauri dev` — Metal shaders present in bundle
+- [ ] CPU fallback tested: inference completes on a machine with no GPU (slower but does not crash)
+- [ ] Vulkan fallback tested on Windows with outdated GPU drivers
+- [ ] Concurrent Whisper + LLM load tested on 8GB machine — no OOM crash
+- [ ] UI remains responsive (shortcut fires, overlay animates) during CPU inference
+
+**Model Downloader:**
+- [ ] Resume tested: kill the process at 50% download, restart, confirms it resumes not re-downloads
+- [ ] SHA256 verification tested: corrupt a partial file, confirm it's detected and download restarts
+- [ ] Windows Defender interaction tested on an unsigned build
+- [ ] GGUF URLs point to HuggingFace, NOT `blob.handy.computer`
+- [ ] Model license displayed in picker UI for each curated model
+
+**Smart Modes:**
+- [ ] Settings migration tested: load a v1.2 settings JSON → verify prompts + shortcut preserved in v1.3
+- [ ] 10+ shortcuts registered → verify UI shows which ones failed, not just silent failure
+- [ ] Default mode names translated in all 20 locales (no key-path fallback visible in French/Spanish/Vietnamese)
+- [ ] Local LLM output sanitized (no "Here is the result:" preamble reaching the user's document)
+- [ ] Cloud providers remain opt-in — local runtime is the default option in Smart Modes settings
+
+**Upstream Sync:**
+- [ ] Sync #2 executed BEFORE v1.3 feature work begins
+- [ ] TECH-04 resolved at v1.3 kickoff (before Smart Modes code is written)
+- [ ] New v1.3 files added to `verify-sync.sh` watchlist where relevant
+- [ ] `verify-sync.sh` passes after Sync #2
+
+---
+
+## Recovery Strategies (v1.3 additions)
+
+| Pitfall | Recovery Cost | Recovery Steps |
+|---------|---------------|----------------|
+| In-process inference crash kills app | MEDIUM — add sidecar | Rewrite inference as sidecar binary; IPC via stdio/local socket; may be 1-2 sprint effort |
+| Settings migration missing — users lose custom prompts | HIGH — data already gone | Hotfix with migration; prompt users to re-enter lost prompts; provide export backup in next version |
+| Metal shaders missing from macOS bundle | MEDIUM | Hotfix `tauri.conf.json` bundle.resources; re-release |
+| GGUF files on blob.handy.computer if CDN goes down | HIGH — model downloads fail for all users | Migrate to HuggingFace URLs; update manifest; release patch |
+| Sync #2 creates large merge conflict in llm_client.rs | MEDIUM | Human-reviewed line-by-line merge; functionally test both Handy and Dictus LLM paths |
+| User base on 8GB machines hits OOM with simultaneous models | HIGH (many users affected) | Emergency release with sequential resource management; communicate in release notes |
+
+---
+
+## Pitfall-to-Phase Mapping (v1.3)
+
+| Pitfall | Prevention Phase | Verification |
+|---------|------------------|--------------|
+| V3-B1: CMake dependencies in CI | LLM runtime — CI setup | Clean CI build passes on all 7 platforms |
+| V3-B2: Metal shaders missing from bundle | LLM runtime — macOS packaging | Release `.app` bundle smoke test; GPU-accelerated on M-series |
+| V3-B3: Vulkan absent on user machines | LLM runtime — GPU abstraction | CPU fallback test on VM with no GPU; user-visible backend indicator |
+| V3-B4: Binary size explosion + notarization timeout | Architecture decision — before first LLM commit | Binary size budget check in CI; notarization < 30 min |
+| V3-B5: Cargo dependency conflict (ggml symbols) | Dependency audit — before integration PR | `cargo tree` diff; `cargo build` passes; inference produces correct output |
+| V3-B6: CUDA breaks non-CUDA CI | Feature flags design | CUDA not in default features; CI matrix passes without CUDA runners |
+| V3-R1: Inference blocks UI thread | Async architecture | Shortcut fires during CPU inference; overlay animates |
+| V3-R2: Whisper + LLM OOM | Memory budget design | 8GB machine test; no crash during concurrent load |
+| V3-R3: In-process crash kills app | Stability hardening | GGUF corruption test; crash in C code handled without process death |
+| V3-R4: LLM manager deadlock | State management | Concurrent command test; no hang under load |
+| V3-D1: Download not resumable | Model downloader — core | Kill-and-resume test at 50% |
+| V3-D2: Windows antivirus quarantine | Model downloader + INFR-03 | Unsigned build download test on Windows with Defender enabled |
+| V3-D3: Model license not surfaced | Model curation | License displayed in picker; Apache/MIT-only in initial library |
+| V3-D4: GGUF on blob.handy.computer | INFR-01 resolution (prerequisite) | All GGUF URLs point to HuggingFace in code review |
+| V3-S1: Settings migration data loss | Smart Modes — migration first | v1.2 settings JSON loaded into v1.3 → prompts preserved |
+| V3-S2: Silent shortcut registration failure | Smart Modes — shortcut binding | 10+ shortcuts registered; UI shows failure badge for conflicting ones |
+| V3-S3: i18n of default mode names | Smart Modes UI | French/Spanish/Vietnamese UI shows translated mode names |
+| V3-S4: Translation quality misrepresented | Smart Modes translation | Quality label in UI; disclaimer for low-resource pairs |
+| V3-S5: Prompt regression on small models | Smart Modes prompts | Each default prompt tested against curated local models |
+| V3-L1: Cloud made prominent by embedded LLM | Smart Modes UI — local-first audit | Local runtime is default option; cloud never shown as fallback when no model downloaded |
+| V3-L2: Upstream merge complexity grows | Sync #2 pre-v1.3 | Sync #2 complete before v1.3 feature PRs open |
+| V3-L3: TECH-04 collision with v1.3 | v1.3 kickoff — TECH-04 first | `cargo clippy -- -D warnings` passes; no `#[allow(clippy::too_many_arguments)]` on new code |
+
+---
+
+## Sources (v1.3)
+
+- Direct codebase analysis: `src-tauri/Cargo.toml` (transcribe-rs Metal/Vulkan features, tauri-runtime patches), `src-tauri/src/settings.rs` (AppSettings schema, LLMPrompt, ShortcutBinding), `src-tauri/src/shortcut/mod.rs` (registration patterns, `register_all_shortcuts_for_implementation`), `PROJECT.md` (INFR-01, INFR-03, TECH-04, local-first constraints, upstream sync state)
+- llama.cpp Rust bindings: `llama-cpp-2` (crates.io), `llama_cpp` (docs.rs), `tauri-local-lm` example (GitHub)
+- Tauri external binary codesigning issue: https://github.com/tauri-apps/tauri/issues/11992
+- Notarization timeout: https://github.com/orgs/tauri-apps/discussions/8630, https://github.com/tauri-apps/tauri/issues/14579
+- Vulkan CPU fallback segfault: https://github.com/withcatai/node-llama-cpp/issues/554
+- AMD Vulkan driver crash with Vulkan SDK 1.4.328.1: https://github.com/ggml-org/llama.cpp/issues/17432
+- tauri-plugin-global-shortcut silent failure: issues #2540, #2646 in tauri-apps/plugins-workspace
+- Global shortcuts panic macOS: https://github.com/orgs/tauri-apps/discussions/12991
+- GGUF quantization translation quality: "The Uneven Impact of Post-Training Quantization in Machine Translation" (arxiv 2508.20893), "How Small Can You Go?" (arxiv 2511.09748)
+- Windows antivirus GGUF interference: https://ggufloader.github.io/how-to-run-gguf-models.html
+- HuggingFace licensing guide: https://www.bluebash.co/blog/understanding-hugging-face-ai-model-licensing-commercial-use/
+- mistral.rs production readiness: https://github.com/EricLBuehler/mistral.rs
+- macOS code signing pitfalls: https://steipete.me/posts/2025/code-signing-and-notarization-sparkle-and-tears
+- Whisper + LLM memory contention: https://medium.com/@patelhet04/the-0-scalability-fix-how-whisper-microservice-saved-us-from-gpu-oom-65dfd41a2180
+- GitHub Actions macOS runner cost (10x Linux): https://www.warpbuild.com/blog/github-actions-cost-reduction
+
+---
+
+_v1.3 pitfalls appended: 2026-05-29_
+_Covering: Embedded LLM runtime, Smart Modes, Multi-target translation, GGUF model downloads_

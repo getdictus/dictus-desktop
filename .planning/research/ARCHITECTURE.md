@@ -1,562 +1,620 @@
-# Architecture Research — v1.2 Polish & Automation Integration Points
+# Architecture Research
 
-**Domain:** Tauri desktop app + GitHub Actions CI/CD + Claude Code agents
-**Milestone:** v1.2 Polish & Automation
-**Researched:** 2026-04-15
-**Confidence:** HIGH (all conclusions drawn directly from source files)
-
----
-
-## 1. CI Pipeline Integration
-
-### Current state
-
-Three workflows exist:
-
-| Workflow | Trigger | What it does |
-|---|---|---|
-| `upstream-sync.yml` | Cron Mon 08:00 UTC + manual | Fetches upstream, compares SHA to `.github/upstream-sha.txt`, opens GitHub Issue labeled `upstream-sync` if drift detected |
-| `build.yml` | `workflow_call` only | Reusable 7-platform matrix build (macOS×2, Linux×3, Windows×2) |
-| `release.yml` | `workflow_dispatch` | Creates draft release, calls `build.yml` with `sign-binaries: true` |
-
-A flat file `.github/upstream-sha.txt` is the only persisted sync state — stores the 40-char SHA of the last merged upstream commit.
-
-`verify-sync.sh` currently lives at `.planning/phases/05-upstream-sync/scripts/verify-sync.sh`. It is referenced in `UPSTREAM.md §6` with a hardcoded relative path. It is run manually before pushing a sync PR — not enforced by CI.
-
-### Target state after v1.2 refactor
-
-```
-.github/
-├── workflows/
-│   ├── upstream-sync.yml      REPLACE body with community action (~30 lines)
-│   ├── verify-sync.yml        NEW: CI gate on PRs labeled 'upstream-sync'
-│   ├── build.yml              UNCHANGED
-│   └── release.yml            UNCHANGED
-├── pull_request_template/
-│   └── upstream-sync.md       NEW: PR checklist (cap-at-SHA? risk-rating? verify-sync green?)
-└── scripts/
-    └── verify-sync.sh         MOVED from .planning/phases/05-upstream-sync/scripts/
-```
-
-`UPSTREAM.md §6` must be updated to reference `.github/scripts/verify-sync.sh` instead of the old path.
-
-### CI data flow across all three workflows
-
-```
-WEEKLY CRON
-    |
-    v
-upstream-sync.yml (community action, e.g. aormsby/Fork-Sync-With-Upstream-action)
-    -> git fetch cjpais/Handy
-    -> opens draft PR: base=main, head=upstream/sync-YYYY-MM-DD
-    -> applies label 'upstream-sync' to the PR
-
-    |  (PR creation triggers label-based workflows)
-    v
-
-[PARALLEL]
-claude-agents.yml (on: pull_request, label='upstream-sync')
-    -> job: adapter  — resolves conflicts, commits to branch
-    -> job: auditor  — reads diff, posts manual test checklist as PR comment
-
-verify-sync.yml (on: pull_request, label='upstream-sync')
-    -> checks out PR branch
-    -> runs .github/scripts/verify-sync.sh
-    -> required status check (merge blocked if FAIL)
-
-    |  (all checks green, developer reviews adapter output + auditor checklist)
-    v
-
-Developer merges PR (Create merge commit — NEVER squash)
-    -> .github/upstream-sha.txt updated as part of merge commit (if kept)
-```
-
-`build.yml` and `release.yml` are entirely unaffected by the sync refactor.
-
-### verify-sync.yml trigger design
-
-```yaml
-on:
-  pull_request:
-    types: [opened, synchronize, labeled]
-
-jobs:
-  verify:
-    if: contains(github.event.pull_request.labels.*.name, 'upstream-sync')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: bash .github/scripts/verify-sync.sh
-```
-
-The `if:` condition gates the job — unrelated PRs never trigger the check. The job must be configured as a required status check in branch protection for the gate to be enforced.
-
-### What disappears
-
-- Custom SHA-comparison shell script in `upstream-sync.yml` — replaced by community action
-- Custom `github-script` issue-creation block — replaced by the draft PR the community action opens
-- `.github/upstream-sha.txt` — if the community action uses `git merge-base` instead of a flat file, this file can be removed; otherwise keep it but stop updating it from the detection workflow
-- `.planning/phases/05-upstream-sync/scripts/` path — `verify-sync.sh` moves to `.github/scripts/verify-sync.sh`
+**Domain:** Embedded LLM runtime + Smart Modes + Multi-target translation inside Tauri 2.x desktop app
+**Researched:** 2026-05-29
+**Confidence:** HIGH (grounded in actual codebase + verified patterns)
 
 ---
 
-## 2. Claude Code Agent (Double-Agent) Architecture
+## Baseline: What Already Exists
 
-### Problem
+Before documenting new components, the critical architectural invariants must be stated clearly so all additions integrate without friction.
 
-Two independent Claude Code agent runs are needed on the same upstream-sync PR:
-- **Adapter agent**: modifies code (resolves merge conflicts, preserves Dictus identity, applies verify-sync.sh fixes). Has write access to the branch.
-- **Auditor agent**: reads the resolved PR diff and generates a manual test checklist as a PR comment. Must be read-only and must not pollute the adapter's context.
+### Manager Pattern (Existing)
 
-### Recommendation: two jobs in one workflow, NOT two workflows
+All core subsystems are `Arc<Manager>` values placed in Tauri state via `.manage()` in `lib.rs`. They own their state behind internal `Mutex`/`AtomicXxx` guards, expose only `pub fn` methods, and communicate back to the frontend via `AppHandle::emit()`.
 
-File: `.github/workflows/claude-agents.yml` (new)
+Current managers:
+- `Arc<ModelManager>` — transcription model catalogue, download, path resolution
+- `Arc<TranscriptionManager>` — engine lifecycle (load/unload), transcription dispatch, idle-watcher thread
+- `Arc<AudioRecordingManager>` — microphone capture
+- `Arc<HistoryManager>` — transcription history
 
-```yaml
-on:
-  pull_request:
-    types: [labeled, synchronize]
+### Command-Event Architecture (Existing)
 
-jobs:
-  adapter:
-    if: contains(github.event.pull_request.labels.*.name, 'upstream-sync')
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-    steps:
-      - uses: anthropics/claude-code-action@...
-        with:
-          # adapter-specific config: write access, code modification mode
+Frontend issues Tauri commands. Backend emits typed events. Type bindings auto-generated by `tauri-specta` into `src/bindings.ts`.
 
-  auditor:
-    if: contains(github.event.pull_request.labels.*.name, 'upstream-sync')
-    needs: [adapter]   # wait for adapter to commit its changes first
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write   # write only to post a comment
-    steps:
-      - uses: anthropics/claude-code-action@...
-        with:
-          # auditor-specific config: read-only, generates test checklist comment
+### Pipeline (Existing)
+
+```
+Shortcut press
+    -> TranscriptionCoordinator (serialises start/stop)
+        -> AudioRecordingManager.start_recording()
+    -> Shortcut release
+        -> AudioRecordingManager.stop_recording()
+        -> TranscriptionManager.transcribe(audio)
+        -> post_process_transcription()  [in actions.rs, calls llm_client.rs]
+        -> clipboard/paste
 ```
 
-Two jobs in one workflow provides:
-- Single workflow run visible in GitHub Actions UI
-- Guaranteed context isolation — each job gets a fresh runner, fresh process, fresh Claude session
-- `needs: [adapter]` ensures the auditor reads the final resolved diff, not the raw conflict state
+`post_process_transcription()` in `actions.rs` is currently aware of:
+- `post_process_provider_id` -- which provider to use
+- `post_process_selected_prompt_id` -- which single prompt to apply
+- It calls `llm_client::send_chat_completion*()` (HTTP only)
 
-### Why not two separate workflows
+### Settings Store (Existing)
 
-Two separate workflows triggered independently on the same PR event create a race condition: both could start simultaneously, and if the adapter pushes commits, the auditor might read an intermediate state. The `needs:` dependency in a single workflow eliminates this.
+`AppSettings` in `settings.rs` is a single flat `serde` struct persisted as `settings_store.json` via `tauri-plugin-store`. `#[serde(default)]` on all new fields enables additive migrations with no migration function for simple additions. Structural migrations (rename, reshape, remove) require explicit handling in `load_or_create_app_settings()`.
 
-### Context isolation guarantee
+### Shortcut System (Existing)
 
-GitHub provisions each job on a fresh runner with a fresh `actions/checkout`. No shared disk, no shared process memory. The Claude Code action's context window starts fresh per job. No additional isolation mechanism is needed.
+Two backends: `tauri_impl` and `handy_keys`. Both delegate to shared `handler.rs::handle_shortcut_event()`. Registered shortcuts are looked up in `ACTION_MAP` by `binding_id`. Dynamic registration at runtime works via `register_shortcut(app, ShortcutBinding)` and `unregister_shortcut(app, ShortcutBinding)`.
 
-### Access model
-
-| Job | Push to branch | Post PR comment | Read files |
-|---|---|---|---|
-| adapter | YES | YES | YES |
-| auditor | NO | YES | YES |
-
-Use `permissions:` blocks (shown above) rather than org-level secrets to enforce the boundary. The auditor's `contents: read` prevents it from committing even if it tries.
+Currently only two transcription shortcuts are registered: `transcribe` and `transcribe_with_post_process`. The `TranscriptionCoordinator` gates them with `is_transcribe_binding(id)`.
 
 ---
 
-## 3. Icon Build Pipeline
-
-### Current icon inventory
-
-`tauri.conf.json` bundle.icon array (lines 32-37) lists five files:
-```
-icons/32x32.png
-icons/128x128.png
-icons/128x128@2x.png
-icons/icon.icns
-icons/icon.ico
-```
-
-Additional files present on disk but NOT in the bundle.icon array:
-- `icons/64x64.png` — present, unused by bundler
-- `icons/icon.png` — 512×512 source PNG
-- `icons/logo.png` — Dictus logo variant
-- `icons/Square*.png` (9 files) — Windows Store tiles, not used for standard bundles
-- `icons/StoreLogo.png` — Windows Store, not used
-
-### Platform-specific gaps
-
-**Linux**: The AppImage/.deb uses the PNG icons from the array. Linux launchers (GNOME, KDE) expect square icons with no padding. If `icon.png`, `32x32.png`, `128x128.png` were generated from a macOS-optimized source (rounded corners, padding inset), they will appear visually inconsistent in Linux app grids. A dedicated `linux-square-256x256.png` with full-bleed square edges should be added.
-
-**Windows**: `icon.ico` must embed multiple resolutions (at minimum 16×16, 32×32, 48×48, 256×256). A single-resolution ICO will be scaled by Windows Explorer and the taskbar, producing blurry icons. The current `icon.ico` may have been generated with limited resolutions — needs verification.
-
-### Recommendation: commit pre-generated variants, no build-time transform
-
-Tauri's bundler reads the `bundle.icon` array before building and expects files to exist at the listed paths. There is no native hook for image transformation before the bundler reads the array. Build-time ImageMagick in CI would require patching `tauri.conf.json` mid-build (the `build.yml` already does this for ONNX runtime dylib paths, so the pattern exists — but it is complex).
-
-The simpler and more reliable approach:
-1. Use `bun run tauri icon <source.png>` (1024×1024 minimum source) — this regenerates the complete icon set including multi-resolution ICO and ICNS
-2. Add `icons/linux-square-256x256.png` manually (no padding variant)
-3. Commit all generated files to the repo
-4. Add `icons/linux-square-256x256.png` to the `bundle.icon` array in `tauri.conf.json`
-
-### Source-of-truth chain
+## System Overview: v1.3 Integration Map
 
 ```
-dictus-brand repo (SVG or 1024x1024 PNG)
-    |
-    v (run locally: bun run tauri icon <source.png>)
-src-tauri/icons/  (committed output)
-    |
-    v (tauri.conf.json bundle.icon array)
-Tauri bundler -> platform packages
++-----------------------------------------------------------------------------+
+|  Frontend (React / TypeScript)                                               |
+|                                                                              |
+|  +-----------------+  +------------------+  +--------------------------+    |
+|  | SmartModes UI   |  | LLMModelPicker   |  | Settings (existing)     |    |
+|  | (new)           |  | (new, mirrors    |  | + provider tab additions |    |
+|  | list/edit/bind  |  |  transcription   |  |                         |    |
+|  |                 |  |  model picker)   |  |                         |    |
+|  +--------+--------+  +-------+----------+  +------------+------------+    |
+|           | Tauri commands    | Tauri commands            |                 |
++-----------|-------------------|---------------------------|----------------+
+|  Rust Backend (src-tauri/src/)                                               |
+|                                                                              |
+|  +---------------------------------------------------------------------+    |
+|  | settings.rs  (MODIFIED)                                             |    |
+|  | + smart_modes: Vec<SmartMode>  (replaces single-prompt)             |    |
+|  | + post_process_selected_mode_id: Option<String>  (migration bridge) |    |
+|  | + llm_model_id: Option<String>                                      |    |
+|  | + llm_model_unload_timeout: ModelUnloadTimeout  (reuse existing)    |    |
+|  +---------------------------------------------------------------------+    |
+|                                                                              |
+|  +------------------+   +------------------+   +-------------------+        |
+|  | managers/        |   | managers/        |   | managers/         |        |
+|  | model.rs         |   | transcription.rs |   | llm_runtime.rs    |        |
+|  | (EXISTING,       |   | (EXISTING,       |   | (NEW)             |        |
+|  |  unchanged)      |   |  unchanged)      |   | GGUF load/unload, |        |
+|  |                  |   |                  |   | inference thread, |        |
+|  +------------------+   +------------------+   | token streaming,  |        |
+|                                                 | idle-watcher      |        |
+|  +------------------------------------------+   +-------------------+        |
+|  | managers/                                |                               |
+|  | llm_model.rs  (NEW)                      |   +-------------------+        |
+|  | GGUF model catalogue, download,          |   | llm_client.rs     |        |
+|  | progress events -- mirrors model.rs      |   | (MODIFIED)        |        |
+|  | patterns exactly                         |   | + "embedded"      |        |
+|  +------------------------------------------+   |   branch routes   |        |
+|                                                 |   to LlmRuntime   |        |
+|  +-----------------------------------------------------------------------+  |
+|  | actions.rs  (MODIFIED)                                                |  |
+|  | post_process_transcription() selects the active SmartMode's prompt   |  |
+|  | reads mode_id from the binding that fired (new routing)               |  |
+|  +-----------------------------------------------------------------------+  |
+|                                                                              |
+|  +-----------------------------------------------------------------------+  |
+|  | transcription_coordinator.rs  (MODIFIED)                              |  |
+|  | is_transcribe_binding() extended to accept smart_mode_* binding IDs  |  |
+|  | passes mode_id through to actions.rs                                  |  |
+|  +-----------------------------------------------------------------------+  |
+|                                                                              |
+|  +-----------------------------------------------------------------------+  |
+|  | shortcut/mod.rs  (MODIFIED)                                           |  |
+|  | register_all_smart_mode_shortcuts() -- bulk register on startup       |  |
+|  | on_smart_mode_shortcut_changed() -- unregister old, register new      |  |
+|  +-----------------------------------------------------------------------+  |
++-----------------------------------------------------------------------------+
 ```
-
-### tauri.conf.json change for Linux square icon
-
-Add one line to the `bundle.icon` array:
-```json
-"icon": [
-  "icons/32x32.png",
-  "icons/128x128.png",
-  "icons/128x128@2x.png",
-  "icons/icon.icns",
-  "icons/icon.ico",
-  "icons/linux-square-256x256.png"
-]
-```
-
-Adding a PNG does not affect macOS (uses ICNS) or Windows (uses ICO). Tauri selects the appropriate format per platform.
 
 ---
 
-## 4. Rust Shutdown Order
+## Component Responsibilities
 
-### Current shutdown paths
+| Component | Status | Responsibility |
+|-----------|--------|---------------|
+| `managers/llm_model.rs` | NEW | GGUF LLM model catalogue (hardcoded entries + user custom), download with resume + SHA256, progress events, same interface as `model.rs` |
+| `managers/llm_runtime.rs` | NEW | In-process GGUF inference engine (via `llama-cpp-2`), model load/unload, `ModelUnloadTimeout` idle watcher, blocking token loop on dedicated thread, streaming tokens back via Tauri events |
+| `llm_client.rs` | MODIFIED | Add `"embedded"` provider branch: calls `LlmRuntimeManager` instead of HTTP. All existing HTTP paths remain unchanged. |
+| `settings.rs` | MODIFIED | Add `smart_modes: Vec<SmartMode>`, `post_process_selected_mode_id`, `llm_model_id`, `llm_model_unload_timeout`. Additive serde defaults = no migration function needed for new fields. One explicit migration: `post_process_prompts` + `post_process_selected_prompt_id` -> `smart_modes` (first launch only). |
+| `actions.rs` | MODIFIED | `post_process_transcription()` receives a `mode_id: Option<&str>` param instead of reading `post_process_selected_prompt_id` from settings. Routes to the correct `SmartMode` prompt + provider. |
+| `transcription_coordinator.rs` | MODIFIED | `is_transcribe_binding()` extended to also accept `smart_mode_{id}` binding IDs. Coordinator passes the `binding_id` through to `actions.rs` so the correct mode is dispatched. |
+| `shortcut/mod.rs` | MODIFIED | Add `register_smart_mode_shortcut()`, `unregister_smart_mode_shortcut()`, `register_all_smart_mode_shortcuts()`, conflict detection before registration. |
+| `commands/llm_models.rs` | NEW | Tauri command handlers for LLM model download, delete, list. |
+| `commands/smart_modes.rs` | NEW | Tauri command handlers for SmartMode CRUD and shortcut binding. |
+| Frontend `components/smart-modes/` | NEW | List + edit SmartModes, shortcut binding per mode, translation preset picker. |
+| Frontend `components/llm-model-picker/` | NEW | Mirrors `components/model-selector/` but drives `LlmModelManager`. |
+| `src/bindings.ts` | AUTO-GENERATED | tauri-specta regenerates on every `cargo build`. |
 
-`app.exit(0)` is called from two locations:
+---
 
-- `src-tauri/src/lib.rs:254` — inside `on_menu_event` in `initialize_core_logic()`, on tray "quit" menu item
-- `src-tauri/src/lib.rs:622` — inside `on_window_event` CloseRequested handler, when no tray is visible
+## Recommended Architecture
 
-Both call `tauri::AppHandle::exit(0)`, which triggers Tauri's shutdown sequence: signals the Tokio runtime, then drops managed state and plugins.
+### 1. New LLM Runtime Manager
 
-### Manager initialization order (lib.rs:162-173)
+**Location:** `src-tauri/src/managers/llm_runtime.rs`
 
-```
-AudioRecordingManager::new()    line 163  -- CPAL CoreAudio stream on macOS
-ModelManager::new()             line 166  -- owns model file handles
-TranscriptionManager::new()     line 169  -- holds Arc<ModelManager>, Metal GPU contexts
-HistoryManager::new()           line 172  -- SQLite connection
-```
+**Why a separate manager from transcription:** The transcription engine and the LLM engine are different computational workloads with independent lifecycles. They may coexist in RAM simultaneously (see Memory Budget below). Mixing them in one manager would break the single-responsibility pattern already established by `transcription.rs`.
 
-All four registered via `app_handle.manage()` (lines 179-183). Tauri drops managed state in undefined order during shutdown — `Arc<T>` drop is not guaranteed to run on the main thread.
+**Crate choice: `llama-cpp-2` (utilityai/llama-cpp-rs)**
 
-### Plugin registration order (lib.rs:481-543)
+Rationale: It is the thinnest idiomatic Rust binding that stays current with llama.cpp. It avoids the full build complexity of `mistral.rs` (which pulls in much of Candle) while providing GPU backend selection via Cargo features (`cuda`, `metal`, `vulkan`) that align with the existing platform model -- Metal on macOS, Vulkan on Windows/Linux. The `LlamaModel` / `LlamaContext` objects load GGUF files directly.
 
-Rust drops in reverse registration order. The last-registered plugin drops first:
+Confidence: MEDIUM -- `llama-cpp-2` is actively maintained and widely used in Rust desktop projects, but the Cargo feature flags for GPU backends require build-system attention (Vulkan SDK on Windows/Linux CI).
 
-```
-Last registered (drops first):
-  tauri_plugin_autostart
-  tauri_plugin_global_shortcut  <-- HIGHEST CRASH SUSPECT
-  tauri_plugin_store            <-- writes to disk on drop
-  tauri_plugin_opener
-  tauri_plugin_macos_permissions
-  tauri_plugin_clipboard_manager
-  tauri_plugin_os
-  tauri_plugin_updater
-  tauri_plugin_process
-  tauri_plugin_fs
-  tauri_plugin_single_instance  <-- Unix socket at /tmp/com_dictus_desktop_si.sock
-  tauri_nspanel (macOS only)
-  tauri_plugin_log              <-- background flush thread
-  tauri_plugin_dialog
-First registered (drops last):
-```
-
-### Most likely crash suspects (macOS)
-
-1. **`tauri_plugin_global_shortcut`** — Unhooking global keyboard listeners on macOS requires main-thread access (CGEventTap runs on the main thread). If the plugin's `Drop` impl executes on a Tokio worker thread, macOS can SIGABRT. This is the highest-probability suspect because `tauri_plugin_global_shortcut` is registered late (drops early) and global shortcut teardown is a known macOS threading pitfall.
-
-2. **`AudioRecordingManager` / CPAL stream** — CPAL audio streams on macOS wrap CoreAudio streams which have thread-affinity requirements. If an active CPAL stream is dropped off the main thread during shutdown, CoreAudio can SIGABRT.
-
-3. **`TranscriptionManager` / Metal GPU context** — whisper-rs / ort Metal contexts must be released on or before the Metal device teardown. Timing depends on when the GPU context is created vs when the Tokio runtime shuts down.
-
-### Recommended fix strategy
-
-**Phase 1: Explicit cleanup before exit (low risk, try first)**
-
-In both exit call sites, add cleanup before `app.exit(0)`:
+**Internal structure mirrors `TranscriptionManager`:**
 
 ```rust
-// In tray "quit" handler and in on_window_event CloseRequested:
-fn clean_exit(app: &AppHandle) {
-    // Stop any active audio recording to release CoreAudio stream
-    if let Some(rm) = app.try_state::<Arc<AudioRecordingManager>>() {
-        // call a stop_all / shutdown method
+pub struct LlmRuntimeManager {
+    app_handle: AppHandle,
+    model: Arc<Mutex<Option<LlamaModel>>>,
+    current_model_id: Arc<Mutex<Option<String>>>,
+    last_activity: Arc<AtomicU64>,
+    shutdown_signal: Arc<AtomicBool>,
+    watcher_handle: Arc<Mutex<Option<thread::JoinHandle<()>>>>,
+    is_loading: Arc<Mutex<bool>>,
+    loading_condvar: Arc<Condvar>,
+}
+```
+
+**Threading -- why `spawn_blocking` / dedicated thread:**
+
+`llama.cpp` inference is synchronous and CPU/GPU-bound. It MUST NOT run on the Tauri main thread or on a tokio worker thread (it would block the async executor). The correct pattern, already used by `TranscriptionManager` for Whisper inference and by `ModelManager` for SHA256 verification, is:
+
+```rust
+// In LlmRuntimeManager::infer()
+let result = tokio::task::spawn_blocking(move || {
+    let mut ctx = model.new_context(...)?;
+    let mut full_output = String::new();
+    for token in ctx.decode(...) {
+        app_handle.emit("llm-token", TokenPayload { token: token.clone(), done: false })?;
+        full_output.push_str(&token);
     }
-    // Give tauri_plugin_global_shortcut a chance to unhook on main thread
-    // by unregistering shortcuts explicitly before exit
-    app.exit(0);
+    app_handle.emit("llm-token", TokenPayload { token: String::new(), done: true })?;
+    Ok::<String, anyhow::Error>(full_output)
+}).await??;
+```
+
+Token streaming uses `app_handle.emit("llm-token", ...)` -- the same event pattern used by `model-download-progress`. The frontend can display a streaming indicator in the overlay pill.
+
+**Load/unload lifecycle:**
+
+Mirrors `TranscriptionManager` exactly:
+- `load_model(model_id)` -- `spawn_blocking`, sets `is_loading`, emits `llm-model-loading` / `llm-model-loaded` / `llm-model-load-failed`.
+- `unload_model()` -- drops the `LlamaModel` from the `Mutex<Option<...>>`, emits `llm-model-unloaded`.
+- `ensure_loaded(model_id)` -- checks if already loaded; loads if not; waits on `loading_condvar` if loading is in progress (thread-safe, same pattern as TranscriptionManager).
+- Idle watcher thread (identical pattern to transcription watcher): reads `llm_model_unload_timeout` from settings, calls `unload_model()` when idle time exceeds threshold.
+
+**Slots into `llm_client.rs` as "embedded" provider:**
+
+```rust
+// In llm_client.rs (new branch, called from actions.rs)
+pub async fn send_embedded(
+    runtime: Arc<LlmRuntimeManager>,
+    model_id: &str,
+    prompt: String,
+) -> Result<Option<String>, String> {
+    runtime.ensure_loaded(model_id).await?;
+    runtime.infer(prompt).await.map(Some)
 }
 ```
 
-**Phase 2: Hard exit fallback (if Phase 1 is insufficient)**
+`actions.rs::post_process_transcription()` checks `provider.id == "embedded"` and calls `send_embedded()` instead of the HTTP path. All other provider branches remain completely unchanged.
 
-Replace `app.exit(0)` with:
+**`lib.rs` setup:**
+
 ```rust
-log::logger().flush(); // ensure log file is written
-std::process::exit(0); // bypass all destructors
+// In lib.rs setup closure, alongside existing managers:
+let llm_model_manager = Arc::new(LlmModelManager::new(&app_handle)?);
+let llm_runtime_manager = Arc::new(LlmRuntimeManager::new(&app_handle)?);
+app_handle.manage(llm_model_manager);
+app_handle.manage(llm_runtime_manager);
 ```
-
-Trade-off: bypasses `tauri_plugin_store` flush (settings changes in the last few ms may be lost) and skips Unix socket cleanup (already handled by the stale-socket cleanup at `lib.rs:341-358` on next launch).
-
-**Diagnosis prerequisite**: Read the crash report in Console.app → User Reports → Dictus to identify the crashing thread's stack trace before implementing fixes.
 
 ---
 
-## 5. Settings UI — Provider List Reorganization
+### 2. LLM Model Downloader
 
-### Current provider order (settings.rs:524-603)
+**Location:** `src-tauri/src/managers/llm_model.rs`
 
-`default_post_process_providers()` builds the list in this order:
+**Reuse vs. extend transcription `model.rs`:**
 
-1. OpenAI — `openai` (default selected: `default_post_process_provider_id()` returns `"openai"`)
-2. Z.AI — `zai`
-3. OpenRouter — `openrouter`
-4. Anthropic — `anthropic`
-5. Groq — `groq`
-6. Cerebras — `cerebras`
-7. Apple Intelligence — `apple_intelligence` (macOS ARM64 only, appended at line 582)
-8. Custom — `custom` (always last, appended at line 593)
+Do NOT merge into `model.rs`. The two model types (transcription engines, LLM GGUFs) have different metadata schemas, different storage locations, and will grow independently. Instead, `llm_model.rs` copies the same structural patterns:
+- `LlmModelInfo` struct (fields parallel `ModelInfo`: `id`, `name`, `filename`, `url`, `sha256`, `size_mb`, `is_downloaded`, `is_downloading`, `partial_size`, `quantization` label, `recommended_vram_mb`)
+- Same `DownloadProgress` event shape -- emit as `llm-download-progress` so the frontend can differentiate from `model-download-progress`
+- Same RAII `DownloadCleanup` guard pattern
+- Same SHA256 verification via `spawn_blocking`
+- Same partial-file resume logic (HTTP Range header)
+- Storage dir: `<app_data>/llm_models/` (separate from `models/`)
 
-There is no Ollama-specific entry. "Custom" with default `base_url: "http://localhost:11434/v1"` is the intended Ollama path.
+**LLM model registry (initial curated list):**
 
-### Rendering path (full chain)
+| id | name | size_mb | quantization | recommended_vram_mb |
+|----|------|---------|--------------|---------------------|
+| `qwen2.5-0.5b-q4_k_m` | Qwen2.5 0.5B (fast) | 350 | Q4_K_M | 1024 |
+| `qwen2.5-3b-q4_k_m` | Qwen2.5 3B | 2000 | Q4_K_M | 3072 |
+| `phi-3.5-mini-q4_k_m` | Phi-3.5 Mini | 2200 | Q4_K_M | 3072 |
 
-```
-settings.rs:default_post_process_providers()
-    | serialized via get_app_settings Tauri command
-    v
-useSettings hook -> settingsStore (Zustand)
-    v
-usePostProcessProviderState hook
-    | builds `providerOptions: DropdownOption[]` from settings.post_process_providers
-    v
-PostProcessingSettings.tsx:39 (ProviderSelect)
-    v
-Dropdown component -- renders options in received array order, no client-side reorder
-```
+Registry is hardcoded (same pattern as `model.rs`). CDN URLs TBD (INFR-01 equivalent for LLM models). Placeholder with `None` URL shows "coming soon" in UI.
 
-The Dropdown renders in the order it receives. Provider order is **entirely controlled by the `Vec` order in `default_post_process_providers()` in settings.rs**. No frontend reordering logic exists.
+**Events emitted:**
+- `llm-download-progress`
+- `llm-download-complete`
+- `llm-download-cancelled`
+- `llm-model-deleted`
 
-### Files to edit
+**Frontend:**
 
-| File | Change | Risk |
-|---|---|---|
-| `src-tauri/src/settings.rs:524-603` | Reorder the `providers` vec — local providers first (Ollama/Custom, Apple Intelligence), cloud providers after | LOW |
-| `src-tauri/src/settings.rs:520-521` | Change `default_post_process_provider_id()` to return a local provider ID if desired | MEDIUM — affects new installs only |
-| `src/components/settings/PostProcessingSettingsApi/ProviderSelect.tsx` | Add visual section dividers if Dropdown supports optgroup-style rendering | LOW–MEDIUM |
-
-### Migration concern: existing saved provider preference
-
-The persisted value is a plain string ID (`post_process_provider_id: "openai"` in the store JSON). Reordering the list in `default_post_process_providers()` does not change any ID strings. **No data migration is needed.** Existing users keep their current selection.
-
-The only risk is if `default_post_process_provider_id()` is changed — this only affects fresh installs and is not a migration concern for existing users.
-
-### Adding Ollama as a first-class entry
-
-If a dedicated `ollama` entry is added (separate from `custom`):
-- Add a new `PostProcessProvider` with `id: "ollama"`, `base_url: "http://localhost:11434/v1"`, `allow_base_url_edit: false`
-- This does not affect existing `custom` users — they remain on `custom`
-- Do NOT auto-migrate `custom` users to `ollama` — their base URL may have been changed
-
-### "External (advanced)" visual grouping
-
-The `Dropdown` component needs to support option groups (divider rows or headers) before the UI can visually separate local vs cloud. Assess the current Dropdown API in `src/components/ui/` before committing to this. If Dropdown does not support groups, a simpler approach is adding a divider `DropdownOption` with `disabled: true` and a label like `"— External providers —"`.
+`components/llm-model-picker/` mirrors `components/model-selector/` structurally. It listens to the `llm-*` events and calls commands in `commands/llm_models.rs`.
 
 ---
 
-## 6. Brand Cleanup Migration Strategy
+### 3. Smart Modes Data Model and Settings Migration
 
-### Recording filename change
+**New types in `settings.rs`:**
 
-**Primary location**: `src-tauri/src/actions.rs:538`
 ```rust
-let file_name = format!("handy-{}.wav", chrono::Utc::now().timestamp());
-```
-
-**Other occurrences (test fixtures only)**:
-- `src-tauri/src/managers/history.rs:689` — `format!("handy-{}.wav", timestamp)` in the `insert_entry` test helper
-- `src-tauri/src/tray.rs:273` — `file_name: "handy-1.wav".to_string()` in the `build_entry` test helper
-
-**History DB relationship**: The DB stores `file_name` as TEXT in `transcription_history` (schema at `history.rs:22`). The `get_audio_file_path` command constructs the path as `recordings_dir.join(entry.file_name)`. If `actions.rs:538` is changed to write `dictus-{ts}.wav` going forward, existing rows with `handy-{ts}.wav` will still point to files on disk named `handy-{ts}.wav` — those files are untouched and playback continues to work. The DB filename and on-disk filename are always kept in sync at write time; no secondary index maps one to the other.
-
-**Existing history entries**: NOT broken by a forward-only rename. Old rows reference old files (`handy-{ts}.wav` on disk = `handy-{ts}.wav` in DB). New rows will reference `dictus-{ts}.wav` files. Both coexist without conflict.
-
-**Options**:
-
-| Option | What it does | Risk |
-|---|---|---|
-| A: Forward-only | Change `actions.rs:538` to write `dictus-{ts}.wav`; fix test fixtures | Zero — old history untouched |
-| B: Full migration | Rename existing WAV files on disk + UPDATE all DB rows in `HistoryManager::new()` | Medium — file system + DB transaction |
-| C: Defer runtime | Fix only test fixtures; extend `verify-sync.sh`; rename in v1.3 | Zero for now |
-
-**Recommended for v1.2**: Option A for the runtime (clean, no migration complexity), Option A for test fixtures (zero risk). Add `verify-sync.sh` assertion: `! grep -n '"handy-' src-tauri/src/actions.rs`.
-
-### Portable mode magic string
-
-**Location**: `src-tauri/src/portable.rs`
-
-Two sites:
-- `line 30`: `std::fs::write(&marker_path, "Handy Portable Mode")` — written during v0.8.0 legacy upgrade
-- `line 98`: `s.trim().starts_with("Handy Portable Mode")` — detection predicate in `is_valid_portable_marker()`
-
-**Backward compatibility requirement**: Existing portable installs have a `portable` marker file containing `"Handy Portable Mode"`. Changing line 98 alone would break those installs — the detection would return `false`, and the app would start in non-portable mode, writing data to `%APPDATA%\com.dictus.desktop` instead of the `Data/` dir.
-
-**Required implementation**:
-```rust
-fn is_valid_portable_marker(path: &std::path::Path) -> bool {
-    std::fs::read_to_string(path)
-        .map(|s| {
-            let trimmed = s.trim();
-            trimmed.starts_with("Dictus Portable Mode")
-                || trimmed.starts_with("Handy Portable Mode") // legacy compat
-        })
-        .unwrap_or(false)
+#[derive(Serialize, Deserialize, Debug, Clone, Type)]
+pub struct SmartMode {
+    pub id: String,
+    pub name: String,
+    pub prompt: String,                     // LLM prompt template, ${output} placeholder
+    pub target_language: Option<String>,    // e.g. "fr", "es", "zh-Hans" -- None = no translation
+    pub shortcut: Option<String>,           // raw shortcut string or None if unbound
+    pub provider_override: Option<String>,  // override post_process_provider_id for this mode
+    pub is_builtin: bool,                   // protects defaults from deletion
 }
 ```
 
-On detection of the legacy string (lines 23-33), silently rewrite the marker to `"Dictus Portable Mode"` using the same migration-upgrade pattern already present at line 29. Update the unit tests in `portable.rs:102-165` to test both old and new magic strings.
+**New fields in `AppSettings` (all additive with `#[serde(default)]`):**
 
-### DebugPaths.tsx Windows path display
+```rust
+pub smart_modes: Vec<SmartMode>,
+pub post_process_selected_mode_id: Option<String>,
+pub llm_model_id: Option<String>,
+pub llm_model_unload_timeout: ModelUnloadTimeout,
+```
 
-**Location**: `src/components/settings/debug/DebugPaths.tsx:29-46`
+**Settings migration from single-prompt to modes-list:**
 
-Hardcoded strings (with ESLint suppression comments):
-- Line 29: `%APPDATA%/handy`
-- Line 37: `%APPDATA%/handy/models`
-- Line 45: `%APPDATA%/handy/settings_store.json`
+Handled in `load_or_create_app_settings()`. If `smart_modes` is empty (first v1.3 launch), synthesise `SmartMode` entries from existing `post_process_prompts`:
 
-**Actual on-disk path**: Tauri derives the app data directory from the `identifier` in `tauri.conf.json` (`com.dictus.desktop`). On Windows, `app_data_dir()` resolves to `%APPDATA%\com.dictus.desktop\`. The displayed path is incorrect for both Handy (wrong identifier) and Dictus.
+```rust
+fn migrate_prompts_to_smart_modes(settings: &mut AppSettings) -> bool {
+    if !settings.smart_modes.is_empty() {
+        return false; // already migrated
+    }
+    for p in &settings.post_process_prompts {
+        settings.smart_modes.push(SmartMode {
+            id: p.id.clone(),
+            name: p.name.clone(),
+            prompt: p.prompt.clone(),
+            target_language: None,
+            shortcut: None,
+            provider_override: None,
+            is_builtin: p.id == "default_improve_transcriptions",
+        });
+    }
+    if let Some(prev_id) = &settings.post_process_selected_prompt_id.clone() {
+        settings.post_process_selected_mode_id = Some(prev_id.clone());
+    }
+    settings.smart_modes.extend(default_smart_modes());
+    true
+}
+```
 
-**Correct fix**: Use the `get_app_dir_path` Tauri command (already exists in `commands/`) to retrieve the actual runtime path. Display the real path instead of a hardcoded string. This eliminates the ESLint suppressions and makes the panel accurate regardless of platform or portable mode.
+`post_process_prompts` and `post_process_selected_prompt_id` are kept in `AppSettings` (as `#[serde(default)]`) throughout v1.3 -- no removal until v1.4+ -- to avoid schema disruption. They are silently ignored by new code after migration.
 
-No migration or data change — display-only fix.
+**Built-in Smart Modes shipped with v1.3:**
+
+| id | name | purpose |
+|----|------|---------|
+| `default_improve_transcriptions` | Improve Transcription | existing default prompt, migrated |
+| `translate_en` | Translate to English | `target_language: Some("en")` |
+| `translate_fr` | Translate to French | `target_language: Some("fr")` |
+| `translate_es` | Translate to Spanish | `target_language: Some("es")` |
+| `translate_zh` | Translate to Chinese | `target_language: Some("zh-Hans")` |
+| `summarize` | Summarize | condense verbose speech |
+| `formal` | Formal Tone | rewrite in formal register |
 
 ---
 
-## 7. Build Order / Phase Sequencing
+### 4. Multi-Shortcut Registration
 
-### Dependency map
+**Architecture decision: Mode shortcuts reuse the existing `bindings` HashMap**
 
-```
-INDEPENDENT (no inter-dependencies, can run in parallel):
-  Phase A: Brand & Icon Polish
-    - actions.rs:538 forward-only filename rename
-    - history.rs:689, tray.rs:273 test fixtures
-    - portable.rs:30,98 magic string + legacy fallback
-    - DebugPaths.tsx:29-46 dynamic path display
-    - Icon regeneration (tauri icon + linux-square-256x256.png)
-    - verify-sync.sh extended assertions
+The `bindings: HashMap<String, ShortcutBinding>` in `AppSettings` already stores all registered shortcuts. Smart Mode shortcuts follow the same pattern:
 
-  Phase B: Privacy / Local-First UX
-    - settings.rs:524-603 provider reorder
-    - ProviderSelect.tsx visual grouping (if Dropdown supports it)
-    - Network surface documentation
+- Key: `smart_mode_{mode_id}` (e.g., `smart_mode_translate_fr`)
+- `ShortcutBinding.id`: `smart_mode_{mode_id}`
+- `ShortcutBinding.current_binding`: user-assigned key combo, or empty string (= unbound, not registered)
 
-  Phase C: macOS Shutdown Fix
-    - Diagnose via Console.app crash report
-    - Explicit cleanup before app.exit(0) in lib.rs + tray.rs
-    - std::process::exit(0) fallback if needed
+An unbound mode has `current_binding == ""`. The existing `change_binding` command already rejects empty bindings. The shortcut is not registered when `current_binding` is empty.
 
-SEQUENTIAL DEPENDENCY CHAIN:
-  Phase D: Sync Infra Refactor
-    - Move verify-sync.sh -> .github/scripts/verify-sync.sh
-    - Update UPSTREAM.md §6 reference
-    - Add verify-sync.yml CI gate
-    - Replace upstream-sync.yml body with community action
-    - Add upstream-sync.md PR template
-    MUST COMPLETE BEFORE ->
+**Registration at startup in `shortcut/mod.rs`:**
 
-  Phase E: Claude Code Agent Layer
-    - Add claude-agents.yml (adapter + auditor jobs)
-    - Wire to upstream-sync-labeled PR trigger
-    - Test against synthetic upstream-sync PR
+```rust
+pub fn register_all_smart_mode_shortcuts(app: &AppHandle) {
+    let settings = get_settings(app);
+    for mode in &settings.smart_modes {
+        let binding_id = format!("smart_mode_{}", mode.id);
+        if let Some(b) = settings.bindings.get(&binding_id) {
+            if !b.current_binding.is_empty() {
+                if let Err(e) = register_shortcut(app, b.clone()) {
+                    warn!("Failed to register smart mode shortcut '{}': {}", binding_id, e);
+                }
+            }
+        }
+    }
+}
 ```
 
-### Recommended sequencing
+Called from `init_shortcuts()` after the base shortcuts are registered.
 
-Phases A, B, C are fully independent of each other and of D/E. They can be executed in any order or simultaneously across branches.
+**Conflict detection:**
 
-Phase D must complete before Phase E because:
-- `verify-sync.sh` must exist at `.github/scripts/verify-sync.sh` before `verify-sync.yml` references it
-- The community action must be producing `upstream-sync`-labeled PRs before `claude-agents.yml` has meaningful input
-- Phase E is additive — if no labeled PRs exist, the workflow simply never triggers
+Before registering a new smart mode shortcut, iterate `settings.bindings` to check whether the key combo is already in use by any other binding. Return a typed `ConflictError { conflicting_binding_id: String }` so the frontend can display the name of the conflicting binding.
 
-The natural v1.2 execution order is: A + B + C in parallel, then D, then E.
+**TranscriptionCoordinator extension:**
+
+```rust
+// In transcription_coordinator.rs
+pub fn is_transcribe_binding(id: &str) -> bool {
+    id == "transcribe"
+    || id == "transcribe_with_post_process"
+    || id.starts_with("smart_mode_")   // ADD for v1.3
+}
+```
+
+The coordinator now passes `binding_id` (which encodes the mode id) through `Stage::Recording(binding_id)`. When `stop()` fires, `actions.rs` receives the full `binding_id` and extracts the `mode_id`.
+
+**Pipeline selection -- which mode runs:**
+
+```rust
+// In actions.rs (new routing logic)
+fn resolve_mode_id(binding_id: &str, settings: &AppSettings) -> Option<String> {
+    if let Some(rest) = binding_id.strip_prefix("smart_mode_") {
+        return Some(rest.to_string());
+    }
+    if binding_id == "transcribe_with_post_process" {
+        return settings.post_process_selected_mode_id.clone();
+    }
+    None // "transcribe" = no post-processing
+}
+```
 
 ---
 
-## Component Boundary Summary
+### 5. Memory Budget Architecture: Whisper + LLM Coexistence
 
-| Feature | New Component | Modified Component | File:Line |
-|---|---|---|---|
-| CI gate | `verify-sync.yml` | — | `.github/workflows/verify-sync.yml` (new) |
-| Sync workflow | — | `upstream-sync.yml` body replaced | `.github/workflows/upstream-sync.yml` |
-| Agent layer | `claude-agents.yml` | — | `.github/workflows/claude-agents.yml` (new) |
-| PR template | `upstream-sync.md` | — | `.github/pull_request_template/upstream-sync.md` (new) |
-| verify-sync.sh | — | Path change only | `.planning/phases/.../verify-sync.sh` -> `.github/scripts/verify-sync.sh` |
-| UPSTREAM.md §6 reference | — | `UPSTREAM.md` | `UPSTREAM.md` |
-| Recording filename | — | `actions.rs:538` | `src-tauri/src/actions.rs` |
-| Test fixtures | — | `history.rs:689`, `tray.rs:273` | test helper functions |
-| Portable string | — | `portable.rs:30,98` + tests | `src-tauri/src/portable.rs` |
-| Debug paths display | — | `DebugPaths.tsx:29-46` | `src/components/settings/debug/DebugPaths.tsx` |
-| Provider order | — | `settings.rs:524-603` | `src-tauri/src/settings.rs` |
-| Provider UI grouping | — | `ProviderSelect.tsx` | `src/components/settings/PostProcessingSettingsApi/ProviderSelect.tsx` |
-| Icon Linux square | `linux-square-256x256.png` | `tauri.conf.json` bundle.icon array | `src-tauri/icons/`, `src-tauri/tauri.conf.json:32-37` |
-| Icon Windows ICO | — | `icon.ico` (regenerate with multi-res) | `src-tauri/icons/icon.ico` |
-| Shutdown fix | — | `lib.rs:254`, `lib.rs:622` | `src-tauri/src/lib.rs` |
-| verify-sync.sh assertions | — | `verify-sync.sh` (add checks) | `.github/scripts/verify-sync.sh` |
+**The problem:**
+
+- Whisper Turbo: ~1.55 GB VRAM (or system RAM on CPU). Parakeet V3: ~450 MB. Moonshine Tiny: ~31 MB.
+- A Q4_K_M LLM: 0.5B ~350 MB, 3B ~2 GB, 7B ~4 GB.
+- Peak on a MacBook Air 8 GB shared-memory with Whisper Turbo + Qwen2.5-3B: ~3.55 GB -- tight but viable.
+
+**Coordination strategy: independent timeouts, no active eviction**
+
+Both `TranscriptionManager` and `LlmRuntimeManager` have their own `ModelUnloadTimeout` (independently user-configurable). Each has its own idle-watcher thread. This keeps the managers fully decoupled and avoids shared locking complexity. This is the same design the app already uses for Whisper.
+
+**Load ordering during pipeline execution:**
+
+1. User presses smart-mode shortcut -> recording starts immediately (no model needed yet)
+2. Recording stops -> `TranscriptionManager.transcribe()` (may lazy-load Whisper)
+3. After transcription finishes -> `LlmRuntimeManager.ensure_loaded(model_id)` + inference
+4. Result pasted
+
+Steps 2 and 3 are sequential. Both models are never *inferring* simultaneously, only potentially both *loaded* in RAM.
+
+**User-facing guidance:**
+
+The LLM model picker UI should display `recommended_vram_mb` and show a compatibility note when the sum of the selected transcription model + LLM model exceeds a platform-estimated budget (e.g., 4 GB threshold for non-pro machines). This is a UI-layer advisory, not a runtime hard gate.
+
+**`Immediately` unload timeout option:**
+
+For constrained hardware, both managers support `ModelUnloadTimeout::Immediately`. Setting this on the transcription model ensures it is unloaded before the LLM loads. Explicit cross-manager "unload before loading" coordination is deferred to v1.4 -- the `Immediately` timeout is sufficient for v1.3 while keeping managers independent.
+
+---
+
+## Recommended Project File Structure (Delta Only)
+
+```
+src-tauri/src/
+  managers/
+    llm_model.rs           (NEW)
+    llm_runtime.rs         (NEW)
+  commands/
+    llm_models.rs          (NEW)
+    smart_modes.rs         (NEW)
+  llm_client.rs            (MODIFIED)
+  settings.rs              (MODIFIED)
+  actions.rs               (MODIFIED)
+  transcription_coordinator.rs  (MODIFIED)
+  shortcut/mod.rs          (MODIFIED)
+  lib.rs                   (MODIFIED)
+  Cargo.toml               (MODIFIED -- add llama-cpp-2 + GPU features)
+
+src/
+  components/
+    smart-modes/           (NEW)
+    llm-model-picker/      (NEW)
+  hooks/
+    useSmartModes.ts       (NEW)
+  stores/settingsStore.ts  (MODIFIED)
+  bindings.ts              (AUTO-GENERATED)
+  i18n/locales/en/translation.json  (MODIFIED -- new keys for Smart Modes UI)
+```
+
+---
+
+## Data Flow
+
+### Existing post-process flow (preserved, routing updated):
+
+```
+"transcribe_with_post_process" shortcut
+  -> TranscriptionCoordinator
+    -> actions.rs::start() -> recording
+    -> actions.rs::stop()
+      -> transcribe
+      -> resolve_mode_id("transcribe_with_post_process", settings) = selected_mode_id
+      -> post_process_transcription(mode_id)
+        -> reads SmartMode from settings
+        -> if provider == "embedded": llm_runtime.infer()
+        -> else: llm_client::send_chat_completion() [HTTP, unchanged]
+  -> clipboard/paste
+```
+
+### New smart mode shortcut flow:
+
+```
+"smart_mode_translate_fr" shortcut fires
+  -> TranscriptionCoordinator (is_transcribe_binding = true)
+    -> Stage::Recording("smart_mode_translate_fr")
+    -> stop: actions.rs receives binding_id = "smart_mode_translate_fr"
+      -> resolve_mode_id -> "translate_fr"
+      -> looks up SmartMode{target_language: Some("fr"), prompt: "..."}
+      -> transcription
+      -> post_process_transcription("translate_fr")
+  -> clipboard/paste
+```
+
+### LLM model download flow:
+
+```
+Frontend: download button clicked
+  -> Tauri command: commands/llm_models.rs::download_llm_model("qwen2.5-0.5b-q4_k_m")
+    -> LlmModelManager::download_model(...)
+      -> HTTP stream -> emits "llm-download-progress" events (throttled)
+      -> SHA256 verify (spawn_blocking)
+      -> file moved to <app_data>/llm_models/
+      -> emits "llm-download-complete"
+  -> Frontend updates picker UI
+```
+
+---
+
+## Integration Points: NEW vs. MODIFIED
+
+| File | Status | What changes |
+|------|--------|--------------|
+| `src-tauri/src/managers/llm_model.rs` | NEW | LLM GGUF catalogue + downloader, mirrors `model.rs` patterns exactly |
+| `src-tauri/src/managers/llm_runtime.rs` | NEW | In-process inference, `spawn_blocking`, token streaming via events, idle watcher |
+| `src-tauri/src/commands/llm_models.rs` | NEW | Tauri commands for LLM model management |
+| `src-tauri/src/commands/smart_modes.rs` | NEW | Tauri commands for SmartMode CRUD + shortcut binding |
+| `src-tauri/src/llm_client.rs` | MODIFIED | Add `"embedded"` provider dispatch arm. TECH-04 struct refactor is a natural companion. |
+| `src-tauri/src/settings.rs` | MODIFIED | `SmartMode` type, 4 new fields (all `#[serde(default)]`), `migrate_prompts_to_smart_modes()` in loader |
+| `src-tauri/src/actions.rs` | MODIFIED | `post_process_transcription()` gains `mode_id: Option<&str>` param; `resolve_mode_id()` helper |
+| `src-tauri/src/transcription_coordinator.rs` | MODIFIED | `is_transcribe_binding()` gains `id.starts_with("smart_mode_")` branch |
+| `src-tauri/src/shortcut/mod.rs` | MODIFIED | `register_all_smart_mode_shortcuts()`, conflict detection, called from `init_shortcuts()` |
+| `src-tauri/src/lib.rs` | MODIFIED | `.manage()` two new managers; call `register_all_smart_mode_shortcuts()` after base init |
+| `src-tauri/src/commands/mod.rs` | MODIFIED | Expose new command modules |
+| `src-tauri/Cargo.toml` | MODIFIED | Add `llama-cpp-2` with conditional GPU features |
+| `src/components/smart-modes/` | NEW | SmartMode list, create, edit, shortcut-bind UI |
+| `src/components/llm-model-picker/` | NEW | LLM model download/select UI (mirrors model-selector) |
+| `src/hooks/useSmartModes.ts` | NEW | React hook wiring SmartMode state |
+| `src/stores/settingsStore.ts` | MODIFIED | SmartMode fields in Zustand store |
+| `src/bindings.ts` | AUTO-GENERATED | tauri-specta regenerates from new commands + types |
+| `src/i18n/locales/en/translation.json` | MODIFIED | New keys for Smart Modes UI + 19 sibling locales |
+
+---
+
+## Dependency-Aware Build Order
+
+**Phase A: LLM Runtime Foundation**
+Must come first -- everything else depends on it.
+
+1. `Cargo.toml`: add `llama-cpp-2` with conditional GPU features (Metal on macOS, Vulkan on Windows/Linux, optional CUDA)
+2. `managers/llm_model.rs`: LLM model catalogue + downloader (no inference dependency)
+3. `managers/llm_runtime.rs`: inference engine + idle watcher (depends on `llama-cpp-2` and `llm_model.rs`)
+4. `commands/llm_models.rs`: Tauri command handlers for download/delete/list
+5. `lib.rs`: `.manage()` both new managers
+6. Frontend `components/llm-model-picker/`: download UI
+7. Verify gate: can download a GGUF, run inference from a test Tauri command, streaming token events arrive in frontend console
+
+**Phase B: Smart Modes Data Layer**
+Depends on Phase A (the LLM runtime must exist to be an addressable provider).
+
+1. `settings.rs`: add `SmartMode` type, 4 new `AppSettings` fields, migration function
+2. `llm_client.rs`: add `"embedded"` branch (TECH-04 struct refactor here too)
+3. Add `"embedded"` entry to `default_post_process_providers()` so it appears in the existing provider tabs
+4. `commands/smart_modes.rs`: CRUD + shortcut binding commands
+5. `actions.rs`: `mode_id` routing, `resolve_mode_id()` helper
+6. `transcription_coordinator.rs`: extend `is_transcribe_binding()`
+7. `shortcut/mod.rs`: `register_all_smart_mode_shortcuts()`, conflict detection
+8. `lib.rs`: call smart mode shortcut registration at init
+9. Verify gate: existing `transcribe_with_post_process` path still works; migration from old prompts produces correct `smart_modes` list
+
+**Phase C: Smart Modes UI + Translation Presets**
+Depends on Phase B (data layer must be settled).
+
+1. Frontend `components/smart-modes/`: list, create, edit, bind shortcut
+2. `src/hooks/useSmartModes.ts`
+3. Translation presets are built-in `SmartMode` entries -- no additional code after B
+4. i18n: add keys to `src/i18n/locales/en/translation.json`, propagate to 19 sibling locales
+5. Settings UI: add Local tab entry pointing to embedded provider + LLM model picker
+6. Verify gate: full end-to-end flow -- record, transcribe, smart mode fires correct prompt, embedded LLM responds, paste
+
+**Phase D: Polish and Memory Budget UX**
+
+1. LLM model picker: `recommended_vram_mb` advisory warnings
+2. Independent `llm_model_unload_timeout` setting exposed in settings UI
+3. Conflict detection feedback in shortcut binding UI
+4. Tray menu shows active Smart Mode (optional)
 
 ---
 
 ## Anti-Patterns to Avoid
 
-### Squashing the upstream-sync PR
+### Anti-Pattern 1: Running llama.cpp inference on a tokio worker thread directly
 
-GitHub squash merge removes upstream commit history from `main`. UPSTREAM.md §7 requires "Create a merge commit". Configure a branch protection rule to disallow squash on `upstream-sync`-labeled PRs, or add a note to the PR template.
+**What people do:** `tokio::spawn(async { llama_model.decode(...) })`
+**Why it's wrong:** llama.cpp token generation is a blocking tight loop. It starves the tokio executor, freezes the UI, and causes timeout errors in other async commands.
+**Do this instead:** `tokio::task::spawn_blocking(|| { token loop })`. This is identical to what `TranscriptionManager` already does for Whisper inference and what `ModelManager` does for SHA256 verification and tar extraction.
 
-### Giving the auditor agent write access to the branch
+### Anti-Pattern 2: Storing LLM models in the same directory as transcription models
 
-If both adapter and auditor have `contents: write` and run in parallel, there is a race condition on the branch. Use `permissions: { contents: read }` for the auditor job, and `needs: [adapter]` to sequence it after the adapter commits.
+**What people do:** Put GGUF files inside the existing `models/` dir.
+**Why it's wrong:** `model.rs::discover_custom_whisper_models()` scans `models/` for `.bin` files. Mixed directories cause confusion when the user has 10+ GB of models of both types.
+**Do this instead:** Separate `<app_data>/llm_models/` directory, managed exclusively by `LlmModelManager`.
 
-### Changing portable mode detection string without legacy fallback
+### Anti-Pattern 3: Making `LlmRuntimeManager` aware of `SmartMode`
 
-Replacing `starts_with("Handy Portable Mode")` with `starts_with("Dictus Portable Mode")` alone silently breaks existing portable installs — the app starts in non-portable mode and writes to the system app data directory instead of `Data/`. Always keep the legacy fallback check until all known installs have been upgraded (i.e., indefinitely for a production app).
+**What people do:** Pass the full `SmartMode` struct into the runtime manager.
+**Why it's wrong:** The runtime manager's job is inference. Prompt selection and mode routing is business logic belonging in `actions.rs`.
+**Do this instead:** `LlmRuntimeManager::infer(prompt: String)` -- the runtime receives an already-resolved prompt string.
 
-### Hand-editing `Cargo.lock` during conflict resolution
+### Anti-Pattern 4: Adding a parallel shortcut system for Smart Modes
 
-Already documented in UPSTREAM.md §4.7. After resolving `Cargo.toml`, always run `cargo generate-lockfile`. This is not specific to v1.2 but remains a risk whenever Rust dependencies change.
+**What people do:** Create a separate `HashMap<String, SmartMode>` that the shortcut handler checks in a new code path.
+**Why it's wrong:** Creates two parallel shortcut state systems, breaking conflict detection, `suspend_binding`/`resume_binding`, and the keyboard implementation switcher.
+**Do this instead:** Smart mode shortcuts use `bindings` HashMap with `smart_mode_{id}` keys. All existing shortcut infrastructure handles them transparently.
 
-### Relying on `app.exit(0)` drop order for manager cleanup
+### Anti-Pattern 5: Explicit cross-manager memory coordination locking
 
-Tauri's managed state drop order is not defined. `TranscriptionManager` holds `Arc<ModelManager>` — if Tauri drops `ModelManager` before `TranscriptionManager`, the Arc refcount prevents the model from being unloaded until `TranscriptionManager` drops. This is fine for memory safety but not for GPU resource release ordering. Explicit cleanup before `app.exit(0)` is safer than relying on drop ordering.
+**What people do:** Add a shared `Mutex<bool>` so `LlmRuntimeManager::ensure_loaded()` waits for `TranscriptionManager` to unload first.
+**Why it's wrong:** Introduces cross-manager coupling and potential deadlocks. Violates the independent manager pattern.
+**Do this instead:** User-configurable `ModelUnloadTimeout::Immediately` on the transcription model for memory-constrained hardware. The sequential pipeline (transcription always completes before LLM starts) means both models are never inferring simultaneously even if both stay loaded.
 
 ---
 
 ## Sources
 
-- Direct source analysis: `src-tauri/src/lib.rs`, `src-tauri/src/actions.rs`, `src-tauri/src/portable.rs`, `src-tauri/src/managers/history.rs`, `src-tauri/src/settings.rs`, `src-tauri/src/tray.rs`
-- Direct source analysis: `.github/workflows/upstream-sync.yml`, `.github/workflows/build.yml`, `.github/workflows/release.yml`
-- Direct source analysis: `.planning/phases/05-upstream-sync/scripts/verify-sync.sh`
-- Direct source analysis: `src-tauri/tauri.conf.json`, `src/components/settings/`
-- `.planning/todos/pending/` — four todo files documenting known gaps
+- Codebase direct reading: `managers/model.rs`, `managers/transcription.rs`, `llm_client.rs`, `settings.rs`, `actions.rs`, `shortcut/mod.rs`, `shortcut/handler.rs`, `transcription_coordinator.rs`, `lib.rs` (HIGH confidence -- actual source code)
+- [llama-cpp-2 crate (utilityai/llama-cpp-rs)](https://deepwiki.com/utilityai/llama-cpp-rs) -- GGUF bindings API, GPU feature flags (MEDIUM confidence)
+- [llama_cpp crate docs](https://docs.rs/llama_cpp) -- LlamaModel / LlamaContext API surface (MEDIUM confidence)
+- [mistral.rs -- pure Rust LLM inference](https://github.com/EricLBuehler/mistral.rs) -- alternative Candle-based engine considered and deferred (MEDIUM confidence)
+- [tauri-plugin-global-shortcut v2 docs](https://v2.tauri.app/plugin/global-shortcut/) -- runtime register/unregister API (HIGH confidence)
+- [Tauri async_runtime module](https://docs.rs/tauri/latest/tauri/async_runtime/index.html) -- `spawn_blocking` integration pattern (HIGH confidence)
 
 ---
 
-*Architecture research for: Dictus Desktop v1.2 Polish & Automation*
-*Researched: 2026-04-15*
+*Architecture research for: Dictus Desktop v1.3 Smart Modes & Local LLM*
+*Researched: 2026-05-29*
