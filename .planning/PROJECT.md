@@ -35,14 +35,21 @@ L'application doit être identifiable et utilisable comme **Dictus Desktop** —
 - v0.1.0 Windows builds unsigned at OS level (INFR-03, Azure Trusted Signing pending)
 - Phase 5 VALIDATION.md left draft — needs `/gsd:validate-phase 5`
 
-## Current Milestone: (between milestones — v1.3 planning pending)
+## Current Milestone: v1.3 Smart Modes & Local LLM
 
-Next: `/gsd:new-milestone` to draft v1.3 "Smart Mode & Translation" requirements + roadmap.
+**Goal:** Faire du traitement local post-transcription un défaut réel et puissant — un runtime LLM embarqué (toutes plateformes, sans Ollama externe) plus des « Smart Modes » (prompts soignés, éditables, créables, chacun associable à un shortcut), dont la traduction multi-cibles devient un mode first-class.
 
-**Tentative v1.3 scope (per memory `project_v13_smart_modes.md`):**
-- Shortcut↔prompt binding so the same keyboard shortcut can map to different post-process prompts
-- Translation as a first-class mode (not just a deferred candidate)
-- Possible candidate after v1.3: embedded local LLM runtime (llama.cpp/candle), Whisper-style downloader for LLMs (memory `project_embedded_local_llm_runtime.md`)
+**Target features:**
+- **Runtime LLM local embarqué** — moteur LLM en Rust intégré (llama.cpp/candle/mistral.rs), téléchargeur de modèles intégré (UX calquée sur le picker Whisper/Parakeet), détection GPU par plateforme (Metal + Vulkan, CUDA optionnel), gestion mémoire/cycle de vie (unload timeout, presets de quantization). Devient l'option locale principale ; la carte placeholder « Bibliothèque de modèles locaux » devient réelle.
+- **Smart Modes** — série de prompts post-transcription soignés livrés par défaut, éditables, l'utilisateur peut créer ses propres modes, chacun associable à son propre shortcut (extension du modèle prompt↔shortcut actuel + amélioration UX/UI).
+- **Traduction first-class** — presets multi-cibles (EN/ES/ZH/FR…), chacun un Smart Mode bindable à un shortcut.
+
+**Scope decisions (2026-05-29):**
+- Runtime embarqué livré sur **toutes les plateformes** dès v1.3 (Metal/Vulkan, pas macOS-first).
+- Apple Foundation + Custom→Ollama + providers cloud **restent tous** en option ; l'embarqué s'ajoute comme option locale principale (ne remplace rien).
+- Smart Modes = prompts (pas un nouveau concept opaque) — défauts soignés + édition + création + binding shortcut.
+
+**Phases continue from Phase 10** (v1.2 ended at Phase 9).
 
 ## Requirements
 
@@ -93,7 +100,11 @@ Next: `/gsd:new-milestone` to draft v1.3 "Smart Mode & Translation" requirements
 
 ### Active
 
-(Between milestones — v1.3 requirements will be defined by `/gsd:new-milestone`.)
+<!-- v1.3 Smart Modes & Local LLM — detailed REQ-IDs in .planning/REQUIREMENTS.md -->
+
+- [ ] Runtime LLM local embarqué (moteur Rust + téléchargeur intégré + GPU detection + gestion mémoire) — toutes plateformes
+- [ ] Smart Modes : prompts post-transcription soignés, éditables, créables, chacun associable à un shortcut
+- [ ] Traduction first-class : presets multi-cibles bindables à des shortcuts
 
 ### Deferred
 
@@ -189,4 +200,4 @@ Next: `/gsd:new-milestone` to draft v1.3 "Smart Mode & Translation" requirements
 
 ---
 
-*Last updated: 2026-05-29 after v1.2 milestone completion*
+*Last updated: 2026-05-29 after starting milestone v1.3 Smart Modes & Local LLM*

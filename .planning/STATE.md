@@ -1,11 +1,11 @@
 ---
 gsd_state_version: 1.0
-milestone: null
-milestone_name: null
-status: between_milestones
-stopped_at: Completed v1.2 milestone archive
-last_updated: "2026-05-29T08:30:00.000Z"
-last_activity: "2026-05-29 — v1.2 Polish & Local-First UX shipped (4 phases / 16 plans / 18 requirements / audit passed); archived to .planning/milestones/v1.2-{ROADMAP,REQUIREMENTS,MILESTONE-AUDIT,INTEGRATION-CHECK}.md"
+milestone: v1.3
+milestone_name: Smart Modes & Local LLM
+status: defining_requirements
+stopped_at: Milestone v1.3 started — defining requirements
+last_updated: "2026-05-29T09:00:00.000Z"
+last_activity: "2026-05-29 — Milestone v1.3 Smart Modes & Local LLM started (embedded LLM runtime all-platforms + Smart Modes prompt↔shortcut + multi-target translation); defining requirements"
 progress:
   total_phases: 0
   completed_phases: 0
@@ -18,19 +18,17 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-29 after v1.2 milestone completion)
+See: .planning/PROJECT.md (updated 2026-05-29 after starting milestone v1.3)
 
 **Core value:** L'application doit être identifiable et utilisable comme Dictus Desktop — pas comme Handy — rester vivante sans décrocher du upstream Handy, et présenter le local-first comme défaut visible dans l'UX.
-**Current focus:** Between milestones — `/gsd:new-milestone` to draft v1.3 "Smart Mode & Translation" requirements + roadmap.
+**Current focus:** v1.3 Smart Modes & Local LLM — defining requirements (embedded LLM runtime all-platforms + Smart Modes + multi-target translation).
 
 ## Current Position
 
-Phase: none (v1.2 archived 2026-05-29)
-Plan: none
-Status: v1.2 shipped — all 18 requirements satisfied, all 4 phases passed verification, cross-phase integration + E2E flows verified, audit passed. Ready for v1.3 planning.
-Last activity: 2026-05-22 — 08-10 complete: i18n key changes propagated to all 19 sibling locales (tabs.local/.cloud translated and inserted between api and modelsAndLocalProcessing, cloudToggle and pillars blocks deleted, cloudSelectedNotice updated with locale-matching Cloud tab label); bun run check:translations exits 0 (19/19 pass)
-
-Progress: [██████████] 100% (v1.2 — Phase 8 source-side gap closure done; all 10 Phase 8 plans + UAT-checkpoint complete; re-UAT pending)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-05-29 — Milestone v1.3 started
 
 ## Performance Metrics
 
