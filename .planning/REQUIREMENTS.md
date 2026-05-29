@@ -1,0 +1,128 @@
+# Requirements: Dictus Desktop — Milestone v1.3 Smart Modes & Local LLM
+
+**Defined:** 2026-05-29
+**Core Value:** Présenter le local-first comme défaut visible et puissant — un runtime LLM embarqué (toutes plateformes, sans Ollama externe) + des Smart Modes (prompts soignés, éditables, créables, chacun associable à un shortcut), dont la traduction multi-cibles devient un mode first-class.
+
+> REQ-IDs continue with NEW categories for v1.3. Prior milestones used UPDT/SYNC/BRAND/ICON/SHUT/PRIV/AUDIT (+ deferred TECH/INFR/DATA/SETT). v1.3 introduces PREP/LLM/MDL/MODE/TRANS/L10N.
+
+## v1.3 Requirements
+
+Requirements for this milestone. Each maps to a roadmap phase (10→14, continuing from v1.2's Phase 9).
+
+### Foundation & Prerequisites (PREP)
+
+Non-user-facing groundwork that must land before feature code (research-recommended risk clearing).
+
+- [ ] **PREP-01**: `llama-cpp-2` compiles cleanly alongside the existing `transcribe-rs` on all 7 CI platforms — ggml symbol conflict resolved (feasibility spike; `[patch.crates-io]` fallback ready)
+- [ ] **PREP-02**: TECH-04 resolved — `llm_client.rs send_chat_completion_with_schema` refactored from 8 args to a request struct; `#[allow(clippy::too_many_arguments)]` removed; `cargo clippy --all-targets -- -D warnings` passes clean
+- [ ] **PREP-03**: Upstream Sync #2 merged with per-commit triage (SYNC-A1); identity integrity preserved (`verify-sync.sh` green); fork policy transitions to documented **selective cherry-pick** going forward (AWS Bedrock `aee682f` decision recorded)
+
+### Embedded LLM Runtime (LLM)
+
+- [ ] **LLM-01**: A GGUF model runs in-process via the embedded engine (no external Ollama), on a background thread so inference never blocks the overlay, tray, or shortcuts
+- [ ] **LLM-02**: GPU acceleration is auto-selected per platform (Metal on macOS, Vulkan on Windows/Linux) with graceful CPU fallback when no GPU backend is available
+- [ ] **LLM-03**: The loaded LLM unloads after its own idle timeout and coexists safely in memory with the transcription model (sequential pipeline, independent unload)
+- [ ] **LLM-04**: "Embedded (local)" is selectable as a post-processing provider alongside Apple Intelligence, Custom→Ollama, and cloud providers — cloud remains opt-in, embedded is the primary local option
+
+### Local Model Library (MDL)
+
+- [ ] **MDL-01**: User can browse a curated catalogue of local models (Qwen3-4B, Qwen2.5-1.5B, TranslateGemma-4B) with the on-disk size shown **before** download
+- [ ] **MDL-02**: User can download a catalogue model in-app with progress, cancel, and resume; download is SHA256-verified and served from HuggingFace CDN (never `blob.handy.computer`)
+- [ ] **MDL-03**: User can delete a downloaded model and reclaim the disk space
+- [ ] **MDL-04**: User can add a custom local model by drag/drop or file-pick of a GGUF file
+- [ ] **MDL-05**: The "Bibliothèque de modèles locaux" placeholder card becomes the real, functional model library anchored at the top of the local-processing page
+
+### Smart Modes (MODE)
+
+- [ ] **MODE-01**: On upgrade, the user's existing post-processing prompts migrate automatically to Smart Modes with no data loss (`settings_schema_version` + explicit migration; verified against a v1.2 settings file)
+- [ ] **MODE-02**: Dictus ships a curated set of ~10 default Smart Modes with a safe default first mode ("Clean Up"); exact prompt wording refined during the implementation phase against real local models
+- [ ] **MODE-03**: User can create, edit, and delete Smart Modes (name + prompt + optional target language)
+- [ ] **MODE-04**: User can assign a distinct global shortcut to each Smart Mode; recording with that shortcut applies that mode's prompt to the transcription
+- [ ] **MODE-05**: Shortcut conflicts are detected and surfaced with an inline warning at bind time (no silent registration failure)
+- [ ] **MODE-06**: Smart Modes are presented as a visual card list, replacing the single-prompt dropdown
+
+### Translation (TRANS)
+
+- [ ] **TRANS-01**: Translation is a first-class Smart Mode with multi-target language presets (candidate defaults EN/ES/FR/ZH — finalized in-phase), each bindable to its own shortcut
+- [ ] **TRANS-02**: Translation runs fully offline through the embedded LLM (Whisper's translate task is English-only, so the LLM step is the only multi-target path)
+
+### Localization (L10N)
+
+- [ ] **L10N-01**: All new user-facing strings (model library, Smart Modes UI, default mode names) are propagated across the 20 locales; `bun run check:translations` passes
+
+## Future Requirements
+
+Deferred to a later milestone. Tracked, not in this roadmap.
+
+### Model Library (post-validation)
+
+- **MDL-F1**: Auto-quantization recommendation based on detected system RAM
+- **MDL-F2**: Hardware fit badge ("Fits" / "May be slow" / "Insufficient memory") based on RAM vs model size
+- **MDL-F3**: Quantization tier labels (Small / Balanced / Quality) hiding raw GGUF suffixes
+- **MDL-F4**: GPU/CPU status badge in the model picker
+- **MDL-F5**: Larger curated catalogue across more providers (Gemma3, Llama-3.2, Phi, DeepSeek, …)
+- **MDL-F6**: Open HuggingFace catalogue browse/search inside the app
+
+### Smart Modes (post-validation)
+
+- **MODE-F1**: Enable/disable a mode without deleting it
+- **MODE-F2**: Export/import Smart Modes as JSON
+- **MODE-F3**: Per-mode provider selection (a different LLM per mode)
+- **MODE-F4**: Auto-activation of a mode based on the active foreground app (requires macOS accessibility permission)
+- **MODE-F5**: Community mode gallery / templates
+
+### Runtime (v1.4+)
+
+- **LLM-F1**: CUDA backend for NVIDIA GPUs
+- **LLM-F2**: Advanced GPU layer configuration (`n_gpu_layers` slider)
+
+## Out of Scope
+
+Explicitly excluded for v1.3. Documented to prevent scope creep.
+
+| Feature | Reason |
+|---------|--------|
+| Running the LLM as a separate `llama-server` / sidecar process | Contradicts the "no external process" promise; in-process is the whole point (revisit only if in-process crash isolation proves unmanageable) |
+| Cloud provider as automatic fallback when no local model is downloaded | Violates local-first philosophy — cloud stays explicit opt-in, never silent |
+| Hosting GGUF weights on `blob.handy.computer` | Availability/cost risk not owned by Dictus; use HuggingFace CDN directly |
+| Silent settings migration that drops existing prompts/shortcuts | Data loss on upgrade is unacceptable — migration must be explicit and tested |
+| Replacing the Custom→Ollama path | Embedded is added as the primary local option; Ollama + Apple Intelligence stay as alternatives (user decision 2026-05-29) |
+| macOS-first / staged platform rollout | All platforms ship together in v1.3 (user decision 2026-05-29) |
+| CUDA backend | Deferred to v1.4 — Metal + Vulkan cover the target platforms |
+
+## Traceability
+
+Which phases cover which requirements. Populated during roadmap creation.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| PREP-01 | — | Pending |
+| PREP-02 | — | Pending |
+| PREP-03 | — | Pending |
+| LLM-01 | — | Pending |
+| LLM-02 | — | Pending |
+| LLM-03 | — | Pending |
+| LLM-04 | — | Pending |
+| MDL-01 | — | Pending |
+| MDL-02 | — | Pending |
+| MDL-03 | — | Pending |
+| MDL-04 | — | Pending |
+| MDL-05 | — | Pending |
+| MODE-01 | — | Pending |
+| MODE-02 | — | Pending |
+| MODE-03 | — | Pending |
+| MODE-04 | — | Pending |
+| MODE-05 | — | Pending |
+| MODE-06 | — | Pending |
+| TRANS-01 | — | Pending |
+| TRANS-02 | — | Pending |
+| L10N-01 | — | Pending |
+
+**Coverage:**
+- v1.3 requirements: 21 total
+- Mapped to phases: 0 (roadmap pending)
+- Unmapped: 21 ⚠️ (resolved by roadmapper)
+
+---
+*Requirements defined: 2026-05-29*
+*Last updated: 2026-05-29 after initial definition*
