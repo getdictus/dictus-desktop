@@ -1,168 +1,249 @@
 # Project Research Summary
 
-**Project:** Dictus Desktop v1.2 — Polish & Automation
-**Domain:** Desktop app polish, brand cleanup, and CI/CD automation for a Tauri 2.x fork
-**Researched:** 2026-04-15
-**Confidence:** HIGH (architecture/pitfalls based on direct source analysis); MEDIUM (CI agent patterns, macOS shutdown)
+**Project:** Dictus Desktop v1.3 — Smart Modes & Local LLM
+**Domain:** Embedded LLM runtime + per-mode shortcut binding + multi-target translation in a shipping Tauri 2.x desktop app
+**Researched:** 2026-05-29
+**Confidence:** MEDIUM-HIGH overall (HIGH on codebase reuse paths, build system, and settings migration; MEDIUM on runtime stability, Vulkan maturity, and translation quality)
+
+---
 
 ## Executive Summary
 
-v1.2 is a polish and automation milestone — no new user-facing features, but meaningful work across three distinct areas: brand correctness, CI automation, and reliability. The codebase is a maintained fork of Handy (cjpais), and the primary tension throughout this milestone is keeping Dictus identity intact while accepting upstream functional improvements. Every feature in scope either fixes a visible quality gap (broken icons, crash dialog, wrong brand strings) or strengthens the infrastructure that catches identity regressions (verify-sync.sh, CI gate, Claude agents).
+Dictus Desktop v1.3 is an extension milestone, not a rewrite. All four research threads independently confirmed that ~80% of the implementation reuses existing infrastructure: the `ModelManager` download pipeline, the `ModelUnloadTimeout` lifecycle mechanism, the dynamic shortcut register/unregister system, and the `PostProcessProvider` abstraction are all directly extensible. The core deliverable is three new components wired into the existing architecture: an in-process GGUF inference engine (`LlmRuntimeManager`), a parallel model catalogue/downloader (`LlmModelManager`), and a settings schema extension that promotes `LLMPrompt` to `SmartMode` with per-mode shortcut bindings. The recommended LLM runtime is `llama-cpp-2` (Rust bindings over llama.cpp) with Metal auto-enabled on macOS and Vulkan feature-gated on Windows/Linux.
 
-The recommended approach is to treat the milestone in three parallel tracks that converge before the agent layer ships. Track A (brand/icon polish) and Track C (macOS shutdown) are fully independent of each other and of CI work — they can proceed simultaneously on separate branches. Track D (sync infra refactor) must complete before Track E (Claude Code agent layer) because the agent workflow depends on the community action generating labeled draft PRs. All five tracks share a single critical safety net: `verify-sync.sh` extended with UPDT-03/UPDT-05 assertions and promoted to a required CI check.
+The single most critical architectural constraint is also the single highest-risk item: `llama-cpp-2` and the existing `transcribe-rs` crate both vendor `ggml` internally. A linker symbol conflict (`duplicate definition of ggml_init`) is a realistic build failure on first integration. This is not a blocker — it has documented resolution paths — but it must be treated as a feasibility spike before any other v1.3 code is written. The second highest-risk item is settings migration: the `post_process_prompts` + `post_process_selected_prompt_id` schema must be explicitly migrated to `smart_modes` + `post_process_selected_mode_id`, or existing users silently lose their configured prompts and shortcuts on upgrade. Both risks are fully preventable with the preparation steps described in the research.
 
-The primary risk in this milestone is not technical complexity — individual tasks are well-scoped — but rather the concentration of identity-critical files that can silently regress. `tauri.conf.json`, the 22 locale files, `llm_client.rs` headers, portable.rs magic string, and recording filenames are all surfaces where a merge, an agent fix, or a brand cleanup could introduce a regression that only manifests at runtime. The mitigation strategy is layered: verify-sync.sh covers config fields, the auditor agent covers the diff, and the human merge gate is the final check.
+The recommended build order that all four research files independently converged on: (1) feasibility spike on `llama-cpp-2` build alongside `transcribe-rs` + TECH-04 `llm_client.rs` refactor + upstream Sync #2 as prerequisites; (2) runtime foundation — `LlmModelManager`, `LlmRuntimeManager`, CI Vulkan SDK setup; (3) Smart Modes data layer — settings migration, `SmartMode` type, per-mode shortcut registration, embedded provider branch in `llm_client.rs`; (4) Smart Modes UI + translation presets + i18n; (5) polish — memory advisory, conflict feedback, quantization labels. Whisper's translate task is English-output only, so multi-target translation is only possible through the LLM post-processing step — this makes the embedded runtime directly enabling for the offline translation use case.
+
+---
 
 ## Key Findings
 
 ### Recommended Stack
 
-No new frontend packages and no new Rust crates are required for v1.2. All additions are workflow files, icon assets, or code pattern changes. Three genuine tooling additions: `peter-evans/create-pull-request@v8` (replaces custom detection workflow), `anthropics/claude-code-action@v1` (Claude agent layer), and `bunx tauri icon` CLI invocation (already installed).
+The core stack is unchanged (Tauri 2.x, Rust, React 18/TypeScript, Tailwind, Zustand, Vite). The only new Cargo dependency is `llama-cpp-2 = "0.1"` with conditional GPU feature gates following the existing `transcribe-rs` pattern: Metal is automatic on macOS (no feature flag needed — unconditional framework link in `llama-cpp-sys-2/build.rs`), Vulkan is feature-gated on Windows/Linux, CUDA is deferred to v1.4. CI runners need Vulkan SDK added for Windows and Linux jobs (`humbletim/install-vulkan-sdk@v1.2.0` on Windows; `libvulkan-dev + spirv-headers` on Linux). `SPIRV-Headers` must be installed separately — it is NOT pulled in by `libvulkan-dev` alone.
 
-**Core additions:**
-- `peter-evans/create-pull-request@v8` (v8.1.1): replaces custom SHA-tracking issue workflow with idempotent draft PR creation — supports `draft: true`, `labels`, handles branch conflicts
-- `anthropics/claude-code-action@v1` (v1.0.96): two sequential jobs — adapter (write access, 15 turns) then auditor (read-only, 5 turns, posts PR comment)
-- OAuth auth via `CLAUDE_CODE_OAUTH_TOKEN`: use Max subscription quota, not API key billing — correct auth path for the first-party action
-- `tokio-util` (conditional): only if crash report confirms background-task shutdown root cause; check `cargo tree | grep tokio-util` first
+Candle (pure Rust, HuggingFace) and mistral.rs were evaluated and rejected. Candle's GGUF support is partial and unreliable for arbitrary community models; it has no Vulkan backend; it requires per-architecture inference code. Mistral.rs inherits candle's GGUF limitations, its Vulkan quality is unverified (single source, LOW confidence), and its server-first design requires excessive embedding glue. `llama-cpp-2` is the only option that provides full GGUF compatibility, automatic Metal, Vulkan support, and a minimal integration surface.
 
-**Critical constraints:**
-- Pin Claude Code action to `v1` major tag; `@v1` floating tag is stable
-- `tauri-plugin-updater 2.10.0` already installed — UPDT-03/UPDT-05 assertions verify pubkey/endpoint fields required by this version
+**Core new technologies:**
+- `llama-cpp-2 = "0.1"` (crates.io): in-process GGUF inference — canonical Rust binding for llama.cpp, stays current with every llama.cpp release, Apache-2.0/MIT
+- HuggingFace CDN (direct): model distribution — free, supports HTTP range requests, globally available; explicitly NOT `blob.handy.computer` (INFR-01 hard line)
+- `tauri-plugin-global-shortcut = "2.3.1"` (already installed): per-mode shortcut binding — existing API, no changes needed
+- `sysinfo` crate (optional, P2): hardware fit badge — total RAM detection for model size recommendation
+
+**Existing infrastructure reused without modification:**
+- `managers/model.rs`: SHA256 verify, partial-resume download, tar.gz extraction, cancel flags, progress events
+- `settings.rs` `ModelUnloadTimeout` enum: idle-watcher lifecycle for both Whisper and LLM managers
+- `shortcut/tauri_impl.rs` `register_shortcut` / `unregister_shortcut`: dynamic registration proven working
 
 ### Expected Features
 
-**Must have (P1):**
-- Linux/Windows icon fix — visible black-corner artifact on Linux; `icon.ico` multi-resolution for Windows
-- Recording filename cleanup (`handy-` → `dictus-`) — user-visible; forward-only rename, no DB migration
-- Portable mode magic string update — legacy compatibility fallback required
-- DebugPaths display fix — use `appDataDir()` Tauri API, not hardcoded `%APPDATA%/handy`
-- verify-sync.sh path move + UPDT-03/UPDT-05 assertions
-- verify-sync.yml CI gate (required status check)
-- macOS clean shutdown — investigation-first; fix or document upstream bug
+**Must have (table stakes):**
+- In-app model downloader with progress bar, cancel, and delete — Whisper picker set this expectation; users will not accept a separate download process
+- Show disk size before download — Jan/LM Studio both do this; 2.5 GB surprises are unacceptable
+- Hardware fit badge ("Fits" / "May be slow" / "Insufficient memory") — Jan pioneered this; critical on 8 GB machines
+- Per-mode shortcut binding — this is the core missing link; without it users must open settings to switch modes
+- Visual mode list (cards, not dropdown) — dropdown does not communicate "mode library"
+- 7-10 pre-loaded default Smart Modes including translation presets — blank slate is intimidating; "Clean Up" should be the safe default and first mode
+- Settings schema migration — existing users must not lose their configured prompts or shortcuts
 
-**Should have (P2 — if time allows):**
-- Community action draft PR workflow
-- PR checklist template
-- Claude adapter + auditor agent workflow
+**Should have (competitive):**
+- Quantization tier labels (Small / Balanced / Quality) mapping to Q4_K_M / Q5_K_M / Q8_0 — avoids exposing GGUF suffixes to non-expert users
+- Shortcut conflict detection with inline warning — Superwhisper only fixed silent failures in v2.13.1; proactive detection is a clear differentiator
+- GPU/CPU status badge in model picker — users need to understand performance expectations
+- Translation modes visually grouped as a sub-category — elevates translation as first-class concept
 
-**Defer to v1.3+:**
-- Privacy network surface documentation
-- Local-first provider picker redesign
-- Data-dir migration (handy → dictus on disk)
+**Defer to v1.x post-validation:**
+- Auto-quantization recommendation based on detected RAM
+- Mode enable/disable toggle without deletion
+- Export/import modes as JSON
+
+**Defer to v2+:**
+- Per-mode provider selection (different LLM per mode)
+- Auto-activation by active app (accessibility permissions required on macOS)
+- Community mode gallery / templates
+- Open HuggingFace catalog integration
+- Advanced GPU layer configuration (n_gpu_layers slider)
+
+**Anti-features to explicitly avoid:**
+- Running the LLM as a separate llama-server process — contradicts "no external process" pitch
+- Cloud provider as fallback when no local model is downloaded — violates local-first philosophy
+- GGUF model hosting on `blob.handy.computer` — availability and cost risk not owned by Dictus
+- Silent settings migration that drops existing prompts — data loss on upgrade
 
 ### Architecture Approach
 
-v1.2 changes span five non-overlapping zones: Rust brand strings, frontend display, icon assets, Rust shutdown paths, and GitHub Actions workflows. This isolation means all tracks can proceed on separate branches without conflicts.
+The architecture follows the established Manager pattern strictly. Two new managers are added alongside the existing four: `LlmModelManager` (catalogue + downloader, mirrors `model.rs` patterns exactly with separate `<app_data>/llm_models/` directory) and `LlmRuntimeManager` (GGUF inference engine, mirrors `TranscriptionManager` lifecycle). The inference call runs on `tokio::task::spawn_blocking` — the same pattern `TranscriptionManager` already uses for Whisper inference — to avoid blocking the async executor. Token streaming uses `app_handle.emit("llm-token", ...)` events. A new `"embedded"` provider branch is added to `llm_client.rs` that calls `LlmRuntimeManager` instead of the HTTP path; all existing HTTP paths are unchanged. `actions.rs` gains a `resolve_mode_id()` helper that routes `smart_mode_{id}` binding IDs to the correct `SmartMode` prompt. `TranscriptionCoordinator.is_transcribe_binding()` is extended to accept the `smart_mode_` prefix. The entire shortcut infrastructure handles Smart Mode shortcuts transparently via `smart_mode_{id}` key naming.
 
-**Major components:**
-1. **CI Pipeline** — `upstream-sync.yml` body replaced; `verify-sync.yml` (new required gate); `claude-agents.yml` (new, two-job sequential: adapter then auditor with `needs: [adapter]`)
-2. **Rust shutdown** — explicit cleanup before `app.exit(0)` in tray quit handler (`lib.rs:254`) and `on_window_event` CloseRequested (`lib.rs:622`); diagnosis via Console.app crash report first
-3. **Brand cleanup** — targeted replacement at 6 specific file:line locations; `handy_keys`/`handy-keys` explicitly excluded (external crate, must not be renamed)
-4. **Icon pipeline** — `bunx tauri icon app-icon.png` from 1024x1024 square RGBA source; add `icons/linux-square-256x256.png` to `bundle.icon` array
-5. **Settings UI** — provider reorder in `settings.rs:524-603`; `ProviderSelect.tsx` visual divider if Dropdown supports option groups
+**New files:**
+1. `managers/llm_model.rs` — GGUF catalogue + downloader, mirrors `model.rs` exactly
+2. `managers/llm_runtime.rs` — in-process inference, `spawn_blocking`, idle watcher, token streaming
+3. `commands/llm_models.rs` — Tauri command handlers for LLM model management
+4. `commands/smart_modes.rs` — Tauri command handlers for SmartMode CRUD + shortcut binding
+5. `components/smart-modes/` — list + edit SmartModes, shortcut binding per mode
+6. `components/llm-model-picker/` — LLM model download/select UI (mirrors model-selector)
 
-**Shutdown crash suspects (priority order):** `tauri_plugin_global_shortcut` (drops first, CGEventTap requires main thread), `AudioRecordingManager`/CPAL CoreAudio stream, `TranscriptionManager`/Metal GPU context.
+**Modified files (summary):**
+- `settings.rs`: `SmartMode` type, 4 new `#[serde(default)]` fields, migration function in loader
+- `llm_client.rs`: `"embedded"` branch + TECH-04 struct refactor
+- `actions.rs`: `mode_id: Option<&str>` param, `resolve_mode_id()` helper
+- `transcription_coordinator.rs`: `is_transcribe_binding()` extended for `smart_mode_` prefix
+- `shortcut/mod.rs`: `register_all_smart_mode_shortcuts()`, conflict detection
+- `lib.rs`: `.manage()` two new managers, call smart mode registration at init
 
 ### Critical Pitfalls
 
-1. **Community action auto-resolves identity conflicts** (C1) — never use `--strategy-option=theirs/ours`; configure for draft-PR-only with raw conflicts intact; `verify-sync.sh` as required CI check before enabling the action
+1. **ggml symbol conflict between `transcribe-rs` and `llama-cpp-2`** — Both vendor ggml internally. Linker `duplicate definition of ggml_init` is a realistic first-build failure. Run `cargo tree | grep ggml` before and after adding the dep; use `[patch.crates-io]` to force a single ggml source if conflict occurs. Treat as a feasibility spike — verify clean build before any feature code.
 
-2. **Portable mode magic string breaks existing installs** (C12) — changing detection without legacy fallback silently moves user data to system app data dir; always ship the dual-check with in-place marker upgrade
+2. **Settings migration data loss** — `post_process_prompts` to `smart_modes` rename is a structural schema change. `#[serde(default)]` only handles additive additions; renamed/restructured fields are silently dropped. Prevention: explicit `settings_schema_version: u32` field, migration function in `load_or_create_app_settings()`, and a test loading a v1.2 settings JSON to verify prompts + shortcut are preserved.
 
-3. **Prompt injection via upstream commit messages** (C5) — agent adapter reads untrusted content; structure prompts with explicit trust boundaries; `verify-sync.sh` as hardcoded CI step independent of agents
+3. **TECH-04 collision with v1.3 LLM work** — `llm_client.rs:137 send_chat_completion_with_schema` has 8 arguments, suppressed by `#[allow(clippy::too_many_arguments)]`. Every new Smart Modes call site written before the refactor triggers the warning. Resolution: resolve TECH-04 as the first task of v1.3, before any Smart Modes code is written.
 
-4. **`handy_keys`/`handy-keys` false positives in brand grep** (C14) — external crate; blanket grep+sed breaks the build; use scoped exclusion grep
+4. **Inference blocks the Tauri main thread** — llama.cpp inference is a synchronous blocking loop. Without `spawn_blocking`, inference freezes the overlay, tray menu, and shortcut responsiveness for 5-30 seconds on CPU. Prevention: always `tokio::task::spawn_blocking` for inference; implement an `Arc<AtomicBool>` cancellation token checked between tokens; stream tokens via `app_handle.emit("llm-token", ...)`.
 
-5. **Recording filename rename misread as data migration** (C11) — DB stores actual filenames; forward-only rename does not break old entries; do not run a DB migration renaming column values without renaming WAV files on disk
+5. **Upstream Sync #2 merge complexity grows if deferred** — v1.3 adds substantial new LOC to files in the upstream conflict zone (`llm_client.rs`, `managers/`, `settings.rs`). Execute Sync #2 before v1.3 feature work begins as a prerequisite gate.
 
-6. **Auditor agent race condition** (C9) — adapter and auditor must not run in parallel; use `needs: [adapter]` and `contents: read` permission on auditor job
+6. **Metal shaders missing from macOS release bundle** — `llama-cpp-2` compiles Metal shaders. Tauri does not auto-include resources from Cargo dependency source trees. The release `.app` bundle will silently fall back to CPU inference on macOS unless `.metallib` files are added to `tauri.conf.json` `bundle.resources`. Test with `tauri build` (not `tauri dev`) as part of Phase 11 verification gate.
+
+7. **GGUF on blob.handy.computer is a hard line** — Multi-GB GGUF weights must never be hosted on `blob.handy.computer`. Use HuggingFace CDN URLs directly. INFR-01 resolution is a prerequisite for v1.3, not a deferred cleanup.
+
+---
 
 ## Implications for Roadmap
 
-### Phase 1: Brand & Icon Polish
-**Rationale:** No dependencies on other phases; highest user-visible impact; lowest risk. Establishes the extended verify-sync.sh baseline that later CI phases depend on.
-**Delivers:** Correct platform icons, clean recording filenames, accurate portable mode detection, accurate DebugPaths display, extended verify-sync.sh assertions
-**Avoids:** C11, C12, C13, C14, C15
-**Research flag:** Standard patterns — all file:line locations confirmed in ARCHITECTURE.md.
+Based on combined research, the following phase structure is recommended. Phases 10-14 continue from v1.2 which ended at Phase 9.
 
-### Phase 2: macOS Clean Shutdown
-**Rationale:** Independent of all other phases; must diagnose before implementing.
-**Delivers:** Clean app quit on macOS; documented root cause or upstream bug report
-**Avoids:** Using `std::process::exit(0)` as default; relying on undefined Tauri drop order
-**Research flag:** MEDIUM confidence — root cause requires Console.app crash report diagnosis before fix strategy is chosen.
+### Phase 10: Prerequisite Gate
 
-### Phase 3: Privacy/Local-First UX (optional v1.2)
-**Rationale:** Independent, low-risk, frontend-only. Lowest urgency — can slip to v1.3.
-**Delivers:** Provider picker reordered (local providers first), optional "External" section divider
-**Research flag:** MEDIUM confidence — assess current Dropdown component API before committing to option-group rendering.
+**Rationale:** Three hard blockers must be resolved before any v1.3 feature code is written. The feasibility spike on `llama-cpp-2` build compatibility with `transcribe-rs` is the single highest-risk item in the milestone — discovering a ggml symbol conflict at Phase 13 would require architectural rework. TECH-04 must be resolved first because every new `llm_client.rs` call site written in later phases should use the clean struct API. Sync #2 must happen before the codebase diverges further.
 
-### Phase 4: Sync Infra Refactor
-**Rationale:** Hard prerequisite for Phase 5. Community action must be producing labeled draft PRs before agent workflow has meaningful input.
-**Delivers:** Community action, `verify-sync.yml` required check, PR template, `upstream-sha.txt` deprecation
-**Avoids:** C1, C2, C3, C4
-**Research flag:** MEDIUM confidence — test `peter-evans/create-pull-request@v8` with `workflow_dispatch` before scheduling weekly cron; verify idempotency when sync branch is already open.
+**Delivers:** Green CI confirming `llama-cpp-2` compiles alongside `transcribe-rs` on all 7 platforms; `send_chat_completion_with_schema` refactored to `ChatCompletionRequest` struct; `cargo clippy --all-targets -- -D warnings` passes clean; upstream Sync #2 merged.
 
-### Phase 5: Claude Code Agent Layer
-**Rationale:** Highest value per future sync; highest complexity. Builds on Phase 4's labeled PR infrastructure.
-**Delivers:** Adapter agent (commits identity fixes) + auditor agent (independent PR comment review)
-**Avoids:** C5, C6, C7, C8, C9, C10
-**Research flag:** MEDIUM-LOW confidence — OAuth billing status has one non-official source; validate `claude setup-token` before building full workflow. Agent prompt engineering for UPSTREAM.md rules is untested — plan for iteration.
+**Avoids:** V3-B1 (ggml symbol conflict discovered late), V3-B5 (tauri-runtime patch conflict), V3-L3 (TECH-04 collision), V3-L2 (upstream merge complexity doubling)
+
+**Needs research-phase:** No — tasks are well-defined.
+
+---
+
+### Phase 11: LLM Runtime Foundation
+
+**Rationale:** Dependency root. Smart Modes, model picker UI, and translation presets all require a working inference engine and model downloader before end-to-end validation is possible. Building the runtime first surfaces CI/packaging issues (Vulkan SDK setup, Metal bundle resources) before UI work depends on them.
+
+**Delivers:** Working end-to-end path: download a GGUF, load it, run inference from a test Tauri command, receive streaming token events in frontend console. Model picker stub UI. Verification gate: full round-trip confirmed on all 3 platforms before Phase 12 opens.
+
+**Implements:** `LlmModelManager`, `LlmRuntimeManager`, `commands/llm_models.rs`, `components/llm-model-picker/` (download/progress/delete), `lib.rs` wiring, CI Vulkan SDK steps.
+
+**Models for initial catalog:** `qwen3-4b` Q4_K_M (~2.5 GB) as primary; `qwen2.5-1.5b` Q4_K_M (~1 GB) as low-RAM fallback; `translategemma-4b-it` Q4_K_M (~2.49 GB) as optional translation-specific. All Apache-2.0 licensed. All URLs from HuggingFace CDN.
+
+**Avoids:** V3-R1 (inference blocking UI — `spawn_blocking` required), V3-R2 (Whisper + LLM OOM — sequential pipeline), V3-R3 (in-process crash — GGUF validation before load), V3-B2 (Metal shaders missing — release build smoke test), V3-D1 (download not resumable — range-request resume required), V3-D4 (GGUF on blob.handy.computer)
+
+**Needs research-phase:** No — architecture fully specified in ARCHITECTURE.md.
+
+---
+
+### Phase 12: Smart Modes Data Layer + Settings Migration
+
+**Rationale:** The data model must be established and migration-tested before any UI depends on it. Shipping a settings migration bug is irreversible without a hotfix. The embedded provider branch in `llm_client.rs` belongs here because it closes the loop between the runtime (Phase 11) and Smart Modes routing logic.
+
+**Delivers:** `SmartMode` struct and schema migration (`post_process_prompts` to `smart_modes`) with migration test; `"embedded"` provider branch in `llm_client.rs`; per-mode shortcut binding infrastructure (`register_all_smart_mode_shortcuts()`, `is_transcribe_binding()` extension, `resolve_mode_id()` helper); 10 built-in default Smart Modes (Clean Up as recommended default, Make Formal, Make Casual, Write as Email, Write as SMS, Bullet Points, Summarize, Translate to English, Translate to Spanish, Translate to French).
+
+**Avoids:** V3-S1 (settings migration data loss), V3-S2 (silent shortcut registration failure — emit registration result event), V3-L1 (cloud made prominent — embedded runtime is first in provider list)
+
+**Needs research-phase:** No — migration pattern and shortcut routing fully specified.
+
+---
+
+### Phase 13: Smart Modes UI + Translation Presets + i18n
+
+**Rationale:** UI work can only proceed after the data layer is stable. Translation presets are built-in `SmartMode` entries requiring no additional code beyond Phase 12. Main work is the visual redesign (cards replacing dropdown), the shortcut binding component with conflict detection, and i18n propagation across 20 locales.
+
+**Delivers:** `components/smart-modes/` list + edit + shortcut-bind UI; translation modes grouped with visual label; `useSmartModes.ts` hook; settings UI Local tab entry for embedded provider + LLM model picker; all new i18n keys propagated to 20 sibling locales. Verification gate: full end-to-end flow — record, transcribe, Smart Mode fires correct prompt, embedded LLM responds, output pasted.
+
+**Avoids:** V3-S3 (i18n of default mode names — propagate in same PR as mode definitions), V3-S4 (translation quality misrepresented — quality label in UI), V3-S5 (prompt regression on small models — test each default prompt against curated local models), V3-L1 (cloud made prominent — local runtime is default option)
+
+**Needs research-phase:** No — competitive patterns documented in FEATURES.md; i18n is mechanical.
+
+---
+
+### Phase 14: Polish + Memory Advisory + Conflict Feedback
+
+**Rationale:** Polish phase addresses UX gaps that only become apparent with a working system. These are lower-risk and can be iterated after initial beta feedback.
+
+**Delivers:** Hardware fit badge (green/yellow/red) based on system RAM vs model RAM requirement; `llm_model_unload_timeout` setting exposed in UI; shortcut conflict detection with inline warning badge; quantization tier labels (Small / Balanced / Quality); GPU/CPU status badge.
+
+**Avoids:** V3-D2 (Windows antivirus guidance on first download), V3-D3 (model license displayed — Apache/MIT-only in initial library)
+
+**Needs research-phase:** No — `sysinfo` crate usage is straightforward; all patterns documented.
+
+---
 
 ### Phase Ordering Rationale
-- Phases 1, 2, 3 are structurally independent; can run on separate branches simultaneously
-- Phase 4 before Phase 5 is a hard dependency: no labeled PRs = agent never fires
-- Phase 1 should land before Phase 4 so the CI gate runs the extended verify-sync.sh from day one
-- Phase 3 can slip to v1.3 without affecting any other phase
+
+- Phase 10 (prerequisites) must come before all feature work — the ggml feasibility spike and TECH-04 refactor define the integration constraints for everything that follows
+- Phase 11 (runtime) must come before Phase 12 (data layer) — the settings migration introduces an `"embedded"` provider ID that must resolve to a working runtime at integration testing time
+- Phase 12 (data layer) must come before Phase 13 (UI) — React components depend on Tauri command signatures and `SmartMode` type bindings auto-generated by tauri-specta
+- Phase 14 (polish) can be parallelized with Phase 13 testing in practice but logically depends on Phases 11-13 being stable
+- Sync #2 is gated before Phase 11 to minimize merge surface for `llm_client.rs` and `managers/`
 
 ### Research Flags
 
-Needs deeper validation:
-- **Phase 4:** Community action idempotency — test with `workflow_dispatch` before live weekly cron
-- **Phase 5:** OAuth token validity — verify `claude setup-token` before building agent workflow; iterate on prompt engineering after first real upstream sync
+Phases requiring deeper research or spikes during planning:
+- **Phase 10 (feasibility spike):** The `llama-cpp-2` + `transcribe-rs` ggml conflict resolution path cannot be determined until `cargo tree | grep ggml` is run against the actual Cargo.lock. The exact resolution approach (shared ggml via `[patch.crates-io]`, separate feature flags, or alternative crate) depends on what the spike reveals.
+- **Phase 11 (Metal bundle resources):** The exact `.metallib` files that `llama-cpp-2` places in `OUT_DIR` and which ones must be copied to `bundle.resources` are not confirmed in any documentation. First release build on macOS is the verification gate.
 
-Standard patterns (skip research-phase):
-- **Phase 1:** All file:line locations confirmed by direct source analysis; `bunx tauri icon` behavior in official docs
-- **Phase 2:** Diagnosis-first pattern well-understood; fix strategies documented with specific code patterns
+Phases with standard patterns (skip research-phase):
+- **Phase 12:** Settings migration and shortcut routing fully specified with code examples in ARCHITECTURE.md. The `settings_schema_version` + migration function pattern is unambiguous.
+- **Phase 13:** All UI patterns mirror existing components (model-selector, shortcut input). i18n propagation is a mechanical process.
+- **Phase 14:** `sysinfo` crate usage is well-documented; hardware fit badge logic is arithmetic.
+
+---
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | All additions verified against official docs and GitHub release pages |
-| Features | HIGH | Priority ratings from direct code inspection; dependency analysis confirmed in ARCHITECTURE.md |
-| Architecture | HIGH | All conclusions from direct source file analysis with specific file:line locations |
-| Pitfalls | HIGH (brand/icon/shutdown) / MEDIUM (agent behavior) | Brand pitfalls from source analysis; agent pitfalls extrapolated from LLM-in-CI patterns |
+| Stack | HIGH | `llama-cpp-2` verified against official build.rs source; GPU feature flags confirmed against actual codebase patterns; model sizes verified from HuggingFace model cards |
+| Features | MEDIUM-HIGH | Competitive landscape verified via live Superwhisper/Jan/LM Studio sources; Whisper translate English-only constraint confirmed from OpenAI docs |
+| Architecture | HIGH | Grounded in actual codebase reading; new component designs directly mirror existing verified patterns; all integration points confirmed working |
+| Pitfalls | HIGH (risk identification) / MEDIUM (mitigations) | Build/signing/settings pitfalls from direct codebase analysis; Vulkan stability on Windows/Linux has contradictory signals; translation quality degradation from academic sources |
 
-**Overall confidence:** HIGH for Phases 1-4. MEDIUM for Phase 5 agent layer.
+**Overall confidence:** MEDIUM-HIGH
 
 ### Gaps to Address
 
-- **OAuth billing status:** Single non-official source (April 2026). Validate `claude setup-token` before Phase 5 implementation.
-- **macOS crash root cause:** Cannot confirm fix strategy without Console.app crash report. Three suspects identified but priority is inference, not confirmed diagnosis.
-- **Community action conflict behavior:** How `peter-evans/create-pull-request@v8` handles merge conflicts in identity files needs live testing.
-- **`upstream-sha.txt` replacement signal:** Idempotency gap documented in C4 — resolve design decision (keep file or document new signal) during Phase 4.
+- **ggml symbol conflict resolution path** — Cannot be determined without running `cargo build` with both crates active. Treat Phase 10 as a feasibility spike; have the `[patch.crates-io]` approach ready as fallback. If a `candle`-based alternative becomes necessary, it changes Cargo.toml additions significantly.
+- **Metal bundle resource requirements** — The exact `.metallib` paths that `llama-cpp-2` places in `OUT_DIR` and which ones must be in `bundle.resources` are not confirmed. First `tauri build` release smoke test on macOS is the only way to verify. Explicit Phase 11 verification gate.
+- **Vulkan quality on Windows with AMD GPUs** — AMD driver 25.11.1 has a known crash with Vulkan SDK 1.4.328.1 (May 2026). Monitor `llama-cpp-2` issue tracker before shipping Windows beta.
+- **TranslateGemma 4B vs. Qwen3-4B translation quality** — No head-to-head benchmark found for the target language pairs. Recommendation: ship Qwen3-4B as default (already downloaded for other modes), offer TranslateGemma as optional download. Validate after first beta.
+- **Upstream Sync #2 scope** — The AWS Bedrock commit (`aee682f`) excluded from Sync #1 per local-first philosophy needs a decision before Sync #2 merging.
+
+---
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- [Tauri v2 Updater plugin docs](https://v2.tauri.app/plugin/updater/) — pubkey/endpoint config
-- [Tauri 2.x Icon docs](https://v2.tauri.app/develop/icons/) — `bunx tauri icon` CLI, output files
-- [peter-evans/create-pull-request GitHub](https://github.com/peter-evans/create-pull-request) — v8.1.1 confirmed
-- [anthropics/claude-code-action GitHub](https://github.com/anthropics/claude-code-action) — v1.0.96, trigger modes confirmed
-- [claude-code-action docs/setup.md](https://github.com/anthropics/claude-code-action/blob/main/docs/setup.md) — OAuth auth mode
-- Direct source analysis: `lib.rs`, `actions.rs`, `portable.rs`, `settings.rs`, `tray.rs`, `managers/history.rs`
-- Direct source analysis: `.github/workflows/`, `src-tauri/tauri.conf.json`, `src/components/settings/`
-- [Tauri issue #12534](https://github.com/tauri-apps/tauri/issues/12534) — macOS cleanup crash root cause
-- [Tauri issue #12978](https://github.com/tauri-apps/tauri/issues/12978) — `applicationShouldTerminate` missing in Tauri 2.x
+- Codebase direct reading — `managers/model.rs`, `managers/transcription.rs`, `llm_client.rs`, `settings.rs`, `actions.rs`, `shortcut/mod.rs`, `shortcut/handler.rs`, `transcription_coordinator.rs`, `lib.rs`, `Cargo.toml`
+- `llama-cpp-sys-2/build.rs` at docs.rs — Metal auto-detection (unconditional framework link), Vulkan feature flag, GGML_VULKAN=ON, VULKAN_SDK env var requirement on Windows
+- `utilityai/llama-cpp-rs` GitHub — Apache-2.0/MIT, 575 stars, 146+ releases, actively maintained
+- `Qwen/Qwen3-4B-GGUF` on HuggingFace — Q4_K_M 2.5 GB, 100+ language support confirmed
+- `Qwen/Qwen2.5-1.5B-Instruct-GGUF` on HuggingFace — Q4_K_M ~1 GB, 29+ languages confirmed
+- tauri-plugin-global-shortcut docs.rs — `GlobalShortcutExt` trait, runtime register/unregister confirmed against working codebase implementation
+- OpenAI Whisper paper — translate task English-output-only constraint confirmed
 
 ### Secondary (MEDIUM confidence)
-- [Tauri issue #4159](https://github.com/tauri-apps/tauri/issues/4159) — macOS termination segfault
-- [Freedesktop hicolor icon spec](https://specifications.freedesktop.org/icon-theme/latest/) — Linux icon size requirements
-- [tauri-apps/tauri Discussion #10206](https://github.com/orgs/tauri-apps/discussions/10206) — GitHub Releases `latest.json` endpoint
+- `mradermacher/translategemma-4b-it-GGUF` on HuggingFace — Q4_K_M 2.49 GB; translation quality vs. general models unverified via head-to-head benchmark
+- TranslateGemma Technical Report (arxiv 2601.09012) — 55 language pairs, WMT25/WMT24++ benchmarks
+- Superwhisper changelog — modes since v1.19, per-mode shortcuts since v2.12.0, conflict fix in v2.13.1
+- Jan AI model hub UX documentation — fit badge, quantization tier, cancel/delete patterns
+- GGUF quantization translation quality — arxiv 2508.20893, arxiv 2511.09748
+- tauri-plugin-global-shortcut silent failure — issues #2540, #2646 in tauri-apps/plugins-workspace
+- AMD Vulkan driver crash — llama.cpp issue #17432 (May 2026)
 
 ### Tertiary (LOW confidence)
-- [KissAPI blog April 2026](https://kissapi.ai/blog/claude-code-github-actions-setup-guide-2026.html) — OAuth vs API key billing post-restriction; needs validation
+- Vulkan quality on Windows/AMD beyond the AMD driver crash report — production readiness unclear
+- mistral.rs Vulkan backend — claimed in README, no high-quality benchmarks found
+- KissAPI blog April 2026 — OAuth vs API key billing for claude-code-action (single non-official source)
 
 ---
-*Research completed: 2026-04-15*
+*Research completed: 2026-05-29*
 *Ready for roadmap: yes*
