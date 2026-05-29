@@ -51,6 +51,8 @@ Review each commit. For each one, decide: do we want it? (Answer is usually yes 
 
 **Known post-v0.8.2 upstream delta (4 commits):**
 
+> Superseded by Sync #2 (2026-05-29) — see [Fork Policy: Selective Cherry-Pick](#fork-policy-selective-cherry-pick) section.
+
 | SHA       | Title                                                           | Risk                                                                 |
 | --------- | --------------------------------------------------------------- | -------------------------------------------------------------------- |
 | `c1697b2` | nix: use symlinkJoin for ALSA_PLUGIN_DIR                        | NONE — accept upstream                                               |
@@ -294,6 +296,24 @@ Phase 6 replaces this manual runbook with an AI-driven pipeline: Claude Code age
 - `.github/upstream-sha.txt` — source of truth for last synced upstream SHA
 - `.github/workflows/upstream-sync.yml` — weekly detection action
 - `.github/scripts/verify-sync.sh` — post-merge identity gate
+
+---
+
+## Fork Policy: Selective Cherry-Pick
+
+As of 2026-05-29, this fork transitions FROM bulk merges TO selective cherry-pick. Sync #2 (the 17-commit merge landing on `feat/v1.3-smart-modes`) is the **LAST planned bulk catch-up merge**.
+
+**Going forward:** Future upstream deltas are triaged commit-by-commit. Only commits aligned with Dictus's local-first direction are cherry-picked into Dictus. Cloud providers, telemetry, analytics, or features that conflict with local-first principles are excluded by default.
+
+**Rationale:** The upstream (cjpais/Handy) is a general-purpose tool; Dictus specializes in local-first, privacy-respecting speech-to-text. As upstream diverges into cloud features, bulk merges create increasing conflict risk. Selective cherry-pick keeps Dictus current on functional improvements (audio, models, platform fixes) while excluding cloud/SaaS additions.
+
+### Exclusion Log
+
+Commits excluded from Dictus in upstream syncs. Each entry documents the exclusion rationale for auditability.
+
+| SHA | PR | Title | Reason Excluded | Date |
+| --- | -- | ----- | --------------- | ---- |
+| aee682f | #1288 | feat: add AWS Bedrock (Mantle) provider | Local-first: cloud provider not owned by Dictus; reverted in Sync #2 | 2026-05-29 |
 
 ---
 
