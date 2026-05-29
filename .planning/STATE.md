@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
-status: defining_requirements
-stopped_at: Milestone v1.3 started — defining requirements
-last_updated: "2026-05-29T09:00:00.000Z"
-last_activity: "2026-05-29 — Milestone v1.3 Smart Modes & Local LLM started (embedded LLM runtime all-platforms + Smart Modes prompt↔shortcut + multi-target translation); defining requirements"
+status: roadmap_created
+stopped_at: Roadmap for v1.3 created — 4 phases (10-13), all 21 requirements mapped
+last_updated: "2026-05-29T09:30:00.000Z"
+last_activity: "2026-05-29 — Roadmap for v1.3 written (Phases 10-13); 21/21 requirements mapped; ready to plan Phase 10"
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,120 +20,56 @@ progress:
 
 See: .planning/PROJECT.md (updated 2026-05-29 after starting milestone v1.3)
 
-**Core value:** L'application doit être identifiable et utilisable comme Dictus Desktop — pas comme Handy — rester vivante sans décrocher du upstream Handy, et présenter le local-first comme défaut visible dans l'UX.
-**Current focus:** v1.3 Smart Modes & Local LLM — defining requirements (embedded LLM runtime all-platforms + Smart Modes + multi-target translation).
+**Core value:** Local-first as a visible, powerful default — embedded LLM runtime + Smart Modes + multi-target translation, all in-process, all platforms.
+**Current focus:** v1.3 Smart Modes & Local LLM — roadmap ready, Phase 10 next.
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 10 of 13 (Prerequisite Gate) — not started
 Plan: —
-Status: Defining requirements
-Last activity: 2026-05-29 — Milestone v1.3 started
+Status: Ready to plan Phase 10
+Last activity: 2026-05-29 — Roadmap created, 4 phases (10-13), 21/21 requirements covered
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
-**Velocity:**
+**Velocity (v1.2 reference):**
+- Total v1.2 plans completed: 16
+- Median plan duration: ~5-30 min (range 2 min to multi-day validation)
 
-- Total plans completed: 15 (v1.0 + v1.1 combined)
-- Average duration: unknown
-- Total execution time: unknown
+**By Phase (v1.2):**
 
-**By Phase:**
-
-| Phase      | Plans | Total | Avg/Plan |
-| ---------- | ----- | ----- | -------- |
-| 1-3 (v1.0) | 8     | -     | -        |
-| 4-5 (v1.1) | 7     | -     | -        |
-
-_Updated after each plan completion_
-| Phase 06-brand-icon-polish P01 | 3 | 3 tasks | 2 files |
-| Phase 06-brand-icon-polish P02 | 3 | 2 tasks | 6 files |
-| Phase 06-brand-icon-polish P03 | 8 | 1 tasks | 1 files |
-| Phase 06-brand-icon-polish P04 | ~60min | 4 tasks | 12 files |
-| Phase 07-macos-clean-shutdown P01 | ~1h coding + multi-day validation | 4 tasks | 7 files |
-| Phase 08-privacy-local-first-ux P02 | ~5min | 2 tasks | 3 files |
-| Phase 08-privacy-local-first-ux P01 | 4min | 1 tasks | 1 files |
-| Phase 08-privacy-local-first-ux P03 | ~25min | 3 tasks | 7 files |
-| Phase 08-privacy-local-first-ux P04 | ~4min | 1 tasks | 19 files |
-| Phase 08-privacy-local-first-ux P06 | ~6min | 3 tasks | 8 files |
-| Phase 08-privacy-local-first-ux P07 | ~5min | 1 tasks | 19 files |
-| Phase 08-privacy-local-first-ux P05 | ~30min (UAT) | 1 task (checkpoint) | 0 files (verification-only) |
-| Phase 08-privacy-local-first-ux P08 | 2 min | 2 tasks | 2 files |
-| Phase 08-privacy-local-first-ux P09 | 3m 29s | 3 tasks | 3 files |
-| Phase 08-privacy-local-first-ux P10 | 1m 56s | 1 tasks | 19 files |
-| Phase 09-v1.2-audit-gap-closure P01 | 14min | 4 tasks | 17 files |
+| Phase | Plans | Notes |
+|-------|-------|-------|
+| 6. Brand & Icon Polish | 4 | Icon rasterization regression fixed post-close |
+| 7. macOS Clean Shutdown | 1 | Multi-day validation window |
+| 8. Privacy / Local-First UX | 10 | UAT iteration cycle included |
+| 9. Audit Gap Closure | 1 | 14 min |
 
 ## Accumulated Context
 
 ### Decisions
 
-- v1.2: Phase 6 must land before Phase 9 — verify-sync.sh extended assertions needed before CI gate goes live
-- v1.2: Phases 6, 7, 8 are independent; can run on separate branches simultaneously
-- v1.2: Phase 10 hard-depends on Phase 9 (no labeled draft PRs = agent never fires)
-- [Phase 05]: UPSTREAM.md §6 post-sync gate missing UPDT-03/UPDT-05 — SYNC-07 in Phase 9 closes this
-- [Phase 06-brand-icon-polish]: SYNC-06 completed in Phase 6 Plan 01 ahead of Phase 9 schedule; .github/scripts/verify-sync.sh is now the permanent script location
-- [Phase 06-brand-icon-polish]: ICON-02a passes immediately — icon.ico already has all 6 required layer sizes; BRAND-01a/02a/03a expected to fail until Plans 06-02/03 land
-- [Phase 06-brand-icon-polish]: No dual-read fallback for Handy Portable Mode marker: CONTEXT.md override, Pierre is sole user
-- [Phase 06-brand-icon-polish]: BRAND-01a filter uses underscore grep -v handy_keys: hyphenated handy-keys in comments must use HandyKeys capitalized form
-- [Phase 06-brand-icon-polish]: Pre-compute modelsPath/settingsPath as template literals before JSX render to satisfy i18next/no-literal-string ESLint rule when concatenating path suffixes
-- [Phase 06-brand-icon-polish]: Reused existing get_app_dir_path Tauri command for DebugPaths — no new backend command created (RESEARCH.md Pitfall 1 honored)
-  - [Phase 06-brand-icon-polish P04]: ICON-01 resolved via opaque-navy-tile variant — source PNG has zero transparent pixels, making Linux black-corners artifact physically impossible (approved by Pierre as Option A)
-  - [Phase 06-brand-icon-polish P04]: tauri icon CLI does not output 256x256.png/512x512.png; ImageMagick fallback required (convert from 1024 source)
-  - [Phase 06-brand-icon-polish P04]: Linux (ICON-01) and Windows (ICON-02) visual verification deferred — macOS approved; automated backstops in place
-  - [Phase 06.1 follow-up]: Icon regression fixed 2026-04-23 (commit 34de33e) — Phase 6 rasterization dropped the middle blue bar; re-rendered dictus-brand source and regenerated full platform icon set; legacy Handy `logo.png` removed
-  - [Phase 07-macos-clean-shutdown P01]: Path (a) graceful cleanup chosen over path (b) std::process::exit — diagnosis pointed at tauri-plugin-global-shortcut Drop releasing CGEventTap from atexit on main thread; flush_and_exit helper releases CGEventTap while runloop is still alive
-  - [Phase 07-macos-clean-shutdown P01]: simulate_updater_restart ships in release builds, UI-gated by settings.debug_mode (not #[cfg(debug_assertions)]) so production installs can validate updater-relaunch path
-  - [Phase 07-macos-clean-shutdown P01]: Crash non-reproducible after fix over multi-day validation window; phase closed without a second-reproduction checkpoint
-  - [Phase 08-privacy-local-first-ux P02]: docs/PRIVACY.md is single source of truth for network surface — no in-app Privacy page; blob.handy.computer CDN documented as-is (INFR-01 deferred); legacy Referer header flagged but not changed in Phase 8
-- [Phase 08-privacy-local-first-ux]: Platform-aware default: macOS ARM64 gets apple_intelligence, all other platforms get custom (local) — cfg gate matches existing pattern at line 580
-- [Phase 08-privacy-local-first-ux]: Custom provider id stays 'custom' (stable for persisted settings); only label changed to 'Custom (local)'
-  - [Phase 08-privacy-local-first-ux P03]: ProviderSelect.tsx left in place as unused export — deletion deferred to keep diff small; no callers remain
-  - [Phase 08-privacy-local-first-ux P03]: PRIV-03 satisfied by existing Onboarding state — zero post_process references in onboarding components; no code change required
-  - [Phase 08-privacy-local-first-ux P03]: renderRowExtras prop pattern established for injecting row-level extras inside selected radio card
-- [Phase 08-privacy-local-first-ux P04]: simulateUpdaterRestart keys kept in English across all locales (technical debug feature — fallback acceptable per CONTRIBUTING_TRANSLATIONS.md)
-- [Phase 08-privacy-local-first-ux]: enable_cloud_providers is UI visibility filter only — does NOT mutate post_process_provider_id; cloud providers hidden by default (false), toggle shows/hides External section in ProviderPicker
-- [Phase 08-privacy-local-first-ux]: Library placeholder card is intentional Coming-soon preview of Local-First Models milestone — not scope creep; previews gemma3:4b + GGUF downloader coming in next milestone
-- [Phase 08-privacy-local-first-ux]: fr/translation.json carries verbatim French copy of cloudToggle + modelsAndLocalProcessing — source values are canonical French per mockup product intent
-- [Phase 08-privacy-local-first-ux]: Brand names (OpenAI, Anthropic, Groq, Cerebras, OpenRouter, Z.AI, Apple Intelligence, Ollama, gemma3:4b, GGUF, Custom (local)) preserved verbatim across all 19 locales in 08-07
-- [Phase 08-privacy-local-first-ux P05]: UAT partial-pass (2026-05-22) — 3 bugs + 3 design pivots documented; gap-closure plan required before Phase 8 ships; phase stays at 08, no advancement
-- [Phase 08-privacy-local-first-ux P05]: Tabs pattern chosen over cloud toggle (user direction) — enable_cloud_providers setting to be repurposed or removed in gap-closure plan
-- [Phase 08-privacy-local-first-ux P05]: Pillars block (Confidentialité / Contrôle / Expérience) confirmed as user-rejected UI pattern — will be fully removed including all 20 locale keys
-- [Phase 08-privacy-local-first-ux P08]: Gap-closure for UAT 1a/2a/2b — Apple Intelligence Alert inlined via renderRowExtras, Ollama link underlined at rest, API key field hidden for Custom (local). Option A chosen for 2b (no i18n change).
-- [Phase 08-privacy-local-first-ux P08]: ProviderPicker.renderRowExtras now invoked for every row (caller controls null-vs-content) — establishes generic per-row extras pattern that survives 08-09 tabs restructure.
-- [Phase 08-privacy-local-first-ux]: P09 — ProviderPicker tabs (Local/Cloud) replace the cloud opt-in toggle; default tab derived from persisted provider id; useEffect keeps tab synced with selection — closes UAT design pivot 5
-- [Phase 08-privacy-local-first-ux]: P09 — Library SettingsGroup hoisted to first content block under page header; three-pillar marketing grid removed entirely (JSX + en pillars.\* keys) — closes UAT design pivots 6 & 7
-- [Phase 08-privacy-local-first-ux]: P09 — enable_cloud_providers Rust field kept vestigial (no schema migration); UI no longer reads/writes; settings tests still pass; cleanup deferrable to a dedicated migration plan
-- [Phase 08-privacy-local-first-ux]: P10 — All 19 sibling locales now mirror EN i18n: tabs.local/.cloud translated and inserted between api and modelsAndLocalProcessing; cloudToggle and pillars blocks deleted; cloudSelectedNotice updated per locale with brand-name Cloud matching each locale's tabs.cloud value. check:translations exits 0 (19/19 pass). Phase 8 source-side gap closure complete; ready for re-UAT.
-- [Phase 08-privacy-local-first-ux]: P10 — Locale propagation done via one-shot Node script (JSON.parse/stringify roundtrip) over 19 files; per-locale failure isolation log+continue; all 19 succeeded first try. Insertion-order-preserving key add (reconstruct parent key-by-key) keeps file diffs structurally identical to EN diff from 08-09.
-- [Phase 09-v1.2-audit-gap-closure]: Option A for llm_client.rs:137 (too_many_arguments): #[allow] suppression, TECH-04 deferred struct refactor — signature change risk exceeds v1.2 window
-- [Phase 09-v1.2-audit-gap-closure]: AUDIT-01/02/03 all closed: clippy clean, 07-VERIFICATION.md authored, 08-UAT.md promoted to status:passed
+- v1.3: Phase 14 (polish) is NOT a standalone phase — essentials absorbed into Phase 11 (disk size before download, MDL-01) and Phase 13 (shortcut conflict detection, MODE-05). Fit badge, quantization labels, GPU badge deferred to Future Requirements (MDL-F2/F3/F4).
+- v1.3: Within Phase 10, execution order: PREP-03 (Sync #2) first → PREP-02 (TECH-04 refactor) → PREP-01 (ggml spike). Rationale: sync may touch llm_client.rs; refactor on up-to-date base.
+- v1.3: MODE-03 spans Phase 12 (backend) and Phase 13 (UI). Requirement assigned to Phase 13 (first phase where user can observe the full capability).
+- v1.3: All platforms ship together (no macOS-first staging). Vulkan SDK added to Windows/Linux CI in Phase 11.
+- v1.3: Cloud stays explicit opt-in. Embedded is primary local option. No silent cloud fallback ever.
 
 ### Pending Todos
 
 3 pending — see `.planning/todos/pending/` for details.
-(2 moved to done/ on 2026-04-23: icon regression + macOS quit-unexpectedly)
 
 ### Blockers/Concerns
 
-**Phase 8 gap-closure in progress (2026-05-22):** 08-05 UAT partial pass — 3 of 6 gaps now closed by 08-08; 3 design pivots remain for 08-09 + 08-10:
-
-- ~~Bug 1a: Apple Intelligence error banner renders at bottom of page instead of inline with Apple Intelligence card~~ — **closed in 08-08 (bbe82db)** — Alert inlined via ProviderPicker.renderRowExtras
-- ~~Bug 2a: Ollama link not visually distinguishable~~ — **closed in 08-08 (bbe82db)** — className changed to `underline underline-offset-2 hover:opacity-80`
-- ~~Bug 2b: API key field shown for Custom (local) provider~~ — **closed in 08-08 (bbe82db)** — Option A: ApiKeyField gated on `selectedProvider?.id !== "custom"` (no i18n change)
-- Design pivot 5: Replace cloud toggle with tabs pattern (Local / Cloud tabs; user-directed) — 08-09 scope
-- Design pivot 6: Remove three-pillar privacy block from post-processing page (user-directed) — 08-09 scope (locale sweep in 08-10)
-- Design pivot 7: Move "Bibliothèque de modèles locaux" placeholder to top of page (user-directed) — 08-09 scope
-  See `.planning/phases/08-privacy-local-first-ux/08-05-SUMMARY.md § Gaps` and `08-08-SUMMARY.md` for full closure detail.
-
-Carried from v1.1 audit:
-
-- UPSTREAM.md §6 post-sync gate missing UPDT-03/UPDT-05 re-assertion (deferred — captured in `.planning/todos/pending/2026-05-21-upstream-sync-strategy-review.md` for the manual-workflow simplification path)
-- Phase 5 VALIDATION.md draft → run `/gsd:validate-phase 5` to close
-- `blob.handy.computer` CDN for onnxruntime (INFR-01, deferred)
-- Windows builds unsigned at OS level (INFR-03, deferred)
+- **ggml symbol conflict (Phase 10 spike):** Cannot be resolved until `cargo tree | grep ggml` runs with both `llama-cpp-2` and `transcribe-rs` in Cargo.toml. Have `[patch.crates-io]` fallback ready.
+- **Metal bundle resources (Phase 11 gate):** `.metallib` paths from `llama-cpp-2` OUT_DIR not documented; verify via `tauri build` release smoke test on macOS before Phase 12 opens.
+- **AMD Vulkan driver (Phase 11 risk):** AMD driver 25.11.1 has known crash with Vulkan SDK 1.4.328.1 (May 2026). Monitor llama.cpp issue #17432 before Windows beta.
+- Carried from v1.2: `blob.handy.computer` CDN for onnxruntime (INFR-01); Windows unsigned builds (INFR-03); Nyquist VALIDATION.md drafts for phases 5-9.
 
 ## Session Continuity
 
-Last session: 2026-05-28T22:01:55.865Z
-Stopped at: Completed 09-01-PLAN.md
+Last session: 2026-05-29T09:30:00Z
+Stopped at: Roadmap created — Phase 10-13 written, all 21 requirements mapped
 Resume file: None

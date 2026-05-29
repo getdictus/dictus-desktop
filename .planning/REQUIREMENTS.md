@@ -7,7 +7,7 @@
 
 ## v1.3 Requirements
 
-Requirements for this milestone. Each maps to a roadmap phase (10→14, continuing from v1.2's Phase 9).
+Requirements for this milestone. Each maps to a roadmap phase (10→13, continuing from v1.2's Phase 9).
 
 ### Foundation & Prerequisites (PREP)
 
@@ -92,37 +92,37 @@ Explicitly excluded for v1.3. Documented to prevent scope creep.
 
 ## Traceability
 
-Which phases cover which requirements. Populated during roadmap creation.
+Which phases cover which requirements. Updated 2026-05-29.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PREP-01 | — | Pending |
-| PREP-02 | — | Pending |
-| PREP-03 | — | Pending |
-| LLM-01 | — | Pending |
-| LLM-02 | — | Pending |
-| LLM-03 | — | Pending |
-| LLM-04 | — | Pending |
-| MDL-01 | — | Pending |
-| MDL-02 | — | Pending |
-| MDL-03 | — | Pending |
-| MDL-04 | — | Pending |
-| MDL-05 | — | Pending |
-| MODE-01 | — | Pending |
-| MODE-02 | — | Pending |
-| MODE-03 | — | Pending |
-| MODE-04 | — | Pending |
-| MODE-05 | — | Pending |
-| MODE-06 | — | Pending |
-| TRANS-01 | — | Pending |
-| TRANS-02 | — | Pending |
-| L10N-01 | — | Pending |
+| PREP-01 | Phase 10 | Pending |
+| PREP-02 | Phase 10 | Pending |
+| PREP-03 | Phase 10 | Pending |
+| LLM-01 | Phase 11 | Pending |
+| LLM-02 | Phase 11 | Pending |
+| LLM-03 | Phase 11 | Pending |
+| LLM-04 | Phase 11 | Pending |
+| MDL-01 | Phase 11 | Pending |
+| MDL-02 | Phase 11 | Pending |
+| MDL-03 | Phase 11 | Pending |
+| MDL-04 | Phase 11 | Pending |
+| MDL-05 | Phase 11 | Pending |
+| MODE-01 | Phase 12 | Pending |
+| MODE-02 | Phase 12 | Pending |
+| MODE-03 | Phase 12 + Phase 13 | Pending |
+| MODE-04 | Phase 12 + Phase 13 | Pending |
+| MODE-05 | Phase 13 | Pending |
+| MODE-06 | Phase 13 | Pending |
+| TRANS-01 | Phase 13 | Pending |
+| TRANS-02 | Phase 13 | Pending |
+| L10N-01 | Phase 13 | Pending |
 
 **Coverage:**
 - v1.3 requirements: 21 total
-- Mapped to phases: 0 (roadmap pending)
-- Unmapped: 21 ⚠️ (resolved by roadmapper)
+- Mapped to phases: 21 (all covered) ✓
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-05-29*
-*Last updated: 2026-05-29 after initial definition*
+*Last updated: 2026-05-29 — traceability populated after roadmap creation*

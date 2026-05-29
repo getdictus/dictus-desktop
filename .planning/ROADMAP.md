@@ -5,7 +5,7 @@
 - ✅ **v1.0 Handy→Dictus Rebrand** — Phases 1-3 (shipped 2026-04-10) — [archive](milestones/v1.0-ROADMAP.md)
 - ✅ **v1.1 Auto-Update & Upstream Sync** — Phases 4-5 (shipped 2026-04-14) — [archive](milestones/v1.1-ROADMAP.md)
 - ✅ **v1.2 Polish & Local-First UX** — Phases 6-9 (shipped 2026-05-29) — [archive](milestones/v1.2-ROADMAP.md)
-- 📋 **v1.3 Smart Mode & Translation** — (planned, see memory `project_v13_smart_modes.md`)
+- 🚧 **v1.3 Smart Modes & Local LLM** — Phases 10-13 (in progress)
 
 ## Phases
 
@@ -36,22 +36,89 @@
 
 </details>
 
-### 📋 v1.3 Smart Mode & Translation (Planned)
+### 🚧 v1.3 Smart Modes & Local LLM (In Progress)
 
-**Tentative goal:** Shortcut↔prompt binding so the same keyboard shortcut can map to different post-process prompts (translation, summarization, command mode); promote translation from a deferred candidate to a first-class mode.
+**Milestone Goal:** Make local post-transcription processing a real and powerful default — an embedded LLM runtime (all platforms, no external Ollama) plus Smart Modes (curated prompts, editable, creatable, each bindable to a shortcut), with multi-target translation as a first-class mode.
 
-See memory `project_v13_smart_modes.md`. Requirements + roadmap will be drafted via `/gsd:new-milestone`.
+- [ ] **Phase 10: Prerequisite Gate** — Upstream Sync #2, TECH-04 refactor, and ggml feasibility spike clear all build blockers before feature work begins
+- [ ] **Phase 11: LLM Runtime Foundation** — In-process GGUF engine, GPU backends, model downloader, curated catalogue, custom drag/drop, and functional model library
+- [ ] **Phase 12: Smart Modes Data Layer** — Settings schema migration, SmartMode type + CRUD backend, per-mode shortcut routing, embedded provider, and 10 default modes
+- [ ] **Phase 13: Smart Modes UI + Translation + i18n** — Card list UI, create/edit/delete UI, shortcut bind with conflict detection, translation presets, and 20-locale propagation
+
+## Phase Details
+
+### Phase 10: Prerequisite Gate
+**Goal**: All build blockers are cleared and the codebase is in a known-clean state before any v1.3 feature code is written
+**Depends on**: Phase 9
+**Requirements**: PREP-01, PREP-02, PREP-03
+**Success Criteria** (what must be TRUE):
+  1. Upstream Sync #2 is merged to main with per-commit triage complete; `verify-sync.sh` exits 0; fork policy documents selective cherry-pick going forward and records the AWS Bedrock `aee682f` exclusion decision
+  2. `llm_client.rs send_chat_completion_with_schema` accepts a `ChatCompletionRequest` struct instead of 8 positional args; `#[allow(clippy::too_many_arguments)]` is removed; `cargo clippy --all-targets -- -D warnings` exits 0 on all platforms
+  3. `llama-cpp-2` compiles alongside `transcribe-rs` on all 7 CI platforms with no linker symbol conflicts; if ggml duplication is detected, `[patch.crates-io]` or equivalent resolution is applied and CI is green
+
+> **Research spike flag (Phase 10):** The ggml conflict resolution path (PREP-01) cannot be determined until `cargo tree | grep ggml` is run against the live Cargo.lock with both crates present. The exact fix — shared ggml via `[patch.crates-io]`, separate feature flags, or an alternative — depends on what the spike reveals. Have the `[patch.crates-io]` approach ready as fallback.
+>
+> **Ordering within Phase 10:** Execute PREP-03 (Sync #2) first — the sync may touch `llm_client.rs` and `managers/`; refactor on the up-to-date base. Then PREP-02 (TECH-04 struct refactor). Then PREP-01 (ggml feasibility spike).
+
+**Plans**: TBD
+
+### Phase 11: LLM Runtime Foundation
+**Goal**: Users can download, manage, and run a local GGUF model in-process, with GPU acceleration where available, and the model library card is fully functional
+**Depends on**: Phase 10
+**Requirements**: LLM-01, LLM-02, LLM-03, LLM-04, MDL-01, MDL-02, MDL-03, MDL-04, MDL-05
+**Success Criteria** (what must be TRUE):
+  1. User can browse a curated catalogue of 3 local models (Qwen3-4B, Qwen2.5-1.5B, TranslateGemma-4B) with the on-disk file size shown before any download begins
+  2. User can download a catalogue model in-app, watch live progress, cancel mid-download, and resume; the completed file is SHA256-verified; the URL is a HuggingFace CDN URL (never `blob.handy.computer`)
+  3. User can delete a downloaded model from the library and see disk space reclaimed
+  4. User can add a custom GGUF model by drag/drop or file picker; it appears in the library alongside catalogue entries
+  5. The "Bibliothèque de modèles locaux" placeholder card is replaced by the real, functional model library anchored at the top of the local-processing page; end-to-end verification gate passes on macOS, Windows, and Linux before Phase 12 opens (download → load → inference → streaming tokens confirmed in all three)
+  6. "Embedded (local)" is selectable as a post-processing provider alongside existing options; cloud remains opt-in; inference runs on a background thread and never blocks the overlay or shortcuts; GPU acceleration uses Metal on macOS and Vulkan on Windows/Linux with graceful CPU fallback; the loaded model unloads after its idle timeout without affecting the transcription model
+
+> **Research spike flag (Phase 11):** The exact `.metallib` files that `llama-cpp-2` places in `OUT_DIR` and which ones must be added to `tauri.conf.json bundle.resources` are not confirmed in documentation. The first `tauri build` release smoke test on macOS is the verification gate — test with `tauri build`, not `tauri dev`, which does not replicate the production bundle layout.
+
+**Plans**: TBD
+
+### Phase 12: Smart Modes Data Layer
+**Goal**: The Smart Modes data model exists in settings with a working migration from v1.2 prompts, the embedded provider routes through the runtime, and per-mode shortcut infrastructure is functional in the backend
+**Depends on**: Phase 11
+**Requirements**: MODE-01, MODE-02, MODE-03, MODE-04
+**Success Criteria** (what must be TRUE):
+  1. Upgrading from a v1.2 settings file migrates existing post-processing prompts to Smart Modes with no data loss; prompt text and shortcut bindings are preserved; `settings_schema_version` is written; the migration is verified against an actual v1.2 settings JSON fixture
+  2. Dictus ships with ~10 default Smart Modes ("Clean Up" as safe first mode, plus Make Formal, Make Casual, Write as Email, Write as SMS, Bullet Points, Summarize, Translate to English, Translate to Spanish, Translate to French); each is available as a selectable post-processing option
+  3. Smart Modes can be created, edited, and deleted via backend commands; name, prompt text, and optional target language are stored per mode; tauri-specta bindings are regenerated and importable by the frontend
+  4. Each Smart Mode can have a distinct global shortcut registered at init and updated dynamically; triggering a mode's shortcut routes the transcription through that mode's prompt; the `smart_mode_{id}` binding prefix is handled throughout the shortcut and actions pipeline
+
+**Plans**: TBD
+
+### Phase 13: Smart Modes UI + Translation Presets + i18n
+**Goal**: Users interact with Smart Modes through a visual card list UI, can create/edit/delete modes and bind shortcuts from the settings panel, translation is a first-class preset group, and all strings are localized across 20 locales
+**Depends on**: Phase 12
+**Requirements**: MODE-03, MODE-04, MODE-05, MODE-06, TRANS-01, TRANS-02, L10N-01
+**Success Criteria** (what must be TRUE):
+  1. Smart Modes are displayed as a visual card list in settings, replacing the single-prompt dropdown; each card shows the mode name, prompt preview, and its bound shortcut (if any)
+  2. User can create a new Smart Mode, edit an existing mode's name and prompt, and delete a mode — all from the settings UI without leaving the page
+  3. User can bind a distinct global shortcut to each Smart Mode from an inline shortcut input; if the chosen shortcut conflicts with an existing binding, an inline warning appears at bind time with no silent registration failure
+  4. Translation presets (EN/ES/FR/ZH as minimum; finalized in-phase) are available as built-in Smart Modes grouped under a "Translation" label; each preset runs fully offline through the embedded LLM; each is bindable to its own shortcut
+  5. All new user-facing strings (model library labels, Smart Modes UI, default mode names, translation preset names) are propagated across all 20 locales; `bun run check:translations` passes with 0 errors; the full end-to-end flow (record → transcribe → Smart Mode fires → embedded LLM responds → output pasted) is verified
+
+> **NOTE on MODE-03:** This requirement spans two phases. Phase 12 delivers the backend CRUD commands and type bindings. Phase 13 delivers the UI surface. The requirement is assigned to Phase 13 (the phase that completes the user-observable deliverable), and Phase 12 success criterion 3 documents the backend prerequisite.
+
+**Plans**: TBD
 
 ## Progress
 
-| Phase                          | Milestone | Plans Complete | Status   | Completed  |
-| ------------------------------ | --------- | -------------- | -------- | ---------- |
-| 1. Bundle Identity             | v1.0      | 1/1            | Complete | 2026-04-05 |
-| 2. Visual Rebrand              | v1.0      | 5/5            | Complete | 2026-04-09 |
-| 3. Documentation and Cleanup   | v1.0      | 2/2            | Complete | 2026-04-09 |
-| 4. Updater Infrastructure      | v1.1      | 4/4            | Complete | 2026-04-13 |
-| 5. Upstream Sync               | v1.1      | 3/3            | Complete | 2026-04-14 |
-| 6. Brand & Icon Polish         | v1.2      | 4/4            | Complete | 2026-04-16 |
-| 7. macOS Clean Shutdown        | v1.2      | 1/1            | Complete | 2026-04-23 |
-| 8. Privacy / Local-First UX    | v1.2      | 10/10          | Complete | 2026-05-22 |
-| 9. v1.2 Audit Gap Closure      | v1.2      | 1/1            | Complete | 2026-05-28 |
+| Phase | Milestone | Plans Complete | Status | Completed |
+|-------|-----------|----------------|--------|-----------|
+| 1. Bundle Identity | v1.0 | 1/1 | Complete | 2026-04-05 |
+| 2. Visual Rebrand | v1.0 | 5/5 | Complete | 2026-04-09 |
+| 3. Documentation and Cleanup | v1.0 | 2/2 | Complete | 2026-04-09 |
+| 4. Updater Infrastructure | v1.1 | 4/4 | Complete | 2026-04-13 |
+| 5. Upstream Sync | v1.1 | 3/3 | Complete | 2026-04-14 |
+| 6. Brand & Icon Polish | v1.2 | 4/4 | Complete | 2026-04-16 |
+| 7. macOS Clean Shutdown | v1.2 | 1/1 | Complete | 2026-04-23 |
+| 8. Privacy / Local-First UX | v1.2 | 10/10 | Complete | 2026-05-22 |
+| 9. v1.2 Audit Gap Closure | v1.2 | 1/1 | Complete | 2026-05-28 |
+| 10. Prerequisite Gate | v1.3 | 0/TBD | Not started | - |
+| 11. LLM Runtime Foundation | v1.3 | 0/TBD | Not started | - |
+| 12. Smart Modes Data Layer | v1.3 | 0/TBD | Not started | - |
+| 13. Smart Modes UI + Translation + i18n | v1.3 | 0/TBD | Not started | - |
