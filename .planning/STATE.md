@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
 status: planning
-stopped_at: Phase 10 context gathered
-last_updated: "2026-05-29T21:28:09.627Z"
+stopped_at: "Completed 10-01-PLAN.md (Tasks 1-2; Task 3 is checkpoint:human-verify awaiting CI)"
+last_updated: "2026-05-29T22:00:01.371Z"
 last_activity: 2026-05-29 — Roadmap created, 4 phases (10-13), 21/21 requirements covered
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 3
+  completed_plans: 1
   percent: 0
 ---
 
@@ -46,6 +46,7 @@ Progress: [░░░░░░░░░░] 0%
 | 7. macOS Clean Shutdown | 1 | Multi-day validation window |
 | 8. Privacy / Local-First UX | 10 | UAT iteration cycle included |
 | 9. Audit Gap Closure | 1 | 14 min |
+| Phase 10 P01 | 9 | 2 tasks | 17 files |
 
 ## Accumulated Context
 
@@ -56,6 +57,9 @@ Progress: [░░░░░░░░░░] 0%
 - v1.3: MODE-03 spans Phase 12 (backend) and Phase 13 (UI). Requirement assigned to Phase 13 (first phase where user can observe the full capability).
 - v1.3: All platforms ship together (no macOS-first staging). Vulkan SDK added to Windows/Linux CI in Phase 11.
 - v1.3: Cloud stays explicit opt-in. Embedded is primary local option. No silent cloud fallback ever.
+- [Phase 10]: Sync #2 is the LAST bulk catch-up merge; selective cherry-pick policy going forward per UPSTREAM.md Fork Policy section
+- [Phase 10]: aee682f (AWS Bedrock) reverted and logged as Exclusion Entry #1 in UPSTREAM.md Exclusion Log (local-first principle)
+- [Phase 10]: 966ff99 (async GPU query) accepted in Sync #2 merge but NOT adopted — flagged forward to Phase 11 GPU detection
 
 ### Pending Todos
 
@@ -70,6 +74,6 @@ Progress: [░░░░░░░░░░] 0%
 
 ## Session Continuity
 
-Last session: 2026-05-29T21:28:09.625Z
-Stopped at: Phase 10 context gathered
-Resume file: .planning/phases/10-prerequisite-gate/10-CONTEXT.md
+Last session: 2026-05-29T22:00:01.370Z
+Stopped at: Completed 10-01-PLAN.md (Tasks 1-2; Task 3 is checkpoint:human-verify awaiting CI)
+Resume file: None
