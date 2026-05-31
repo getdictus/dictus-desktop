@@ -121,7 +121,7 @@
 | 7. macOS Clean Shutdown | v1.2 | 1/1 | Complete | 2026-04-23 |
 | 8. Privacy / Local-First UX | v1.2 | 10/10 | Complete | 2026-05-22 |
 | 9. v1.2 Audit Gap Closure | v1.2 | 1/1 | Complete | 2026-05-28 |
-| 10. Prerequisite Gate | 1/3 | In Progress|  | - |
+| 10. Prerequisite Gate | 2/3 | In Progress|  | - |
 | 11. LLM Runtime Foundation | v1.3 | 0/TBD | Not started | - |
 | 12. Smart Modes Data Layer | v1.3 | 0/TBD | Not started | - |
 | 13. Smart Modes UI + Translation + i18n | v1.3 | 0/TBD | Not started | - |
