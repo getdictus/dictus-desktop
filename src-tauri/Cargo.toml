@@ -31,7 +31,11 @@ serde = { version = "1", features = ["derive"] }
 
 [dependencies]
 once_cell = "1"
-tauri = { version = "2.10.2", features = [
+# Pinned to the 2.10.x range: the [patch.crates-io] block below replaces
+# tauri-runtime/-wry/-utils with cjpais' `handy-2.10.2` fork (overlay
+# off-screen fix #543). That fork tracks tauri 2.10.x — letting tauri float
+# to 2.11+ makes the patch silently unused (and reverts the overlay fix).
+tauri = { version = "~2.10", features = [
   "protocol-asset",
   "macos-private-api",
   "tray-icon",
