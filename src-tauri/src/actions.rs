@@ -205,14 +205,16 @@ async fn post_process_transcription(settings: &AppSettings, transcription: &str)
         });
 
         match crate::llm_client::send_chat_completion_with_schema(
-            &provider,
-            api_key.clone(),
-            &model,
-            user_content,
-            Some(system_prompt),
-            Some(json_schema),
-            reasoning_effort.clone(),
-            reasoning.clone(),
+            crate::llm_client::ChatCompletionParams {
+                provider: provider.clone(),
+                api_key: api_key.clone(),
+                model: model.clone(),
+                user_content,
+                system_prompt: Some(system_prompt),
+                json_schema: Some(json_schema),
+                reasoning_effort: reasoning_effort.clone(),
+                reasoning: reasoning.clone(),
+            },
         )
         .await
         {
