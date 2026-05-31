@@ -93,7 +93,7 @@ pub struct LLMPrompt {
     pub prompt: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Type)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, Type)]
 pub struct PostProcessProvider {
     pub id: String,
     pub label: String,

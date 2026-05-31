@@ -32,6 +32,20 @@ pub struct ReasoningConfig {
     pub exclude: Option<bool>,
 }
 
+/// Parameters for a chat completion request with optional structured output support.
+/// Derives `Default` so callers can use `..Default::default()` for unset fields.
+#[derive(Debug, Clone, Default)]
+pub struct ChatCompletionParams {
+    pub provider: PostProcessProvider,
+    pub api_key: String,
+    pub model: String,
+    pub user_content: String,
+    pub system_prompt: Option<String>,
+    pub json_schema: Option<Value>,
+    pub reasoning_effort: Option<String>,
+    pub reasoning: Option<ReasoningConfig>,
+}
+
 #[derive(Debug, Serialize)]
 struct ChatCompletionRequest {
     model: String,
@@ -116,16 +130,15 @@ pub async fn send_chat_completion(
     reasoning_effort: Option<String>,
     reasoning: Option<ReasoningConfig>,
 ) -> Result<Option<String>, String> {
-    send_chat_completion_with_schema(
-        provider,
+    send_chat_completion_with_schema(ChatCompletionParams {
+        provider: provider.clone(),
         api_key,
-        model,
-        prompt,
-        None,
-        None,
+        model: model.to_string(),
+        user_content: prompt,
         reasoning_effort,
         reasoning,
-    )
+        ..Default::default()
+    })
     .await
 }
 
@@ -134,23 +147,26 @@ pub async fn send_chat_completion(
 /// system_prompt is used as the system message when provided
 /// reasoning_effort sets the OpenAI-style top-level field (e.g., "none", "low", "medium", "high")
 /// reasoning sets the OpenRouter-style nested object (effort + exclude)
-#[allow(clippy::too_many_arguments)]
 pub async fn send_chat_completion_with_schema(
-    provider: &PostProcessProvider,
-    api_key: String,
-    model: &str,
-    user_content: String,
-    system_prompt: Option<String>,
-    json_schema: Option<Value>,
-    reasoning_effort: Option<String>,
-    reasoning: Option<ReasoningConfig>,
+    params: ChatCompletionParams,
 ) -> Result<Option<String>, String> {
+    let ChatCompletionParams {
+        provider,
+        api_key,
+        model,
+        user_content,
+        system_prompt,
+        json_schema,
+        reasoning_effort,
+        reasoning,
+    } = params;
+
     let base_url = provider.base_url.trim_end_matches('/');
     let url = format!("{}/chat/completions", base_url);
 
     debug!("Sending chat completion request to: {}", url);
 
-    let client = create_client(provider, &api_key)?;
+    let client = create_client(&provider, &api_key)?;
 
     // Build messages vector
     let mut messages = Vec::new();
