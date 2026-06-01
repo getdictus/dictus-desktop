@@ -443,10 +443,36 @@
           "cloudSelectedNotice": "Mô hình bạn chọn là một nhà cung cấp đám mây. Nhấp vào tab \"Đám mây\" bên dưới để xem, hoặc chọn một mô hình cục bộ."
         },
         "library": {
-          "title": "Thư viện mô hình cục bộ",
-          "comingSoonBadge": "Sắp ra mắt",
-          "comingSoonBody": "Thư viện cục bộ sẽ ra mắt ở bước tiếp theo: tải xuống mô hình GGUF tích hợp (khuyến nghị: gemma3:4b), quản lý ngoại tuyến và thực thi nhúng.",
-          "currentBridge": "Trong thời gian này, hãy sử dụng Custom (local) với Ollama để chạy mô hình của bạn cục bộ."
+          "title": "Local Model Library",
+          "description": "Download and manage local GGUF models. Models run entirely on your device — no data leaves your machine.",
+          "yourModels": "Your Models",
+          "availableModels": "Available to Download",
+          "recommendedBadge": "Recommended",
+          "downloadModel": "Download model",
+          "activateModel": "Use this model",
+          "addCustomModel": "Add custom model",
+          "dropZoneLabel": "Drop a .gguf file here",
+          "dropZoneSublabel": "or use the button above",
+          "invalidGguf": "Not a valid GGUF model file. Please select a .gguf file.",
+          "cancelDownload": "Cancel download",
+          "models": {
+            "qwen25_1b5": {
+              "description": "Fast, lightweight — runs on any machine"
+            },
+            "qwen3_4b": {
+              "description": "Best quality for post-processing"
+            },
+            "translate_gemma_4b": {
+              "description": "Translation-focused"
+            }
+          }
+        },
+        "embedded": {
+          "noModelHeading": "No local model selected",
+          "noModelBody": "Download a model below to enable embedded processing. The Qwen2.5-1.5B model is recommended for most machines.",
+          "downloadNowLink": "Download a model",
+          "providerLabel": "Embedded (local)",
+          "providerDescription": "Runs on your device. Requires a downloaded local model."
         }
       },
       "prompts": {

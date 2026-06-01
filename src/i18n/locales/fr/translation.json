@@ -443,10 +443,36 @@
           "cloudSelectedNotice": "Votre modèle sélectionné est un fournisseur cloud. Cliquez sur l'onglet « Cloud » ci-dessous pour le voir, ou choisissez un modèle local."
         },
         "library": {
-          "title": "Bibliothèque de modèles locaux",
-          "comingSoonBadge": "Bientôt",
-          "comingSoonBody": "La bibliothèque locale arrive dans la prochaine étape : téléchargement intégré de modèles GGUF (recommandé : gemma3:4b), gestion hors ligne, et exécution embarquée.",
-          "currentBridge": "En attendant, utilisez Custom (local) avec Ollama pour exécuter vos modèles localement."
+          "title": "Local Model Library",
+          "description": "Download and manage local GGUF models. Models run entirely on your device — no data leaves your machine.",
+          "yourModels": "Your Models",
+          "availableModels": "Available to Download",
+          "recommendedBadge": "Recommended",
+          "downloadModel": "Download model",
+          "activateModel": "Use this model",
+          "addCustomModel": "Add custom model",
+          "dropZoneLabel": "Drop a .gguf file here",
+          "dropZoneSublabel": "or use the button above",
+          "invalidGguf": "Not a valid GGUF model file. Please select a .gguf file.",
+          "cancelDownload": "Cancel download",
+          "models": {
+            "qwen25_1b5": {
+              "description": "Fast, lightweight — runs on any machine"
+            },
+            "qwen3_4b": {
+              "description": "Best quality for post-processing"
+            },
+            "translate_gemma_4b": {
+              "description": "Translation-focused"
+            }
+          }
+        },
+        "embedded": {
+          "noModelHeading": "No local model selected",
+          "noModelBody": "Download a model below to enable embedded processing. The Qwen2.5-1.5B model is recommended for most machines.",
+          "downloadNowLink": "Download a model",
+          "providerLabel": "Embedded (local)",
+          "providerDescription": "Runs on your device. Requires a downloaded local model."
         }
       },
       "prompts": {
