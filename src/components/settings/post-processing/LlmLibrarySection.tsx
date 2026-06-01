@@ -51,8 +51,7 @@ export const LlmLibrarySection: React.FC = () => {
     return () => {
       unlistenFn?.();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, []); // Mount once — store actions are stable Zustand references
 
   const getModelStatus = (modelId: string): ModelCardStatus => {
     if (modelId in store.downloadProgress) {

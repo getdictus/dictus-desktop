@@ -37,8 +37,7 @@ export const CustomGgufDropZone: React.FC = () => {
     return () => {
       unlistenRef.current?.();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, []); // Mount once — webview drag-drop listener registered on mount only
 
   const handleImport = async (filePath: string) => {
     setError(null);

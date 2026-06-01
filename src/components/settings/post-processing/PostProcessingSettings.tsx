@@ -24,13 +24,38 @@ import { usePostProcessProviderState } from "../PostProcessingSettingsApi/usePos
 import { ShortcutInput } from "../ShortcutInput";
 import { useSettings } from "../../../hooks/useSettings";
 import type { PostProcessProvider } from "@/bindings";
+import { LlmLibrarySection } from "./LlmLibrarySection";
+import { EmbeddedNoModelEmptyState } from "./EmbeddedNoModelEmptyState";
+import { useLlmModelStore } from "@/stores/llmModelStore";
 
-const LOCAL_PROVIDER_IDS_SET = new Set(["apple_intelligence", "custom"]);
+const LOCAL_PROVIDER_IDS_SET = new Set([
+  "apple_intelligence",
+  "custom",
+  "embedded",
+]);
 const RECOMMENDED_PROVIDER_ID = "apple_intelligence";
 
 const PostProcessingSettingsApiComponent: React.FC = () => {
   const { t } = useTranslation();
   const state = usePostProcessProviderState();
+  const llmStore = useLlmModelStore();
+
+  // Inject the synthetic "Embedded (local)" option into the local tab.
+  // The embedded provider is handled specially by the backend (not in post_process_providers),
+  // so we add it as a synthetic entry on the frontend side.
+  const embeddedOption = {
+    value: "embedded",
+    label: t(
+      "settings.postProcessing.modelsAndLocalProcessing.embedded.providerLabel",
+    ),
+    description: t(
+      "settings.postProcessing.modelsAndLocalProcessing.embedded.providerDescription",
+    ),
+  };
+  const localOptionsWithEmbedded = [
+    ...state.groupedProviderOptions.local,
+    embeddedOption,
+  ];
 
   const selectedIsCloud =
     state.selectedProviderId !== "" &&
@@ -71,7 +96,7 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
     setActiveTab(nextTab);
     const tabOptions =
       nextTab === "local"
-        ? state.groupedProviderOptions.local
+        ? localOptionsWithEmbedded
         : state.groupedProviderOptions.external;
     if (tabOptions.length === 0) return;
     const preferred = nextTab === "local" ? lastLocalId : lastCloudId;
@@ -83,6 +108,9 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
       void state.handleProviderSelect(targetId);
     }
   };
+
+  // Determine if embedded has any downloaded models (to hide the empty state)
+  const hasLlmDownloaded = llmStore.models.some((m) => m.is_downloaded);
 
   return (
     <>
@@ -143,7 +171,7 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
         grouped={true}
       >
         <ProviderPicker
-          localOptions={state.groupedProviderOptions.local}
+          localOptions={localOptionsWithEmbedded}
           externalOptions={state.groupedProviderOptions.external}
           value={state.selectedProviderId}
           onChange={state.handleProviderSelect}
@@ -159,6 +187,10 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
                   )}
                 </Alert>
               );
+            }
+            if (option.value === "embedded") {
+              if (hasLlmDownloaded) return null;
+              return <EmbeddedNoModelEmptyState />;
             }
             if (option.value !== "custom") return null;
             return (
@@ -635,32 +667,8 @@ export const PostProcessingSettings: React.FC = () => {
         </span>
       </div>
 
-      {/* Local model library — coming-soon placeholder (hoisted to top per Gap 7) */}
-      <SettingsGroup
-        title={t(
-          "settings.postProcessing.modelsAndLocalProcessing.library.title",
-        )}
-      >
-        <div className="rounded-md border border-dashed border-mid-gray/40 bg-mid-gray/5 p-4 space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-logo-primary/10 text-logo-primary border border-logo-primary/40">
-              {t(
-                "settings.postProcessing.modelsAndLocalProcessing.library.comingSoonBadge",
-              )}
-            </span>
-          </div>
-          <p className="text-sm text-mid-gray">
-            {t(
-              "settings.postProcessing.modelsAndLocalProcessing.library.comingSoonBody",
-            )}
-          </p>
-          <p className="text-xs text-mid-gray/80">
-            {t(
-              "settings.postProcessing.modelsAndLocalProcessing.library.currentBridge",
-            )}
-          </p>
-        </div>
-      </SettingsGroup>
+      {/* Local model library — real library (replaces placeholder, anchored at top per MDL-05) */}
+      <LlmLibrarySection />
 
       {/* Hotkey */}
       <SettingsGroup title={t("settings.postProcessing.hotkey.title")}>
