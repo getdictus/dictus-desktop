@@ -63,7 +63,83 @@ fn build_system_prompt(prompt_template: &str) -> String {
     prompt_template.replace("${output}", "").trim().to_string()
 }
 
-async fn post_process_transcription(settings: &AppSettings, transcription: &str) -> Option<String> {
+async fn post_process_transcription(
+    app: &AppHandle,
+    settings: &AppSettings,
+    transcription: &str,
+) -> Option<String> {
+    // Handle the embedded (local LLM) provider before the HTTP provider lookup.
+    // "embedded" is not in post_process_providers and has no base_url, model, or api key.
+    if settings.post_process_provider_id == "embedded" {
+        use std::sync::Arc;
+        let llm_manager = app.state::<Arc<crate::managers::llm::LlmManager>>();
+
+        // Resolve the selected prompt (same logic as the HTTP path below).
+        let selected_prompt_id = match &settings.post_process_selected_prompt_id {
+            Some(id) => id.clone(),
+            None => {
+                debug!("Embedded post-processing skipped: no prompt selected");
+                return None;
+            }
+        };
+        let prompt = match settings
+            .post_process_prompts
+            .iter()
+            .find(|p| p.id == selected_prompt_id)
+        {
+            Some(p) => p.prompt.clone(),
+            None => {
+                debug!(
+                    "Embedded post-processing skipped: prompt '{}' not found",
+                    selected_prompt_id
+                );
+                return None;
+            }
+        };
+        if prompt.trim().is_empty() {
+            debug!("Embedded post-processing skipped: selected prompt is empty");
+            return None;
+        }
+
+        // Load the active model on demand if not already loaded.
+        if !llm_manager.is_model_loaded() {
+            if let Some(active_id) = &settings.active_llm_model_id {
+                if let Err(e) = llm_manager.load_model(active_id).await {
+                    log::error!(
+                        "Embedded LLM failed to load model '{}': {}",
+                        active_id,
+                        e
+                    );
+                    return None;
+                }
+            } else {
+                debug!("Embedded provider selected but no active LLM model is set");
+                return None;
+            }
+        }
+
+        let system_prompt = build_system_prompt(&prompt);
+        let full_prompt = format!("{}\n\n{}", system_prompt, transcription);
+        return match llm_manager.run_inference(full_prompt).await {
+            Ok(result) => {
+                let result = strip_invisible_chars(&result);
+                if result.trim().is_empty() {
+                    None
+                } else {
+                    debug!(
+                        "Embedded LLM post-processing succeeded. Output length: {} chars",
+                        result.len()
+                    );
+                    Some(result)
+                }
+            }
+            Err(e) => {
+                log::error!("Embedded LLM inference failed: {}", e);
+                None
+            }
+        };
+    }
+
     let provider = match settings.active_post_process_provider().cloned() {
         Some(provider) => provider,
         None => {
@@ -363,7 +439,7 @@ pub(crate) async fn process_transcription_output(
     }
 
     if post_process {
-        if let Some(processed_text) = post_process_transcription(&settings, &final_text).await {
+        if let Some(processed_text) = post_process_transcription(app, &settings, &final_text).await {
             post_processed_text = Some(processed_text.clone());
             final_text = processed_text;
 
