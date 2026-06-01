@@ -29,43 +29,47 @@ created: 2026-06-01
 
 ## Spacing Scale
 
-Declared values (must be multiples of 4):
+Declared values (all multiples of 4):
 
 | Token | Value | Usage |
 |-------|-------|-------|
 | xs | 4px | Icon gaps (`gap-1`), badge padding (`px-1`), inline chip spacing |
-| sm | 8px | Compact element spacing (`gap-2`, `p-2`), card inner gaps |
+| sm | 8px | Compact element spacing (`gap-2`, `p-2`), card inner gaps, progress bar height (`h-2`) |
 | md | 16px | Default element spacing (`p-4`, `gap-4`), card padding |
 | lg | 24px | Section padding (`space-y-6`), settings group gaps |
 | xl | 32px | Layout gaps between major settings groups |
 | 2xl | 48px | Not used in settings context (page-level only) |
 | 3xl | 64px | Not used in settings context |
 
-Exceptions:
-- Drop-zone minimum hit area: 44px height (touch/pointer target accessibility floor)
-- Progress bar height: 6px (`h-1.5`) — matches existing ModelCard progress bar
-- Divider line: 1px (`border`) — matches `<hr className="w-full border-mid-gray/20">` in ModelCard
+Exceptions (justified, single):
+- Drop-zone minimum hit area: 44px height — touch/pointer target accessibility floor (WCAG 2.5.5)
 
 **Source:** Observed from `ModelsSettings.tsx`, `ModelCard.tsx`, `PostProcessingSettings.tsx` — reuse verbatim.
+
+> Note: the existing `ModelCard.tsx` progress bar ships at `h-1.5` (6px). This phase standardizes the LLM library progress bar to `h-2` (8px) to keep the spacing scale to multiples of 4. The 8px bar remains visually thin and conforms to the contract.
 
 ---
 
 ## Typography
+
+Exactly 2 weights declared: 400 (regular) and 500 (medium). Emphasis is carried by size contrast (`text-base` vs `text-sm`), never by a third weight.
 
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body | 14px (`text-sm`) | 400 (regular) | 1.5 (`leading-relaxed` on descriptions) |
 | Label | 12px (`text-xs`) | 400 (regular) | 1.5 |
 | Heading (section) | 14px (`text-sm`) | 500 (`font-medium`) | 1.4 |
-| Heading (page) | 20px (`text-xl`) | 500 (`font-medium`) or 600 (`font-semibold`) | 1.2 |
+| Heading (page) | 20px (`text-xl`) | 500 (`font-medium`) | 1.2 |
 
 Typography rules enforced by this phase:
-- Model name in card: `text-base font-semibold` — matches existing ModelCard `<h3>`
-- Model description in card: `text-sm text-text/60 leading-relaxed` — matches existing ModelCard
-- Progress percentage / speed: `text-xs tabular-nums text-text/50` — matches existing ModelCard
-- Section sub-headings ("Your Models", "Available Models"): `text-sm font-medium text-text/60` — matches ModelsSettings
-- Badge text: `text-xs font-medium` — matches existing Badge/pill patterns
-- Inline empty-state body: `text-sm text-mid-gray` — matches PostProcessingSettings empty-state pattern
+- Model name in card: `text-base font-medium` — size contrast (16px vs 14px body) carries the emphasis, not weight
+- Model description in card: `text-sm text-text/60 leading-relaxed`
+- Progress percentage / speed: `text-xs tabular-nums text-text/50`
+- Section sub-headings ("Your Models", "Available Models"): `text-sm font-medium text-text/60`
+- Badge text: `text-xs font-medium`
+- Inline empty-state body: `text-sm text-mid-gray`
+
+> Note: the existing `ModelCard.tsx` uses `text-base font-semibold` (weight 600) for the card name. This phase replaces every `font-semibold` with `font-medium` (weight 500) in the LLM library surface, relying on the `text-base`/`text-sm` size step for name emphasis. This keeps the phase to a strict 2-weight contract.
 
 **Source:** `ModelCard.tsx` lines 139, 160, 248-250; `ModelsSettings.tsx` lines 225, 341; `PostProcessingSettings.tsx` line 652.
 
@@ -126,6 +130,14 @@ This phase exclusively reuses existing components. No new primitive components a
 | `EmbeddedNoModelEmptyState` | Plain div + `text-sm text-mid-gray` + anchor link | Shown inside ProviderPicker row when `embedded` selected, no model present |
 | `CustomGgufDropZone` | `div` with dashed border + `Button` (file picker) | Drag-and-drop target + "Add custom model" button below the library list |
 
+### Border / rendering primitives (not part of the spacing contract)
+
+These are 1px CSS rendering primitives, not layout spacing. They are documented here so the executor reproduces them, but they are explicitly outside the spacing scale:
+
+- Card divider: `<hr className="w-full border-mid-gray/20">` (1px) — inherited from `ModelCard.tsx`
+- Card border: `border-2 border-mid-gray/20` (2px stroke) — inherited from `ModelCard.tsx`
+- Drop-zone dashed border: `border border-dashed border-mid-gray/40` (1px)
+
 ### ProviderPicker integration point
 
 Add `"embedded"` to `LOCAL_PROVIDER_IDS_SET` in `PostProcessingSettings.tsx` (line 28). The `renderRowExtras` callback for `option.value === "embedded"` renders `EmbeddedNoModelEmptyState` when no LLM is downloaded; renders nothing when an active model exists.
@@ -141,8 +153,8 @@ Every UI state the executor must handle, mapped to its visual treatment.
 | State | Visual |
 |-------|--------|
 | `downloadable` | `border-mid-gray/20`; Download icon + size in footer; cursor pointer |
-| `downloading` | Progress bar (logo-primary fill, 6px height); percentage + speed text; Cancel button (danger-ghost) |
-| `verifying` | Pulsing full-width progress bar; "Verifying…" label |
+| `downloading` | Progress bar (logo-primary fill, `h-2` / 8px height); percentage + speed text; Cancel button (danger-ghost) |
+| `verifying` | Pulsing full-width progress bar (`h-2`); "Verifying…" label |
 | `active` | `border-logo-primary/50 bg-logo-primary/10`; Active badge; no Download button |
 | `available` | `border-mid-gray/20`; no Download button; Delete button visible |
 
@@ -183,8 +195,8 @@ All copy below is for i18n key scaffolding in `src/i18n/locales/en/translation.j
 | Model role — Qwen2.5-1.5B | `settings.postProcessing.modelsAndLocalProcessing.library.models.qwen25_1b5.description` | "Fast, lightweight — runs on any machine" |
 | Model role — Qwen3-4B | `settings.postProcessing.modelsAndLocalProcessing.library.models.qwen3_4b.description` | "Best quality for post-processing" |
 | Model role — TranslateGemma-4B | `settings.postProcessing.modelsAndLocalProcessing.library.models.translate_gemma_4b.description` | "Translation-focused" |
-| Primary CTA (download catalogue model) | reuse `modelSelector.download` or add `library.downloadModel` | "Download" |
-| Primary CTA (activate model) | reuse `modelSelector.useModel` or add `library.activateModel` | "Use this model" |
+| Primary CTA (download catalogue model) | `settings.postProcessing.modelsAndLocalProcessing.library.downloadModel` (NEW) | "Download model" |
+| Primary CTA (activate model) | `settings.postProcessing.modelsAndLocalProcessing.library.activateModel` (NEW) | "Use this model" |
 | Add custom model button | `settings.postProcessing.modelsAndLocalProcessing.library.addCustomModel` | "Add custom model" |
 | Drop-zone label | `settings.postProcessing.modelsAndLocalProcessing.library.dropZoneLabel` | "Drop a .gguf file here" |
 | Drop-zone sub-label | `settings.postProcessing.modelsAndLocalProcessing.library.dropZoneSublabel` | "or use the button above" |
@@ -199,8 +211,10 @@ All copy below is for i18n key scaffolding in `src/i18n/locales/en/translation.j
 | Delete model dialog title | reuse `settings.models.deleteTitle` | "Delete Model" |
 | Download progress label | reuse `modelSelector.downloading` | "Downloading {{percentage}}%" |
 | Download speed label | reuse `modelSelector.downloadSpeed` | "{{speed}} MB/s" |
-| Cancel download button | reuse `modelSelector.cancel` | "Cancel" |
+| Cancel download button | `settings.postProcessing.modelsAndLocalProcessing.library.cancelDownload` (NEW) | "Cancel download" |
 | Verifying label | reuse `modelSelector.verifyingGeneric` | "Verifying…" |
+
+> CTA labels are specific verb+noun pairs. New keys (`downloadModel`, `activateModel`, `cancelDownload`) are added under the `library.*` namespace rather than reusing the generic single-word `modelSelector.download` / `modelSelector.cancel` keys, which stay untouched for their existing transcription-model uses.
 
 ---
 
@@ -229,7 +243,9 @@ All copy below is for i18n key scaffolding in `src/i18n/locales/en/translation.j
 1. User selects "Embedded (local)" in ProviderPicker
 2. If no LLM is downloaded: `EmbeddedNoModelEmptyState` appears inline under the provider row
 3. "Download a model" link in empty state scrolls to and highlights the `LlmLibrarySection` (same page, anchor scroll, no modal, no navigation)
-4. Qwen2.5-1.5B card is visually highlighted (accent border pulse, 1 cycle) to indicate recommendation
+4. Qwen2.5-1.5B card is visually highlighted to indicate recommendation:
+   - **Default:** accent border pulse animation, 1 cycle (`border-logo-primary`, brief opacity/scale pulse), then settles to a static accent border
+   - **`prefers-reduced-motion: reduce`:** skip the pulse entirely — render a static accent border (`border-logo-primary/50`) only, no animation. The recommendation is still conveyed by the persistent accent border.
 5. Once user downloads and activates a model: empty state disappears; provider row shows normal selected state
 
 ### Active model indicator
