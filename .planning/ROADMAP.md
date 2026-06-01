@@ -126,6 +126,6 @@
 | 8. Privacy / Local-First UX | v1.2 | 10/10 | Complete | 2026-05-22 |
 | 9. v1.2 Audit Gap Closure | v1.2 | 1/1 | Complete | 2026-05-28 |
 | 10. Prerequisite Gate | 3/3 | Complete    | 2026-06-01 | 2026-06-01 |
-| 11. LLM Runtime Foundation | v1.3 | 0/4 | Not started | - |
+| 11. LLM Runtime Foundation | 1/4 | In Progress|  | - |
 | 12. Smart Modes Data Layer | v1.3 | 0/TBD | Not started | - |
 | 13. Smart Modes UI + Translation + i18n | v1.3 | 0/TBD | Not started | - |
