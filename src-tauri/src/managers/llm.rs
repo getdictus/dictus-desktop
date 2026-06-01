@@ -40,7 +40,7 @@ pub struct LlmModelInfo {
 }
 
 /// Progress payload emitted during LLM model downloads.
-#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[derive(Debug, Clone, Serialize, Deserialize, Type, tauri_specta::Event)]
 pub struct LlmDownloadProgress {
     pub model_id: String,
     pub downloaded: u64,

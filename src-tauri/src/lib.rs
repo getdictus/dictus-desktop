@@ -28,6 +28,7 @@ use tauri_specta::{collect_commands, collect_events, Builder};
 use env_filter::Builder as EnvFilterBuilder;
 use managers::audio::AudioRecordingManager;
 use managers::history::HistoryManager;
+use managers::llm::LlmManager;
 use managers::model::ModelManager;
 use managers::transcription::TranscriptionManager;
 #[cfg(unix)]
@@ -80,6 +81,10 @@ fn level_filter_from_u8(value: u8) -> log::LevelFilter {
 /// not silently revert it.
 fn flush_and_exit(app: &AppHandle, code: i32) {
     log::info!("SHUT-02: flush_and_exit invoked (code={})", code);
+    // Stop the LLM idle watcher thread so it doesn't outlive the process.
+    if let Some(llm_manager) = app.try_state::<Arc<LlmManager>>() {
+        llm_manager.shutdown();
+    }
     log::logger().flush();
     #[cfg(target_os = "macos")]
     {
@@ -213,6 +218,8 @@ fn initialize_core_logic(app_handle: &AppHandle) {
     );
     let history_manager =
         Arc::new(HistoryManager::new(app_handle).expect("Failed to initialize history manager"));
+    let llm_manager =
+        Arc::new(LlmManager::new(app_handle).expect("Failed to initialize LLM manager"));
 
     // Apply accelerator preferences before any model loads
     managers::transcription::apply_accelerator_settings(app_handle);
@@ -222,6 +229,7 @@ fn initialize_core_logic(app_handle: &AppHandle) {
     app_handle.manage(model_manager.clone());
     app_handle.manage(transcription_manager.clone());
     app_handle.manage(history_manager.clone());
+    app_handle.manage(llm_manager.clone());
 
     // Note: Shortcuts are NOT initialized here.
     // The frontend is responsible for calling the `initialize_shortcuts` command
@@ -484,6 +492,13 @@ pub fn run(cli_args: CliArgs) {
             commands::models::is_model_loading,
             commands::models::has_any_models_available,
             commands::models::has_any_models_or_downloads,
+            commands::llm::get_llm_models,
+            commands::llm::download_llm_model,
+            commands::llm::cancel_llm_download,
+            commands::llm::delete_llm_model,
+            commands::llm::set_active_llm_model,
+            commands::llm::get_active_llm_model,
+            commands::llm::import_custom_llm_model,
             commands::audio::update_microphone_mode,
             commands::audio::get_microphone_mode,
             commands::audio::get_windows_microphone_permission_status,
@@ -511,7 +526,10 @@ pub fn run(cli_args: CliArgs) {
             commands::history::update_recording_retention_period,
             helpers::clamshell::is_laptop,
         ])
-        .events(collect_events![managers::history::HistoryUpdatePayload,]);
+        .events(collect_events![
+            managers::history::HistoryUpdatePayload,
+            managers::llm::LlmDownloadProgress,
+        ]);
 
     #[cfg(debug_assertions)] // <- Only export on non-release builds
     specta_builder
