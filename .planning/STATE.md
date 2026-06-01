@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
 status: completed
-stopped_at: Completed 11-02-PLAN.md
-last_updated: "2026-06-01T14:38:47.902Z"
+stopped_at: Completed 11-03-PLAN.md
+last_updated: "2026-06-01T14:48:04.583Z"
 last_activity: 2026-06-01 — 10-03 closed; PREP-01 confirmed; ggml coexistence proven 6/7 CI platforms; Windows-x64 vulkan deferred to Phase 11
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 7
-  completed_plans: 5
+  completed_plans: 6
   percent: 8
 ---
 
@@ -51,6 +51,7 @@ Progress: [██░░░░░░░░] ~8%
 | Phase 10-prerequisite-gate P03 | multi-day | 3 tasks | 2 files |
 | Phase 11 P01 | 427 | 3 tasks | 4 files |
 | Phase 11 P02 | 25 | 2 tasks | 5 files |
+| Phase 11 P03 | 15 | 3 tasks | 24 files |
 
 ## Accumulated Context
 
@@ -70,6 +71,8 @@ Progress: [██░░░░░░░░] ~8%
 - [Phase 11]: llama-cpp-2 0.1.146 API deviations from RESEARCH.md: with_n_gpu_layers takes u32 not i32; with_n_ctx takes Option<NonZeroU32>; sample_token_greedy on LlamaTokenDataArray; token_to_piece_bytes replaces deprecated token_to_bytes; num_cpus not a dep — use std::thread::available_parallelism
 - [Phase 11]: Embedded provider detected by checking settings.post_process_provider_id == 'embedded' before active_post_process_provider() lookup — avoids None early-return since embedded has no entry in post_process_providers
 - [Phase 11]: LlmManager shutdown wired into flush_and_exit() shared helper, covering both tray quit and no-tray CloseRequested paths symmetrically
+- [Phase 11]: Embedded provider injected synthetically in frontend localOptionsWithEmbedded array rather than added to Rust settings.rs default_post_process_providers
+- [Phase 11]: All 19 non-English locales updated with English fallback strings for library.* and embedded.* keys so check:translations passes; real L10N deferred to Phase 13 L10N-01
 
 ### Pending Todos
 
@@ -85,6 +88,6 @@ Progress: [██░░░░░░░░] ~8%
 
 ## Session Continuity
 
-Last session: 2026-06-01T14:38:47.900Z
-Stopped at: Completed 11-02-PLAN.md
+Last session: 2026-06-01T14:48:04.582Z
+Stopped at: Completed 11-03-PLAN.md
 Resume file: None

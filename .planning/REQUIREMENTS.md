@@ -30,7 +30,7 @@ Non-user-facing groundwork that must land before feature code (research-recommen
 - [x] **MDL-02**: User can download a catalogue model in-app with progress, cancel, and resume; download is SHA256-verified and served from HuggingFace CDN (never `blob.handy.computer`)
 - [x] **MDL-03**: User can delete a downloaded model and reclaim the disk space
 - [x] **MDL-04**: User can add a custom local model by drag/drop or file-pick of a GGUF file
-- [ ] **MDL-05**: The "Bibliothèque de modèles locaux" placeholder card becomes the real, functional model library anchored at the top of the local-processing page
+- [x] **MDL-05**: The "Bibliothèque de modèles locaux" placeholder card becomes the real, functional model library anchored at the top of the local-processing page
 
 ### Smart Modes (MODE)
 
@@ -107,7 +107,7 @@ Which phases cover which requirements. Updated 2026-05-29.
 | MDL-02 | Phase 11 | Complete |
 | MDL-03 | Phase 11 | Complete |
 | MDL-04 | Phase 11 | Complete |
-| MDL-05 | Phase 11 | Pending |
+| MDL-05 | Phase 11 | Complete |
 | MODE-01 | Phase 12 | Pending |
 | MODE-02 | Phase 12 | Pending |
 | MODE-03 | Phase 12 + Phase 13 | Pending |
