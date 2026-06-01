@@ -19,17 +19,17 @@ Non-user-facing groundwork that must land before feature code (research-recommen
 
 ### Embedded LLM Runtime (LLM)
 
-- [ ] **LLM-01**: A GGUF model runs in-process via the embedded engine (no external Ollama), on a background thread so inference never blocks the overlay, tray, or shortcuts
-- [ ] **LLM-02**: GPU acceleration is auto-selected per platform (Metal on macOS, Vulkan on Windows/Linux) with graceful CPU fallback when no GPU backend is available
-- [ ] **LLM-03**: The loaded LLM unloads after its own idle timeout and coexists safely in memory with the transcription model (sequential pipeline, independent unload)
-- [ ] **LLM-04**: "Embedded (local)" is selectable as a post-processing provider alongside Apple Intelligence, Custom→Ollama, and cloud providers — cloud remains opt-in, embedded is the primary local option
+- [x] **LLM-01**: A GGUF model runs in-process via the embedded engine (no external Ollama), on a background thread so inference never blocks the overlay, tray, or shortcuts
+- [x] **LLM-02**: GPU acceleration is auto-selected per platform (Metal on macOS, Vulkan on Windows/Linux) with graceful CPU fallback when no GPU backend is available
+- [x] **LLM-03**: The loaded LLM unloads after its own idle timeout and coexists safely in memory with the transcription model (sequential pipeline, independent unload)
+- [x] **LLM-04**: "Embedded (local)" is selectable as a post-processing provider alongside Apple Intelligence, Custom→Ollama, and cloud providers — cloud remains opt-in, embedded is the primary local option
 
 ### Local Model Library (MDL)
 
-- [ ] **MDL-01**: User can browse a curated catalogue of local models (Qwen3-4B, Qwen2.5-1.5B, TranslateGemma-4B) with the on-disk size shown **before** download
-- [ ] **MDL-02**: User can download a catalogue model in-app with progress, cancel, and resume; download is SHA256-verified and served from HuggingFace CDN (never `blob.handy.computer`)
-- [ ] **MDL-03**: User can delete a downloaded model and reclaim the disk space
-- [ ] **MDL-04**: User can add a custom local model by drag/drop or file-pick of a GGUF file
+- [x] **MDL-01**: User can browse a curated catalogue of local models (Qwen3-4B, Qwen2.5-1.5B, TranslateGemma-4B) with the on-disk size shown **before** download
+- [x] **MDL-02**: User can download a catalogue model in-app with progress, cancel, and resume; download is SHA256-verified and served from HuggingFace CDN (never `blob.handy.computer`)
+- [x] **MDL-03**: User can delete a downloaded model and reclaim the disk space
+- [x] **MDL-04**: User can add a custom local model by drag/drop or file-pick of a GGUF file
 - [ ] **MDL-05**: The "Bibliothèque de modèles locaux" placeholder card becomes the real, functional model library anchored at the top of the local-processing page
 
 ### Smart Modes (MODE)
@@ -99,14 +99,14 @@ Which phases cover which requirements. Updated 2026-05-29.
 | PREP-01 | Phase 10 | Complete |
 | PREP-02 | Phase 10 | Complete |
 | PREP-03 | Phase 10 | Complete |
-| LLM-01 | Phase 11 | Pending |
-| LLM-02 | Phase 11 | Pending |
-| LLM-03 | Phase 11 | Pending |
-| LLM-04 | Phase 11 | Pending |
-| MDL-01 | Phase 11 | Pending |
-| MDL-02 | Phase 11 | Pending |
-| MDL-03 | Phase 11 | Pending |
-| MDL-04 | Phase 11 | Pending |
+| LLM-01 | Phase 11 | Complete |
+| LLM-02 | Phase 11 | Complete |
+| LLM-03 | Phase 11 | Complete |
+| LLM-04 | Phase 11 | Complete |
+| MDL-01 | Phase 11 | Complete |
+| MDL-02 | Phase 11 | Complete |
+| MDL-03 | Phase 11 | Complete |
+| MDL-04 | Phase 11 | Complete |
 | MDL-05 | Phase 11 | Pending |
 | MODE-01 | Phase 12 | Pending |
 | MODE-02 | Phase 12 | Pending |

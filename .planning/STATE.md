@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
 status: completed
-stopped_at: Completed 11-01-PLAN.md
-last_updated: "2026-06-01T14:33:04.606Z"
+stopped_at: Completed 11-02-PLAN.md
+last_updated: "2026-06-01T14:38:47.902Z"
 last_activity: 2026-06-01 — 10-03 closed; PREP-01 confirmed; ggml coexistence proven 6/7 CI platforms; Windows-x64 vulkan deferred to Phase 11
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 7
-  completed_plans: 4
+  completed_plans: 5
   percent: 8
 ---
 
@@ -50,6 +50,7 @@ Progress: [██░░░░░░░░] ~8%
 | Phase 10-prerequisite-gate P02 | 2 | 2 tasks | 3 files |
 | Phase 10-prerequisite-gate P03 | multi-day | 3 tasks | 2 files |
 | Phase 11 P01 | 427 | 3 tasks | 4 files |
+| Phase 11 P02 | 25 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -67,6 +68,8 @@ Progress: [██░░░░░░░░] ~8%
 - [Phase 10-02]: Added Default derive to PostProcessProvider (all fields String/bool/Option — empty default safe for internal use)
 - [Phase 10-03]: PREP-01 spike: ggml duplicate-symbol conflict did NOT manifest; llama-cpp-2 0.1.146 + transcribe-rs coexist (two static ggml builds tolerated by linkers) on 6/7 CI platforms; llama-cpp-2 confirmed as in-process engine; candle/mistral.rs fallback not needed; Windows-x64 vulkan-shaders-gen MSVC build failure deferred to Phase 11
 - [Phase 11]: llama-cpp-2 0.1.146 API deviations from RESEARCH.md: with_n_gpu_layers takes u32 not i32; with_n_ctx takes Option<NonZeroU32>; sample_token_greedy on LlamaTokenDataArray; token_to_piece_bytes replaces deprecated token_to_bytes; num_cpus not a dep — use std::thread::available_parallelism
+- [Phase 11]: Embedded provider detected by checking settings.post_process_provider_id == 'embedded' before active_post_process_provider() lookup — avoids None early-return since embedded has no entry in post_process_providers
+- [Phase 11]: LlmManager shutdown wired into flush_and_exit() shared helper, covering both tray quit and no-tray CloseRequested paths symmetrically
 
 ### Pending Todos
 
@@ -82,6 +85,6 @@ Progress: [██░░░░░░░░] ~8%
 
 ## Session Continuity
 
-Last session: 2026-06-01T14:33:04.604Z
-Stopped at: Completed 11-01-PLAN.md
+Last session: 2026-06-01T14:38:47.900Z
+Stopped at: Completed 11-02-PLAN.md
 Resume file: None
