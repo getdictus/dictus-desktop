@@ -79,7 +79,11 @@
 
 > **Research spike flag (Phase 11):** The exact `.metallib` files that `llama-cpp-2` places in `OUT_DIR` and which ones must be added to `tauri.conf.json bundle.resources` are not confirmed in documentation. The first `tauri build` release smoke test on macOS is the verification gate — test with `tauri build`, not `tauri dev`, which does not replicate the production bundle layout.
 
-**Plans**: TBD
+**Plans**: 4 plans
+- [ ] 11-01-PLAN.md — LlmManager backend: catalogue, download/verify/delete, GGUF validation, load/infer/unload, idle watcher (TDD)
+- [ ] 11-02-PLAN.md — LLM Tauri commands + manager registration + embedded provider branch in actions.rs
+- [ ] 11-03-PLAN.md — Frontend LlmLibrarySection + custom GGUF import + embedded provider UI + English i18n
+- [ ] 11-04-PLAN.md — Platform gate: macOS .metallib bundling, Windows x64 Vulkan fix, cross-platform e2e smoke (checkpoint)
 
 ### Phase 12: Smart Modes Data Layer
 **Goal**: The Smart Modes data model exists in settings with a working migration from v1.2 prompts, the embedded provider routes through the runtime, and per-mode shortcut infrastructure is functional in the backend
@@ -122,6 +126,6 @@
 | 8. Privacy / Local-First UX | v1.2 | 10/10 | Complete | 2026-05-22 |
 | 9. v1.2 Audit Gap Closure | v1.2 | 1/1 | Complete | 2026-05-28 |
 | 10. Prerequisite Gate | 3/3 | Complete    | 2026-06-01 | 2026-06-01 |
-| 11. LLM Runtime Foundation | v1.3 | 0/TBD | Not started | - |
+| 11. LLM Runtime Foundation | v1.3 | 0/4 | Not started | - |
 | 12. Smart Modes Data Layer | v1.3 | 0/TBD | Not started | - |
 | 13. Smart Modes UI + Translation + i18n | v1.3 | 0/TBD | Not started | - |
