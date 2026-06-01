@@ -298,6 +298,17 @@ jobs:
           echo "CMAKE_CXX_COMPILER_TARGET=aarch64-pc-windows-msvc" >> $env:GITHUB_ENV
           echo "CL=/EHsc" >> $env:GITHUB_ENV
 
+      # vulkan-shaders-gen (llama-cpp-sys-2) ExternalProject cmake_install.cmake
+      # is not generated when MSBuild runs the install step on MSVC x64 toolchain
+      # (llama.cpp issue #11788). Switching to Ninja avoids the MSBuild path issue;
+      # Ninja is pre-installed on all GitHub Actions Windows runners.
+      # MSVC cl.exe works correctly with Ninja on x64 (no compiler override needed).
+      - name: Configure cmake for x64 (Windows)
+        if: contains(inputs.platform, 'windows') && !contains(inputs.target, 'aarch64')
+        shell: pwsh
+        run: |
+          echo "CMAKE_GENERATOR=Ninja" >> $env:GITHUB_ENV
+
       - name: Install ONNX Runtime (x86_64 macOS)
         if: inputs.target == 'x86_64-apple-darwin'
         shell: bash
