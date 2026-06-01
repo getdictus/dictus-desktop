@@ -402,6 +402,10 @@ pub struct AppSettings {
     pub whisper_gpu_device: i32,
     #[serde(default)]
     pub extra_recording_buffer_ms: u64,
+    #[serde(default)]
+    pub active_llm_model_id: Option<String>,
+    #[serde(default)]
+    pub llm_unload_timeout: ModelUnloadTimeout,
 }
 
 fn default_model() -> String {
@@ -787,6 +791,8 @@ pub fn get_default_settings() -> AppSettings {
         ort_accelerator: OrtAcceleratorSetting::default(),
         whisper_gpu_device: default_whisper_gpu_device(),
         extra_recording_buffer_ms: 0,
+        active_llm_model_id: None,
+        llm_unload_timeout: ModelUnloadTimeout::default(),
     }
 }
 
