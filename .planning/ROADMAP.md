@@ -40,7 +40,7 @@
 
 **Milestone Goal:** Make local post-transcription processing a real and powerful default — an embedded LLM runtime (all platforms, no external Ollama) plus Smart Modes (curated prompts, editable, creatable, each bindable to a shortcut), with multi-target translation as a first-class mode.
 
-- [ ] **Phase 10: Prerequisite Gate** — Upstream Sync #2, TECH-04 refactor, and ggml feasibility spike clear all build blockers before feature work begins
+- [x] **Phase 10: Prerequisite Gate** — Upstream Sync #2, TECH-04 refactor, and ggml feasibility spike clear all build blockers before feature work begins
 - [ ] **Phase 11: LLM Runtime Foundation** — In-process GGUF engine, GPU backends, model downloader, curated catalogue, custom drag/drop, and functional model library
 - [ ] **Phase 12: Smart Modes Data Layer** — Settings schema migration, SmartMode type + CRUD backend, per-mode shortcut routing, embedded provider, and 10 default modes
 - [ ] **Phase 13: Smart Modes UI + Translation + i18n** — Card list UI, create/edit/delete UI, shortcut bind with conflict detection, translation presets, and 20-locale propagation
@@ -61,9 +61,9 @@
 > **Ordering within Phase 10:** Execute PREP-03 (Sync #2) first — the sync may touch `llm_client.rs` and `managers/`; refactor on the up-to-date base. Then PREP-02 (TECH-04 struct refactor). Then PREP-01 (ggml feasibility spike).
 
 **Plans**: 3 plans
-- [ ] 10-01-PLAN.md — PREP-03: Upstream Sync #2 (merge 17-commit delta, revert Bedrock, Fork Policy + Exclusion Log)
-- [ ] 10-02-PLAN.md — PREP-02: TECH-04 refactor (8-arg fn → ChatCompletionParams struct, drop #[allow], clippy clean)
-- [ ] 10-03-PLAN.md — PREP-01: ggml feasibility spike (llama-cpp-2 + transcribe-rs coexistence, 7 CI platforms)
+- [x] 10-01-PLAN.md — PREP-03: Upstream Sync #2 (merge 17-commit delta, revert Bedrock, Fork Policy + Exclusion Log)
+- [x] 10-02-PLAN.md — PREP-02: TECH-04 refactor (8-arg fn → ChatCompletionParams struct, drop #[allow], clippy clean)
+- [x] 10-03-PLAN.md — PREP-01: ggml feasibility spike (llama-cpp-2 + transcribe-rs coexistence, 6/7 CI platforms; Windows-x64 vulkan deferred to Phase 11)
 
 ### Phase 11: LLM Runtime Foundation
 **Goal**: Users can download, manage, and run a local GGUF model in-process, with GPU acceleration where available, and the model library card is fully functional
@@ -121,7 +121,7 @@
 | 7. macOS Clean Shutdown | v1.2 | 1/1 | Complete | 2026-04-23 |
 | 8. Privacy / Local-First UX | v1.2 | 10/10 | Complete | 2026-05-22 |
 | 9. v1.2 Audit Gap Closure | v1.2 | 1/1 | Complete | 2026-05-28 |
-| 10. Prerequisite Gate | 2/3 | In Progress|  | - |
+| 10. Prerequisite Gate | 3/3 | Complete   | 2026-06-01 | 2026-06-01 |
 | 11. LLM Runtime Foundation | v1.3 | 0/TBD | Not started | - |
 | 12. Smart Modes Data Layer | v1.3 | 0/TBD | Not started | - |
 | 13. Smart Modes UI + Translation + i18n | v1.3 | 0/TBD | Not started | - |

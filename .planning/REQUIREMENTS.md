@@ -13,7 +13,7 @@ Requirements for this milestone. Each maps to a roadmap phase (10→13, continui
 
 Non-user-facing groundwork that must land before feature code (research-recommended risk clearing).
 
-- [ ] **PREP-01**: `llama-cpp-2` compiles cleanly alongside the existing `transcribe-rs` on all 7 CI platforms — ggml symbol conflict resolved (feasibility spike; `[patch.crates-io]` fallback ready)
+- [x] **PREP-01**: `llama-cpp-2` compiles cleanly alongside the existing `transcribe-rs` on all 7 CI platforms — ggml symbol conflict resolved (feasibility spike; `[patch.crates-io]` fallback ready)
 - [x] **PREP-02**: TECH-04 resolved — `llm_client.rs send_chat_completion_with_schema` refactored from 8 args to a request struct; `#[allow(clippy::too_many_arguments)]` removed; `cargo clippy --all-targets -- -D warnings` passes clean
 - [x] **PREP-03**: Upstream Sync #2 merged with per-commit triage (SYNC-A1); identity integrity preserved (`verify-sync.sh` green); fork policy transitions to documented **selective cherry-pick** going forward (AWS Bedrock `aee682f` decision recorded)
 
@@ -96,7 +96,7 @@ Which phases cover which requirements. Updated 2026-05-29.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PREP-01 | Phase 10 | Pending |
+| PREP-01 | Phase 10 | Complete |
 | PREP-02 | Phase 10 | Complete |
 | PREP-03 | Phase 10 | Complete |
 | LLM-01 | Phase 11 | Pending |
