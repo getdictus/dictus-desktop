@@ -73,6 +73,8 @@ Progress: [██░░░░░░░░] ~8%
 - [Phase 11]: LlmManager shutdown wired into flush_and_exit() shared helper, covering both tray quit and no-tray CloseRequested paths symmetrically
 - [Phase 11]: Embedded provider injected synthetically in frontend localOptionsWithEmbedded array rather than added to Rust settings.rs default_post_process_providers
 - [Phase 11]: All 19 non-English locales updated with English fallback strings for library.* and embedded.* keys so check:translations passes; real L10N deferred to Phase 13 L10N-01
+- [Phase 11-04]: ggml duplicate-symbol coexistence solved with linker "keep first definition" (`--allow-multiple-definition` / `/FORCE:MULTIPLE`), NOT symbol isolation. Whisper's ggml (0.9.5, linked first) wins for shared `ggml_*`/`gguf_*` symbols across both engines. Accepted because macOS ld64 already did this implicitly and that build shipped. Trade-off: NOT validated at runtime by CI — link success ≠ correct inference. If embedded inference or transcription misbehaves at runtime, revisit with objcopy symbol localization or ggml version alignment.
+- [Phase 11-04]: Windows x64 needs `CMAKE_GENERATOR=Ninja` (not default MSBuild) for llama-cpp-sys-2's vulkan-shaders-gen ExternalProject to install correctly under MSVC x64.
 
 ### Pending Todos
 
@@ -80,9 +82,9 @@ Progress: [██░░░░░░░░] ~8%
 
 ### Blockers/Concerns
 
-- ~~**ggml symbol conflict (Phase 10 spike):**~~ **RESOLVED (10-03):** Conflict did not manifest; llama-cpp-2 + transcribe-rs coexist with two separate static ggml builds (0.9.5 + 0.9.11) tolerated by all tested linkers; no resolution path needed. 6/7 CI platforms green.
-- **Windows x64 + llama-cpp-2 vulkan-shaders-gen MSVC build failure (Phase 11 gate):** CI run 26749959299 — vulkan-shaders-gen ExternalProject cmake_install.cmake not generated when MSBuild runs install step on MSVC x64 toolchain; NOT a ggml conflict; NOT a missing Vulkan SDK; must be fixed before Phase 11 Windows-x64 embedded-LLM build ships. Windows ARM64 builds fine.
-- **Metal bundle resources (Phase 11 gate):** `.metallib` paths from `llama-cpp-2` OUT_DIR not documented; verify via `tauri build` release smoke test on macOS before Phase 12 opens.
+- ~~**ggml symbol conflict (Phase 10 spike):**~~ **RESOLVED (11-04, fe2949c):** The 10-03 "did not manifest" finding was WRONG — the spike only added the dependency without calling llama, so the linker never pulled ggml objects. Once 11-01 called `LlamaModel::load_from_file`, the conflict surfaced at final link on ALL 5 non-macOS platforms (Linux lld: `duplicate symbol: gguf_*`; Windows MSVC: `LNK2005: ggml_backend_* already defined`). Fixed in `.cargo/config.toml` via per-target link args: `-Wl,--allow-multiple-definition` (Linux GNU-ld/lld) + `/FORCE:MULTIPLE` (Windows MSVC). macOS ld64 already tolerated it (keeps first definition). Linker keeps whisper's ggml (linked first) for shared symbols. **CI green on all 7 platforms (run 26820157928). Runtime correctness of both transcription + embedded inference still pending 11-04 E2E smoke test.**
+- ~~**Windows x64 + llama-cpp-2 vulkan-shaders-gen MSVC build failure (Phase 11 gate):**~~ **RESOLVED (11-04, ab97d9f):** Fixed by setting `CMAKE_GENERATOR=Ninja` for Windows x64 jobs in build.yml (Ninja pre-installed on GHA runners; MSVC cl.exe works correctly with it on x64). Windows x64 advanced past compile to link, then passed once the ggml fix landed.
+- ~~**Metal bundle resources (Phase 11 gate):**~~ **RESOLVED (11-04, b0c0843):** No bundling needed — `llama-cpp-2` builds with `GGML_METAL_EMBED_LIBRARY=ON`, so Metal shaders are compiled into the binary; no separate `.metallib` exists at runtime. `tauri.conf.json` unchanged. Confirmed on dev build (M4 Pro): `ggml_metal_library_init: using embedded metal library`.
 - **AMD Vulkan driver (Phase 11 risk):** AMD driver 25.11.1 has known crash with Vulkan SDK 1.4.328.1 (May 2026). Monitor llama.cpp issue #17432 before Windows beta.
 - Carried from v1.2: `blob.handy.computer` CDN for onnxruntime (INFR-01); Windows unsigned builds (INFR-03); Nyquist VALIDATION.md drafts for phases 5-9.
 
