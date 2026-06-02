@@ -1,1 +1,26 @@
 [build]
+
+# ── ggml duplicate-symbol coexistence (whisper-rs-sys + llama-cpp-sys-2) ──────
+# transcribe-rs (whisper.cpp) and llama-cpp-2 each statically link their own
+# copy of ggml (ggml 0.9.5 vs 0.9.11). Their `ggml_*` / `gguf_*` symbols collide
+# at final link on GNU-ld/lld (Linux) and MSVC link.exe (Windows).
+#
+# macOS (ld64) already tolerates this silently by keeping the first definition,
+# and that build is accepted. These flags make Linux/Windows behave identically
+# — the linker keeps the first definition (whisper's, linked first) for the
+# shared symbols. Runtime correctness of BOTH transcription and embedded
+# inference is validated by the cross-platform E2E smoke test (Phase 11 / 11-04).
+#
+# Scoped per-target so macOS link args (set in build.rs) are untouched.
+
+[target.x86_64-unknown-linux-gnu]
+rustflags = ["-C", "link-arg=-Wl,--allow-multiple-definition"]
+
+[target.aarch64-unknown-linux-gnu]
+rustflags = ["-C", "link-arg=-Wl,--allow-multiple-definition"]
+
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "link-arg=/FORCE:MULTIPLE"]
+
+[target.aarch64-pc-windows-msvc]
+rustflags = ["-C", "link-arg=/FORCE:MULTIPLE"]
