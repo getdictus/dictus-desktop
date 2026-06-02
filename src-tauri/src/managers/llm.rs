@@ -965,8 +965,14 @@ impl LlmManager {
                 tps,
                 if hit_eog { "eog" } else { "max_tokens" }
             );
+            let trimmed = output.trim();
+            debug!(
+                "LLM output ({} chars): {}",
+                trimmed.len(),
+                trimmed.chars().take(300).collect::<String>()
+            );
 
-            Ok(output.trim().to_string())
+            Ok(trimmed.to_string())
         })
         .await
         .map_err(|e| anyhow::anyhow!("Inference task panicked: {}", e))??;
