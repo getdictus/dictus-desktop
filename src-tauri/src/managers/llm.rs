@@ -344,14 +344,6 @@ impl LlmManager {
             .collect()
     }
 
-    pub fn get_model_info(&self, model_id: &str) -> Option<LlmModelInfo> {
-        self.available_models
-            .lock()
-            .unwrap()
-            .get(model_id)
-            .cloned()
-    }
-
     // ── GGUF header validation ───────────────────────────────────────────────
 
     /// Validates the first 4 bytes of a file are the GGUF magic `b"GGUF"`.
@@ -800,7 +792,7 @@ impl LlmManager {
 
         let backend = self.backend.clone();
         let loaded = tokio::task::spawn_blocking(move || -> Result<Arc<LlamaModel>> {
-            let model_params = LlamaModelParams::default().with_n_gpu_layers(u32::MAX);
+            let model_params = Self::gpu_model_params();
             let model = LlamaModel::load_from_file(&backend, model_path, &model_params)
                 .map_err(|e| anyhow::anyhow!("Failed to load LLM model: {}", e))?;
             Ok(Arc::new(model))
@@ -828,17 +820,20 @@ impl LlmManager {
     }
 
     pub fn unload_model(&self) -> Result<()> {
-        {
+        let unloaded_id = {
             let mut loaded = self.loaded_model.lock().unwrap();
-            *loaded = None;
-        }
+            loaded.take().map(|m| m.id)
+        };
         {
             let mut active = self.active_model_id.lock().unwrap();
             *active = None;
         }
 
         let _ = self.app_handle.emit("llm-model-unloaded", ());
-        debug!("LLM model unloaded");
+        match unloaded_id {
+            Some(id) => debug!("LLM model unloaded: {}", id),
+            None => debug!("LLM unload requested but no model was loaded"),
+        }
         Ok(())
     }
 
