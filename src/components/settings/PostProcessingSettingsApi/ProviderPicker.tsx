@@ -11,6 +11,12 @@ interface ProviderPickerProps {
   renderRowExtras?: (option: GroupedProviderOption) => React.ReactNode;
   activeTab: "local" | "cloud";
   onTabChange: (tab: "local" | "cloud") => void;
+  /**
+   * On-device GGUF model list, injected into the local tab right after the
+   * Apple Intelligence row (or at the top of the local list when Apple
+   * Intelligence is unavailable). This is the "the model is the engine" block.
+   */
+  localModelSlot?: React.ReactNode;
 }
 
 export const ProviderPicker: React.FC<ProviderPickerProps> = ({
@@ -22,48 +28,66 @@ export const ProviderPicker: React.FC<ProviderPickerProps> = ({
   renderRowExtras,
   activeTab,
   onTabChange,
+  localModelSlot,
 }) => {
   const { t } = useTranslation();
 
-  const renderSection = (title: string, options: GroupedProviderOption[]) => (
-    <fieldset className="space-y-1 border-0 p-0 m-0">
-      <legend className="text-xs font-medium text-mid-gray uppercase tracking-wide mb-2">
-        {title}
-      </legend>
-      {options.map((option) => {
-        const checked = value === option.value;
-        return (
-          <label
-            key={option.value}
-            className={`flex flex-col gap-1 p-3 rounded-md border transition-colors ${
-              checked
-                ? "border-logo-primary bg-logo-primary/10"
-                : "border-mid-gray/20 hover:bg-mid-gray/5"
-            } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-          >
-            <div className="flex items-center gap-3">
-              <input
-                type="radio"
-                name="post-process-provider"
-                value={option.value}
-                checked={checked}
-                onChange={() => onChange(option.value)}
-                disabled={disabled}
-                className="accent-logo-primary"
-              />
-              <span className="text-sm font-medium">{option.label}</span>
-            </div>
-            {option.description ? (
-              <p className="text-xs text-mid-gray pl-7">{option.description}</p>
+  const renderRow = (option: GroupedProviderOption) => {
+    const checked = value === option.value;
+    return (
+      <label
+        key={option.value}
+        className={`flex flex-col gap-1 p-3 rounded-md border transition-colors ${
+          checked
+            ? "border-logo-primary bg-logo-primary/10"
+            : "border-mid-gray/20 hover:bg-mid-gray/5"
+        } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+      >
+        <div className="flex items-center gap-3">
+          <input
+            type="radio"
+            name="post-process-provider"
+            value={option.value}
+            checked={checked}
+            onChange={() => onChange(option.value)}
+            disabled={disabled}
+            className="accent-logo-primary"
+          />
+          <span className="text-sm font-medium">{option.label}</span>
+        </div>
+        {option.description ? (
+          <p className="text-xs text-mid-gray pl-7">{option.description}</p>
+        ) : null}
+        {renderRowExtras ? (
+          <div className="pl-7 mt-1">{renderRowExtras(option)}</div>
+        ) : null}
+      </label>
+    );
+  };
+
+  const renderSection = (
+    title: string,
+    options: GroupedProviderOption[],
+    modelSlot?: React.ReactNode,
+  ) => {
+    const hasApple = options.some((o) => o.value === "apple_intelligence");
+    return (
+      <fieldset className="space-y-1 border-0 p-0 m-0">
+        <legend className="text-xs font-medium text-mid-gray uppercase tracking-wide mb-2">
+          {title}
+        </legend>
+        {modelSlot && !hasApple ? <div className="mb-1">{modelSlot}</div> : null}
+        {options.map((option) => (
+          <React.Fragment key={option.value}>
+            {renderRow(option)}
+            {modelSlot && option.value === "apple_intelligence" ? (
+              <div className="py-1">{modelSlot}</div>
             ) : null}
-            {renderRowExtras ? (
-              <div className="pl-7 mt-1">{renderRowExtras(option)}</div>
-            ) : null}
-          </label>
-        );
-      })}
-    </fieldset>
-  );
+          </React.Fragment>
+        ))}
+      </fieldset>
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -106,6 +130,7 @@ export const ProviderPicker: React.FC<ProviderPickerProps> = ({
         ? renderSection(
             t("settings.postProcessing.api.providers.sectionLocal"),
             localOptions,
+            localModelSlot,
           )
         : null}
 

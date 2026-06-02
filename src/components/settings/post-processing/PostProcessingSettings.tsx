@@ -25,7 +25,6 @@ import { ShortcutInput } from "../ShortcutInput";
 import { useSettings } from "../../../hooks/useSettings";
 import type { PostProcessProvider } from "@/bindings";
 import { LlmLibrarySection } from "./LlmLibrarySection";
-import { EmbeddedNoModelEmptyState } from "./EmbeddedNoModelEmptyState";
 import { useLlmModelStore } from "@/stores/llmModelStore";
 
 const LOCAL_PROVIDER_IDS_SET = new Set([
@@ -40,22 +39,29 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
   const state = usePostProcessProviderState();
   const llmStore = useLlmModelStore();
 
-  // Inject the synthetic "Embedded (local)" option into the local tab.
-  // The embedded provider is handled specially by the backend (not in post_process_providers),
-  // so we add it as a synthetic entry on the frontend side.
-  const embeddedOption = {
-    value: "embedded",
-    label: t(
-      "settings.postProcessing.modelsAndLocalProcessing.embedded.providerLabel",
-    ),
-    description: t(
-      "settings.postProcessing.modelsAndLocalProcessing.embedded.providerDescription",
-    ),
+  // The embedded provider is no longer a standalone radio — the local GGUF
+  // models ARE the engine choices (see UI-SPEC R2). Selecting a downloaded
+  // model sets provider=embedded + active model in one action.
+  const isEmbeddedSelected = state.selectedProviderId === "embedded";
+  const handleSelectEmbeddedModel = async (modelId: string) => {
+    await llmStore.setActiveModel(modelId);
+    await state.handleProviderSelect("embedded");
   };
-  const localOptionsWithEmbedded = [
-    ...state.groupedProviderOptions.local,
-    embeddedOption,
-  ];
+
+  // Name of the active local model, used to label the "active engine" summary
+  // when embedded is selected (e.g. "Qwen2.5 1.5B" instead of a generic label).
+  const activeLlmName =
+    llmStore.models.find((m) => m.id === llmStore.activeModelId)?.name ??
+    t("settings.postProcessing.modelsAndLocalProcessing.embedded.providerLabel");
+
+  // On-device GGUF model list injected into the local tab after Apple Intelligence.
+  const localModelSlot = (
+    <LlmLibrarySection
+      engineMode
+      embeddedSelected={isEmbeddedSelected}
+      onSelectAsEngine={(id) => void handleSelectEmbeddedModel(id)}
+    />
+  );
 
   const selectedIsCloud =
     state.selectedProviderId !== "" &&
@@ -65,7 +71,7 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
   // base URL, or model dropdown) — same as Apple Intelligence. Because
   // "embedded" is synthetic, state.selectedProvider falls back to providers[0],
   // so gate these sections on the id directly rather than the resolved object.
-  const isEmbedded = state.selectedProviderId === "embedded";
+  const isEmbedded = isEmbeddedSelected;
 
   const initialTab: "local" | "cloud" =
     state.selectedProviderId !== "" &&
@@ -102,7 +108,7 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
     setActiveTab(nextTab);
     const tabOptions =
       nextTab === "local"
-        ? localOptionsWithEmbedded
+        ? state.groupedProviderOptions.local
         : state.groupedProviderOptions.external;
     if (tabOptions.length === 0) return;
     const preferred = nextTab === "local" ? lastLocalId : lastCloudId;
@@ -114,9 +120,6 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
       void state.handleProviderSelect(targetId);
     }
   };
-
-  // Determine if embedded has any downloaded models (to hide the empty state)
-  const hasLlmDownloaded = llmStore.models.some((m) => m.is_downloaded);
 
   return (
     <>
@@ -130,9 +133,7 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
               )}
             </h3>
             {isEmbedded ? (
-              <p className="text-base font-medium mt-1">
-                {embeddedOption.label}
-              </p>
+              <p className="text-base font-medium mt-1">{activeLlmName}</p>
             ) : state.selectedProvider ? (
               <p className="text-base font-medium mt-1">
                 {state.selectedProvider.label}
@@ -181,12 +182,13 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
         grouped={true}
       >
         <ProviderPicker
-          localOptions={localOptionsWithEmbedded}
+          localOptions={state.groupedProviderOptions.local}
           externalOptions={state.groupedProviderOptions.external}
           value={state.selectedProviderId}
           onChange={state.handleProviderSelect}
           activeTab={activeTab}
           onTabChange={handleTabChange}
+          localModelSlot={localModelSlot}
           renderRowExtras={(option) => {
             if (option.value === "apple_intelligence") {
               if (!state.appleIntelligenceUnavailable) return null;
@@ -197,10 +199,6 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
                   )}
                 </Alert>
               );
-            }
-            if (option.value === "embedded") {
-              if (hasLlmDownloaded) return null;
-              return <EmbeddedNoModelEmptyState />;
             }
             if (option.value !== "custom") return null;
             return (
@@ -676,9 +674,6 @@ export const PostProcessingSettings: React.FC = () => {
               )}
         </span>
       </div>
-
-      {/* Local model library — real library (replaces placeholder, anchored at top per MDL-05) */}
-      <LlmLibrarySection />
 
       {/* Hotkey */}
       <SettingsGroup title={t("settings.postProcessing.hotkey.title")}>

@@ -49,7 +49,25 @@ function toModelCardModel(m: LlmModelInfo, description: string): ModelInfo {
   };
 }
 
-export const LlmLibrarySection: React.FC = () => {
+interface LlmLibrarySectionProps {
+  /**
+   * Engine mode: render bare (no SettingsGroup wrapper) as the "local GGUF
+   * models" block inside the on-device engine list. Selecting a downloaded
+   * model picks it as the post-processing engine (via `onSelectAsEngine`),
+   * not merely as the "active LLM".
+   */
+  engineMode?: boolean;
+  /** Whether the embedded provider is the currently selected engine. */
+  embeddedSelected?: boolean;
+  /** Select a downloaded model as the embedded engine (sets active + provider). */
+  onSelectAsEngine?: (modelId: string) => void;
+}
+
+export const LlmLibrarySection: React.FC<LlmLibrarySectionProps> = ({
+  engineMode = false,
+  embeddedSelected = false,
+  onSelectAsEngine,
+}) => {
   const { t } = useTranslation();
   const store = useLlmModelStore();
 
@@ -82,10 +100,14 @@ export const LlmLibrarySection: React.FC = () => {
     if (modelId in store.verifyingModels) {
       return "verifying";
     }
-    if (modelId === store.activeModelId) {
+    const model = store.models.find((m) => m.id === modelId);
+    const isActive = modelId === store.activeModelId;
+    // In engine mode a model only reads as the selected engine when the
+    // embedded provider is actually the chosen engine — otherwise it's just a
+    // downloaded model available to pick.
+    if (isActive && (!engineMode || embeddedSelected)) {
       return "active";
     }
-    const model = store.models.find((m) => m.id === modelId);
     if (model?.is_downloaded) {
       return "available";
     }
@@ -116,13 +138,47 @@ export const LlmLibrarySection: React.FC = () => {
     const status = getModelStatus(modelId);
     if (status === "downloadable") {
       void store.downloadModel(modelId);
-    } else if (status === "available") {
-      void store.setActiveModel(modelId);
+      return;
     }
-    // active: no-op
+    if (status === "available" || status === "active") {
+      if (engineMode && onSelectAsEngine) {
+        // Pick this model AS the post-processing engine (active + embedded).
+        onSelectAsEngine(modelId);
+      } else {
+        void store.setActiveModel(modelId);
+      }
+    }
   };
 
-  // Split models: downloaded (active + available) vs catalogue (not downloaded, not downloading)
+  const renderCard = (model: LlmModelInfo, withActions: boolean) => (
+    <ModelCard
+      key={model.id}
+      model={toModelCardModel(model, localizedDescription(model))}
+      status={getModelStatus(model.id)}
+      onSelect={handleSelect}
+      onDownload={(id) => void store.downloadModel(id)}
+      onCancel={
+        withActions ? (id) => void store.cancelDownload(id) : undefined
+      }
+      onDelete={withActions ? handleDelete : undefined}
+      downloadProgress={store.downloadProgress[model.id]?.percentage}
+      downloadSpeed={store.downloadStats[model.id]?.speedMbps}
+      showRecommended={true}
+    />
+  );
+
+  // Rank for the unified engine list: active/downloaded first, then catalogue.
+  const engineSorted = [...store.models].sort((a, b) => {
+    const rank = (m: LlmModelInfo) => {
+      if (m.id === store.activeModelId) return 0;
+      if (m.is_downloaded || m.is_downloading || m.id in store.downloadProgress)
+        return 1;
+      return 2;
+    };
+    return rank(a) - rank(b);
+  });
+
+  // Two-section split (legacy / standalone mode).
   const downloadedModels = store.models
     .filter(
       (m) =>
@@ -132,7 +188,6 @@ export const LlmLibrarySection: React.FC = () => {
         m.is_custom,
     )
     .sort((a, b) => {
-      // Active model pinned to top
       if (a.id === store.activeModelId) return -1;
       if (b.id === store.activeModelId) return 1;
       return 0;
@@ -146,6 +201,25 @@ export const LlmLibrarySection: React.FC = () => {
       !m.is_custom,
   );
 
+  // ── Engine mode: bare, single sorted list for the on-device tab ──────────
+  if (engineMode) {
+    return (
+      <div id="llm-library-section" className="space-y-3">
+        {store.isLoading ? (
+          <div className="py-10 flex justify-center">
+            <div className="w-7 h-7 border-2 border-logo-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : (
+          <>
+            {engineSorted.map((model) => renderCard(model, true))}
+            <CustomGgufDropZone />
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // ── Standalone mode (legacy two-section layout) ──────────────────────────
   return (
     <div id="llm-library-section">
       <SettingsGroup
@@ -174,25 +248,7 @@ export const LlmLibrarySection: React.FC = () => {
                     )}
                   </p>
                   <div className="space-y-3">
-                    {downloadedModels.map((model) => {
-                      const status = getModelStatus(model.id);
-                      const progress = store.downloadProgress[model.id];
-                      const stats = store.downloadStats[model.id];
-                      return (
-                        <ModelCard
-                          key={model.id}
-                          model={toModelCardModel(model, localizedDescription(model))}
-                          status={status}
-                          onSelect={handleSelect}
-                          onDownload={(id) => void store.downloadModel(id)}
-                          onCancel={(id) => void store.cancelDownload(id)}
-                          onDelete={handleDelete}
-                          downloadProgress={progress?.percentage}
-                          downloadSpeed={stats?.speedMbps}
-                          showRecommended={true}
-                        />
-                      );
-                    })}
+                    {downloadedModels.map((model) => renderCard(model, true))}
                   </div>
                 </div>
               )}
@@ -205,19 +261,7 @@ export const LlmLibrarySection: React.FC = () => {
                     )}
                   </p>
                   <div className="space-y-3">
-                    {availableModels.map((model) => {
-                      const status = getModelStatus(model.id);
-                      return (
-                        <ModelCard
-                          key={model.id}
-                          model={toModelCardModel(model, localizedDescription(model))}
-                          status={status}
-                          onSelect={handleSelect}
-                          onDownload={(id) => void store.downloadModel(id)}
-                          showRecommended={true}
-                        />
-                      );
-                    })}
+                    {availableModels.map((model) => renderCard(model, false))}
                   </div>
                 </div>
               )}
