@@ -907,7 +907,13 @@ pub fn change_post_process_model_setting(
 #[specta::specta]
 pub fn set_post_process_provider(app: AppHandle, provider_id: String) -> Result<(), String> {
     let mut settings = settings::get_settings(&app);
-    validate_provider_exists(&settings, &provider_id)?;
+    // "embedded" is a synthetic provider run in-process by LlmManager. It is
+    // intentionally not present in post_process_providers (see actions.rs, which
+    // detects it via post_process_provider_id == "embedded"), so skip the
+    // registry check for it — otherwise the selection is rejected and reverted.
+    if provider_id != "embedded" {
+        validate_provider_exists(&settings, &provider_id)?;
+    }
     settings.post_process_provider_id = provider_id;
     settings::write_settings(&app, settings);
     Ok(())

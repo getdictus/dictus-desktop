@@ -61,6 +61,12 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
     state.selectedProviderId !== "" &&
     !LOCAL_PROVIDER_IDS_SET.has(state.selectedProviderId);
 
+  // Embedded is an in-process provider with no external config (no API key,
+  // base URL, or model dropdown) — same as Apple Intelligence. Because
+  // "embedded" is synthetic, state.selectedProvider falls back to providers[0],
+  // so gate these sections on the id directly rather than the resolved object.
+  const isEmbedded = state.selectedProviderId === "embedded";
+
   const initialTab: "local" | "cloud" =
     state.selectedProviderId !== "" &&
     !LOCAL_PROVIDER_IDS_SET.has(state.selectedProviderId)
@@ -123,7 +129,11 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
                 "settings.postProcessing.modelsAndLocalProcessing.selectedModel.title",
               )}
             </h3>
-            {state.selectedProvider ? (
+            {isEmbedded ? (
+              <p className="text-base font-medium mt-1">
+                {embeddedOption.label}
+              </p>
+            ) : state.selectedProvider ? (
               <p className="text-base font-medium mt-1">
                 {state.selectedProvider.label}
               </p>
@@ -229,7 +239,7 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
         />
       </SettingContainer>
 
-      {!state.isAppleProvider && (
+      {!state.isAppleProvider && !isEmbedded && (
         <>
           {state.selectedProvider?.id === "custom" && (
             <SettingContainer
@@ -277,7 +287,7 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
         </>
       )}
 
-      {!state.isAppleProvider && (
+      {!state.isAppleProvider && !isEmbedded && (
         <SettingContainer
           title={t("settings.postProcessing.api.model.title")}
           description={
