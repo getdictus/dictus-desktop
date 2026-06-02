@@ -437,11 +437,14 @@
             "qwen25_1b5": {
               "description": "Fast, lightweight — runs on any machine"
             },
-            "qwen3_4b": {
-              "description": "Best quality for post-processing"
+            "gemma3_4b": {
+              "description": "Versatile and multilingual — strong in many languages"
             },
-            "translate_gemma_4b": {
-              "description": "Translation-focused"
+            "phi4_mini": {
+              "description": "Precise instruction-following — formatting and structure"
+            },
+            "llama32_3b": {
+              "description": "Balanced generalist — solid multilingual quality"
             }
           }
         },

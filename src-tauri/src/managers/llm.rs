@@ -130,13 +130,13 @@ impl LlmManager {
                 is_recommended: true,
             },
             LlmModelInfo {
-                id: "qwen3-4b".to_string(),
-                name: "Qwen3 4B".to_string(),
-                description: "Best quality for post-processing".to_string(),
-                filename: "Qwen3-4B-Q4_K_M.gguf".to_string(),
-                url: Some("https://huggingface.co/Qwen/Qwen3-4B-GGUF/resolve/main/Qwen3-4B-Q4_K_M.gguf".to_string()),
-                sha256: Some("7485fe6f11af29433bc51cab58009521f205840f5b4ae3a32fa7f92e8534fdf5".to_string()),
-                size_mb: 2500,
+                id: "gemma-3-4b".to_string(),
+                name: "Gemma 3 4B".to_string(),
+                description: "Versatile and multilingual — strong in many languages".to_string(),
+                filename: "gemma-3-4b-it-Q4_K_M.gguf".to_string(),
+                url: Some("https://huggingface.co/unsloth/gemma-3-4b-it-GGUF/resolve/main/gemma-3-4b-it-Q4_K_M.gguf".to_string()),
+                sha256: Some("04a43a22e8d2003deda5acc262f68ec1005fa76c735a9962a8c77042a74a7d19".to_string()),
+                size_mb: 2490,
                 is_downloaded: false,
                 is_downloading: false,
                 partial_size: 0,
@@ -144,13 +144,27 @@ impl LlmManager {
                 is_recommended: false,
             },
             LlmModelInfo {
-                id: "translategemma-4b".to_string(),
-                name: "TranslateGemma 4B".to_string(),
-                description: "Translation-focused".to_string(),
-                filename: "translategemma-4b-it-Q4_K_M.gguf".to_string(),
-                url: Some("https://huggingface.co/bullerwins/translategemma-4b-it-GGUF/resolve/main/translategemma-4b-it-Q4_K_M.gguf".to_string()),
-                sha256: Some("7f7357c14abd9da4eb200b38b05da502cd6e10d7e1d403fbc9f78c19f3209b72".to_string()),
-                size_mb: 2490,
+                id: "phi-4-mini".to_string(),
+                name: "Phi-4 Mini".to_string(),
+                description: "Precise instruction-following — formatting and structure".to_string(),
+                filename: "Phi-4-mini-instruct-Q4_K_M.gguf".to_string(),
+                url: Some("https://huggingface.co/unsloth/Phi-4-mini-instruct-GGUF/resolve/main/Phi-4-mini-instruct-Q4_K_M.gguf".to_string()),
+                sha256: Some("88c00229914083cd112853aab84ed51b87bdf6b9ce42f532d8c85c7c63b1730a".to_string()),
+                size_mb: 2492,
+                is_downloaded: false,
+                is_downloading: false,
+                partial_size: 0,
+                is_custom: false,
+                is_recommended: false,
+            },
+            LlmModelInfo {
+                id: "llama-3.2-3b".to_string(),
+                name: "Llama 3.2 3B".to_string(),
+                description: "Balanced generalist — solid multilingual quality".to_string(),
+                filename: "Llama-3.2-3B-Instruct-Q4_K_M.gguf".to_string(),
+                url: Some("https://huggingface.co/unsloth/Llama-3.2-3B-Instruct-GGUF/resolve/main/Llama-3.2-3B-Instruct-Q4_K_M.gguf".to_string()),
+                sha256: Some("6c99cc00ae910f6a532a80022cb4bc1939094527a089c29294b841c0bd87f74d".to_string()),
+                size_mb: 2019,
                 is_downloaded: false,
                 is_downloading: false,
                 partial_size: 0,
@@ -1005,9 +1019,9 @@ mod tests {
     // ── Task 1 tests: catalogue + settings serde ──────────────────────────────
 
     #[test]
-    fn test_catalogue_has_three_models() {
+    fn test_catalogue_has_four_models() {
         let catalogue = LlmManager::catalogue();
-        assert_eq!(catalogue.len(), 3);
+        assert_eq!(catalogue.len(), 4);
     }
 
     #[test]

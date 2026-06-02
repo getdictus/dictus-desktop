@@ -459,11 +459,14 @@
             "qwen25_1b5": {
               "description": "Rapide et léger — fonctionne sur toutes les machines"
             },
-            "qwen3_4b": {
-              "description": "Meilleure qualité pour le post-traitement"
+            "gemma3_4b": {
+              "description": "Polyvalent et multilingue — excellent en français"
             },
-            "translate_gemma_4b": {
-              "description": "Spécialisé dans la traduction"
+            "phi4_mini": {
+              "description": "Suivi d'instructions précis — mise en forme et structure"
+            },
+            "llama32_3b": {
+              "description": "Généraliste équilibré — bon en français"
             }
           }
         },

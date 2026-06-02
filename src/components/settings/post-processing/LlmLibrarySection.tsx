@@ -15,8 +15,9 @@ import { CustomGgufDropZone } from "./CustomGgufDropZone";
  */
 const MODEL_ID_TO_I18N_KEY: Record<string, string> = {
   "qwen2.5-1.5b": "qwen25_1b5",
-  "qwen3-4b": "qwen3_4b",
-  "translategemma-4b": "translate_gemma_4b",
+  "gemma-3-4b": "gemma3_4b",
+  "phi-4-mini": "phi4_mini",
+  "llama-3.2-3b": "llama32_3b",
 };
 
 /**
