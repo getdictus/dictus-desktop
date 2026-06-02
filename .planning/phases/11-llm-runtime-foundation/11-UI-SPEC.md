@@ -14,6 +14,39 @@ reviewed_at: 2026-06-01
 
 ---
 
+## Revision R2 — Unified Engine Picker (2026-06-02, gap-closure, post-UAT)
+
+**Supersedes the two-surface layout** (separate "Local Model Library" section at the
+top + an abstract "Embedded (local)" radio in the ProviderPicker). UAT showed the two
+surfaces were not understood as one decision, and "Embedded" had a hidden dependency on
+the library's active model. Approved direction: **the model IS the engine.**
+
+**New information architecture — one section "Post-traitement":**
+
+- A **single tabbed list**: `Sur l'appareil` (default, prominent) / `Cloud` (de-emphasized,
+  labelled "données envoyées"). No silent cloud fallback — unchanged principle.
+- **On-device tab is one ordered list of selectable engines:**
+  1. **Apple Intelligence** (first — free, native, zero-download; only on macOS Apple Silicon)
+  2. **Local GGUF models** as direct engine choices — Qwen2.5 1.5B (recommended), Qwen3 4B,
+     TranslateGemma 4B, + any custom imports. Download / progress / delete / custom-import
+     live inline on each model row (reuses `ModelCard`).
+  3. **Local server (Ollama / LM Studio)** last (advanced).
+- There is **no separate library section** and **no abstract "embedded" radio**. Selecting a
+  GGUF model row sets `post_process_provider_id = "embedded"` AND `active_llm_model_id =
+  <that model>` in one action. A model row's "selected" state = `provider == embedded &&
+  active_llm_model == row.id`. Apple / Ollama rows select by `provider == id` as before.
+- Selecting a **not-yet-downloaded** model row triggers its download, then auto-selects it
+  on completion (the existing auto-activate behaviour).
+- The **"Moteur actif" summary card** at the top of the section shows the current engine
+  (model name when embedded) with the local/private/offline tags.
+
+Sections of the original contract below describing the separate `LlmLibrarySection` placement
+(Layout Contract) and the "Embedded provider selection + no-model flow" are retained for
+history but **superseded by this revision** for layout/placement. Visual tokens (spacing,
+colour, ModelCard states, GGUF validation) remain in force.
+
+---
+
 ## Design System
 
 | Property | Value |
