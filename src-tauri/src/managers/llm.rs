@@ -20,7 +20,8 @@ use tauri::{AppHandle, Emitter};
 use llama_cpp_2::context::params::LlamaContextParams;
 use llama_cpp_2::llama_backend::LlamaBackend;
 use llama_cpp_2::model::params::LlamaModelParams;
-use llama_cpp_2::model::{AddBos, LlamaModel};
+use llama_cpp_2::model::{AddBos, LlamaChatMessage, LlamaModel};
+use llama_cpp_2::sampling::LlamaSampler;
 
 /// Information about a single LLM model in the catalogue or discovered on disk.
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
@@ -848,6 +849,7 @@ impl LlmManager {
         let backend = self.backend.clone();
 
         let result = tokio::task::spawn_blocking(move || -> Result<String> {
+            let started = Instant::now();
             let n_threads = (std::thread::available_parallelism()
                 .map(|n| n.get())
                 .unwrap_or(4) as i32)
@@ -860,11 +862,47 @@ impl LlmManager {
                 .new_context(&backend, ctx_params)
                 .map_err(|e| anyhow::anyhow!("Failed to create LLM context: {}", e))?;
 
+            // Apply the model's embedded chat template (ChatML for Qwen, Gemma
+            // for TranslateGemma, etc.) so instruct models receive the prompt in
+            // the format they were trained on. Without this, the raw prompt drives
+            // the model into completion mode — meta-commentary, ignored
+            // instructions, and runaway repetition.
+            let formatted = match model_arc.chat_template(None) {
+                Ok(tmpl) => {
+                    let messages = vec![LlamaChatMessage::new(
+                        "user".to_string(),
+                        prompt.clone(),
+                    )
+                    .map_err(|e| anyhow::anyhow!("Failed to build chat message: {}", e))?];
+                    model_arc
+                        .apply_chat_template(&tmpl, &messages, true)
+                        .map_err(|e| anyhow::anyhow!("Failed to apply chat template: {}", e))?
+                }
+                Err(e) => {
+                    // No embedded template (e.g. a base/non-instruct GGUF): fall back
+                    // to the raw prompt rather than failing the request.
+                    warn!(
+                        "LLM model has no chat template ({}); using raw prompt",
+                        e
+                    );
+                    prompt.clone()
+                }
+            };
+
+            // add_bos = Never: the chat template already emits the model's required
+            // leading tokens, and str_to_token parses special tokens so the
+            // template's control markers (e.g. <|im_start|>) are tokenized correctly.
             let tokens_list = model_arc
-                .str_to_token(&prompt, AddBos::Always)
+                .str_to_token(&formatted, AddBos::Never)
                 .map_err(|e| anyhow::anyhow!("Failed to tokenize prompt: {}", e))?;
 
             let n_tokens = tokens_list.len();
+            debug!(
+                "LLM inference: prompt={} chars, formatted={} chars, {} prompt tokens",
+                prompt.len(),
+                formatted.len(),
+                n_tokens
+            );
             let mut batch = llama_cpp_2::llama_batch::LlamaBatch::new(2048, 1);
 
             for (i, token) in tokens_list.iter().enumerate() {
@@ -876,15 +914,26 @@ impl LlmManager {
             ctx.decode(&mut batch)
                 .map_err(|e| anyhow::anyhow!("Failed to decode batch: {}", e))?;
 
+            // Sampler chain: repetition penalty (last 64 tokens, repeat 1.1) then
+            // greedy selection. The penalty breaks the degenerate repetition loops
+            // that pure greedy decoding produces on small models.
+            let mut sampler = LlamaSampler::chain_simple([
+                LlamaSampler::penalties(64, 1.1, 0.0, 0.0),
+                LlamaSampler::greedy(),
+            ]);
+
             let max_tokens = 512usize;
             let mut output = String::new();
             let mut pos = n_tokens as i32;
+            let mut n_generated = 0usize;
+            let mut hit_eog = false;
 
             for _ in 0..max_tokens {
-                let mut candidates = ctx.token_data_array_ith(batch.n_tokens() - 1);
-                let new_token = candidates.sample_token_greedy();
+                let new_token = sampler.sample(&ctx, batch.n_tokens() - 1);
+                sampler.accept(new_token);
 
                 if model_arc.is_eog_token(new_token) {
+                    hit_eog = true;
                     break;
                 }
 
@@ -892,6 +941,7 @@ impl LlmManager {
                     .token_to_piece_bytes(new_token, 64, false, None)
                     .map_err(|e| anyhow::anyhow!("Failed to decode token: {}", e))?;
                 output.push_str(&String::from_utf8_lossy(&token_bytes));
+                n_generated += 1;
 
                 batch.clear();
                 batch
@@ -902,7 +952,21 @@ impl LlmManager {
                 pos += 1;
             }
 
-            Ok(output)
+            let elapsed = started.elapsed();
+            let tps = if elapsed.as_secs_f64() > 0.0 {
+                n_generated as f64 / elapsed.as_secs_f64()
+            } else {
+                0.0
+            };
+            info!(
+                "LLM inference complete: {} tokens in {} ms ({:.1} tok/s), stop={}",
+                n_generated,
+                elapsed.as_millis(),
+                tps,
+                if hit_eog { "eog" } else { "max_tokens" }
+            );
+
+            Ok(output.trim().to_string())
         })
         .await
         .map_err(|e| anyhow::anyhow!("Inference task panicked: {}", e))??;
