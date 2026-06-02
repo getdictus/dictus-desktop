@@ -201,7 +201,15 @@ export const useLlmModelStore = create<LlmModelsStore>()((set, get) => ({
             delete state.verifyingModels[modelId];
           }),
         );
-        void get().refresh();
+        void (async () => {
+          await get().refresh();
+          // Auto-activate the freshly downloaded model when nothing is active
+          // yet, so the first download is usable without an extra click. Don't
+          // steal activation from a model the user already chose.
+          if (!get().activeModelId) {
+            await get().setActiveModel(modelId);
+          }
+        })();
       },
     );
     unlisteners.push(unlistenComplete);

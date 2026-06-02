@@ -10,14 +10,25 @@ import { useLlmModelStore } from "@/stores/llmModelStore";
 import { CustomGgufDropZone } from "./CustomGgufDropZone";
 
 /**
+ * Maps a backend catalogue model id to its i18n description key suffix.
+ * Custom/unmapped models fall back to the backend-provided description.
+ */
+const MODEL_ID_TO_I18N_KEY: Record<string, string> = {
+  "qwen2.5-1.5b": "qwen25_1b5",
+  "qwen3-4b": "qwen3_4b",
+  "translategemma-4b": "translate_gemma_4b",
+};
+
+/**
  * Adapt LlmModelInfo to ModelInfo so we can reuse ModelCard verbatim.
  * Whisper-only fields are filled with safe zero/empty defaults.
+ * `description` is passed in (localized) so card text follows the UI language.
  */
-function toModelCardModel(m: LlmModelInfo): ModelInfo {
+function toModelCardModel(m: LlmModelInfo, description: string): ModelInfo {
   return {
     id: m.id,
     name: m.name,
-    description: m.description,
+    description,
     filename: m.filename,
     url: m.url ?? "",
     sha256: m.sha256 ?? null,
@@ -52,6 +63,17 @@ export const LlmLibrarySection: React.FC = () => {
       unlistenFn?.();
     };
   }, []); // Mount once — store actions are stable Zustand references
+
+  // Catalogue models get their description from i18n (so it follows the UI
+  // language); custom models keep their backend-provided description.
+  const localizedDescription = (m: LlmModelInfo): string => {
+    const key = MODEL_ID_TO_I18N_KEY[m.id];
+    if (!key) return m.description;
+    return t(
+      `settings.postProcessing.modelsAndLocalProcessing.library.models.${key}.description`,
+      { defaultValue: m.description },
+    );
+  };
 
   const getModelStatus = (modelId: string): ModelCardStatus => {
     if (modelId in store.downloadProgress) {
@@ -159,7 +181,7 @@ export const LlmLibrarySection: React.FC = () => {
                       return (
                         <ModelCard
                           key={model.id}
-                          model={toModelCardModel(model)}
+                          model={toModelCardModel(model, localizedDescription(model))}
                           status={status}
                           onSelect={handleSelect}
                           onDownload={(id) => void store.downloadModel(id)}
@@ -188,7 +210,7 @@ export const LlmLibrarySection: React.FC = () => {
                       return (
                         <ModelCard
                           key={model.id}
-                          model={toModelCardModel(model)}
+                          model={toModelCardModel(model, localizedDescription(model))}
                           status={status}
                           onSelect={handleSelect}
                           onDownload={(id) => void store.downloadModel(id)}

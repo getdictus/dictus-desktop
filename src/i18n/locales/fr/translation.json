@@ -443,36 +443,36 @@
           "cloudSelectedNotice": "Votre modèle sélectionné est un fournisseur cloud. Cliquez sur l'onglet « Cloud » ci-dessous pour le voir, ou choisissez un modèle local."
         },
         "library": {
-          "title": "Local Model Library",
-          "description": "Download and manage local GGUF models. Models run entirely on your device — no data leaves your machine.",
-          "yourModels": "Your Models",
-          "availableModels": "Available to Download",
-          "recommendedBadge": "Recommended",
-          "downloadModel": "Download model",
-          "activateModel": "Use this model",
-          "addCustomModel": "Add custom model",
-          "dropZoneLabel": "Drop a .gguf file here",
-          "dropZoneSublabel": "or use the button above",
-          "invalidGguf": "Not a valid GGUF model file. Please select a .gguf file.",
-          "cancelDownload": "Cancel download",
+          "title": "Bibliothèque de modèles locaux",
+          "description": "Téléchargez et gérez des modèles GGUF locaux. Les modèles s'exécutent entièrement sur votre appareil — aucune donnée ne quitte votre machine.",
+          "yourModels": "Vos modèles",
+          "availableModels": "Disponibles au téléchargement",
+          "recommendedBadge": "Recommandé",
+          "downloadModel": "Télécharger le modèle",
+          "activateModel": "Utiliser ce modèle",
+          "addCustomModel": "Ajouter un modèle personnalisé",
+          "dropZoneLabel": "Déposez un fichier .gguf ici",
+          "dropZoneSublabel": "ou utilisez le bouton ci-dessus",
+          "invalidGguf": "Fichier de modèle GGUF invalide. Veuillez sélectionner un fichier .gguf.",
+          "cancelDownload": "Annuler le téléchargement",
           "models": {
             "qwen25_1b5": {
-              "description": "Fast, lightweight — runs on any machine"
+              "description": "Rapide et léger — fonctionne sur toutes les machines"
             },
             "qwen3_4b": {
-              "description": "Best quality for post-processing"
+              "description": "Meilleure qualité pour le post-traitement"
             },
             "translate_gemma_4b": {
-              "description": "Translation-focused"
+              "description": "Spécialisé dans la traduction"
             }
           }
         },
         "embedded": {
-          "noModelHeading": "No local model selected",
-          "noModelBody": "Download a model below to enable embedded processing. The Qwen2.5-1.5B model is recommended for most machines.",
-          "downloadNowLink": "Download a model",
-          "providerLabel": "Embedded (local)",
-          "providerDescription": "Runs on your device. Requires a downloaded local model."
+          "noModelHeading": "Aucun modèle local sélectionné",
+          "noModelBody": "Téléchargez un modèle ci-dessous pour activer le traitement intégré. Le modèle Qwen2.5-1.5B est recommandé pour la plupart des machines.",
+          "downloadNowLink": "Télécharger un modèle",
+          "providerLabel": "Intégré (local)",
+          "providerDescription": "S'exécute sur votre appareil. Nécessite un modèle local téléchargé."
         }
       },
       "prompts": {
