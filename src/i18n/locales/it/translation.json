@@ -379,7 +379,7 @@
             "custom": "Custom (local)"
           },
           "descriptions": {
-            "apple_intelligence": "Gratuito • sul dispositivo • macOS Apple Silicon",
+            "apple_intelligence": "sul dispositivo • macOS Apple Silicon",
             "custom": "Ollama / LM Studio su localhost"
           }
         },

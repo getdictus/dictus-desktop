@@ -17,6 +17,11 @@ interface ProviderPickerProps {
    * Intelligence is unavailable). This is the "the model is the engine" block.
    */
   localModelSlot?: React.ReactNode;
+  /**
+   * Rendered at the very bottom of the local tab, after every provider row
+   * (e.g. the custom-GGUF import zone, kept below the Ollama/Custom row).
+   */
+  localFooterSlot?: React.ReactNode;
 }
 
 export const ProviderPicker: React.FC<ProviderPickerProps> = ({
@@ -29,18 +34,22 @@ export const ProviderPicker: React.FC<ProviderPickerProps> = ({
   activeTab,
   onTabChange,
   localModelSlot,
+  localFooterSlot,
 }) => {
   const { t } = useTranslation();
 
   const renderRow = (option: GroupedProviderOption) => {
     const checked = value === option.value;
+    // Scale matches ModelCard (rounded-xl, border-2, px-4 py-3, text-base name,
+    // text-sm description) so provider rows and model cards read as siblings in
+    // the same on-device list.
     return (
       <label
         key={option.value}
-        className={`flex flex-col gap-1 p-3 rounded-md border transition-colors ${
+        className={`flex flex-col gap-1 px-4 py-3 rounded-xl border-2 transition-all ${
           checked
-            ? "border-logo-primary bg-logo-primary/10"
-            : "border-mid-gray/20 hover:bg-mid-gray/5"
+            ? "border-logo-primary/50 bg-logo-primary/10"
+            : "border-mid-gray/20 hover:border-logo-primary/50 hover:bg-logo-primary/5"
         } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
       >
         <div className="flex items-center gap-3">
@@ -53,10 +62,12 @@ export const ProviderPicker: React.FC<ProviderPickerProps> = ({
             disabled={disabled}
             className="accent-logo-primary"
           />
-          <span className="text-sm font-medium">{option.label}</span>
+          <span className="text-base font-semibold text-text">
+            {option.label}
+          </span>
         </div>
         {option.description ? (
-          <p className="text-xs text-mid-gray pl-7">{option.description}</p>
+          <p className="text-sm text-text/60 pl-7">{option.description}</p>
         ) : null}
         {renderRowExtras ? (
           <div className="pl-7 mt-1">{renderRowExtras(option)}</div>
@@ -69,22 +80,24 @@ export const ProviderPicker: React.FC<ProviderPickerProps> = ({
     title: string,
     options: GroupedProviderOption[],
     modelSlot?: React.ReactNode,
+    footerSlot?: React.ReactNode,
   ) => {
     const hasApple = options.some((o) => o.value === "apple_intelligence");
     return (
-      <fieldset className="space-y-1 border-0 p-0 m-0">
+      <fieldset className="space-y-3 border-0 p-0 m-0">
         <legend className="text-xs font-medium text-mid-gray uppercase tracking-wide mb-2">
           {title}
         </legend>
-        {modelSlot && !hasApple ? <div className="mb-1">{modelSlot}</div> : null}
+        {modelSlot && !hasApple ? modelSlot : null}
         {options.map((option) => (
           <React.Fragment key={option.value}>
             {renderRow(option)}
-            {modelSlot && option.value === "apple_intelligence" ? (
-              <div className="py-1">{modelSlot}</div>
-            ) : null}
+            {modelSlot && option.value === "apple_intelligence"
+              ? modelSlot
+              : null}
           </React.Fragment>
         ))}
+        {footerSlot ?? null}
       </fieldset>
     );
   };
@@ -131,6 +144,7 @@ export const ProviderPicker: React.FC<ProviderPickerProps> = ({
             t("settings.postProcessing.api.providers.sectionLocal"),
             localOptions,
             localModelSlot,
+            localFooterSlot,
           )
         : null}
 

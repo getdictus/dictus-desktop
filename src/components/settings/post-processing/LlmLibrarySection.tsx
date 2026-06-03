@@ -211,10 +211,9 @@ export const LlmLibrarySection: React.FC<LlmLibrarySectionProps> = ({
             <div className="w-7 h-7 border-2 border-logo-primary border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
-          <>
-            {engineSorted.map((model) => renderCard(model, true))}
-            <CustomGgufDropZone />
-          </>
+          // Import zone is rendered by the parent below the Custom/Ollama row
+          // (ProviderPicker localFooterSlot), not here.
+          engineSorted.map((model) => renderCard(model, true))
         )}
       </div>
     );

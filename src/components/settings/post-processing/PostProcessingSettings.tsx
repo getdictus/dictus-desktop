@@ -25,6 +25,7 @@ import { ShortcutInput } from "../ShortcutInput";
 import { useSettings } from "../../../hooks/useSettings";
 import type { PostProcessProvider } from "@/bindings";
 import { LlmLibrarySection } from "./LlmLibrarySection";
+import { CustomGgufDropZone } from "./CustomGgufDropZone";
 import { useLlmModelStore } from "@/stores/llmModelStore";
 
 const LOCAL_PROVIDER_IDS_SET = new Set([
@@ -189,6 +190,7 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
           activeTab={activeTab}
           onTabChange={handleTabChange}
           localModelSlot={localModelSlot}
+          localFooterSlot={<CustomGgufDropZone />}
           renderRowExtras={(option) => {
             if (option.value === "apple_intelligence") {
               if (!state.appleIntelligenceUnavailable) return null;

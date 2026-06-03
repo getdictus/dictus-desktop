@@ -379,7 +379,7 @@
             "custom": "Custom (מקומי)"
           },
           "descriptions": {
-            "apple_intelligence": "חינם • במכשיר • macOS Apple Silicon",
+            "apple_intelligence": "במכשיר • macOS Apple Silicon",
             "custom": "Ollama / LM Studio ב-localhost"
           }
         },

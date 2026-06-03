@@ -379,7 +379,7 @@
             "custom": "Custom (yerel)"
           },
           "descriptions": {
-            "apple_intelligence": "Ücretsiz • cihazda • macOS Apple Silicon",
+            "apple_intelligence": "cihazda • macOS Apple Silicon",
             "custom": "localhost üzerinde Ollama / LM Studio"
           }
         },

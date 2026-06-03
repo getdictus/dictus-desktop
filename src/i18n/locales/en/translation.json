@@ -379,7 +379,7 @@
             "custom": "Custom (local)"
           },
           "descriptions": {
-            "apple_intelligence": "Free • on-device • macOS Apple Silicon",
+            "apple_intelligence": "on-device • macOS Apple Silicon",
             "custom": "Ollama / LM Studio on localhost"
           }
         },
