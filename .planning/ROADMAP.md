@@ -113,7 +113,11 @@
 
 > **NOTE on MODE-03:** This requirement spans two phases. Phase 12 delivers the backend CRUD commands and type bindings. Phase 13 delivers the UI surface. The requirement is assigned to Phase 13 (the phase that completes the user-observable deliverable), and Phase 12 success criterion 3 documents the backend prerequisite.
 
-**Plans**: TBD
+**Plans**: 4 plans
+- [ ] 13-01-PLAN.md — Backend: TranslateGemma catalogue entry + translation_engine_choice setting/command + Translation execution wiring in actions.rs [Wave 1]
+- [ ] 13-02-PLAN.md — i18n: smartModes.* keys in en + propagation to all 19 non-English locales (L10N-01) [Wave 1]
+- [ ] 13-03-PLAN.md — React components: SmartModeShortcutChip + SmartModeCard + TranslationEngineChoiceModal + SmartModesSection [Wave 2]
+- [ ] 13-04-PLAN.md — Mount SmartModesSection in PostProcessingSettings, remove legacy prompt UI + transcribe_with_post_process row, E2E checkpoint [Wave 3]
 
 ## Progress
 
@@ -131,4 +135,4 @@
 | 10. Prerequisite Gate | 3/3 | Complete    | 2026-06-01 | 2026-06-01 |
 | 11. LLM Runtime Foundation | 3/4 | In Progress|  | - |
 | 12. Smart Modes Data Layer | 3/3 | Complete    | 2026-06-03 | - |
-| 13. Smart Modes UI + Translation + i18n | v1.3 | 0/TBD | Not started | - |
+| 13. Smart Modes UI + Translation + i18n | v1.3 | 0/4 | Not started | - |
