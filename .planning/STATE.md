@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
-status: in_progress
-stopped_at: Phase 11 complete (PASS-WITH-NOTES); Phase 12 next
-last_updated: "2026-06-03"
-last_activity: 2026-06-03 — Phase 11 closed: build gate cleared (Win x64 Ninja, ggml link flags, macOS metallib embedded), catalogue refreshed to 4 instruct models, unified on-device engine list; 2 visual UI checks pending (non-blocking, tracked in todos)
+status: completed
+stopped_at: Phase 12 context gathered
+last_updated: "2026-06-03T13:25:53.097Z"
+last_activity: "2026-06-03 — Phase 11 closed: build gate cleared, catalogue refreshed to 4 instruct models, unified engine list; 2 visual UI checks pending (non-blocking, tracked in .planning/todos/pending/2026-06-03-verify-postproc-engine-list-ux.md)"
 progress:
   total_phases: 4
   completed_phases: 2
@@ -92,6 +92,6 @@ Progress: [█████░░░░░] ~50%
 
 ## Session Continuity
 
-Last session: 2026-06-01T14:48:04.582Z
-Stopped at: Completed 11-03-PLAN.md
-Resume file: None
+Last session: 2026-06-03T13:25:53.094Z
+Stopped at: Phase 12 context gathered
+Resume file: .planning/phases/12-smart-modes-data-layer/12-CONTEXT.md
