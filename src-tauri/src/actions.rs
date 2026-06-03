@@ -63,43 +63,29 @@ fn build_system_prompt(prompt_template: &str) -> String {
     prompt_template.replace("${output}", "").trim().to_string()
 }
 
-async fn post_process_transcription(
+/// Run the inference pipeline with an explicit prompt string.
+///
+/// This is the shared engine behind both the active-selection path
+/// (`post_process_transcription`) and the smart-mode override path
+/// (`process_transcription_output` with `mode_id_override`).
+/// It receives a resolved `prompt` (already looked up by the caller) and
+/// executes it against the configured provider / embedded engine.
+async fn post_process_with_prompt(
     app: &AppHandle,
     settings: &AppSettings,
     transcription: &str,
+    prompt: &str,
 ) -> Option<String> {
+    if prompt.trim().is_empty() {
+        debug!("post_process_with_prompt: prompt is empty, skipping");
+        return None;
+    }
+
     // Handle the embedded (local LLM) provider before the HTTP provider lookup.
     // "embedded" is not in post_process_providers and has no base_url, model, or api key.
     if settings.post_process_provider_id == "embedded" {
         use std::sync::Arc;
         let llm_manager = app.state::<Arc<crate::managers::llm::LlmManager>>();
-
-        // Resolve the selected prompt (same logic as the HTTP path below).
-        let selected_prompt_id = match &settings.post_process_selected_prompt_id {
-            Some(id) => id.clone(),
-            None => {
-                debug!("Embedded post-processing skipped: no prompt selected");
-                return None;
-            }
-        };
-        let prompt = match settings
-            .post_process_prompts
-            .iter()
-            .find(|p| p.id == selected_prompt_id)
-        {
-            Some(p) => p.prompt.clone(),
-            None => {
-                debug!(
-                    "Embedded post-processing skipped: prompt '{}' not found",
-                    selected_prompt_id
-                );
-                return None;
-            }
-        };
-        if prompt.trim().is_empty() {
-            debug!("Embedded post-processing skipped: selected prompt is empty");
-            return None;
-        }
 
         // Load the active model on demand if not already loaded.
         if !llm_manager.is_model_loaded() {
@@ -118,7 +104,7 @@ async fn post_process_transcription(
             }
         }
 
-        let system_prompt = build_system_prompt(&prompt);
+        let system_prompt = build_system_prompt(prompt);
         let full_prompt = format!("{}\n\n{}", system_prompt, transcription);
         return match llm_manager.run_inference(full_prompt).await {
             Ok(result) => {
@@ -162,34 +148,6 @@ async fn post_process_transcription(
         return None;
     }
 
-    let selected_prompt_id = match &settings.post_process_selected_prompt_id {
-        Some(id) => id.clone(),
-        None => {
-            debug!("Post-processing skipped because no prompt is selected");
-            return None;
-        }
-    };
-
-    let prompt = match settings
-        .post_process_prompts
-        .iter()
-        .find(|prompt| prompt.id == selected_prompt_id)
-    {
-        Some(prompt) => prompt.prompt.clone(),
-        None => {
-            debug!(
-                "Post-processing skipped because prompt '{}' was not found",
-                selected_prompt_id
-            );
-            return None;
-        }
-    };
-
-    if prompt.trim().is_empty() {
-        debug!("Post-processing skipped because the selected prompt is empty");
-        return None;
-    }
-
     debug!(
         "Starting LLM post-processing with provider '{}' (model: {})",
         provider.id, model
@@ -220,7 +178,7 @@ async fn post_process_transcription(
     if provider.supports_structured_output {
         debug!("Using structured outputs for provider '{}'", provider.id);
 
-        let system_prompt = build_system_prompt(&prompt);
+        let system_prompt = build_system_prompt(prompt);
         let user_content = transcription.to_string();
 
         // Handle Apple Intelligence separately since it uses native Swift APIs
@@ -374,6 +332,65 @@ async fn post_process_transcription(
     }
 }
 
+/// Resolve the active selected prompt from settings, then run inference.
+/// This is the existing post-processing path for the standard shortcut.
+async fn post_process_transcription(
+    app: &AppHandle,
+    settings: &AppSettings,
+    transcription: &str,
+) -> Option<String> {
+    // Handle the embedded provider prompt resolution separately (same lookup as HTTP path below).
+    if settings.post_process_provider_id == "embedded" {
+        let selected_prompt_id = match &settings.post_process_selected_prompt_id {
+            Some(id) => id.clone(),
+            None => {
+                debug!("Embedded post-processing skipped: no prompt selected");
+                return None;
+            }
+        };
+        let prompt = match settings
+            .post_process_prompts
+            .iter()
+            .find(|p| p.id == selected_prompt_id)
+        {
+            Some(p) => p.prompt.clone(),
+            None => {
+                debug!(
+                    "Embedded post-processing skipped: prompt '{}' not found",
+                    selected_prompt_id
+                );
+                return None;
+            }
+        };
+        return post_process_with_prompt(app, settings, transcription, &prompt).await;
+    }
+
+    let selected_prompt_id = match &settings.post_process_selected_prompt_id {
+        Some(id) => id.clone(),
+        None => {
+            debug!("Post-processing skipped because no prompt is selected");
+            return None;
+        }
+    };
+
+    let prompt = match settings
+        .post_process_prompts
+        .iter()
+        .find(|prompt| prompt.id == selected_prompt_id)
+    {
+        Some(prompt) => prompt.prompt.clone(),
+        None => {
+            debug!(
+                "Post-processing skipped because prompt '{}' was not found",
+                selected_prompt_id
+            );
+            return None;
+        }
+    };
+
+    post_process_with_prompt(app, settings, transcription, &prompt).await
+}
+
 async fn maybe_convert_chinese_variant(
     settings: &AppSettings,
     transcription: &str,
@@ -428,6 +445,7 @@ pub(crate) async fn process_transcription_output(
     app: &AppHandle,
     transcription: &str,
     post_process: bool,
+    mode_id_override: Option<&str>,
 ) -> ProcessedTranscription {
     let settings = get_settings(app);
     let mut final_text = transcription.to_string();
@@ -439,17 +457,44 @@ pub(crate) async fn process_transcription_output(
     }
 
     if post_process {
-        if let Some(processed_text) = post_process_transcription(app, &settings, &final_text).await {
-            post_processed_text = Some(processed_text.clone());
-            final_text = processed_text;
+        if let Some(mode_id) = mode_id_override {
+            // Smart mode path: branch on kind.
+            match resolve_mode_prompt(&settings, mode_id) {
+                Some((_mode, prompt)) => {
+                    // Rewrite kind: run inference with the mode's explicit prompt.
+                    if let Some(processed_text) =
+                        post_process_with_prompt(app, &settings, &final_text, &prompt).await
+                    {
+                        post_processed_text = Some(processed_text.clone());
+                        final_text = processed_text;
+                        post_process_prompt = Some(prompt);
+                    }
+                }
+                None => {
+                    // Translation kind (or unknown mode): stub — engine not yet wired.
+                    log::warn!(
+                        "Translation Smart Mode '{}' triggered but the translation engine is not yet wired (Phase 13)",
+                        mode_id
+                    );
+                    // post_processed_text stays None; final_text unchanged.
+                }
+            }
+        } else {
+            // Standard path: use active selected prompt (existing behavior).
+            if let Some(processed_text) =
+                post_process_transcription(app, &settings, &final_text).await
+            {
+                post_processed_text = Some(processed_text.clone());
+                final_text = processed_text;
 
-            if let Some(prompt_id) = &settings.post_process_selected_prompt_id {
-                if let Some(prompt) = settings
-                    .post_process_prompts
-                    .iter()
-                    .find(|prompt| &prompt.id == prompt_id)
-                {
-                    post_process_prompt = Some(prompt.prompt.clone());
+                if let Some(prompt_id) = &settings.post_process_selected_prompt_id {
+                    if let Some(prompt) = settings
+                        .post_process_prompts
+                        .iter()
+                        .find(|prompt| &prompt.id == prompt_id)
+                    {
+                        post_process_prompt = Some(prompt.prompt.clone());
+                    }
                 }
             }
         }
@@ -661,7 +706,7 @@ impl ShortcutAction for TranscribeAction {
                                 show_processing_overlay(&ah);
                             }
                             let processed =
-                                process_transcription_output(&ah, &transcription, post_process)
+                                process_transcription_output(&ah, &transcription, post_process, None)
                                     .await;
 
                             // Save to history if WAV was saved
@@ -774,6 +819,24 @@ impl ShortcutAction for TestAction {
     }
 }
 
+/// Resolve which SmartMode and prompt text to use for a `mode_id_override`.
+///
+/// Returns `Some((mode, prompt_text))` for Rewrite modes and `None` for Translation
+/// modes (stub path – engine not yet wired).
+pub(crate) fn resolve_mode_prompt<'a>(
+    settings: &'a crate::settings::AppSettings,
+    mode_id: &str,
+) -> Option<(&'a crate::settings::SmartMode, String)> {
+    let mode = settings.smart_modes.iter().find(|m| m.id == mode_id)?;
+    match mode.kind {
+        crate::settings::SmartModeKind::Rewrite => {
+            let prompt = mode.prompt.clone();
+            Some((mode, prompt))
+        }
+        crate::settings::SmartModeKind::Translation => None,
+    }
+}
+
 // Static Action Map
 pub static ACTION_MAP: Lazy<HashMap<String, Arc<dyn ShortcutAction>>> = Lazy::new(|| {
     let mut map = HashMap::new();
@@ -797,3 +860,70 @@ pub static ACTION_MAP: Lazy<HashMap<String, Arc<dyn ShortcutAction>>> = Lazy::ne
     );
     map
 });
+
+#[cfg(test)]
+mod actions_tests {
+    use super::*;
+    use crate::settings::{AppSettings, SmartMode, SmartModeKind};
+
+    fn make_settings_with_modes(modes: Vec<SmartMode>) -> AppSettings {
+        let mut s = crate::settings::get_default_settings();
+        s.smart_modes = modes;
+        s
+    }
+
+    fn rewrite_mode(id: &str, prompt: &str) -> SmartMode {
+        SmartMode {
+            id: id.to_string(),
+            name: format!("Mode {}", id),
+            kind: SmartModeKind::Rewrite,
+            prompt: prompt.to_string(),
+            target_language: None,
+        }
+    }
+
+    fn translation_mode(id: &str) -> SmartMode {
+        SmartMode {
+            id: id.to_string(),
+            name: format!("Mode {}", id),
+            kind: SmartModeKind::Translation,
+            prompt: String::new(),
+            target_language: None,
+        }
+    }
+
+    #[test]
+    fn mode_routing_rewrite_uses_correct_prompt() {
+        let expected_prompt = "Fix grammar and style.";
+        let mode = rewrite_mode("mode_x", expected_prompt);
+        let settings = make_settings_with_modes(vec![mode]);
+
+        let result = resolve_mode_prompt(&settings, "mode_x");
+        assert!(result.is_some(), "Rewrite mode should resolve successfully");
+        let (found_mode, prompt_text) = result.unwrap();
+        assert_eq!(found_mode.id, "mode_x");
+        assert_eq!(
+            prompt_text, expected_prompt,
+            "Should return the mode's own prompt, not the active selection"
+        );
+    }
+
+    #[test]
+    fn mode_routing_translation_returns_none() {
+        let mode = translation_mode("translate_fr");
+        let settings = make_settings_with_modes(vec![mode]);
+
+        let result = resolve_mode_prompt(&settings, "translate_fr");
+        assert!(
+            result.is_none(),
+            "Translation mode should return None (stub path – engine not yet wired)"
+        );
+    }
+
+    #[test]
+    fn mode_routing_unknown_id_returns_none() {
+        let settings = make_settings_with_modes(vec![]);
+        let result = resolve_mode_prompt(&settings, "nonexistent");
+        assert!(result.is_none(), "Unknown mode id should return None");
+    }
+}
