@@ -38,8 +38,8 @@ Non-user-facing groundwork that must land before feature code (research-recommen
 - [x] **MODE-02**: Dictus ships a curated set of ~10 default Smart Modes with a safe default first mode ("Clean Up"); exact prompt wording refined during the implementation phase against real local models
 - [x] **MODE-03**: User can create, edit, and delete Smart Modes (name + prompt + optional target language)
 - [x] **MODE-04**: User can assign a distinct global shortcut to each Smart Mode; recording with that shortcut applies that mode's prompt to the transcription
-- [ ] **MODE-05**: Shortcut conflicts are detected and surfaced with an inline warning at bind time (no silent registration failure)
-- [ ] **MODE-06**: Smart Modes are presented as a visual card list, replacing the single-prompt dropdown
+- [x] **MODE-05**: Shortcut conflicts are detected and surfaced with an inline warning at bind time (no silent registration failure)
+- [x] **MODE-06**: Smart Modes are presented as a visual card list, replacing the single-prompt dropdown
 
 ### Translation (TRANS)
 
@@ -112,8 +112,8 @@ Which phases cover which requirements. Updated 2026-05-29.
 | MODE-02 | Phase 12 | Complete |
 | MODE-03 | Phase 12 + Phase 13 | Complete |
 | MODE-04 | Phase 12 + Phase 13 | Complete |
-| MODE-05 | Phase 13 | Pending |
-| MODE-06 | Phase 13 | Pending |
+| MODE-05 | Phase 13 | Complete |
+| MODE-06 | Phase 13 | Complete |
 | TRANS-01 | Phase 13 | Complete |
 | TRANS-02 | Phase 13 | Complete |
 | L10N-01 | Phase 13 | Complete |
