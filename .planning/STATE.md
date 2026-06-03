@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
 status: completed
-stopped_at: Completed 13-03-PLAN.md
-last_updated: "2026-06-03T20:00:33.835Z"
+stopped_at: "Checkpoint: 13-04 Task 2 - E2E human-verify"
+last_updated: "2026-06-03T20:04:14.397Z"
 last_activity: "2026-06-03 — Phase 12 plan 03 complete: smart_mode_ routing wired end-to-end (is_transcribe_binding prefix, SmartModeAction, spawn_transcription_task, mode_id_override, both init loops)"
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 14
-  completed_plans: 13
+  completed_plans: 14
   percent: 50
 ---
 
@@ -110,6 +110,6 @@ Progress: [█████░░░░░] ~50%
 
 ## Session Continuity
 
-Last session: 2026-06-03T20:00:33.833Z
-Stopped at: Completed 13-03-PLAN.md
+Last session: 2026-06-03T20:04:14.395Z
+Stopped at: Checkpoint: 13-04 Task 2 - E2E human-verify
 Resume file: None
