@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
 status: completed
-stopped_at: Phase 12 context gathered
-last_updated: "2026-06-03T13:25:53.097Z"
+stopped_at: Completed 12-01-PLAN.md
+last_updated: "2026-06-03T14:19:22.805Z"
 last_activity: "2026-06-03 — Phase 11 closed: build gate cleared, catalogue refreshed to 4 instruct models, unified engine list; 2 visual UI checks pending (non-blocking, tracked in .planning/todos/pending/2026-06-03-verify-postproc-engine-list-ux.md)"
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 7
-  completed_plans: 7
+  total_plans: 10
+  completed_plans: 8
   percent: 50
 ---
 
@@ -52,6 +52,7 @@ Progress: [█████░░░░░] ~50%
 | Phase 11 P01 | 427 | 3 tasks | 4 files |
 | Phase 11 P02 | 25 | 2 tasks | 5 files |
 | Phase 11 P03 | 15 | 3 tasks | 24 files |
+| Phase 12 P01 | 233 | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,8 @@ Progress: [█████░░░░░] ~50%
 - [Phase 11-04]: Windows x64 needs `CMAKE_GENERATOR=Ninja` (not default MSBuild) for llama-cpp-sys-2's vulkan-shaders-gen ExternalProject to install correctly under MSVC x64.
 - [Phase 11 post-UAT]: Catalogue refreshed to 4 general-instruct models (Qwen2.5 1.5B / Gemma 3 4B / Phi-4 Mini / Llama 3.2 3B). Dropped Qwen3 4B (reasoning model — emits `<think>`, hits max_tokens, slow) and TranslateGemma 4B (specialized — ignores generic post-process prompts, passes text through unchanged). Verified at runtime: generic instruct models suit short text post-processing; specialized/reasoning models do not.
 - [Phase 11 post-UAT]: **TranslateGemma deferred to the Phase 12/13 translation mode.** It is a genuine Google translation model (4B ≈ Gemma 3 12B baseline on WMT24++) but needs its native format (direct text + target language via its chat template), NOT a wrapped custom prompt. To be reintroduced as a translation-specialized engine when the translation mode is built. License note: Gemma family (Gemma 3 4B + TranslateGemma) is open-weights/commercial-OK but a custom Google license, not OSI; Qwen2.5=Apache-2.0, Phi-4=MIT, Llama-3.2=Llama Community License.
+- [Phase 12]: Pristine 'Improve Transcriptions' replaced by Clean Up on migration; edited version preserved with original id
+- [Phase 12]: transcribe_with_post_process binding retired, combo transferred to smart_mode_{active_id} key on migration
 
 ### Pending Todos
 
@@ -92,6 +95,6 @@ Progress: [█████░░░░░] ~50%
 
 ## Session Continuity
 
-Last session: 2026-06-03T13:25:53.094Z
-Stopped at: Phase 12 context gathered
-Resume file: .planning/phases/12-smart-modes-data-layer/12-CONTEXT.md
+Last session: 2026-06-03T14:19:22.803Z
+Stopped at: Completed 12-01-PLAN.md
+Resume file: None

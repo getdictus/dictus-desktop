@@ -34,8 +34,8 @@ Non-user-facing groundwork that must land before feature code (research-recommen
 
 ### Smart Modes (MODE)
 
-- [ ] **MODE-01**: On upgrade, the user's existing post-processing prompts migrate automatically to Smart Modes with no data loss (`settings_schema_version` + explicit migration; verified against a v1.2 settings file)
-- [ ] **MODE-02**: Dictus ships a curated set of ~10 default Smart Modes with a safe default first mode ("Clean Up"); exact prompt wording refined during the implementation phase against real local models
+- [x] **MODE-01**: On upgrade, the user's existing post-processing prompts migrate automatically to Smart Modes with no data loss (`settings_schema_version` + explicit migration; verified against a v1.2 settings file)
+- [x] **MODE-02**: Dictus ships a curated set of ~10 default Smart Modes with a safe default first mode ("Clean Up"); exact prompt wording refined during the implementation phase against real local models
 - [ ] **MODE-03**: User can create, edit, and delete Smart Modes (name + prompt + optional target language)
 - [ ] **MODE-04**: User can assign a distinct global shortcut to each Smart Mode; recording with that shortcut applies that mode's prompt to the transcription
 - [ ] **MODE-05**: Shortcut conflicts are detected and surfaced with an inline warning at bind time (no silent registration failure)
@@ -108,8 +108,8 @@ Which phases cover which requirements. Updated 2026-05-29.
 | MDL-03 | Phase 11 | Complete |
 | MDL-04 | Phase 11 | Complete |
 | MDL-05 | Phase 11 | Complete |
-| MODE-01 | Phase 12 | Pending |
-| MODE-02 | Phase 12 | Pending |
+| MODE-01 | Phase 12 | Complete |
+| MODE-02 | Phase 12 | Complete |
 | MODE-03 | Phase 12 + Phase 13 | Pending |
 | MODE-04 | Phase 12 + Phase 13 | Pending |
 | MODE-05 | Phase 13 | Pending |
