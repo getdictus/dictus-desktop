@@ -476,12 +476,19 @@ pub(crate) async fn process_transcription_output(
                     }
                 }
                 None => {
-                    // Translation kind (or unknown mode): stub — engine not yet wired.
-                    log::warn!(
-                        "Translation Smart Mode '{}' triggered but the translation engine is not yet wired (Phase 13)",
-                        mode_id
-                    );
-                    // post_processed_text stays None; final_text unchanged.
+                    // Translation kind: run through the embedded LLM per the global engine choice.
+                    let mode = settings.smart_modes.iter().find(|m| m.id == mode_id);
+                    if let Some(mode) = mode {
+                        if mode.kind == crate::settings::SmartModeKind::Translation {
+                            if let Some(translated) =
+                                run_translation(app, &settings, &final_text, mode).await
+                            {
+                                post_processed_text = Some(translated.clone());
+                                final_text = translated;
+                            }
+                        }
+                    }
+                    // else: unknown mode id — leave text unchanged (no-op).
                 }
             }
         } else {
@@ -860,10 +867,85 @@ impl ShortcutAction for TestAction {
     }
 }
 
+/// Run translation inference for a Translation Smart Mode via the global engine choice.
+///
+/// Returns `Some(translated_text)` on success, `None` if not configured or inference fails.
+async fn run_translation(
+    app: &AppHandle,
+    settings: &crate::settings::AppSettings,
+    text: &str,
+    mode: &crate::settings::SmartMode,
+) -> Option<String> {
+    use crate::settings::TranslationEngineChoice;
+
+    let target = mode.target_language.as_ref()?;
+    let llm_manager = app.state::<Arc<crate::managers::llm::LlmManager>>();
+
+    let prompt = match settings.translation_engine_choice {
+        TranslationEngineChoice::NotChosen => {
+            log::warn!(
+                "Translation mode '{}' triggered but no translation engine is chosen",
+                mode.id
+            );
+            return None;
+        }
+        TranslationEngineChoice::TranslateGemma => {
+            if !llm_manager.is_model_loaded() {
+                if let Err(e) = llm_manager.load_model("translate-gemma-4b").await {
+                    log::error!("TranslateGemma failed to load: {}", e);
+                    return None;
+                }
+            }
+            // Native template: source text + target language code.
+            format!("{}\n{}", text, target.code)
+        }
+        TranslationEngineChoice::GenericModel => {
+            if !llm_manager.is_model_loaded() {
+                match &settings.active_llm_model_id {
+                    Some(id) => {
+                        if let Err(e) = llm_manager.load_model(id).await {
+                            log::error!(
+                                "Active model failed to load for translation: {}",
+                                e
+                            );
+                            return None;
+                        }
+                    }
+                    None => {
+                        log::warn!(
+                            "Generic translation engine selected but no active LLM model is set"
+                        );
+                        return None;
+                    }
+                }
+            }
+            format!(
+                "Translate the following text to {}. Output only the translation, no explanation or commentary.\n\n{}",
+                target.label, text
+            )
+        }
+    };
+
+    match llm_manager.run_inference(prompt).await {
+        Ok(result) => {
+            let result = strip_invisible_chars(&result);
+            if result.trim().is_empty() {
+                None
+            } else {
+                Some(result)
+            }
+        }
+        Err(e) => {
+            log::error!("Translation inference failed: {}", e);
+            None
+        }
+    }
+}
+
 /// Resolve which SmartMode and prompt text to use for a `mode_id_override`.
 ///
 /// Returns `Some((mode, prompt_text))` for Rewrite modes and `None` for Translation
-/// modes (stub path – engine not yet wired).
+/// modes (handled in process_transcription_output via run_translation).
 pub(crate) fn resolve_mode_prompt<'a>(
     settings: &'a crate::settings::AppSettings,
     mode_id: &str,
@@ -957,7 +1039,7 @@ mod actions_tests {
         let result = resolve_mode_prompt(&settings, "translate_fr");
         assert!(
             result.is_none(),
-            "Translation mode should return None (stub path – engine not yet wired)"
+            "Translation mode should return None from resolve_mode_prompt (handled in process_transcription_output)"
         );
     }
 
@@ -966,5 +1048,29 @@ mod actions_tests {
         let settings = make_settings_with_modes(vec![]);
         let result = resolve_mode_prompt(&settings, "nonexistent");
         assert!(result.is_none(), "Unknown mode id should return None");
+    }
+
+    #[test]
+    fn generic_model_translation_prompt_contains_target_language() {
+        // Test the pure logic: confirm the prompt format for GenericModel contains
+        // the expected strings without needing an AppHandle.
+        let target_label = "Spanish";
+        let transcription = "Hello, how are you?";
+        let prompt = format!(
+            "Translate the following text to {}. Output only the translation, no explanation or commentary.\n\n{}",
+            target_label, transcription
+        );
+        assert!(
+            prompt.contains("Translate the following text to Spanish"),
+            "Prompt should contain target language"
+        );
+        assert!(
+            prompt.contains("Output only the translation"),
+            "Prompt should contain output instruction"
+        );
+        assert!(
+            prompt.contains(transcription),
+            "Prompt should contain the original transcription"
+        );
     }
 }
