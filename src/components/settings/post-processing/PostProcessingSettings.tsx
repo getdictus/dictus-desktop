@@ -25,6 +25,7 @@ import { ShortcutInput } from "../ShortcutInput";
 import { useSettings } from "../../../hooks/useSettings";
 import type { PostProcessProvider } from "@/bindings";
 import { LlmLibrarySection } from "./LlmLibrarySection";
+import type { ProviderEntry } from "./LlmLibrarySection";
 import { CustomGgufDropZone } from "./CustomGgufDropZone";
 import { useLlmModelStore } from "@/stores/llmModelStore";
 
@@ -55,12 +56,74 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
     llmStore.models.find((m) => m.id === llmStore.activeModelId)?.name ??
     t("settings.postProcessing.modelsAndLocalProcessing.embedded.providerLabel");
 
-  // On-device GGUF model list injected into the local tab after Apple Intelligence.
-  const localModelSlot = (
+  // Non-model on-device engines (Apple Intelligence, Ollama/Custom) interleaved
+  // with the GGUF model cards. Apple leads (top), Custom trails (bottom); the
+  // active engine is pinned to the top by LlmLibrarySection regardless.
+  const providerEntries: ProviderEntry[] = state.groupedProviderOptions.local.map(
+    (opt) => ({
+      id: opt.value,
+      label: opt.label,
+      description: opt.description,
+      checked: state.selectedProviderId === opt.value,
+      position: opt.value === "custom" ? "trail" : "lead",
+      onSelect: (id: string) => void state.handleProviderSelect(id),
+      extras:
+        opt.value === "apple_intelligence"
+          ? state.appleIntelligenceUnavailable
+            ? (
+                <Alert variant="error" contained>
+                  {t("settings.postProcessing.api.appleIntelligence.unavailable")}
+                </Alert>
+              )
+            : undefined
+          : opt.value === "custom"
+            ? (
+                <div className="space-y-2">
+                  <p className="text-xs text-mid-gray/80">
+                    <Trans
+                      i18nKey="settings.postProcessing.api.custom.ollamaTip"
+                      components={{
+                        link: (
+                          <a
+                            role="link"
+                            tabIndex={0}
+                            className="text-logo-primary underline underline-offset-2 hover:opacity-80 cursor-pointer"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              void openUrl("https://ollama.com");
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                void openUrl("https://ollama.com");
+                              }
+                            }}
+                          />
+                        ),
+                        code: (
+                          <code className="font-mono text-xs bg-mid-gray/10 px-1 rounded" />
+                        ),
+                      }}
+                    />
+                  </p>
+                  <TestConnectionButton baseUrl={state.baseUrl} />
+                </div>
+              )
+            : undefined,
+    }),
+  );
+
+  // Full on-device tab body: provider cards + model cards, active pinned top,
+  // import zone last.
+  const localContent = (
     <LlmLibrarySection
       engineMode
       embeddedSelected={isEmbeddedSelected}
       onSelectAsEngine={(id) => void handleSelectEmbeddedModel(id)}
+      providerEntries={providerEntries}
+      footer={<CustomGgufDropZone />}
     />
   );
 
@@ -183,59 +246,12 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
         grouped={true}
       >
         <ProviderPicker
-          localOptions={state.groupedProviderOptions.local}
           externalOptions={state.groupedProviderOptions.external}
           value={state.selectedProviderId}
           onChange={state.handleProviderSelect}
           activeTab={activeTab}
           onTabChange={handleTabChange}
-          localModelSlot={localModelSlot}
-          localFooterSlot={<CustomGgufDropZone />}
-          renderRowExtras={(option) => {
-            if (option.value === "apple_intelligence") {
-              if (!state.appleIntelligenceUnavailable) return null;
-              return (
-                <Alert variant="error" contained>
-                  {t(
-                    "settings.postProcessing.api.appleIntelligence.unavailable",
-                  )}
-                </Alert>
-              );
-            }
-            if (option.value !== "custom") return null;
-            return (
-              <div className="space-y-2 mt-2">
-                <p className="text-xs text-mid-gray/80">
-                  <Trans
-                    i18nKey="settings.postProcessing.api.custom.ollamaTip"
-                    components={{
-                      link: (
-                        <a
-                          role="link"
-                          tabIndex={0}
-                          className="text-logo-primary underline underline-offset-2 hover:opacity-80 cursor-pointer"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            void openUrl("https://ollama.com");
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                              e.preventDefault();
-                              void openUrl("https://ollama.com");
-                            }
-                          }}
-                        />
-                      ),
-                      code: (
-                        <code className="font-mono text-xs bg-mid-gray/10 px-1 rounded" />
-                      ),
-                    }}
-                  />
-                </p>
-                <TestConnectionButton baseUrl={state.baseUrl} />
-              </div>
-            );
-          }}
+          localContent={localContent}
         />
       </SettingContainer>
 

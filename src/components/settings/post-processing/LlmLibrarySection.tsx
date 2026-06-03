@@ -1,13 +1,32 @@
 import React, { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { ask } from "@tauri-apps/plugin-dialog";
+import { Check } from "lucide-react";
 import type { ModelInfo } from "@/bindings";
 import type { LlmModelInfo } from "@/bindings";
 import type { ModelCardStatus } from "@/components/onboarding/ModelCard";
 import ModelCard from "@/components/onboarding/ModelCard";
+import Badge from "@/components/ui/Badge";
 import { SettingsGroup } from "@/components/ui";
 import { useLlmModelStore } from "@/stores/llmModelStore";
 import { CustomGgufDropZone } from "./CustomGgufDropZone";
+
+/**
+ * A non-model on-device engine (Apple Intelligence, Ollama/Custom) rendered as a
+ * peer card in the unified engine list. `position` sets its default slot before
+ * (`lead`) or after (`trail`) the GGUF model cards; the active engine is always
+ * pinned to the top regardless of position.
+ */
+export interface ProviderEntry {
+  id: string;
+  label: string;
+  description?: string;
+  checked: boolean;
+  disabled?: boolean;
+  position: "lead" | "trail";
+  onSelect: (id: string) => void;
+  extras?: React.ReactNode;
+}
 
 /**
  * Maps a backend catalogue model id to its i18n description key suffix.
@@ -52,22 +71,27 @@ function toModelCardModel(m: LlmModelInfo, description: string): ModelInfo {
 
 interface LlmLibrarySectionProps {
   /**
-   * Engine mode: render bare (no SettingsGroup wrapper) as the "local GGUF
-   * models" block inside the on-device engine list. Selecting a downloaded
-   * model picks it as the post-processing engine (via `onSelectAsEngine`),
-   * not merely as the "active LLM".
+   * Engine mode: render the full unified on-device engine list (provider cards
+   * + GGUF model cards) bare, no SettingsGroup wrapper. Selecting a downloaded
+   * model picks it as the post-processing engine (via `onSelectAsEngine`).
    */
   engineMode?: boolean;
   /** Whether the embedded provider is the currently selected engine. */
   embeddedSelected?: boolean;
   /** Select a downloaded model as the embedded engine (sets active + provider). */
   onSelectAsEngine?: (modelId: string) => void;
+  /** Non-model engines (Apple Intelligence, Ollama) to interleave in the list. */
+  providerEntries?: ProviderEntry[];
+  /** Rendered at the very bottom (e.g. the custom-GGUF import zone). */
+  footer?: React.ReactNode;
 }
 
 export const LlmLibrarySection: React.FC<LlmLibrarySectionProps> = ({
   engineMode = false,
   embeddedSelected = false,
   onSelectAsEngine,
+  providerEntries = [],
+  footer,
 }) => {
   const { t } = useTranslation();
   const store = useLlmModelStore();
@@ -202,8 +226,78 @@ export const LlmLibrarySection: React.FC<LlmLibrarySectionProps> = ({
       !m.is_custom,
   );
 
-  // ── Engine mode: bare, single sorted list for the on-device tab ──────────
+  // Provider card (Apple Intelligence, Ollama) — same shape as ModelCard, with
+  // an "Actif" badge when selected, so every row in the list is uniform.
+  const renderProviderRow = (p: ProviderEntry) => {
+    const selectable = !p.disabled;
+    return (
+      <div
+        key={`provider:${p.id}`}
+        role="button"
+        aria-pressed={p.checked}
+        tabIndex={selectable ? 0 : undefined}
+        onClick={() => selectable && p.onSelect(p.id)}
+        onKeyDown={(e) => {
+          if (selectable && (e.key === "Enter" || e.key === " ")) {
+            e.preventDefault();
+            p.onSelect(p.id);
+          }
+        }}
+        className={`flex flex-col gap-1 px-4 py-3 rounded-xl border-2 transition-all ${
+          p.checked
+            ? "border-logo-primary/50 bg-logo-primary/10"
+            : "border-mid-gray/20 hover:border-logo-primary/50 hover:bg-logo-primary/5"
+        } ${p.disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+      >
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-base font-semibold text-text">{p.label}</span>
+          {p.checked && (
+            <Badge variant="primary">
+              <Check className="w-3 h-3 mr-1" />
+              {t("modelSelector.active")}
+            </Badge>
+          )}
+        </div>
+        {p.description ? (
+          <p className="text-sm text-text/60">{p.description}</p>
+        ) : null}
+        {p.extras ? <div className="mt-1">{p.extras}</div> : null}
+      </div>
+    );
+  };
+
+  // ── Engine mode: one unified list — providers + models — active pinned top ──
   if (engineMode) {
+    type Item = { key: string; active: boolean; node: React.ReactNode };
+    const leads = providerEntries.filter((p) => p.position === "lead");
+    const trails = providerEntries.filter((p) => p.position === "trail");
+
+    const items: Item[] = [
+      ...leads.map((p) => ({
+        key: `provider:${p.id}`,
+        active: p.checked,
+        node: renderProviderRow(p),
+      })),
+      ...engineSorted.map((m) => ({
+        key: `model:${m.id}`,
+        active: getModelStatus(m.id) === "active",
+        node: renderCard(m, true),
+      })),
+      ...trails.map((p) => ({
+        key: `provider:${p.id}`,
+        active: p.checked,
+        node: renderProviderRow(p),
+      })),
+    ];
+
+    // Pin the single active engine to the top (mirrors the transcription
+    // Models tab), keeping the relative order of everything else.
+    const activeIdx = items.findIndex((i) => i.active);
+    if (activeIdx > 0) {
+      const [activeItem] = items.splice(activeIdx, 1);
+      items.unshift(activeItem);
+    }
+
     return (
       <div id="llm-library-section" className="space-y-3">
         {store.isLoading ? (
@@ -211,9 +305,12 @@ export const LlmLibrarySection: React.FC<LlmLibrarySectionProps> = ({
             <div className="w-7 h-7 border-2 border-logo-primary border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
-          // Import zone is rendered by the parent below the Custom/Ollama row
-          // (ProviderPicker localFooterSlot), not here.
-          engineSorted.map((model) => renderCard(model, true))
+          <>
+            {items.map((i) => (
+              <React.Fragment key={i.key}>{i.node}</React.Fragment>
+            ))}
+            {footer}
+          </>
         )}
       </div>
     );
