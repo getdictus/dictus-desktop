@@ -379,7 +379,7 @@
             "custom": "Custom (cục bộ)"
           },
           "descriptions": {
-            "apple_intelligence": "trên thiết bị • macOS Apple Silicon",
+            "apple_intelligence": "No download required — macOS Apple Silicon",
             "custom": "Ollama / LM Studio trên localhost"
           }
         },

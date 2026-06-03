@@ -40,39 +40,43 @@ export const ProviderPicker: React.FC<ProviderPickerProps> = ({
 
   const renderRow = (option: GroupedProviderOption) => {
     const checked = value === option.value;
-    // Scale matches ModelCard (rounded-xl, border-2, px-4 py-3, text-base name,
-    // text-sm description) so provider rows and model cards read as siblings in
-    // the same on-device list.
+    // Rendered as a clickable card (no radio) — selection is shown by the
+    // accent border, exactly like ModelCard, so provider rows and model cards
+    // are visually uniform in the on-device list. role/keyboard mirror ModelCard.
+    const selectable = !disabled;
     return (
-      <label
+      <div
         key={option.value}
+        role="button"
+        aria-pressed={checked}
+        tabIndex={selectable ? 0 : undefined}
+        onClick={() => selectable && onChange(option.value)}
+        onKeyDown={(e) => {
+          if (selectable && (e.key === "Enter" || e.key === " ")) {
+            e.preventDefault();
+            onChange(option.value);
+          }
+        }}
         className={`flex flex-col gap-1 px-4 py-3 rounded-xl border-2 transition-all ${
           checked
             ? "border-logo-primary/50 bg-logo-primary/10"
             : "border-mid-gray/20 hover:border-logo-primary/50 hover:bg-logo-primary/5"
         } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
       >
-        <div className="flex items-center gap-3">
-          <input
-            type="radio"
-            name="post-process-provider"
-            value={option.value}
-            checked={checked}
-            onChange={() => onChange(option.value)}
-            disabled={disabled}
-            className="accent-logo-primary"
-          />
-          <span className="text-base font-semibold text-text">
-            {option.label}
-          </span>
-        </div>
+        <span
+          className={`text-base font-semibold text-text ${
+            selectable ? "hover:text-logo-primary" : ""
+          } transition-colors`}
+        >
+          {option.label}
+        </span>
         {option.description ? (
-          <p className="text-sm text-text/60 pl-7">{option.description}</p>
+          <p className="text-sm text-text/60">{option.description}</p>
         ) : null}
         {renderRowExtras ? (
-          <div className="pl-7 mt-1">{renderRowExtras(option)}</div>
+          <div className="mt-1">{renderRowExtras(option)}</div>
         ) : null}
-      </label>
+      </div>
     );
   };
 
