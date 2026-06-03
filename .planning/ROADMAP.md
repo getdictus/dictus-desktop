@@ -95,7 +95,10 @@
   3. Smart Modes can be created, edited, and deleted via backend commands; name, prompt text, and optional target language are stored per mode; tauri-specta bindings are regenerated and importable by the frontend
   4. Each Smart Mode can have a distinct global shortcut registered at init and updated dynamically; triggering a mode's shortcut routes the transcription through that mode's prompt; the `smart_mode_{id}` binding prefix is handled throughout the shortcut and actions pipeline
 
-**Plans**: TBD
+**Plans**: 3 plans
+- [ ] 12-01-PLAN.md — Data model + 10 default modes + fixture-tested v1.2→v1.3 migration (settings.rs) [Wave 1]
+- [ ] 12-02-PLAN.md — Smart Mode CRUD commands + per-mode binding command + specta registration (shortcut/mod.rs, lib.rs) [Wave 2]
+- [ ] 12-03-PLAN.md — smart_mode_ routing: is_transcribe_binding + SmartModeAction + process_transcription_output override + init registration (coordinator, actions, init loops) [Wave 2]
 
 ### Phase 13: Smart Modes UI + Translation Presets + i18n
 **Goal**: Users interact with Smart Modes through a visual card list UI, can create/edit/delete modes and bind shortcuts from the settings panel, translation is a first-class preset group, and all strings are localized across 20 locales
@@ -127,5 +130,5 @@
 | 9. v1.2 Audit Gap Closure | v1.2 | 1/1 | Complete | 2026-05-28 |
 | 10. Prerequisite Gate | 3/3 | Complete    | 2026-06-01 | 2026-06-01 |
 | 11. LLM Runtime Foundation | 3/4 | In Progress|  | - |
-| 12. Smart Modes Data Layer | v1.3 | 0/TBD | Not started | - |
+| 12. Smart Modes Data Layer | v1.3 | 0/3 | Planned | - |
 | 13. Smart Modes UI + Translation + i18n | v1.3 | 0/TBD | Not started | - |

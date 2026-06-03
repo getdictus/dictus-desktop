@@ -1,8 +1,8 @@
 ---
 phase: 12
 slug: smart-modes-data-layer
-status: draft
-nyquist_compliant: false
+status: ready
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-06-03
 ---
@@ -40,7 +40,15 @@ created: 2026-06-03
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| TBD | TBD | TBD | MODE-01 | unit | `cargo test settings::migration` | ❌ W0 | ⬜ pending |
+| 01-T1 | 12-01 | 1 | MODE-01 | unit | `cargo test settings::` (serde default load of v1.2 JSON) | ❌ W0 | ⬜ pending |
+| 01-T2 | 12-01 | 1 | MODE-02 | unit | `cargo test settings::default_smart_modes` | ❌ W0 | ⬜ pending |
+| 01-T3 | 12-01 | 1 | MODE-01 | unit | `cargo test settings::migration` | ❌ W0 | ⬜ pending |
+| 02-T1 | 12-02 | 2 | MODE-03 | unit | `cargo test shortcut::` (crud_delete_last_guard, crud_delete_reassigns_active) | ❌ W0 | ⬜ pending |
+| 02-T2 | 12-02 | 2 | MODE-04 | unit | `cargo test shortcut::tests::smart_mode_binding_id_format` | ❌ W0 | ⬜ pending |
+| 02-T3 | 12-02 | 2 | MODE-03 | smoke (manual) | `cargo build && grep -q "SmartMode" src/bindings.ts` | ❌ W0 | ⬜ pending |
+| 03-T1 | 12-03 | 2 | MODE-04 | unit | `cargo test actions::` (mode_routing_rewrite, mode_routing_translation_returns_none) | ❌ W0 | ⬜ pending |
+| 03-T2 | 12-03 | 2 | MODE-04 | unit | `cargo test transcription_coordinator::is_transcribe_binding_smart_mode_prefix` | ❌ W0 | ⬜ pending |
+| 03-T3 | 12-03 | 2 | MODE-04 | build | `cargo build` (both init loops compile) | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
