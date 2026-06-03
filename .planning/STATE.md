@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
 status: completed
-stopped_at: Completed 12-01-PLAN.md
-last_updated: "2026-06-03T14:19:22.805Z"
+stopped_at: Completed 12-02-PLAN.md
+last_updated: "2026-06-03T14:24:13.686Z"
 last_activity: "2026-06-03 — Phase 11 closed: build gate cleared, catalogue refreshed to 4 instruct models, unified engine list; 2 visual UI checks pending (non-blocking, tracked in .planning/todos/pending/2026-06-03-verify-postproc-engine-list-ux.md)"
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 10
-  completed_plans: 8
+  completed_plans: 9
   percent: 50
 ---
 
@@ -53,6 +53,7 @@ Progress: [█████░░░░░] ~50%
 | Phase 11 P02 | 25 | 2 tasks | 5 files |
 | Phase 11 P03 | 15 | 3 tasks | 24 files |
 | Phase 12 P01 | 233 | 3 tasks | 2 files |
+| Phase 12 P02 | 210 | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -80,6 +81,8 @@ Progress: [█████░░░░░] ~50%
 - [Phase 11 post-UAT]: **TranslateGemma deferred to the Phase 12/13 translation mode.** It is a genuine Google translation model (4B ≈ Gemma 3 12B baseline on WMT24++) but needs its native format (direct text + target language via its chat template), NOT a wrapped custom prompt. To be reintroduced as a translation-specialized engine when the translation mode is built. License note: Gemma family (Gemma 3 4B + TranslateGemma) is open-weights/commercial-OK but a custom Google license, not OSI; Qwen2.5=Apache-2.0, Phi-4=MIT, Llama-3.2=Llama Community License.
 - [Phase 12]: Pristine 'Improve Transcriptions' replaced by Clean Up on migration; edited version preserved with original id
 - [Phase 12]: transcribe_with_post_process binding retired, combo transferred to smart_mode_{active_id} key on migration
+- [Phase 12]: set_smart_mode_binding inserts a ShortcutBinding entry for smart_mode_{id} before delegating to change_binding, since change_binding's fallback only covers default binding ids
+- [Phase 12]: delete_mode_in_place extracted as pure-logic helper so delete guard + active reassignment are unit-testable without AppHandle
 
 ### Pending Todos
 
@@ -95,6 +98,6 @@ Progress: [█████░░░░░] ~50%
 
 ## Session Continuity
 
-Last session: 2026-06-03T14:19:22.803Z
-Stopped at: Completed 12-01-PLAN.md
+Last session: 2026-06-03T14:24:13.684Z
+Stopped at: Completed 12-02-PLAN.md
 Resume file: None
