@@ -13,9 +13,9 @@ import { CustomGgufDropZone } from "./CustomGgufDropZone";
 
 /**
  * A non-model on-device engine (Apple Intelligence, Ollama/Custom) rendered as a
- * peer card in the unified engine list. `position` sets its default slot before
- * (`lead`) or after (`trail`) the GGUF model cards; the active engine is always
- * pinned to the top regardless of position.
+ * peer card in the unified engine list. `position` sets its slot before
+ * (`lead`) or after (`trail`) the GGUF model cards. The active engine is
+ * signalled by its "Actif" badge, not by reordering.
  */
 export interface ProviderEntry {
   id: string;
@@ -182,9 +182,7 @@ export const LlmLibrarySection: React.FC<LlmLibrarySectionProps> = ({
       status={getModelStatus(model.id)}
       onSelect={handleSelect}
       onDownload={(id) => void store.downloadModel(id)}
-      onCancel={
-        withActions ? (id) => void store.cancelDownload(id) : undefined
-      }
+      onCancel={withActions ? (id) => void store.cancelDownload(id) : undefined}
       onDelete={withActions ? handleDelete : undefined}
       downloadProgress={store.downloadProgress[model.id]?.percentage}
       downloadSpeed={store.downloadStats[model.id]?.speedMbps}
@@ -192,13 +190,16 @@ export const LlmLibrarySection: React.FC<LlmLibrarySectionProps> = ({
     />
   );
 
-  // Rank for the unified engine list: active/downloaded first, then catalogue.
+  // Engine-list order by zone: downloaded → downloadable → perso (imported
+  // custom GGUF). Active state does NOT affect position — selecting a model must
+  // not move it; a model only shifts up into the downloaded zone when its
+  // download starts. sort() is stable, so catalogue order holds within a zone.
   const engineSorted = [...store.models].sort((a, b) => {
     const rank = (m: LlmModelInfo) => {
-      if (m.id === store.activeModelId) return 0;
+      if (m.is_custom) return 2; // perso / imported GGUF — after the catalogue
       if (m.is_downloaded || m.is_downloading || m.id in store.downloadProgress)
-        return 1;
-      return 2;
+        return 0; // downloaded (or download in flight)
+      return 1; // downloadable
     };
     return rank(a) - rank(b);
   });
@@ -268,35 +269,29 @@ export const LlmLibrarySection: React.FC<LlmLibrarySectionProps> = ({
 
   // ── Engine mode: one unified list — providers + models — active pinned top ──
   if (engineMode) {
-    type Item = { key: string; active: boolean; node: React.ReactNode };
+    type Item = { key: string; node: React.ReactNode };
     const leads = providerEntries.filter((p) => p.position === "lead");
     const trails = providerEntries.filter((p) => p.position === "trail");
 
+    // Stable order: Apple (lead) → GGUF models (downloaded-first via
+    // engineSorted) → Custom/Ollama (trail). The active engine is signalled by
+    // its "Actif" badge, NOT by reordering — this keeps Custom anchored at the
+    // bottom next to its config block and stays consistent with the Cloud tab,
+    // which never reorders on selection.
     const items: Item[] = [
       ...leads.map((p) => ({
         key: `provider:${p.id}`,
-        active: p.checked,
         node: renderProviderRow(p),
       })),
       ...engineSorted.map((m) => ({
         key: `model:${m.id}`,
-        active: getModelStatus(m.id) === "active",
         node: renderCard(m, true),
       })),
       ...trails.map((p) => ({
         key: `provider:${p.id}`,
-        active: p.checked,
         node: renderProviderRow(p),
       })),
     ];
-
-    // Pin the single active engine to the top (mirrors the transcription
-    // Models tab), keeping the relative order of everything else.
-    const activeIdx = items.findIndex((i) => i.active);
-    if (activeIdx > 0) {
-      const [activeItem] = items.splice(activeIdx, 1);
-      items.unshift(activeItem);
-    }
 
     return (
       <div id="llm-library-section" className="space-y-3">

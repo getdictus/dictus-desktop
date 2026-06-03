@@ -54,13 +54,16 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
   // when embedded is selected (e.g. "Qwen2.5 1.5B" instead of a generic label).
   const activeLlmName =
     llmStore.models.find((m) => m.id === llmStore.activeModelId)?.name ??
-    t("settings.postProcessing.modelsAndLocalProcessing.embedded.providerLabel");
+    t(
+      "settings.postProcessing.modelsAndLocalProcessing.embedded.providerLabel",
+    );
 
   // Non-model on-device engines (Apple Intelligence, Ollama/Custom) interleaved
-  // with the GGUF model cards. Apple leads (top), Custom trails (bottom); the
-  // active engine is pinned to the top by LlmLibrarySection regardless.
-  const providerEntries: ProviderEntry[] = state.groupedProviderOptions.local.map(
-    (opt) => ({
+  // with the GGUF model cards. Apple leads (top), Custom trails (bottom) so it
+  // stays anchored next to its config block; the active engine is shown by its
+  // "Actif" badge, not by reordering.
+  const providerEntries: ProviderEntry[] =
+    state.groupedProviderOptions.local.map((opt) => ({
       id: opt.value,
       label: opt.label,
       description: opt.description,
@@ -68,54 +71,46 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
       position: opt.value === "custom" ? "trail" : "lead",
       onSelect: (id: string) => void state.handleProviderSelect(id),
       extras:
-        opt.value === "apple_intelligence"
-          ? state.appleIntelligenceUnavailable
-            ? (
-                <Alert variant="error" contained>
-                  {t("settings.postProcessing.api.appleIntelligence.unavailable")}
-                </Alert>
-              )
-            : undefined
-          : opt.value === "custom"
-            ? (
-                <div className="space-y-2">
-                  <p className="text-xs text-mid-gray/80">
-                    <Trans
-                      i18nKey="settings.postProcessing.api.custom.ollamaTip"
-                      components={{
-                        link: (
-                          <a
-                            role="link"
-                            tabIndex={0}
-                            className="text-logo-primary underline underline-offset-2 hover:opacity-80 cursor-pointer"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              void openUrl("https://ollama.com");
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter" || e.key === " ") {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                void openUrl("https://ollama.com");
-                              }
-                            }}
-                          />
-                        ),
-                        code: (
-                          <code className="font-mono text-xs bg-mid-gray/10 px-1 rounded" />
-                        ),
-                      }}
-                    />
-                  </p>
-                  <TestConnectionButton baseUrl={state.baseUrl} />
-                </div>
-              )
-            : undefined,
-    }),
-  );
+        opt.value === "apple_intelligence" ? (
+          state.appleIntelligenceUnavailable ? (
+            <Alert variant="error" contained>
+              {t("settings.postProcessing.api.appleIntelligence.unavailable")}
+            </Alert>
+          ) : undefined
+        ) : opt.value === "custom" ? (
+          <p className="text-xs text-mid-gray/80">
+            <Trans
+              i18nKey="settings.postProcessing.api.custom.ollamaTip"
+              components={{
+                link: (
+                  <a
+                    role="link"
+                    tabIndex={0}
+                    className="text-logo-primary underline underline-offset-2 hover:opacity-80 cursor-pointer"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      void openUrl("https://ollama.com");
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        void openUrl("https://ollama.com");
+                      }
+                    }}
+                  />
+                ),
+                code: (
+                  <code className="font-mono text-xs bg-mid-gray/10 px-1 rounded" />
+                ),
+              }}
+            />
+          </p>
+        ) : undefined,
+    }));
 
-  // Full on-device tab body: provider cards + model cards, active pinned top,
+  // Full on-device tab body: provider cards + model cards in stable order,
   // import zone last.
   const localContent = (
     <LlmLibrarySection
@@ -262,10 +257,10 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
               title={t("settings.postProcessing.api.baseUrl.title")}
               description={t("settings.postProcessing.api.baseUrl.description")}
               descriptionMode="tooltip"
-              layout="horizontal"
+              layout="stacked"
               grouped={true}
             >
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col items-start gap-2">
                 <BaseUrlField
                   value={state.baseUrl}
                   onBlur={state.handleBaseUrlChange}
@@ -273,8 +268,9 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
                     "settings.postProcessing.api.baseUrl.placeholder",
                   )}
                   disabled={state.isBaseUrlUpdating}
-                  className="min-w-[380px]"
+                  className="w-full"
                 />
+                <TestConnectionButton baseUrl={state.baseUrl} />
               </div>
             </SettingContainer>
           )}
