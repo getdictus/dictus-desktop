@@ -158,10 +158,49 @@ impl TranscriptionCoordinator {
     }
 }
 
+#[cfg(test)]
+mod coordinator_tests {
+    use super::is_transcribe_binding;
+
+    #[test]
+    fn is_transcribe_binding_smart_mode_prefix() {
+        assert!(
+            is_transcribe_binding("smart_mode_mode_abc"),
+            "smart_mode_ prefix must be recognized"
+        );
+        assert!(
+            is_transcribe_binding("smart_mode_"),
+            "bare smart_mode_ prefix must be recognized"
+        );
+        assert!(
+            is_transcribe_binding("transcribe"),
+            "transcribe must still be recognized"
+        );
+        assert!(
+            is_transcribe_binding("transcribe_with_post_process"),
+            "transcribe_with_post_process must still be recognized"
+        );
+        assert!(
+            !is_transcribe_binding("cancel"),
+            "cancel must not be a transcribe binding"
+        );
+        assert!(
+            !is_transcribe_binding("test"),
+            "test must not be a transcribe binding"
+        );
+    }
+}
+
 fn start(app: &AppHandle, stage: &mut Stage, binding_id: &str, hotkey_string: &str) {
-    let Some(action) = ACTION_MAP.get(binding_id) else {
-        warn!("No action in ACTION_MAP for '{binding_id}'");
-        return;
+    let action: Arc<dyn crate::actions::ShortcutAction> = if binding_id.starts_with("smart_mode_") {
+        let mode_id = binding_id.strip_prefix("smart_mode_").unwrap().to_string();
+        Arc::new(crate::actions::SmartModeAction { mode_id })
+    } else {
+        let Some(a) = ACTION_MAP.get(binding_id) else {
+            warn!("No action in ACTION_MAP for '{binding_id}'");
+            return;
+        };
+        Arc::clone(a)
     };
     action.start(app, binding_id, hotkey_string);
     if app
@@ -175,9 +214,15 @@ fn start(app: &AppHandle, stage: &mut Stage, binding_id: &str, hotkey_string: &s
 }
 
 fn stop(app: &AppHandle, stage: &mut Stage, binding_id: &str, hotkey_string: &str) {
-    let Some(action) = ACTION_MAP.get(binding_id) else {
-        warn!("No action in ACTION_MAP for '{binding_id}'");
-        return;
+    let action: Arc<dyn crate::actions::ShortcutAction> = if binding_id.starts_with("smart_mode_") {
+        let mode_id = binding_id.strip_prefix("smart_mode_").unwrap().to_string();
+        Arc::new(crate::actions::SmartModeAction { mode_id })
+    } else {
+        let Some(a) = ACTION_MAP.get(binding_id) else {
+            warn!("No action in ACTION_MAP for '{binding_id}'");
+            return;
+        };
+        Arc::clone(a)
     };
     action.stop(app, binding_id, hotkey_string);
     *stage = Stage::Processing;
