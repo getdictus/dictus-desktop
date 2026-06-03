@@ -1,10 +1,11 @@
 ---
 phase: 13
 slug: smart-modes-ui-translation-presets-i18n
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-06-03
+reviewed_at: 2026-06-03
 ---
 
 # Phase 13 — UI Design Contract
