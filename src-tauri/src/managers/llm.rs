@@ -177,7 +177,7 @@ impl LlmManager {
                 description: "Dedicated translation model — 55 benchmarked languages".to_string(),
                 filename: "translategemma-4b-it-Q4_K_M.gguf".to_string(),
                 url: Some("https://huggingface.co/bullerwins/translategemma-4b-it-GGUF/resolve/main/translategemma-4b-it-Q4_K_M.gguf".to_string()),
-                sha256: None, // TODO(TRANS-01): compute SHA256 from real file
+                sha256: Some("7f7357c14abd9da4eb200b38b05da502cd6e10d7e1d403fbc9f78c19f3209b72".to_string()),
                 size_mb: 2490,
                 is_downloaded: false,
                 is_downloading: false,
@@ -1232,7 +1232,7 @@ mod tests {
             after >= captured_before,
             "last_activity should be >= value before touch"
         );
-        drop(before);
+        let _ = before;
     }
 
     #[test]
