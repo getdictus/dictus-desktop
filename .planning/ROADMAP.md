@@ -41,7 +41,7 @@
 **Milestone Goal:** Make local post-transcription processing a real and powerful default — an embedded LLM runtime (all platforms, no external Ollama) plus Smart Modes (curated prompts, editable, creatable, each bindable to a shortcut), with multi-target translation as a first-class mode.
 
 - [x] **Phase 10: Prerequisite Gate** — Upstream Sync #2, TECH-04 refactor, and ggml feasibility spike clear all build blockers before feature work begins
-- [ ] **Phase 11: LLM Runtime Foundation** — In-process GGUF engine, GPU backends, model downloader, curated catalogue, custom drag/drop, and functional model library
+- [x] **Phase 11: LLM Runtime Foundation** (4/4 plans) — completed 2026-06-03 — In-process GGUF engine, GPU backends, model downloader, curated catalogue, custom drag/drop, and functional model library
 - [ ] **Phase 12: Smart Modes Data Layer** — Settings schema migration, SmartMode type + CRUD backend, per-mode shortcut routing, embedded provider, and 10 default modes
 - [ ] **Phase 13: Smart Modes UI + Translation + i18n** — Card list UI, create/edit/delete UI, shortcut bind with conflict detection, translation presets, and 20-locale propagation
 
@@ -70,7 +70,7 @@
 **Depends on**: Phase 10
 **Requirements**: LLM-01, LLM-02, LLM-03, LLM-04, MDL-01, MDL-02, MDL-03, MDL-04, MDL-05
 **Success Criteria** (what must be TRUE):
-  1. User can browse a curated catalogue of 3 local models (Qwen3-4B, Qwen2.5-1.5B, TranslateGemma-4B) with the on-disk file size shown before any download begins
+  1. User can browse a curated catalogue of 4 local instruct models (Qwen2.5 1.5B, Gemma 3 4B, Phi-4 Mini, Llama 3.2 3B) with the on-disk file size shown before any download begins (post-UAT refresh — TranslateGemma deferred to the Phase 13 translation mode)
   2. User can download a catalogue model in-app, watch live progress, cancel mid-download, and resume; the completed file is SHA256-verified; the URL is a HuggingFace CDN URL (never `blob.handy.computer`)
   3. User can delete a downloaded model from the library and see disk space reclaimed
   4. User can add a custom GGUF model by drag/drop or file picker; it appears in the library alongside catalogue entries
@@ -80,10 +80,10 @@
 > **Research spike flag (Phase 11):** The exact `.metallib` files that `llama-cpp-2` places in `OUT_DIR` and which ones must be added to `tauri.conf.json bundle.resources` are not confirmed in documentation. The first `tauri build` release smoke test on macOS is the verification gate — test with `tauri build`, not `tauri dev`, which does not replicate the production bundle layout.
 
 **Plans**: 4 plans
-- [ ] 11-01-PLAN.md — LlmManager backend: catalogue, download/verify/delete, GGUF validation, load/infer/unload, idle watcher (TDD)
-- [ ] 11-02-PLAN.md — LLM Tauri commands + manager registration + embedded provider branch in actions.rs
-- [ ] 11-03-PLAN.md — Frontend LlmLibrarySection + custom GGUF import + embedded provider UI + English i18n
-- [ ] 11-04-PLAN.md — Platform gate: macOS .metallib bundling, Windows x64 Vulkan fix, cross-platform e2e smoke (checkpoint)
+- [x] 11-01-PLAN.md — LlmManager backend: catalogue, download/verify/delete, GGUF validation, load/infer/unload, idle watcher (TDD)
+- [x] 11-02-PLAN.md — LLM Tauri commands + manager registration + embedded provider branch in actions.rs
+- [x] 11-03-PLAN.md — Frontend LlmLibrarySection + custom GGUF import + embedded provider UI + English i18n
+- [x] 11-04-PLAN.md — Platform gate: macOS .metallib (embedded), Windows x64 Vulkan fix (Ninja), ggml link-flag coexistence, catalogue refresh + unified engine list (post-UAT)
 
 ### Phase 12: Smart Modes Data Layer
 **Goal**: The Smart Modes data model exists in settings with a working migration from v1.2 prompts, the embedded provider routes through the runtime, and per-mode shortcut infrastructure is functional in the backend

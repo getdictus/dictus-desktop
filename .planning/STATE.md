@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
-status: completed
-stopped_at: Completed 11-03-PLAN.md
-last_updated: "2026-06-01T14:48:04.583Z"
-last_activity: 2026-06-01 — 10-03 closed; PREP-01 confirmed; ggml coexistence proven 6/7 CI platforms; Windows-x64 vulkan deferred to Phase 11
+status: in_progress
+stopped_at: Phase 11 complete (PASS-WITH-NOTES); Phase 12 next
+last_updated: "2026-06-03"
+last_activity: 2026-06-03 — Phase 11 closed: build gate cleared (Win x64 Ninja, ggml link flags, macOS metallib embedded), catalogue refreshed to 4 instruct models, unified on-device engine list; 2 visual UI checks pending (non-blocking, tracked in todos)
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 7
-  completed_plans: 6
-  percent: 8
+  completed_plans: 7
+  percent: 50
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-29 after starting milestone v1.3)
 
 **Core value:** Local-first as a visible, powerful default — embedded LLM runtime + Smart Modes + multi-target translation, all in-process, all platforms.
-**Current focus:** v1.3 Smart Modes & Local LLM — roadmap ready, Phase 10 next.
+**Current focus:** v1.3 Smart Modes & Local LLM — Phase 11 closed, Phase 12 (Smart Modes Data Layer) next.
 
 ## Current Position
 
-Phase: 10 of 13 (Prerequisite Gate) — COMPLETE (3/3 plans)
-Plan: — (Phase 10 done; Phase 11 next)
-Status: Phase 10 complete; Phase 11 (LLM Runtime Foundation) is the next phase
-Last activity: 2026-06-01 — 10-03 closed; PREP-01 confirmed; ggml coexistence proven 6/7 CI platforms; Windows-x64 vulkan deferred to Phase 11
+Phase: 11 of 13 (LLM Runtime Foundation) — COMPLETE (4/4 plans) — PASS-WITH-NOTES
+Plan: — (Phase 11 done; Phase 12 next)
+Status: Phase 11 complete; Phase 12 (Smart Modes Data Layer) is the next phase
+Last activity: 2026-06-03 — Phase 11 closed: build gate cleared, catalogue refreshed to 4 instruct models, unified engine list; 2 visual UI checks pending (non-blocking, tracked in .planning/todos/pending/2026-06-03-verify-postproc-engine-list-ux.md)
 
-Progress: [██░░░░░░░░] ~8%
+Progress: [█████░░░░░] ~50%
 
 ## Performance Metrics
 
