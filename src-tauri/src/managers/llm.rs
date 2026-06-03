@@ -903,11 +903,16 @@ impl LlmManager {
                 }
             };
 
-            // add_bos = Never: the chat template already emits the model's required
-            // leading tokens, and str_to_token parses special tokens so the
-            // template's control markers (e.g. <|im_start|>) are tokenized correctly.
+            // add_bos = Always maps to llama.cpp's `add_special = true`, which adds
+            // the BOS token *only when the model's tokenizer config requires it*
+            // (add_bos_token). llama.cpp's chat templates do not emit BOS themselves,
+            // so models that need it (e.g. Gemma — without <bos> it echoes the input
+            // and degenerates into filler) get it, while models with add_bos_token=false
+            // (e.g. Qwen) correctly get none. parse_special is always true, so the
+            // template's control markers (<|im_start|>, <start_of_turn>, …) tokenize
+            // correctly either way.
             let tokens_list = model_arc
-                .str_to_token(&formatted, AddBos::Never)
+                .str_to_token(&formatted, AddBos::Always)
                 .map_err(|e| anyhow::anyhow!("Failed to tokenize prompt: {}", e))?;
 
             let n_tokens = tokens_list.len();
