@@ -48,7 +48,7 @@ Non-user-facing groundwork that must land before feature code (research-recommen
 
 ### Localization (L10N)
 
-- [ ] **L10N-01**: All new user-facing strings (model library, Smart Modes UI, default mode names) are propagated across the 20 locales; `bun run check:translations` passes
+- [x] **L10N-01**: All new user-facing strings (model library, Smart Modes UI, default mode names) are propagated across the 20 locales; `bun run check:translations` passes
 
 ## Future Requirements
 
@@ -116,7 +116,7 @@ Which phases cover which requirements. Updated 2026-05-29.
 | MODE-06 | Phase 13 | Pending |
 | TRANS-01 | Phase 13 | Pending |
 | TRANS-02 | Phase 13 | Pending |
-| L10N-01 | Phase 13 | Pending |
+| L10N-01 | Phase 13 | Complete |
 
 **Coverage:**
 - v1.3 requirements: 21 total

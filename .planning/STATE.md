@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
 status: completed
-stopped_at: Phase 13 context gathered
-last_updated: "2026-06-03T18:51:08.735Z"
+stopped_at: Completed 13-02-PLAN.md
+last_updated: "2026-06-03T19:47:06.268Z"
 last_activity: "2026-06-03 — Phase 12 plan 03 complete: smart_mode_ routing wired end-to-end (is_transcribe_binding prefix, SmartModeAction, spawn_transcription_task, mode_id_override, both init loops)"
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 10
-  completed_plans: 10
+  total_plans: 14
+  completed_plans: 11
   percent: 50
 ---
 
@@ -55,6 +55,7 @@ Progress: [█████░░░░░] ~50%
 | Phase 12 P01 | 233 | 3 tasks | 2 files |
 | Phase 12 P02 | 210 | 3 tasks | 3 files |
 | Phase 12 P03 | 22 | 3 tasks | 5 files |
+| Phase 13-smart-modes-ui-translation-presets-i18n P02 | 5 | 2 tasks | 20 files |
 
 ## Accumulated Context
 
@@ -87,6 +88,7 @@ Progress: [█████░░░░░] ~50%
 - [Phase 12-03]: spawn_transcription_task factored out of TranscribeAction::stop as shared helper to avoid duplicating 100-line async pipeline in SmartModeAction::stop
 - [Phase 12-03]: SmartModeAction::start delegates to TranscribeAction (via ACTION_MAP) — recording start is mode-agnostic; mode_id only affects post-processing at stop time
 - [Phase 12-03]: Translation kind routes through process_transcription_output but returns stub (None, warn log); engine execution deferred to Phase 13 per phase boundary
+- [Phase 13]: Phase 13 plan 02: English fallback values used verbatim in all 19 non-English locales for new smartModes.* keys — real translations deferred (Phase 11 precedent)
 
 ### Pending Todos
 
@@ -102,6 +104,6 @@ Progress: [█████░░░░░] ~50%
 
 ## Session Continuity
 
-Last session: 2026-06-03T18:51:08.733Z
-Stopped at: Phase 13 context gathered
-Resume file: .planning/phases/13-smart-modes-ui-translation-presets-i18n/13-CONTEXT.md
+Last session: 2026-06-03T19:47:06.266Z
+Stopped at: Completed 13-02-PLAN.md
+Resume file: None
