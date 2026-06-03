@@ -4,14 +4,14 @@ milestone: v1.3
 milestone_name: Smart Modes & Local LLM
 status: completed
 stopped_at: Completed 12-03-PLAN.md
-last_updated: "2026-06-03T14:43:00Z"
+last_updated: "2026-06-03T14:35:26.453Z"
 last_activity: "2026-06-03 — Phase 12 plan 03 complete: smart_mode_ routing wired end-to-end (is_transcribe_binding prefix, SmartModeAction, spawn_transcription_task, mode_id_override, both init loops)"
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 10
   completed_plans: 10
-  percent: 60
+  percent: 50
 ---
 
 # Project State
