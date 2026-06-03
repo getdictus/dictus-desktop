@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
 status: completed
-stopped_at: Completed 13-02-PLAN.md
-last_updated: "2026-06-03T19:47:06.268Z"
+stopped_at: Completed 13-01-PLAN.md
+last_updated: "2026-06-03T19:52:51.583Z"
 last_activity: "2026-06-03 — Phase 12 plan 03 complete: smart_mode_ routing wired end-to-end (is_transcribe_binding prefix, SmartModeAction, spawn_transcription_task, mode_id_override, both init loops)"
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 14
-  completed_plans: 11
+  completed_plans: 12
   percent: 50
 ---
 
@@ -56,6 +56,7 @@ Progress: [█████░░░░░] ~50%
 | Phase 12 P02 | 210 | 3 tasks | 3 files |
 | Phase 12 P03 | 22 | 3 tasks | 5 files |
 | Phase 13-smart-modes-ui-translation-presets-i18n P02 | 5 | 2 tasks | 20 files |
+| Phase 13 P01 | 126 | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -89,6 +90,8 @@ Progress: [█████░░░░░] ~50%
 - [Phase 12-03]: SmartModeAction::start delegates to TranscribeAction (via ACTION_MAP) — recording start is mode-agnostic; mode_id only affects post-processing at stop time
 - [Phase 12-03]: Translation kind routes through process_transcription_output but returns stub (None, warn log); engine execution deferred to Phase 13 per phase boundary
 - [Phase 13]: Phase 13 plan 02: English fallback values used verbatim in all 19 non-English locales for new smartModes.* keys — real translations deferred (Phase 11 precedent)
+- [Phase 13]: TranslationEngineChoice uses snake_case serde (not_chosen/translate_gemma/generic_model) matching SmartModeKind pattern
+- [Phase 13]: [Phase 13-01]: TranslateGemma SHA256 computed from real file download (7f7357c14abd9da4eb200b38b05da502cd6e10d7e1d403fbc9f78c19f3209b72); run_translation dispatches per TranslationEngineChoice — NotChosen=warn+None, TranslateGemma=native template format, GenericModel=explicit prompt with target label
 
 ### Pending Todos
 
@@ -104,6 +107,6 @@ Progress: [█████░░░░░] ~50%
 
 ## Session Continuity
 
-Last session: 2026-06-03T19:47:06.266Z
-Stopped at: Completed 13-02-PLAN.md
+Last session: 2026-06-03T19:52:51.581Z
+Stopped at: Completed 13-01-PLAN.md
 Resume file: None

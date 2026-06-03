@@ -43,8 +43,8 @@ Non-user-facing groundwork that must land before feature code (research-recommen
 
 ### Translation (TRANS)
 
-- [ ] **TRANS-01**: Translation is a first-class Smart Mode with multi-target language presets (candidate defaults EN/ES/FR/ZH — finalized in-phase), each bindable to its own shortcut
-- [ ] **TRANS-02**: Translation runs fully offline through the embedded LLM (Whisper's translate task is English-only, so the LLM step is the only multi-target path)
+- [x] **TRANS-01**: Translation is a first-class Smart Mode with multi-target language presets (candidate defaults EN/ES/FR/ZH — finalized in-phase), each bindable to its own shortcut
+- [x] **TRANS-02**: Translation runs fully offline through the embedded LLM (Whisper's translate task is English-only, so the LLM step is the only multi-target path)
 
 ### Localization (L10N)
 
@@ -114,8 +114,8 @@ Which phases cover which requirements. Updated 2026-05-29.
 | MODE-04 | Phase 12 + Phase 13 | Complete |
 | MODE-05 | Phase 13 | Pending |
 | MODE-06 | Phase 13 | Pending |
-| TRANS-01 | Phase 13 | Pending |
-| TRANS-02 | Phase 13 | Pending |
+| TRANS-01 | Phase 13 | Complete |
+| TRANS-02 | Phase 13 | Complete |
 | L10N-01 | Phase 13 | Complete |
 
 **Coverage:**
