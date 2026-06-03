@@ -272,6 +272,54 @@ async setPostProcessSelectedPrompt(id: string) : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
+async addSmartMode(name: string, kind: SmartModeKind, prompt: string, targetLanguage: TargetLanguage | null) : Promise<Result<SmartMode, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("add_smart_mode", { name, kind, prompt, targetLanguage }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async updateSmartMode(id: string, name: string, prompt: string, targetLanguage: TargetLanguage | null) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("update_smart_mode", { id, name, prompt, targetLanguage }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async deleteSmartMode(id: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("delete_smart_mode", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async setActiveSmartMode(id: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_active_smart_mode", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async listSmartModes() : Promise<Result<SmartMode[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("list_smart_modes") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async setSmartModeBinding(modeId: string, binding: string) : Promise<Result<BindingResponse, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_smart_mode_binding", { modeId, binding }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async updateCustomWords(words: string[]) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("update_custom_words", { words }) };

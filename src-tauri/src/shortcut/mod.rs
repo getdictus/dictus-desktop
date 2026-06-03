@@ -1171,7 +1171,7 @@ pub fn set_smart_mode_binding(
     // change_binding falls back to default_settings.bindings for unknown ids, but
     // smart_mode_* ids are not in defaults. We insert one here so change_binding
     // finds an existing entry and proceeds to the register step.
-    if settings.bindings.get(&binding_id).is_none() {
+    if !settings.bindings.contains_key(&binding_id) {
         let mode = settings
             .smart_modes
             .iter()
