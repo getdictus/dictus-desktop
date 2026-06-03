@@ -445,6 +445,9 @@
             },
             "llama32_3b": {
               "description": "Balanced generalist — solid multilingual quality"
+            },
+            "translateGemma4b": {
+              "description": "Dedicated translation model — 55 benchmarked languages"
             }
           }
         },
@@ -716,5 +719,66 @@
   "overlay": {
     "transcribing": "...جاري التفريغ",
     "processing": "...جاري المعالجة"
+  },
+  "smartModes": {
+    "sections": {
+      "rewrite": "Rewrite",
+      "translation": "Translation"
+    },
+    "createRewrite": "+ New Rewrite",
+    "createTranslation": "+ New Translation",
+    "card": {
+      "saveCta": "Save mode",
+      "discardCta": "Discard changes",
+      "createCta": "Create mode",
+      "discardNewCta": "Discard",
+      "addShortcut": "Add shortcut",
+      "shortcutConflict": "Already used by: {{name}}",
+      "targetLanguage": "Target language"
+    },
+    "kind": {
+      "rewrite": "Rewrite",
+      "translation": "Translation"
+    },
+    "translation": {
+      "enableHeading": "Enable offline translation",
+      "enableBody": "Translation runs fully offline through the embedded LLM. Choose an engine to get started.",
+      "chooseCta": "Choose translation engine",
+      "genericEngineNote": "Best-effort — quality varies by model",
+      "modal": {
+        "dedicatedHeading": "Download dedicated translation model (Recommended)",
+        "dedicatedSubtext": "TranslateGemma 4B: ~2.5 GB download. Best translation quality across 40+ languages.",
+        "downloadButton": "Download TranslateGemma",
+        "useButton": "Use TranslateGemma",
+        "genericHeading": "Use active processing model",
+        "genericSubtext": "Uses your current local model with a built-in translation prompt. No extra download. Quality varies.",
+        "useGenericButton": "Use active model",
+        "footnote": "Both options run fully offline. You can change this choice later in settings."
+      }
+    },
+    "delete": {
+      "title": "Delete mode",
+      "confirm": "Delete \"{{name}}\"? This will also remove its shortcut binding.",
+      "ariaLabel": "Delete {{name}}"
+    },
+    "edit": {
+      "ariaLabel": "Edit {{name}}"
+    },
+    "noModel": {
+      "heading": "No local model selected",
+      "body": "Select or download a local model above to use Smart Modes."
+    },
+    "defaultModes": {
+      "cleanUp": "Clean Up",
+      "makeFormal": "Make Formal",
+      "makeCasual": "Make Casual",
+      "writeAsEmail": "Write as Email",
+      "bulletPoints": "Bullet Points",
+      "summarize": "Summarize",
+      "translateToEnglish": "Translate to English",
+      "translateToSpanish": "Translate to Spanish",
+      "translateToFrench": "Translate to French",
+      "translateToChinese": "Translate to Chinese"
+    }
   }
 }
