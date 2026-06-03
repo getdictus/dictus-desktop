@@ -54,13 +54,19 @@ Sourced from `src/App.css` (`:root` declarations) and observed component pattern
 
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
-| Body | 15px (`:root font-size`) | 400 | 1.6 (`line-height: 24px` at 15px base) |
-| Label / small | 12px (`text-xs`) | 500 (`font-medium`) | 1.5 |
-| Card title | 15px (`text-base font-semibold`) | 600 | 1.4 |
-| Section heading | 12px (`text-xs font-medium uppercase tracking-wide`) | 500 | 1.4 |
-| Page heading | 20px (`text-xl font-medium`) | 500 | 1.2 |
+| Body | 15px (`:root font-size`) | 400 (`font-normal`) | 1.6 (`line-height: 24px` at 15px base) |
+| Label / small / card title / section heading / page heading | 12–20px (see size column per role in component notes) | 500 (`font-medium`) | 1.2–1.5 |
 
-**Note:** This phase introduces no new type sizes. All type roles map to existing Tailwind classes already used in `PostProcessingSettings.tsx`, `LlmLibrarySection.tsx`, and `ModelCard.tsx`.
+**Weight declaration (exactly 2):**
+- 400 — body text, prompt preview, secondary descriptive text
+- 500 — all emphasized roles: labels (`text-xs font-medium`), card titles (`text-base font-medium`), section headings (`text-xs font-medium uppercase tracking-wide`), page headings (`text-xl font-medium`)
+
+**Size reference (no new sizes introduced):**
+- 12px (`text-xs`) — labels, section headings, small metadata
+- 15px (`text-base`) — card titles, body text
+- 20px (`text-xl`) — page heading
+
+**Note:** This phase introduces no new type sizes. All type roles map to existing Tailwind classes already used in `PostProcessingSettings.tsx`, `LlmLibrarySection.tsx`, and `ModelCard.tsx`. Card titles previously used `font-semibold` (weight 600) in the prior draft; the contract collapses that to `font-medium` (weight 500) to stay within the 2-weight maximum.
 
 ---
 
@@ -102,7 +108,7 @@ All components are **reused from existing codebase**. No new primitives are intr
 |-----------|------|---------|
 | `ModelCard` | `src/components/onboarding/ModelCard.tsx` | Smart Mode card visual base (border, padding, badge placement) |
 | `Badge` | `src/components/ui/Badge.tsx` | Kind badge (Rewrite/Translation), shortcut "unbound" hint |
-| `Button` | `src/components/ui/Button.tsx` | "+ New Rewrite", "+ New Translation", Save, Cancel, Enable translation CTA |
+| `Button` | `src/components/ui/Button.tsx` | "+ New Rewrite", "+ New Translation", Save mode, Discard changes, Enable translation CTA |
 | `Alert` | `src/components/ui/Alert.tsx` | Conflict warning (variant="error", contained), engine-choice info (variant="info") |
 | `Input` | `src/components/ui/Input.tsx` | Mode name field (inline edit) |
 | `Textarea` | `src/components/ui/Textarea.tsx` | Prompt field (Rewrite inline edit) |
@@ -132,13 +138,13 @@ All components are **reused from existing codebase**. No new primitives are intr
 ### Smart Mode Card — Collapsed State
 
 **Always visible on each card:**
-- Mode name (`text-base font-semibold text-text`)
+- Mode name (`text-base font-medium text-text`)
 - Preview text: for Rewrite cards, first 80 characters of prompt truncated with ellipsis (`text-sm text-text/60`); for Translation cards, target language name (e.g. "Spanish") instead of prompt preview
 - Kind badge: `"Rewrite"` in `bg-mid-gray/10 text-mid-gray` pill; `"Translation"` in `bg-logo-primary/10 text-logo-primary border-logo-primary/30` pill
 - Shortcut chip (always visible, clickable to bind without expanding card):
-  - **Bound:** displays key combo in `px-2 py-1 text-sm font-semibold bg-mid-gray/10 border border-mid-gray/80 rounded-md`
+  - **Bound:** displays key combo in `px-2 py-1 text-sm font-medium bg-mid-gray/10 border border-mid-gray/80 rounded-md`
   - **Unbound:** `px-2 py-1 text-xs font-medium bg-mid-gray/5 border border-mid-gray/30 text-mid-gray/60 rounded-md cursor-pointer` — text: i18n key `smartModes.card.addShortcut` ("Add shortcut")
-  - **Recording:** `px-2 py-1 text-sm font-semibold border border-logo-primary bg-logo-primary/30 rounded-md` — text: live key combo or "Press keys..."
+  - **Recording:** `px-2 py-1 text-sm font-medium border border-logo-primary bg-logo-primary/30 rounded-md` — text: live key combo or "Press keys..."
   - **Conflict:** chip reverts to previous state; red inline text `text-xs text-red-400 mt-1` appears directly below the chip: "Already used by: {conflicting mode name}"
 - Edit icon button (`Pencil` lucide, `text-mid-gray/50 hover:text-text`, `w-4 h-4`) — top-right of card, expands card inline
 - Delete icon button (`Trash2` lucide, `text-mid-gray/50 hover:text-red-400`, `w-4 h-4`) — top-right of card, next to edit
@@ -157,9 +163,10 @@ Hover (non-disabled): `hover:border-logo-primary/50 hover:bg-logo-primary/5`
 Triggered by clicking the Edit icon. Card expands in place with a vertical form below the collapsed header row.
 
 **Rewrite card expanded form:**
-- Name field: `Input` variant="compact", label `text-sm font-semibold` ("Name")
-- Prompt field: `Textarea`, label `text-sm font-semibold` ("Prompt")
-- Action row: `Button variant="primary" size="md"` ("Save"), `Button variant="secondary" size="md"` ("Cancel")
+- Name field: `Input` variant="compact", label `text-sm font-medium` ("Name")
+- Prompt field: `Textarea`, label `text-sm font-medium` ("Prompt")
+- Action row (editing existing mode): `Button variant="primary" size="md"` ("Save mode"), `Button variant="secondary" size="md"` ("Discard changes")
+- Action row (creating new mode): `Button variant="primary" size="md"` ("Create mode"), `Button variant="secondary" size="md"` ("Discard")
 - Shortcut chip remains visible and functional in the header row during editing
 
 **Translation card expanded form:**
@@ -168,14 +175,15 @@ Triggered by clicking the Edit icon. Card expands in place with a vertical form 
   - If TranslateGemma engine is active: restrict to its officially supported languages (list defined in implementation; ~40 languages)
   - If generic model path is active: show same curated list with `text-xs text-mid-gray/60` footnote "Best-effort — quality varies by model" (i18n key `smartModes.translation.genericEngineNote`)
 - No prompt field (translation cards carry only a target language; this matches Phase 12 data model)
-- Action row: same Save/Cancel buttons
+- Action row (editing existing mode): `Button variant="primary" size="md"` ("Save mode"), `Button variant="secondary" size="md"` ("Discard changes")
+- Action row (creating new mode): `Button variant="primary" size="md"` ("Create mode"), `Button variant="secondary" size="md"` ("Discard")
 
 **Expanded card border:** `border-logo-primary/40 bg-logo-primary/5` (active-tint on the card being edited)
 
 **Validation rules:**
-- Save button disabled when name is empty (after trim)
-- Save button disabled for Rewrite when prompt is empty (after trim)
-- Save button disabled for Translation when no target language is selected
+- Primary CTA disabled when name is empty (after trim)
+- Primary CTA disabled for Rewrite when prompt is empty (after trim)
+- Primary CTA disabled for Translation when no target language is selected
 - No change detection required — Save always writes (matches existing prompt save pattern)
 
 ### Create New Mode
@@ -185,7 +193,7 @@ Two dedicated buttons, one per section (positioned at the bottom of each section
 - Clicking inserts a new **expanded card at the bottom of that section** (above the create button)
 - The new card is empty (blank name, blank prompt / no language selected)
 - Kind is determined by which button was clicked — not user-selectable in the form
-- Cancel removes the unsaved card without any persistence call
+- "Discard" removes the unsaved card without any persistence call
 
 ### Delete Mode
 
@@ -201,7 +209,7 @@ When no global translation engine is configured yet, the Translation section ren
 - 4 seeded translation cards rendered at `opacity-60`, non-interactive (no shortcut chip click, no edit/delete)
 - Below the disabled cards, an inline CTA box:
   - Background: `bg-amber-500/5 border border-amber-500/20 rounded-xl p-4`
-  - Heading: `text-sm font-semibold` — i18n key `smartModes.translation.enableHeading` ("Enable offline translation")
+  - Heading: `text-sm font-medium` — i18n key `smartModes.translation.enableHeading` ("Enable offline translation")
   - Body: `text-sm text-text/60` — i18n key `smartModes.translation.enableBody` ("Translation runs fully offline through the embedded LLM. Choose an engine to get started.")
   - CTA button: `Button variant="primary-soft" size="md"` — "Choose translation engine" → opens `TranslationEngineChoiceModal`
 
@@ -212,14 +220,14 @@ Triggered by the "Choose translation engine" CTA. Uses native dialog flow or an 
 **Two options presented:**
 
 Option A — Download TranslateGemma:
-- Heading: `text-base font-semibold` — "Download dedicated translation model (Recommended)"
+- Heading: `text-base font-medium` — "Download dedicated translation model (Recommended)"
 - Sub-text: `text-sm text-text/60` — "TranslateGemma 4B: ~2.5 GB download. Best translation quality across 40+ languages."
 - If not yet downloaded: `Button variant="primary" size="md"` — "Download TranslateGemma"
 - If already downloaded: `Button variant="primary" size="md"` — "Use TranslateGemma" (no download)
 - Download shows inline progress using existing download progress bar pattern from `ModelCard`
 
 Option B — Use active model:
-- Heading: `text-base font-semibold` — "Use active processing model"
+- Heading: `text-base font-medium` — "Use active processing model"
 - Sub-text: `text-sm text-text/60` — "Uses your current local model with a built-in translation prompt. No extra download. Quality varies." (i18n key `smartModes.translation.genericEngineDescription`)
 - `Button variant="secondary" size="md"` — "Use active model"
 
@@ -239,8 +247,10 @@ All strings are i18n keys. English source values are listed here as the ground t
 | Translation section label | `smartModes.sections.translation` | "Translation" |
 | Create Rewrite button | `smartModes.createRewrite` | "+ New Rewrite" |
 | Create Translation button | `smartModes.createTranslation` | "+ New Translation" |
-| Save button | `smartModes.card.save` | "Save" |
-| Cancel button | `smartModes.card.cancel` | "Cancel" |
+| Save mode button (editing existing) | `smartModes.card.saveCta` | "Save mode" |
+| Discard changes button (editing existing) | `smartModes.card.discardCta` | "Discard changes" |
+| Create mode button (creating new) | `smartModes.card.createCta` | "Create mode" |
+| Discard button (creating new) | `smartModes.card.discardNewCta` | "Discard" |
 | Add shortcut (unbound chip) | `smartModes.card.addShortcut` | "Add shortcut" |
 | Shortcut recording prompt | `settings.general.shortcut.pressKeys` | "Press keys..." (reused) |
 | Conflict error text | `smartModes.card.shortcutConflict` | "Already used by: {{name}}" |
@@ -276,6 +286,8 @@ All strings are i18n keys. English source values are listed here as the ground t
 | Translate to Chinese | `smartModes.defaultModes.translateToChinese` | "Translate to Chinese" |
 
 **Translation preset names** follow the pattern "Translate to {language}" in English; locales use the localized language name (e.g. FR: "Traduire en espagnol").
+
+**CTA label rationale:** "Save mode" / "Create mode" are the primary CTAs (specific verb + object noun). "Discard changes" / "Discard" are the secondary CTAs. Generic labels "Save" and "Cancel" are not used anywhere in this phase.
 
 ---
 
@@ -318,6 +330,8 @@ PostProcessingSettings (max-w-3xl w-full mx-auto space-y-6)
               ├── [Enable CTA box — visible only if pre-enable]
               └── Button: "+ New Translation" [disabled if pre-enable]
 ```
+
+**Primary visual anchor:** The "Rewrite" section label and first card row (`SmartModeCard — Clean Up`) are the focal point of the screen. User attention flows top-to-bottom down the card list; the "Translation" section header (amber when pre-enable, neutral when active) is the secondary anchor that signals whether translation requires action.
 
 **Note for planner:** The old `ShortcutInput shortcutId="transcribe_with_post_process"` row in PostProcessingSettings is removed in this phase (the binding is now vestigial per Phase 12 migration). The raw `transcribe` binding remains in the General settings panel (not touched here).
 
@@ -388,6 +402,9 @@ No third-party registries are used. All components are from the existing codebas
 | Button/Alert/Badge variants | Detected from `src/components/ui/Button.tsx`, `Alert.tsx`, `Badge.tsx` |
 | Translation section amber accent | Claude's Discretion (resolved in this spec) |
 | Hardcoded translation prompt | Claude's Discretion (resolved in this spec) |
+| CTA labels "Save mode" / "Create mode" / "Discard changes" / "Discard" | Revision fix — checker Dimension 1 BLOCK (generic "Save"/"Cancel" rejected) |
+| Typography collapsed to 2 weights (400 + 500) | Revision fix — checker Dimension 4 BLOCK (3 weights declared, max is 2) |
+| Primary visual anchor declared | Revision recommendation — checker Dimension 2 FLAG |
 
 ---
 
