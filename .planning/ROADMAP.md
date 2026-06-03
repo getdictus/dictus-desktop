@@ -42,7 +42,7 @@
 
 - [x] **Phase 10: Prerequisite Gate** — Upstream Sync #2, TECH-04 refactor, and ggml feasibility spike clear all build blockers before feature work begins
 - [x] **Phase 11: LLM Runtime Foundation** (4/4 plans) — completed 2026-06-03 — In-process GGUF engine, GPU backends, model downloader, curated catalogue, custom drag/drop, and functional model library
-- [ ] **Phase 12: Smart Modes Data Layer** — Settings schema migration, SmartMode type + CRUD backend, per-mode shortcut routing, embedded provider, and 10 default modes
+- [x] **Phase 12: Smart Modes Data Layer** — Settings schema migration, SmartMode type + CRUD backend, per-mode shortcut routing, embedded provider, and 10 default modes (completed 2026-06-03)
 - [ ] **Phase 13: Smart Modes UI + Translation + i18n** — Card list UI, create/edit/delete UI, shortcut bind with conflict detection, translation presets, and 20-locale propagation
 
 ## Phase Details
@@ -130,5 +130,5 @@
 | 9. v1.2 Audit Gap Closure | v1.2 | 1/1 | Complete | 2026-05-28 |
 | 10. Prerequisite Gate | 3/3 | Complete    | 2026-06-01 | 2026-06-01 |
 | 11. LLM Runtime Foundation | 3/4 | In Progress|  | - |
-| 12. Smart Modes Data Layer | 2/3 | In Progress|  | - |
+| 12. Smart Modes Data Layer | 3/3 | Complete   | 2026-06-03 | - |
 | 13. Smart Modes UI + Translation + i18n | v1.3 | 0/TBD | Not started | - |

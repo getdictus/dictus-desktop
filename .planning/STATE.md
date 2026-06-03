@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
 status: completed
-stopped_at: Completed 12-02-PLAN.md
-last_updated: "2026-06-03T14:24:13.686Z"
-last_activity: "2026-06-03 — Phase 11 closed: build gate cleared, catalogue refreshed to 4 instruct models, unified engine list; 2 visual UI checks pending (non-blocking, tracked in .planning/todos/pending/2026-06-03-verify-postproc-engine-list-ux.md)"
+stopped_at: Completed 12-03-PLAN.md
+last_updated: "2026-06-03T14:43:00Z"
+last_activity: "2026-06-03 — Phase 12 plan 03 complete: smart_mode_ routing wired end-to-end (is_transcribe_binding prefix, SmartModeAction, spawn_transcription_task, mode_id_override, both init loops)"
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 10
-  completed_plans: 9
-  percent: 50
+  completed_plans: 10
+  percent: 60
 ---
 
 # Project State
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-05-29 after starting milestone v1.3)
 
 ## Current Position
 
-Phase: 11 of 13 (LLM Runtime Foundation) — COMPLETE (4/4 plans) — PASS-WITH-NOTES
-Plan: — (Phase 11 done; Phase 12 next)
-Status: Phase 11 complete; Phase 12 (Smart Modes Data Layer) is the next phase
-Last activity: 2026-06-03 — Phase 11 closed: build gate cleared, catalogue refreshed to 4 instruct models, unified engine list; 2 visual UI checks pending (non-blocking, tracked in .planning/todos/pending/2026-06-03-verify-postproc-engine-list-ux.md)
+Phase: 12 of 13 (Smart Modes Data Layer) — COMPLETE (3/3 plans) — PASS
+Plan: — (Phase 12 done; Phase 13 next)
+Status: Phase 12 complete; Phase 13 (Smart Modes UI + Translation Engine) is the next phase
+Last activity: 2026-06-03 — Phase 12 plan 03 complete: smart_mode_ routing wired end-to-end (is_transcribe_binding prefix, SmartModeAction, spawn_transcription_task, mode_id_override, both init loops)
 
 Progress: [█████░░░░░] ~50%
 
@@ -54,6 +54,7 @@ Progress: [█████░░░░░] ~50%
 | Phase 11 P03 | 15 | 3 tasks | 24 files |
 | Phase 12 P01 | 233 | 3 tasks | 2 files |
 | Phase 12 P02 | 210 | 3 tasks | 3 files |
+| Phase 12 P03 | 22 | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,9 @@ Progress: [█████░░░░░] ~50%
 - [Phase 12]: transcribe_with_post_process binding retired, combo transferred to smart_mode_{active_id} key on migration
 - [Phase 12]: set_smart_mode_binding inserts a ShortcutBinding entry for smart_mode_{id} before delegating to change_binding, since change_binding's fallback only covers default binding ids
 - [Phase 12]: delete_mode_in_place extracted as pure-logic helper so delete guard + active reassignment are unit-testable without AppHandle
+- [Phase 12-03]: spawn_transcription_task factored out of TranscribeAction::stop as shared helper to avoid duplicating 100-line async pipeline in SmartModeAction::stop
+- [Phase 12-03]: SmartModeAction::start delegates to TranscribeAction (via ACTION_MAP) — recording start is mode-agnostic; mode_id only affects post-processing at stop time
+- [Phase 12-03]: Translation kind routes through process_transcription_output but returns stub (None, warn log); engine execution deferred to Phase 13 per phase boundary
 
 ### Pending Todos
 
@@ -98,6 +102,6 @@ Progress: [█████░░░░░] ~50%
 
 ## Session Continuity
 
-Last session: 2026-06-03T14:24:13.684Z
-Stopped at: Completed 12-02-PLAN.md
+Last session: 2026-06-03T14:43:00Z
+Stopped at: Completed 12-03-PLAN.md
 Resume file: None
