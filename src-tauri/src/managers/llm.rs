@@ -171,6 +171,20 @@ impl LlmManager {
                 is_custom: false,
                 is_recommended: false,
             },
+            LlmModelInfo {
+                id: "translate-gemma-4b".to_string(),
+                name: "TranslateGemma 4B".to_string(),
+                description: "Dedicated translation model — 55 benchmarked languages".to_string(),
+                filename: "translategemma-4b-it-Q4_K_M.gguf".to_string(),
+                url: Some("https://huggingface.co/bullerwins/translategemma-4b-it-GGUF/resolve/main/translategemma-4b-it-Q4_K_M.gguf".to_string()),
+                sha256: None, // TODO(TRANS-01): compute SHA256 from real file
+                size_mb: 2490,
+                is_downloaded: false,
+                is_downloading: false,
+                partial_size: 0,
+                is_custom: false,
+                is_recommended: false,
+            },
         ]
     }
 
@@ -1024,9 +1038,9 @@ mod tests {
     // ── Task 1 tests: catalogue + settings serde ──────────────────────────────
 
     #[test]
-    fn test_catalogue_has_four_models() {
+    fn test_catalogue_has_five_models() {
         let catalogue = LlmManager::catalogue();
-        assert_eq!(catalogue.len(), 4);
+        assert_eq!(catalogue.len(), 5);
     }
 
     #[test]

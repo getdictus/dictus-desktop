@@ -37,6 +37,7 @@ const MODEL_ID_TO_I18N_KEY: Record<string, string> = {
   "gemma-3-4b": "gemma3_4b",
   "phi-4-mini": "phi4_mini",
   "llama-3.2-3b": "llama32_3b",
+  "translate-gemma-4b": "translateGemma4b",
 };
 
 /**
