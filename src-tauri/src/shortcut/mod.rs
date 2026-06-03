@@ -1055,6 +1055,143 @@ pub fn set_post_process_selected_prompt(app: AppHandle, id: String) -> Result<()
     Ok(())
 }
 
+// ============================================================================
+// Smart Mode CRUD helpers and commands
+// ============================================================================
+
+/// Pure logic helper: removes a mode by id from `modes` and reassigns `active`
+/// if the deleted mode was the active one. Returns Err if len <= 1 or id not found.
+pub fn delete_mode_in_place(
+    modes: &mut Vec<settings::SmartMode>,
+    active: &mut Option<String>,
+    id: &str,
+) -> Result<(), String> {
+    if modes.len() <= 1 {
+        return Err("Cannot delete the last mode".to_string());
+    }
+    let original_len = modes.len();
+    modes.retain(|m| m.id != id);
+    if modes.len() == original_len {
+        return Err(format!("Smart mode with id '{}' not found", id));
+    }
+    if active.as_deref() == Some(id) {
+        *active = modes.first().map(|m| m.id.clone());
+    }
+    Ok(())
+}
+
+/// Construct the binding id for a smart mode.
+/// Exported so Phase 13 routing can reuse it.
+pub fn smart_mode_binding_id(mode_id: &str) -> String {
+    format!("smart_mode_{}", mode_id)
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn add_smart_mode(
+    app: AppHandle,
+    name: String,
+    kind: settings::SmartModeKind,
+    prompt: String,
+    target_language: Option<settings::TargetLanguage>,
+) -> Result<settings::SmartMode, String> {
+    let mut settings = settings::get_settings(&app);
+    let id = format!("mode_{}", chrono::Utc::now().timestamp_millis());
+    let new_mode = settings::SmartMode {
+        id: id.clone(),
+        name,
+        kind,
+        prompt,
+        target_language,
+    };
+    settings.smart_modes.push(new_mode.clone());
+    settings::write_settings(&app, settings);
+    Ok(new_mode)
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn update_smart_mode(
+    app: AppHandle,
+    id: String,
+    name: String,
+    prompt: String,
+    target_language: Option<settings::TargetLanguage>,
+) -> Result<(), String> {
+    let mut settings = settings::get_settings(&app);
+    if let Some(mode) = settings.smart_modes.iter_mut().find(|m| m.id == id) {
+        mode.name = name;
+        mode.prompt = prompt;
+        mode.target_language = target_language;
+        settings::write_settings(&app, settings);
+        Ok(())
+    } else {
+        Err(format!("Smart mode with id '{}' not found", id))
+    }
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn delete_smart_mode(app: AppHandle, id: String) -> Result<(), String> {
+    let mut settings = settings::get_settings(&app);
+    delete_mode_in_place(&mut settings.smart_modes, &mut settings.smart_mode_active_id, &id)?;
+    settings::write_settings(&app, settings);
+    Ok(())
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn set_active_smart_mode(app: AppHandle, id: String) -> Result<(), String> {
+    let mut settings = settings::get_settings(&app);
+    if !settings.smart_modes.iter().any(|m| m.id == id) {
+        return Err(format!("Smart mode with id '{}' not found", id));
+    }
+    settings.smart_mode_active_id = Some(id);
+    settings::write_settings(&app, settings);
+    Ok(())
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn list_smart_modes(app: AppHandle) -> Result<Vec<settings::SmartMode>, String> {
+    Ok(settings::get_settings(&app).smart_modes)
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn set_smart_mode_binding(
+    app: AppHandle,
+    mode_id: String,
+    binding: String,
+) -> Result<BindingResponse, String> {
+    let binding_id = smart_mode_binding_id(&mode_id);
+    let mut settings = settings::get_settings(&app);
+
+    // Ensure a ShortcutBinding entry exists for this smart mode id.
+    // change_binding falls back to default_settings.bindings for unknown ids, but
+    // smart_mode_* ids are not in defaults. We insert one here so change_binding
+    // finds an existing entry and proceeds to the register step.
+    if settings.bindings.get(&binding_id).is_none() {
+        let mode = settings
+            .smart_modes
+            .iter()
+            .find(|m| m.id == mode_id)
+            .ok_or_else(|| format!("Smart mode with id '{}' not found", mode_id))?;
+        let entry = settings::ShortcutBinding {
+            id: binding_id.clone(),
+            name: mode.name.clone(),
+            description: "Smart Mode shortcut".to_string(),
+            default_binding: String::new(),
+            current_binding: String::new(),
+        };
+        settings.bindings.insert(binding_id.clone(), entry);
+        settings::write_settings(&app, settings);
+    }
+
+    // Delegate to the existing conflict-aware change_binding flow.
+    change_binding(app, binding_id, binding)
+}
+
 #[tauri::command]
 #[specta::specta]
 pub fn change_mute_while_recording_setting(app: AppHandle, enabled: bool) -> Result<(), String> {
@@ -1167,4 +1304,71 @@ pub async fn get_available_accelerators() -> crate::managers::transcription::Ava
     tauri::async_runtime::spawn_blocking(crate::managers::transcription::get_available_accelerators)
         .await
         .expect("get_available_accelerators panicked")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::settings::{SmartMode, SmartModeKind};
+
+    // ── Smart Mode CRUD helper tests ─────────────────────────────────────────
+
+    #[test]
+    fn crud_delete_last_guard() {
+        let mut modes = vec![SmartMode {
+            id: "mode_only".to_string(),
+            name: "Only Mode".to_string(),
+            kind: SmartModeKind::Rewrite,
+            prompt: "Test".to_string(),
+            target_language: None,
+        }];
+        let mut active: Option<String> = Some("mode_only".to_string());
+        let result = delete_mode_in_place(&mut modes, &mut active, "mode_only");
+        assert!(result.is_err(), "deleting the last mode must return Err");
+        assert_eq!(
+            result.unwrap_err(),
+            "Cannot delete the last mode",
+            "error message must match"
+        );
+    }
+
+    #[test]
+    fn crud_delete_reassigns_active() {
+        let mut modes = vec![
+            SmartMode {
+                id: "mode_a".to_string(),
+                name: "Mode A".to_string(),
+                kind: SmartModeKind::Rewrite,
+                prompt: "A".to_string(),
+                target_language: None,
+            },
+            SmartMode {
+                id: "mode_b".to_string(),
+                name: "Mode B".to_string(),
+                kind: SmartModeKind::Rewrite,
+                prompt: "B".to_string(),
+                target_language: None,
+            },
+        ];
+        let mut active: Option<String> = Some("mode_a".to_string());
+        let result = delete_mode_in_place(&mut modes, &mut active, "mode_a");
+        assert!(result.is_ok(), "delete must succeed when more than one mode");
+        assert_eq!(modes.len(), 1, "one mode must remain");
+        assert_eq!(
+            active.as_deref(),
+            Some("mode_b"),
+            "active must be reassigned to the first remaining mode"
+        );
+    }
+
+    // ── Binding id helper test ────────────────────────────────────────────────
+
+    #[test]
+    fn smart_mode_binding_id_format() {
+        assert_eq!(
+            smart_mode_binding_id("mode_abc"),
+            "smart_mode_mode_abc",
+            "binding id must be prefixed with smart_mode_"
+        );
+    }
 }
