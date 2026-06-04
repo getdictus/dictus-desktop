@@ -454,6 +454,7 @@ pub fn run(cli_args: CliArgs) {
             shortcut::set_active_smart_mode,
             shortcut::list_smart_modes,
             shortcut::set_smart_mode_binding,
+            shortcut::clear_smart_mode_binding,
             shortcut::update_custom_words,
             shortcut::suspend_binding,
             shortcut::resume_binding,

@@ -1194,6 +1194,28 @@ pub fn set_smart_mode_binding(
 
 #[tauri::command]
 #[specta::specta]
+pub fn clear_smart_mode_binding(app: AppHandle, mode_id: String) -> Result<(), String> {
+    let binding_id = smart_mode_binding_id(&mode_id);
+    let mut settings = settings::get_settings(&app);
+    // Unregister the OS-level shortcut if one is currently bound.
+    if let Some(b) = settings.bindings.get(&binding_id).cloned() {
+        if !b.current_binding.trim().is_empty() {
+            if let Err(e) = unregister_shortcut(&app, b) {
+                error!(
+                    "clear_smart_mode_binding: failed to unregister '{}': {}",
+                    binding_id, e
+                );
+            }
+        }
+    }
+    // Remove the binding entry entirely so init_shortcuts never re-registers it.
+    settings.bindings.remove(&binding_id);
+    settings::write_settings(&app, settings);
+    Ok(())
+}
+
+#[tauri::command]
+#[specta::specta]
 pub fn change_mute_while_recording_setting(app: AppHandle, enabled: bool) -> Result<(), String> {
     let mut settings = settings::get_settings(&app);
     settings.mute_while_recording = enabled;
