@@ -736,6 +736,11 @@
       "shortcutConflict": "Already used by: {{name}}",
       "targetLanguage": "Target language"
     },
+    "shortcut": {
+      "clear": "Clear",
+      "clearAriaLabel": "Clear shortcut {{combo}}",
+      "recording": "Press keys…"
+    },
     "kind": {
       "rewrite": "Rewrite",
       "translation": "Translation"
