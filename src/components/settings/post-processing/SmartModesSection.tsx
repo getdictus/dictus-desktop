@@ -6,6 +6,7 @@ import { commands } from "@/bindings";
 import { Button } from "@/components/ui/Button";
 import { useSettings } from "@/hooks/useSettings";
 import { SmartModeCard } from "./SmartModeCard";
+import { SmartModeTemplatePicker } from "./SmartModeTemplatePicker";
 import { TranslationEngineChoiceModal } from "./TranslationEngineChoiceModal";
 
 // Languages supported by TranslateGemma (~40 benchmarked languages)
@@ -86,6 +87,7 @@ export const SmartModesSection: React.FC = () => {
   const [creatingRewrite, setCreatingRewrite] = useState(false);
   const [creatingTranslation, setCreatingTranslation] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState<"rewrite" | "translation" | null>(null);
 
   const engineChoice = getSetting("translation_engine_choice") ?? "not_chosen";
   const translationEnabled = engineChoice !== "not_chosen";
@@ -145,7 +147,7 @@ export const SmartModesSection: React.FC = () => {
               variant="primary-soft"
               size="sm"
               disabled={creatingRewrite}
-              onClick={() => setCreatingRewrite(true)}
+              onClick={() => setPickerOpen("rewrite")}
             >
               <Plus className="w-3 h-3 mr-1 inline" />
               {t("smartModes.createRewrite")}
@@ -216,7 +218,7 @@ export const SmartModesSection: React.FC = () => {
               variant="primary-soft"
               size="sm"
               disabled={!translationEnabled || creatingTranslation}
-              onClick={() => setCreatingTranslation(true)}
+              onClick={() => setPickerOpen("translation")}
             >
               <Plus className="w-3 h-3 mr-1 inline" />
               {t("smartModes.createTranslation")}
@@ -232,6 +234,24 @@ export const SmartModesSection: React.FC = () => {
           void refreshSettings?.();
           void refetchModes();
         }}
+      />
+
+      <SmartModeTemplatePicker
+        open={pickerOpen === "rewrite"}
+        kind="rewrite"
+        existingModeIds={rewrites.map((m) => m.id)}
+        onClose={() => setPickerOpen(null)}
+        onCreated={refetchModes}
+        onCustom={() => setCreatingRewrite(true)}
+      />
+
+      <SmartModeTemplatePicker
+        open={pickerOpen === "translation"}
+        kind="translation"
+        existingModeIds={translations.map((m) => m.id)}
+        onClose={() => setPickerOpen(null)}
+        onCreated={refetchModes}
+        onCustom={() => setCreatingTranslation(true)}
       />
     </div>
   );
