@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
 status: completed
-stopped_at: "Checkpoint: 13-04 Task 2 - E2E human-verify"
-last_updated: "2026-06-03T20:04:14.397Z"
-last_activity: "2026-06-03 — Phase 12 plan 03 complete: smart_mode_ routing wired end-to-end (is_transcribe_binding prefix, SmartModeAction, spawn_transcription_task, mode_id_override, both init loops)"
+stopped_at: Completed 13-06-PLAN.md
+last_updated: "2026-06-04T10:00:45.164Z"
+last_activity: "2026-06-04 — 13-05 complete: clear_smart_mode_binding command added; transcribe_with_post_process global shortcut retired from all 4 init/register paths; first-run seeding narrowed to Clean Up only; smart_mode_templates command exposes full 10-mode catalogue"
 progress:
   total_phases: 4
-  completed_phases: 4
-  total_plans: 14
-  completed_plans: 14
-  percent: 50
+  completed_phases: 3
+  total_plans: 18
+  completed_plans: 16
+  percent: 85
 ---
 
 # Project State
@@ -59,6 +59,7 @@ Progress: [████████░░] ~85% (4.5/4 plans equivalent; gap clo
 | Phase 13 P01 | 126 | 3 tasks | 7 files |
 | Phase 13-smart-modes-ui-translation-presets-i18n P03 | 15 | 3 tasks | 4 files |
 | Phase 13 P05 (gap-closure backend) | 4 | 3 tasks | 5 files |
+| Phase 13 P06 | 15 | 2 tasks | 22 files |
 
 ## Accumulated Context
 
@@ -99,6 +100,8 @@ Progress: [████████░░] ~85% (4.5/4 plans equivalent; gap clo
 - [Phase 13-05]: clear_smart_mode_binding deletes binding entry entirely (not empty-set) so init_shortcuts never re-registers it
 - [Phase 13-05]: transcribe_with_post_process retired only as a persisted global shortcut; action string kept in coordinator/actions/signal/CLI for --toggle-post-process CLI flag
 - [Phase 13-05]: smart_mode_templates() is the 10-mode catalogue source (pub); default_smart_modes() seeds only Clean Up for first-run and migration
+- [Phase 13]: Commit shortcut on first non-modifier keydown (not keyup drain) — fixes macOS Cmd+key swallow where OS never fires keyup for non-modifier while Cmd held
+- [Phase 13]: [Phase 13-06]: English fallback values used verbatim in all 19 non-English locales for new shortcut.* keys (clear/clearAriaLabel/recording) — real translations deferred
 
 ### Pending Todos
 
@@ -114,6 +117,6 @@ Progress: [████████░░] ~85% (4.5/4 plans equivalent; gap clo
 
 ## Session Continuity
 
-Last session: 2026-06-03T20:04:14.395Z
-Stopped at: Checkpoint: 13-04 Task 2 - E2E human-verify
+Last session: 2026-06-04T10:00:45.162Z
+Stopped at: Completed 13-06-PLAN.md
 Resume file: None
