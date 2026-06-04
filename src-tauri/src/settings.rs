@@ -667,7 +667,9 @@ fn default_post_process_prompts() -> Vec<LLMPrompt> {
 
 pub const CLEAN_UP_MODE_ID: &str = "mode_clean_up";
 
-fn default_smart_modes() -> Vec<SmartMode> {
+/// Returns the full predefined template catalogue (10 modes).
+/// This is the source for the create-picker; it is NOT the first-run seed.
+pub fn smart_mode_templates() -> Vec<SmartMode> {
     vec![
         SmartMode {
             id: "mode_clean_up".to_string(),
@@ -752,6 +754,15 @@ fn default_smart_modes() -> Vec<SmartMode> {
             }),
         },
     ]
+}
+
+/// Returns the first-run seed: only Clean Up.
+/// The full catalogue is available via `smart_mode_templates()`.
+fn default_smart_modes() -> Vec<SmartMode> {
+    smart_mode_templates()
+        .into_iter()
+        .filter(|m| m.id == CLEAN_UP_MODE_ID)
+        .collect()
 }
 
 fn default_whisper_gpu_device() -> i32 {
@@ -1223,13 +1234,23 @@ mod tests {
     // ── Smart Modes defaults tests ────────────────────────────────────────────
 
     #[test]
-    fn default_smart_modes_count_is_ten() {
-        assert_eq!(default_smart_modes().len(), 10);
+    fn smart_mode_templates_count_is_ten() {
+        assert_eq!(smart_mode_templates().len(), 10);
+    }
+
+    #[test]
+    fn default_smart_modes_seeds_only_clean_up() {
+        let modes = default_smart_modes();
+        assert_eq!(modes.len(), 1, "first-run seed must be exactly 1 mode");
+        assert_eq!(
+            modes[0].id, CLEAN_UP_MODE_ID,
+            "first-run seed must be Clean Up"
+        );
     }
 
     #[test]
     fn default_smart_modes_order() {
-        let modes = default_smart_modes();
+        let modes = smart_mode_templates();
         assert_eq!(modes[0].name, "Clean Up");
         for (i, mode) in modes.iter().enumerate().take(6) {
             assert_eq!(
@@ -1251,7 +1272,7 @@ mod tests {
 
     #[test]
     fn default_translation_modes_have_target_language() {
-        let modes = default_smart_modes();
+        let modes = smart_mode_templates();
         let expected_codes = ["en", "es", "fr", "zh"];
         for (i, code) in expected_codes.iter().enumerate() {
             let mode = &modes[6 + i];
@@ -1298,8 +1319,8 @@ mod tests {
         let settings: AppSettings = serde_json::from_value(v12_json).unwrap();
         assert_eq!(settings.settings_schema_version, 0);
         assert!(settings.smart_mode_active_id.is_none());
-        // smart_modes gets the default via serde default
-        assert_eq!(settings.smart_modes.len(), 10);
+        // smart_modes gets the default via serde default — now only Clean Up
+        assert_eq!(settings.smart_modes.len(), 1);
     }
 
     // ── Migration tests ───────────────────────────────────────────────────────
@@ -1387,7 +1408,10 @@ mod tests {
         );
         // Clean Up exists
         assert!(
-            settings.smart_modes.iter().any(|m| m.id == CLEAN_UP_MODE_ID),
+            settings
+                .smart_modes
+                .iter()
+                .any(|m| m.id == CLEAN_UP_MODE_ID),
             "Clean Up must exist"
         );
         // Active id is set
@@ -1422,7 +1446,10 @@ mod tests {
         );
         // Clean Up exists
         assert!(
-            settings.smart_modes.iter().any(|m| m.id == CLEAN_UP_MODE_ID),
+            settings
+                .smart_modes
+                .iter()
+                .any(|m| m.id == CLEAN_UP_MODE_ID),
             "Clean Up must exist"
         );
         // Active id points to Clean Up
@@ -1454,7 +1481,10 @@ mod tests {
         );
         // Clean Up also exists
         assert!(
-            settings.smart_modes.iter().any(|m| m.id == CLEAN_UP_MODE_ID),
+            settings
+                .smart_modes
+                .iter()
+                .any(|m| m.id == CLEAN_UP_MODE_ID),
             "Clean Up must also exist"
         );
     }
@@ -1527,7 +1557,9 @@ mod tests {
 
         // transcribe_with_post_process must be removed
         assert!(
-            !settings.bindings.contains_key("transcribe_with_post_process"),
+            !settings
+                .bindings
+                .contains_key("transcribe_with_post_process"),
             "transcribe_with_post_process binding must be retired after migration"
         );
         // A smart_mode_ prefixed key must exist with the transferred combo

@@ -1115,7 +1115,11 @@ pub fn update_smart_mode(
 #[specta::specta]
 pub fn delete_smart_mode(app: AppHandle, id: String) -> Result<(), String> {
     let mut settings = settings::get_settings(&app);
-    delete_mode_in_place(&mut settings.smart_modes, &mut settings.smart_mode_active_id, &id)?;
+    delete_mode_in_place(
+        &mut settings.smart_modes,
+        &mut settings.smart_mode_active_id,
+        &id,
+    )?;
     settings::write_settings(&app, settings);
     Ok(())
 }
@@ -1136,6 +1140,12 @@ pub fn set_active_smart_mode(app: AppHandle, id: String) -> Result<(), String> {
 #[specta::specta]
 pub fn list_smart_modes(app: AppHandle) -> Result<Vec<settings::SmartMode>, String> {
     Ok(settings::get_settings(&app).smart_modes)
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn smart_mode_templates() -> Vec<settings::SmartMode> {
+    settings::smart_mode_templates()
 }
 
 #[tauri::command]
@@ -1355,7 +1365,10 @@ mod tests {
         ];
         let mut active: Option<String> = Some("mode_a".to_string());
         let result = delete_mode_in_place(&mut modes, &mut active, "mode_a");
-        assert!(result.is_ok(), "delete must succeed when more than one mode");
+        assert!(
+            result.is_ok(),
+            "delete must succeed when more than one mode"
+        );
         assert_eq!(modes.len(), 1, "one mode must remain");
         assert_eq!(
             active.as_deref(),
