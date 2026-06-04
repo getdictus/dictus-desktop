@@ -177,7 +177,7 @@
     },
     "general": {
       "title": "通用",
-      "shortcut": {
+          "shortcut": {
         "title": "Dictus 快捷键",
         "description": "配置启动语音转文字录制的键盘快捷键",
         "loading": "加载快捷键中...",
@@ -725,8 +725,8 @@
       "rewrite": "Rewrite",
       "translation": "Translation"
     },
-    "createRewrite": "+ New Rewrite",
-    "createTranslation": "+ New Translation",
+    "createRewrite": "New Rewrite",
+    "createTranslation": "New Translation",
     "card": {
       "saveCta": "Save mode",
       "discardCta": "Discard changes",
@@ -734,7 +734,16 @@
       "discardNewCta": "Discard",
       "addShortcut": "Add shortcut",
       "shortcutConflict": "Already used by: {{name}}",
-      "targetLanguage": "Target language"
+      "targetLanguage": "Target language",
+      "nameLabel": "Name",
+      "promptLabel": "Prompt"
+    },
+    "picker": {
+      "rewriteTitle": "Add a rewrite mode",
+      "translationTitle": "Add a translation mode",
+      "custom": "Custom",
+      "customSubtext": "Create a mode with your own name and prompt",
+      "added": "Added"
     },
     "shortcut": {
       "clear": "Clear",
@@ -750,6 +759,10 @@
       "enableBody": "Translation runs fully offline through the embedded LLM. Choose an engine to get started.",
       "chooseCta": "Choose translation engine",
       "genericEngineNote": "Best-effort — quality varies by model",
+      "changeEngine": "Change engine",
+      "currentEngine": "Using: {{engine}}",
+      "engineGemma": "TranslateGemma",
+      "engineGeneric": "Active model",
       "modal": {
         "dedicatedHeading": "Download dedicated translation model (Recommended)",
         "dedicatedSubtext": "TranslateGemma 4B: ~2.5 GB download. Best translation quality across 40+ languages.",
