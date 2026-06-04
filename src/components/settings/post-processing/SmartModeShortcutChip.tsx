@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { X } from "lucide-react";
 import { commands } from "@/bindings";
 import {
   formatKeyCombination,
@@ -29,6 +30,8 @@ const MODIFIERS = [
   "windows",
 ];
 
+const isModifier = (k: string) => MODIFIERS.includes(k.toLowerCase());
+
 export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
   modeId,
   currentBinding,
@@ -39,7 +42,8 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
   const osType = useOsType();
 
   const [isRecording, setIsRecording] = useState(false);
-  const [keyPressed, setKeyPressed] = useState<string[]>([]);
+  // heldModifiers tracks currently pressed modifier keys for live preview
+  const heldModifiersRef = useRef<Set<string>>(new Set());
   const [recordedKeys, setRecordedKeys] = useState<string[]>([]);
   const [conflict, setConflict] = useState<string | null>(null);
 
@@ -49,6 +53,35 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
   useEffect(() => {
     setConflict(null);
   }, [currentBinding]);
+
+  const commitCombo = useCallback(
+    async (combo: string) => {
+      setIsRecording(false);
+      heldModifiersRef.current.clear();
+      setRecordedKeys([]);
+
+      const res = await commands.setSmartModeBinding(modeId, combo);
+      if (res.status === "ok") {
+        const response = res.data;
+        if (response.success) {
+          setConflict(null);
+          onBound();
+        } else {
+          const errorMsg =
+            response.error ??
+            t("smartModes.card.shortcutConflict", { name: "" });
+          setConflict(errorMsg);
+          // Restore the previous binding if mode was bound before
+          if (currentBinding) {
+            commands
+              .resumeBinding("smart_mode_" + modeId)
+              .catch(() => {});
+          }
+        }
+      }
+    },
+    [modeId, currentBinding, onBound, t],
+  );
 
   useEffect(() => {
     if (!isRecording) return;
@@ -63,61 +96,55 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
       const rawKey = getKeyName(e, osType);
       const key = normalizeKey(rawKey);
 
-      setKeyPressed((prev) => (prev.includes(key) ? prev : [...prev, key]));
-      setRecordedKeys((prev) => (prev.includes(key) ? prev : [...prev, key]));
+      if (isModifier(key)) {
+        // Track held modifier; update live preview
+        heldModifiersRef.current.add(key);
+        const sortedMods = [...heldModifiersRef.current].sort((a, b) => {
+          const aIdx = MODIFIERS.indexOf(a.toLowerCase());
+          const bIdx = MODIFIERS.indexOf(b.toLowerCase());
+          return aIdx - bIdx;
+        });
+        setRecordedKeys(sortedMods);
+      } else {
+        // Main (non-modifier) key pressed — this is the COMMIT trigger
+        const sortedKeys = [...heldModifiersRef.current, key].sort((a, b) => {
+          const aIsMod = isModifier(a);
+          const bIsMod = isModifier(b);
+          if (aIsMod && !bIsMod) return -1;
+          if (!aIsMod && bIsMod) return 1;
+          return 0;
+        });
+        const combo = sortedKeys.join("+");
+        // Commit immediately on keydown (fixes macOS Cmd+keyup swallow issue)
+        void commitCombo(combo);
+      }
     };
 
-    const handleKeyUp = async (e: KeyboardEvent) => {
+    const handleKeyUp = (e: KeyboardEvent) => {
       if (cleanup) return;
       e.preventDefault();
 
       const rawKey = getKeyName(e, osType);
       const key = normalizeKey(rawKey);
 
-      const updatedPressed = keyPressed.filter((k) => k !== key);
-      setKeyPressed(updatedPressed);
-
-      if (updatedPressed.length === 0 && recordedKeys.length > 0) {
-        const sortedKeys = [...recordedKeys].sort((a, b) => {
-          const aIsMod = MODIFIERS.includes(a.toLowerCase());
-          const bIsMod = MODIFIERS.includes(b.toLowerCase());
-          if (aIsMod && !bIsMod) return -1;
-          if (!aIsMod && bIsMod) return 1;
-          return 0;
+      // Only track modifier releases to keep live preview accurate
+      if (isModifier(key)) {
+        heldModifiersRef.current.delete(key);
+        const sortedMods = [...heldModifiersRef.current].sort((a, b) => {
+          const aIdx = MODIFIERS.indexOf(a.toLowerCase());
+          const bIdx = MODIFIERS.indexOf(b.toLowerCase());
+          return aIdx - bIdx;
         });
-        const combo = sortedKeys.join("+");
-
-        setIsRecording(false);
-        setKeyPressed([]);
-        setRecordedKeys([]);
-
-        const res = await commands.setSmartModeBinding(modeId, combo);
-        if (res.status === "ok") {
-          const response = res.data;
-          if (response.success) {
-            setConflict(null);
-            onBound();
-          } else {
-            const errorMsg =
-              response.error ??
-              t("smartModes.card.shortcutConflict", { name: "" });
-            setConflict(errorMsg);
-            // Restore the previous binding if mode was bound before
-            if (currentBinding) {
-              commands
-                .resumeBinding("smart_mode_" + modeId)
-                .catch(() => {});
-            }
-          }
-        }
+        setRecordedKeys(sortedMods);
       }
+      // No commit on keyup — the commit happens on main-key keydown
     };
 
     const handleClickOutside = (e: MouseEvent) => {
       if (cleanup) return;
       if (chipRef.current && !chipRef.current.contains(e.target as Node)) {
         setIsRecording(false);
-        setKeyPressed([]);
+        heldModifiersRef.current.clear();
         setRecordedKeys([]);
         // Resume binding if mode was bound before
         if (currentBinding) {
@@ -136,12 +163,12 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
       window.removeEventListener("keyup", handleKeyUp);
       window.removeEventListener("click", handleClickOutside);
     };
-  }, [isRecording, keyPressed, recordedKeys, modeId, currentBinding, osType, t, onBound]);
+  }, [isRecording, modeId, currentBinding, osType, commitCombo]);
 
   const handleClick = () => {
     if (disabled || isRecording) return;
     setConflict(null);
-    setKeyPressed([]);
+    heldModifiersRef.current.clear();
     setRecordedKeys([]);
     // Best-effort suspend — no-op if entry doesn't exist yet
     if (currentBinding) {
@@ -150,9 +177,16 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
     setIsRecording(true);
   };
 
+  const handleClear = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    await commands.clearSmartModeBinding(modeId);
+    setConflict(null);
+    onBound();
+  };
+
   const formatCurrentKeys = (): string => {
     if (recordedKeys.length === 0) {
-      return t("settings.general.shortcut.pressKeys");
+      return t("smartModes.shortcut.recording");
     }
     return formatKeyCombination(recordedKeys.join("+"), osType);
   };
@@ -163,7 +197,7 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
         <div
           ref={chipRef}
           dir="ltr"
-          aria-label={t("settings.general.shortcut.pressKeys")}
+          aria-label={t("smartModes.shortcut.recording")}
           className="px-2 py-1 text-sm font-medium border border-logo-primary bg-logo-primary/30 rounded-md"
         >
           {formatCurrentKeys()}
@@ -173,16 +207,30 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
 
     if (currentBinding) {
       return (
-        <div
-          ref={chipRef}
-          dir="ltr"
-          aria-label={currentBinding}
-          aria-disabled={disabled ? "true" : undefined}
-          onClick={disabled ? undefined : handleClick}
-          className={`px-2 py-1 text-sm font-medium bg-mid-gray/10 border border-mid-gray/80 rounded-md ${disabled ? "opacity-60" : "cursor-pointer hover:border-logo-primary"}`}
-        >
-          {formatKeyCombination(currentBinding, osType)}
-        </div>
+        <span className="inline-flex items-center gap-1">
+          <div
+            ref={chipRef}
+            dir="ltr"
+            aria-label={currentBinding}
+            aria-disabled={disabled ? "true" : undefined}
+            onClick={disabled ? undefined : handleClick}
+            className={`px-2 py-1 text-sm font-medium bg-mid-gray/10 border border-mid-gray/80 rounded-md ${disabled ? "opacity-60" : "cursor-pointer hover:bg-logo-primary/10 hover:border-logo-primary"}`}
+          >
+            {formatKeyCombination(currentBinding, osType)}
+          </div>
+          {!disabled && (
+            <button
+              type="button"
+              className="p-0.5 rounded focus:outline-none"
+              onClick={handleClear}
+              aria-label={t("smartModes.shortcut.clearAriaLabel", {
+                combo: formatKeyCombination(currentBinding, osType),
+              })}
+            >
+              <X className="w-4 h-4 text-mid-gray/50 hover:text-red-400" />
+            </button>
+          )}
+        </span>
       );
     }
 

@@ -320,6 +320,14 @@ async setSmartModeBinding(modeId: string, binding: string) : Promise<Result<Bind
     else return { status: "error", error: e  as any };
 }
 },
+async clearSmartModeBinding(modeId: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("clear_smart_mode_binding", { modeId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async updateCustomWords(words: string[]) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("update_custom_words", { words }) };
