@@ -11,7 +11,7 @@ import { useSettings } from "@/hooks/useSettings";
 import { SmartModeShortcutChip } from "./SmartModeShortcutChip";
 
 // Seeded mode ID -> i18n key map; verified against settings.rs default_smart_modes
-const SEEDED_MODE_ID_TO_I18N_KEY: Record<string, string> = {
+export const SEEDED_MODE_ID_TO_I18N_KEY: Record<string, string> = {
   mode_clean_up: "smartModes.defaultModes.cleanUp",
   mode_make_formal: "smartModes.defaultModes.makeFormal",
   mode_make_casual: "smartModes.defaultModes.makeCasual",
@@ -22,6 +22,21 @@ const SEEDED_MODE_ID_TO_I18N_KEY: Record<string, string> = {
   mode_translate_es: "smartModes.defaultModes.translateToSpanish",
   mode_translate_fr: "smartModes.defaultModes.translateToFrench",
   mode_translate_zh: "smartModes.defaultModes.translateToChinese",
+};
+
+// Seeded mode ID -> stored default English name (from settings.rs smart_mode_templates)
+// Used to detect whether a seeded mode's name has been edited by the user.
+const SEEDED_MODE_DEFAULT_NAME: Record<string, string> = {
+  mode_clean_up: "Clean Up",
+  mode_make_formal: "Make Formal",
+  mode_make_casual: "Make Casual",
+  mode_email: "Write as Email",
+  mode_bullet_points: "Bullet Points",
+  mode_summarize: "Summarize",
+  mode_translate_en: "Translate → English",
+  mode_translate_es: "Translate → Spanish",
+  mode_translate_fr: "Translate → French",
+  mode_translate_zh: "Translate → Chinese",
 };
 
 interface SmartModeCardProps {
@@ -49,11 +64,15 @@ export const SmartModeCard: React.FC<SmartModeCardProps> = ({
   const isNew = mode === null;
   const [isEditing, setIsEditing] = useState(isNew);
 
-  // Derive displayed name from seeded key or raw name
+  // Derive displayed name from seeded key or raw name.
+  // Only localize when the stored name is still the pristine seed default.
+  // Once the user edits the name, show the literal stored name.
   const displayName = (() => {
     if (!mode) return "";
-    const key = SEEDED_MODE_ID_TO_I18N_KEY[mode.id];
-    return key ? t(key) : mode.name;
+    const i18nKey = SEEDED_MODE_ID_TO_I18N_KEY[mode.id];
+    const seedDefault = SEEDED_MODE_DEFAULT_NAME[mode.id];
+    if (i18nKey && seedDefault && mode.name === seedDefault) return t(i18nKey);
+    return mode.name;
   })();
 
   // Draft state for the edit form
@@ -177,9 +196,7 @@ export const SmartModeCard: React.FC<SmartModeCardProps> = ({
           {/* Name field */}
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium">
-              {t("settings.postProcessing.prompts.nameLabel", {
-                defaultValue: "Name",
-              })}
+              {t("smartModes.card.nameLabel")}
             </label>
             <Input
               variant="compact"
@@ -193,9 +210,7 @@ export const SmartModeCard: React.FC<SmartModeCardProps> = ({
           {kind === "rewrite" && (
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium">
-                {t("settings.postProcessing.prompts.promptLabel", {
-                  defaultValue: "Prompt",
-                })}
+                {t("smartModes.card.promptLabel")}
               </label>
               <Textarea
                 variant="compact"
@@ -295,44 +310,46 @@ export const SmartModeCard: React.FC<SmartModeCardProps> = ({
           )}
         </div>
 
-        {/* Edit / delete (hidden when disabled) */}
-        {!disabled && (
-          <div className="flex items-center gap-1 shrink-0">
-            <button
-              type="button"
-              aria-label={t("smartModes.edit.ariaLabel", { name: displayName })}
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsEditing(true);
-              }}
-              className="p-0.5 rounded focus:outline-none"
-            >
-              <Pencil className="w-4 h-4 text-mid-gray/50 hover:text-text" />
-            </button>
-            <button
-              type="button"
-              aria-label={t("smartModes.delete.ariaLabel", {
-                name: displayName,
-              })}
-              onClick={(e) => {
-                e.stopPropagation();
-                void handleDelete();
-              }}
-              className="p-0.5 rounded focus:outline-none"
-            >
-              <Trash2 className="w-4 h-4 text-mid-gray/50 hover:text-red-400" />
-            </button>
-          </div>
-        )}
+        {/* Shortcut chip + edit/delete (hidden when disabled) */}
+        <div className="flex items-center gap-1 shrink-0">
+          <SmartModeShortcutChip
+            modeId={mode.id}
+            currentBinding={currentBinding}
+            disabled={disabled}
+            onBound={onChanged}
+          />
+          {!disabled && (
+            <>
+              <button
+                type="button"
+                aria-label={t("smartModes.edit.ariaLabel", {
+                  name: displayName,
+                })}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEditing(true);
+                }}
+                className="p-0.5 rounded focus:outline-none"
+              >
+                <Pencil className="w-4 h-4 text-mid-gray/50 hover:text-text" />
+              </button>
+              <button
+                type="button"
+                aria-label={t("smartModes.delete.ariaLabel", {
+                  name: displayName,
+                })}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void handleDelete();
+                }}
+                className="p-0.5 rounded focus:outline-none"
+              >
+                <Trash2 className="w-4 h-4 text-mid-gray/50 hover:text-red-400" />
+              </button>
+            </>
+          )}
+        </div>
       </div>
-
-      {/* Shortcut chip row */}
-      <SmartModeShortcutChip
-        modeId={mode.id}
-        currentBinding={currentBinding}
-        disabled={disabled}
-        onBound={onChanged}
-      />
     </div>
   );
 };
