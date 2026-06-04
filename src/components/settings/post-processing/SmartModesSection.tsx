@@ -158,12 +158,31 @@ export const SmartModesSection: React.FC = () => {
 
       {/* Translation section */}
       <div className="space-y-2">
-        <div className="px-4">
+        <div className="px-4 flex items-center justify-between gap-2">
           <h2
             className={`text-xs font-medium uppercase tracking-wide ${translationEnabled ? "text-mid-gray" : "text-amber-500"}`}
           >
             {t("smartModes.sections.translation")}
           </h2>
+          {translationEnabled && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-mid-gray">
+                {t("smartModes.translation.currentEngine", {
+                  engine:
+                    engineChoice === "translate_gemma"
+                      ? t("smartModes.translation.engineGemma")
+                      : t("smartModes.translation.engineGeneric"),
+                })}
+              </span>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setModalOpen(true)}
+              >
+                {t("smartModes.translation.changeEngine")}
+              </Button>
+            </div>
+          )}
         </div>
         <div className="flex flex-col gap-2">
           {translations.map((mode) => (
