@@ -96,11 +96,7 @@ async fn post_process_with_prompt(
         if !llm_manager.is_model_loaded() {
             if let Some(active_id) = &settings.active_llm_model_id {
                 if let Err(e) = llm_manager.load_model(active_id).await {
-                    log::error!(
-                        "Embedded LLM failed to load model '{}': {}",
-                        active_id,
-                        e
-                    );
+                    log::error!("Embedded LLM failed to load model '{}': {}", active_id, e);
                     return None;
                 }
             } else {
@@ -734,9 +730,13 @@ fn spawn_transcription_task(
                             show_processing_overlay(&ah);
                         }
                         let mode_id_ref = mode_id_override.as_deref();
-                        let processed =
-                            process_transcription_output(&ah, &transcription, post_process, mode_id_ref)
-                                .await;
+                        let processed = process_transcription_output(
+                            &ah,
+                            &transcription,
+                            post_process,
+                            mode_id_ref,
+                        )
+                        .await;
 
                         // Save to history if WAV was saved
                         if wav_saved {
@@ -783,13 +783,9 @@ fn spawn_transcription_task(
                         debug!("Global Shortcut Transcription error: {}", err);
                         // Save entry with empty text so user can retry
                         if wav_saved {
-                            if let Err(save_err) = hm.save_entry(
-                                file_name,
-                                String::new(),
-                                post_process,
-                                None,
-                                None,
-                            ) {
+                            if let Err(save_err) =
+                                hm.save_entry(file_name, String::new(), post_process, None, None)
+                            {
                                 error!("Failed to save failed history entry: {}", save_err);
                             }
                         }
@@ -904,10 +900,7 @@ async fn run_translation(
                 match &settings.active_llm_model_id {
                     Some(id) => {
                         if let Err(e) = llm_manager.load_model(id).await {
-                            log::error!(
-                                "Active model failed to load for translation: {}",
-                                e
-                            );
+                            log::error!("Active model failed to load for translation: {}", e);
                             return None;
                         }
                     }

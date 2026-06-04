@@ -303,7 +303,8 @@ impl LlmManager {
                         let now_ms = Self::now_ms();
                         let idle_ms = now_ms.saturating_sub(last);
 
-                        if should_unload(idle_ms, limit_seconds) && manager_cloned.is_model_loaded() {
+                        if should_unload(idle_ms, limit_seconds) && manager_cloned.is_model_loaded()
+                        {
                             info!(
                                 "LLM model idle for {}s (limit: {}s), unloading",
                                 idle_ms / 1000,
@@ -377,8 +378,7 @@ impl LlmManager {
 
     /// Validates the first 4 bytes of a file are the GGUF magic `b"GGUF"`.
     pub fn validate_gguf_header(path: &Path) -> Result<(), String> {
-        let mut file = File::open(path)
-            .map_err(|e| format!("Failed to open file: {}", e))?;
+        let mut file = File::open(path).map_err(|e| format!("Failed to open file: {}", e))?;
         let mut magic = [0u8; 4];
         file.read_exact(&mut magic)
             .map_err(|_| "File too small to be a GGUF model".to_string())?;
@@ -632,9 +632,7 @@ impl LlmManager {
         }
 
         // SHA256 verification on blocking thread
-        let _ = self
-            .app_handle
-            .emit("llm-verification-started", model_id);
+        let _ = self.app_handle.emit("llm-verification-started", model_id);
         info!("Verifying SHA256 for LLM model {}...", model_id);
         let verify_path = partial_path.clone();
         let verify_expected = model_info.sha256.clone();
@@ -645,9 +643,7 @@ impl LlmManager {
         .await
         .map_err(|e| anyhow::anyhow!("SHA256 task panicked: {}", e))?;
         verify_result?;
-        let _ = self
-            .app_handle
-            .emit("llm-verification-completed", model_id);
+        let _ = self.app_handle.emit("llm-verification-completed", model_id);
 
         // Move partial to final path (single flat file — no extraction needed)
         fs::rename(&partial_path, &model_path)?;
@@ -791,9 +787,7 @@ impl LlmManager {
             models.insert(id, info.clone());
         }
 
-        let _ = self
-            .app_handle
-            .emit("llm-custom-model-imported", &info);
+        let _ = self.app_handle.emit("llm-custom-model-imported", &info);
 
         Ok(info)
     }
@@ -811,10 +805,7 @@ impl LlmManager {
                 .get(model_id)
                 .ok_or_else(|| anyhow::anyhow!("LLM model not found: {}", model_id))?;
             if !info.is_downloaded {
-                return Err(anyhow::anyhow!(
-                    "LLM model not downloaded: {}",
-                    model_id
-                ));
+                return Err(anyhow::anyhow!("LLM model not downloaded: {}", model_id));
             }
             self.models_dir.join(&info.filename)
         };
@@ -897,11 +888,8 @@ impl LlmManager {
             // instructions, and runaway repetition.
             let formatted = match model_arc.chat_template(None) {
                 Ok(tmpl) => {
-                    let messages = vec![LlamaChatMessage::new(
-                        "user".to_string(),
-                        prompt.clone(),
-                    )
-                    .map_err(|e| anyhow::anyhow!("Failed to build chat message: {}", e))?];
+                    let messages = vec![LlamaChatMessage::new("user".to_string(), prompt.clone())
+                        .map_err(|e| anyhow::anyhow!("Failed to build chat message: {}", e))?];
                     model_arc
                         .apply_chat_template(&tmpl, &messages, true)
                         .map_err(|e| anyhow::anyhow!("Failed to apply chat template: {}", e))?
@@ -909,10 +897,7 @@ impl LlmManager {
                 Err(e) => {
                     // No embedded template (e.g. a base/non-instruct GGUF): fall back
                     // to the raw prompt rather than failing the request.
-                    warn!(
-                        "LLM model has no chat template ({}); using raw prompt",
-                        e
-                    );
+                    warn!("LLM model has no chat template ({}); using raw prompt", e);
                     prompt.clone()
                 }
             };
@@ -1047,11 +1032,7 @@ mod tests {
     fn test_catalogue_sizes_nonzero() {
         let catalogue = LlmManager::catalogue();
         for entry in &catalogue {
-            assert!(
-                entry.size_mb > 0,
-                "Model '{}' has size_mb == 0",
-                entry.id
-            );
+            assert!(entry.size_mb > 0, "Model '{}' has size_mb == 0", entry.id);
         }
     }
 
@@ -1084,11 +1065,12 @@ mod tests {
     #[test]
     fn test_catalogue_recommended_is_qwen25() {
         let catalogue = LlmManager::catalogue();
-        let recommended: Vec<_> = catalogue
-            .iter()
-            .filter(|m| m.is_recommended)
-            .collect();
-        assert_eq!(recommended.len(), 1, "Expected exactly one recommended model");
+        let recommended: Vec<_> = catalogue.iter().filter(|m| m.is_recommended).collect();
+        assert_eq!(
+            recommended.len(),
+            1,
+            "Expected exactly one recommended model"
+        );
         assert_eq!(
             recommended[0].id, "qwen2.5-1.5b",
             "Recommended model should be 'qwen2.5-1.5b'"
@@ -1127,7 +1109,8 @@ mod tests {
         let temp_dir = TempDir::new().unwrap();
         let path = temp_dir.path().join("valid.gguf");
         let mut f = File::create(&path).unwrap();
-        f.write_all(b"GGUF\x00\x00\x00\x00garbage data here").unwrap();
+        f.write_all(b"GGUF\x00\x00\x00\x00garbage data here")
+            .unwrap();
         drop(f);
         assert!(LlmManager::validate_gguf_header(&path).is_ok());
     }
@@ -1171,15 +1154,10 @@ mod tests {
         drop(f);
         let hash = LlmManager::compute_sha256(&path).unwrap();
         // The computed hash is the ground truth — verified at test run time
-        assert_eq!(
-            hash.len(),
-            64,
-            "SHA256 hex digest should be 64 characters"
-        );
+        assert_eq!(hash.len(), 64, "SHA256 hex digest should be 64 characters");
         // Verify it matches the known SHA256 of "hello world"
         assert_eq!(
-            hash,
-            "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9",
+            hash, "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9",
             "SHA256 hash mismatch for known input"
         );
     }

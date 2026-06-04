@@ -67,9 +67,7 @@ pub async fn set_active_llm_model(
 
 #[tauri::command]
 #[specta::specta]
-pub async fn get_active_llm_model(
-    app_handle: AppHandle,
-) -> Result<Option<String>, String> {
+pub async fn get_active_llm_model(app_handle: AppHandle) -> Result<Option<String>, String> {
     let settings = get_settings(&app_handle);
     Ok(settings.active_llm_model_id)
 }
