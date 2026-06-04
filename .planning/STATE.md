@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-29 after starting milestone v1.3)
 ## Current Position
 
 Phase: 13 of 13 (Smart Modes UI + Translation Engine + Presets i18n) — IN PROGRESS
-Plan: 13-01/02/03 complete; 13-04 task 1 committed (legacy UI removed, SmartModesSection mounted); 13-04 task 2 (E2E verify) surfaced gaps
-Status: UAT at 13-04 checkpoint found 8 gaps (see 13-UAT.md) — routing to gap closure. Tests 1 & 5 passed; tests 2/3/4/6 issued.
-Last activity: 2026-06-04 — Phase 13 UAT: shortcut UX broken (multi-key combo, delete, stale Option binding) = blocker; card title not refreshing; translation engine choice locked; mode-defaults redesign requested (picker + Clean-Up-only seed); double '+' on create buttons
+Plan: 13-01/02/03 complete; 13-04 checkpoint done; 13-05 complete (backend gap closure: clear_smart_mode_binding, legacy shortcut retired, Clean-Up-only seed, smart_mode_templates command)
+Status: Gap closure underway — 13-05 backend done; 13-06 (shortcut UX) and 13-07 (create-picker / mode-defaults UI) remain.
+Last activity: 2026-06-04 — 13-05 complete: clear_smart_mode_binding command added; transcribe_with_post_process global shortcut retired from all 4 init/register paths; first-run seeding narrowed to Clean Up only; smart_mode_templates command exposes full 10-mode catalogue
 
-Progress: [████████░░] ~80% (3.5/4 plans; gap closure pending)
+Progress: [████████░░] ~85% (4.5/4 plans equivalent; gap closure 13-05 done, 2 remaining)
 
 ## Performance Metrics
 
@@ -58,6 +58,7 @@ Progress: [████████░░] ~80% (3.5/4 plans; gap closure pendin
 | Phase 13-smart-modes-ui-translation-presets-i18n P02 | 5 | 2 tasks | 20 files |
 | Phase 13 P01 | 126 | 3 tasks | 7 files |
 | Phase 13-smart-modes-ui-translation-presets-i18n P03 | 15 | 3 tasks | 4 files |
+| Phase 13 P05 (gap-closure backend) | 4 | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -95,6 +96,9 @@ Progress: [████████░░] ~80% (3.5/4 plans; gap closure pendin
 - [Phase 13]: [Phase 13-01]: TranslateGemma SHA256 computed from real file download (7f7357c14abd9da4eb200b38b05da502cd6e10d7e1d403fbc9f78c19f3209b72); run_translation dispatches per TranslationEngineChoice — NotChosen=warn+None, TranslateGemma=native template format, GenericModel=explicit prompt with target label
 - [Phase 13]: SmartModeShortcutChip routes through setSmartModeBinding exclusively (not updateBinding); suspend/resume is best-effort; dir=ltr on chip for RTL safety
 - [Phase 13]: SmartModesSection renders custom h2 elements instead of SettingsGroup to support dynamic amber color on Translation header
+- [Phase 13-05]: clear_smart_mode_binding deletes binding entry entirely (not empty-set) so init_shortcuts never re-registers it
+- [Phase 13-05]: transcribe_with_post_process retired only as a persisted global shortcut; action string kept in coordinator/actions/signal/CLI for --toggle-post-process CLI flag
+- [Phase 13-05]: smart_mode_templates() is the 10-mode catalogue source (pub); default_smart_modes() seeds only Clean Up for first-run and migration
 
 ### Pending Todos
 
