@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-05-29 after starting milestone v1.3)
 
 ## Current Position
 
-Phase: 12 of 13 (Smart Modes Data Layer) — COMPLETE (3/3 plans) — PASS
-Plan: — (Phase 12 done; Phase 13 next)
-Status: Phase 12 complete; Phase 13 (Smart Modes UI + Translation Engine) is the next phase
-Last activity: 2026-06-03 — Phase 12 plan 03 complete: smart_mode_ routing wired end-to-end (is_transcribe_binding prefix, SmartModeAction, spawn_transcription_task, mode_id_override, both init loops)
+Phase: 13 of 13 (Smart Modes UI + Translation Engine + Presets i18n) — IN PROGRESS
+Plan: 13-01/02/03 complete; 13-04 task 1 committed (legacy UI removed, SmartModesSection mounted); 13-04 task 2 (E2E verify) surfaced gaps
+Status: UAT at 13-04 checkpoint found 8 gaps (see 13-UAT.md) — routing to gap closure. Tests 1 & 5 passed; tests 2/3/4/6 issued.
+Last activity: 2026-06-04 — Phase 13 UAT: shortcut UX broken (multi-key combo, delete, stale Option binding) = blocker; card title not refreshing; translation engine choice locked; mode-defaults redesign requested (picker + Clean-Up-only seed); double '+' on create buttons
 
-Progress: [█████░░░░░] ~50%
+Progress: [████████░░] ~80% (3.5/4 plans; gap closure pending)
 
 ## Performance Metrics
 
