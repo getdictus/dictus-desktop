@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
 status: completed
-stopped_at: Completed 13-06-PLAN.md
-last_updated: "2026-06-04T10:00:45.164Z"
+stopped_at: Completed 13-07-PLAN.md
+last_updated: "2026-06-04T10:04:46.638Z"
 last_activity: "2026-06-04 — 13-05 complete: clear_smart_mode_binding command added; transcribe_with_post_process global shortcut retired from all 4 init/register paths; first-run seeding narrowed to Clean Up only; smart_mode_templates command exposes full 10-mode catalogue"
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 18
-  completed_plans: 16
+  completed_plans: 17
   percent: 85
 ---
 
@@ -60,6 +60,7 @@ Progress: [████████░░] ~85% (4.5/4 plans equivalent; gap clo
 | Phase 13-smart-modes-ui-translation-presets-i18n P03 | 15 | 3 tasks | 4 files |
 | Phase 13 P05 (gap-closure backend) | 4 | 3 tasks | 5 files |
 | Phase 13 P06 | 15 | 2 tasks | 22 files |
+| Phase 13 P07 | 45 | 4 tasks | 24 files |
 
 ## Accumulated Context
 
@@ -102,6 +103,9 @@ Progress: [████████░░] ~85% (4.5/4 plans equivalent; gap clo
 - [Phase 13-05]: smart_mode_templates() is the 10-mode catalogue source (pub); default_smart_modes() seeds only Clean Up for first-run and migration
 - [Phase 13]: Commit shortcut on first non-modifier keydown (not keyup drain) — fixes macOS Cmd+key swallow where OS never fires keyup for non-modifier while Cmd held
 - [Phase 13]: [Phase 13-06]: English fallback values used verbatim in all 19 non-English locales for new shortcut.* keys (clear/clearAriaLabel/recording) — real translations deferred
+- [Phase 13-07]: SEEDED_MODE_ID_TO_I18N_KEY exported from SmartModeCard so SmartModeTemplatePicker can localize template names without duplicating the map
+- [Phase 13-07]: SmartModeTemplatePicker uses addSmartMode (new id) not seeded id — prevents id collision when user deletes a default and recreates it via picker
+- [Phase 13-07]: smartModeTemplates() added manually to bindings.ts returning SmartMode[] (no Result) — infallible command, follows getAvailableTypingTools() pattern
 
 ### Pending Todos
 
@@ -117,6 +121,6 @@ Progress: [████████░░] ~85% (4.5/4 plans equivalent; gap clo
 
 ## Session Continuity
 
-Last session: 2026-06-04T10:00:45.162Z
-Stopped at: Completed 13-06-PLAN.md
+Last session: 2026-06-04T10:04:46.636Z
+Stopped at: Completed 13-07-PLAN.md
 Resume file: None
