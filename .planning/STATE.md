@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
 status: completed
-stopped_at: Completed 13-07-PLAN.md
-last_updated: "2026-06-04T10:04:46.638Z"
-last_activity: "2026-06-04 — 13-05 complete: clear_smart_mode_binding command added; transcribe_with_post_process global shortcut retired from all 4 init/register paths; first-run seeding narrowed to Clean Up only; smart_mode_templates command exposes full 10-mode catalogue"
+stopped_at: "Phase 13 live UAT + post-UAT fixes done; 13-08 formal closure (SUMMARY + VERIFICATION) pending"
+last_updated: "2026-06-05T10:45:00.000Z"
+last_activity: "2026-06-05 — Live UAT of Phase 13 surfaced (and we fixed) several real issues beyond the original 8 gaps: settings-store refresh after shortcut bind/clear, infinite-loop webview crash in translation modal, ErrorBoundary, download UX (progress/verify), modifier-only shortcuts (Option), and language-preservation directive. Major decision: TranslateGemma DROPPED (benchmark showed a same-size generic Gemma-3-4B matches/beats it reliably); translation now uses the active generic model. All work committed (35e63d9, f8dc2c0, dd4f9e7)."
 progress:
   total_phases: 4
   completed_phases: 3
@@ -25,12 +25,18 @@ See: .planning/PROJECT.md (updated 2026-05-29 after starting milestone v1.3)
 
 ## Current Position
 
-Phase: 13 of 13 (Smart Modes UI + Translation Engine + Presets i18n) — IN PROGRESS
-Plan: 13-01/02/03 complete; 13-04 checkpoint done; 13-05 complete (backend gap closure: clear_smart_mode_binding, legacy shortcut retired, Clean-Up-only seed, smart_mode_templates command)
-Status: Gap closure underway — 13-05 backend done; 13-06 (shortcut UX) and 13-07 (create-picker / mode-defaults UI) remain.
-Last activity: 2026-06-04 — 13-05 complete: clear_smart_mode_binding command added; transcribe_with_post_process global shortcut retired from all 4 init/register paths; first-run seeding narrowed to Clean Up only; smart_mode_templates command exposes full 10-mode catalogue
+Phase: 13 of 13 (Smart Modes UI + Translation Engine + Presets i18n) — IN PROGRESS (functionally done, GSD closure pending)
+Plan: 13-01..13-07 complete (SUMMARYs present). 13-08 (UAT re-verification) was run as a LIVE session rather than a checkpoint — it found real issues that were fixed directly (see Decisions). 13-08 SUMMARY + VERIFICATION.md + `phase complete` still pending.
+Status: All 8 original gaps + several newly-discovered live-UAT issues are FIXED and committed. App verified working in live tests (FR rewrite/translate output stays French; shortcuts; modal; no crash).
 
-Progress: [████████░░] ~85% (4.5/4 plans equivalent; gap closure 13-05 done, 2 remaining)
+### Remaining before formal phase closure
+- Generate 13-08-SUMMARY.md + 13-VERIFICATION.md, run `gsd-tools phase complete 13`.
+- Manual tests still worth doing: Option-only shortcut on a mode; set Gemma-3-4B as ACTIVE model and validate rewrite + translation quality; confirm no mode re-downloads/re-crashes.
+
+### Next session (post /clear) — NEW WORK
+- **Improve/adapt the default Smart Mode prompts.** User finds output quality on the default prompts (clean-up, email, bullets, etc.) not quite matching intent; wants to refine the prompt wording. This is a fresh task, not part of Phase 13 gap closure.
+
+Progress: [█████████░] ~95% (Phase 13 functionally complete; formal GSD closure pending)
 
 ## Performance Metrics
 
@@ -106,6 +112,11 @@ Progress: [████████░░] ~85% (4.5/4 plans equivalent; gap clo
 - [Phase 13-07]: SEEDED_MODE_ID_TO_I18N_KEY exported from SmartModeCard so SmartModeTemplatePicker can localize template names without duplicating the map
 - [Phase 13-07]: SmartModeTemplatePicker uses addSmartMode (new id) not seeded id — prevents id collision when user deletes a default and recreates it via picker
 - [Phase 13-07]: smartModeTemplates() added manually to bindings.ts returning SmartMode[] (no Result) — infallible command, follows getAvailableTypingTools() pattern
+- [Phase 13 post-UAT]: **TranslateGemma DROPPED.** Controlled benchmark (`src-tauri/examples/translation_ab.rs`, 14 texts x 4 models) — a same-size generic (Gemma-3-4B) matches/beats the dedicated translate model on quality AND is far more reliable (TranslateGemma had runaway generation, hallucinated continuations, self-emitted `<<<note>>>` markers, ~6/14 polluted outputs; Gemma-3-4B 0/14). Removed from catalogue; `TranslationEngineChoice::TranslateGemma` enum variant kept for settings back-compat, treated as GenericModel. Translation routes through the active LLM model.
+- [Phase 13 post-UAT]: Output-language fix — small LLMs answer in the language of the (English) instructions and ignore "preserve the language". Fix: detect input language (whatlang) and inject an explicit "write your entire response in {lang}" directive, placed FIRST (appending after the base lands it next to the trailing `Text:` label → model echoes it into the output). Directive defers to explicit-translation prompts.
+- [Phase 13 post-UAT]: Settings store must be refreshed after shortcut bind/clear/edit — SmartModeCard reads bindings from the Zustand settings store, but the chip mutates via direct commands; refetchModes now also calls refreshSettings.
+- [Phase 13 post-UAT]: Modifier-only shortcuts (e.g. Option alone) commit on modifier RELEASE when no main key was pressed; combos still commit on main keydown. Guarded against double-commit.
+- [Phase 13 post-UAT]: Translation modal infinite loop fixed — `useLlmModelStore()` whole-store subscription + store-dependent effect caused refresh->re-render->refresh (froze UI / webview black-screen). Use narrow selectors + effect depending only on `open`. Root ErrorBoundary added as a backstop.
 
 ### Pending Todos
 
