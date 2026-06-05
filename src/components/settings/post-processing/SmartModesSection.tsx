@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Plus } from "lucide-react";
-import type { SmartMode, TargetLanguage } from "@/bindings";
+import type { PostProcessProvider, SmartMode, TargetLanguage } from "@/bindings";
 import { commands } from "@/bindings";
 import { Button } from "@/components/ui/Button";
 import { useSettings } from "@/hooks/useSettings";
@@ -101,6 +101,19 @@ export const SmartModesSection: React.FC = () => {
   const llmModels = useLlmModelStore((s) => s.models);
   const activeModelName =
     llmModels.find((m) => m.id === activeModelId)?.name ?? null;
+
+  // Resolve the active-engine descriptor for the translation modal.
+  // Uses the GGUF model name when one is active; otherwise falls back to the
+  // active post-process provider's display label (covers Apple Intelligence,
+  // cloud providers, etc.).
+  const providerId = (getSetting("post_process_provider_id") as string | undefined) ?? "";
+  const providers = (getSetting("post_process_providers") as PostProcessProvider[] | undefined) ?? [];
+  const activeEngineName: string | null =
+    activeModelName ??
+    providers.find((p) => p.id === providerId)?.label ??
+    (providerId ? providerId : null);
+  // True only when the active GGUF model is the recommended Gemma 3 4B
+  const activeIsRecommended = activeModelId === "gemma-3-4b";
 
   const refetchModes = useCallback(async () => {
     const r = await commands.listSmartModes();
@@ -253,6 +266,9 @@ export const SmartModesSection: React.FC = () => {
       <TranslationEngineChoiceModal
         open={modalOpen}
         enabled={translationEnabled}
+        engineChoice={engineChoice as string}
+        activeEngineName={activeEngineName}
+        activeIsRecommended={activeIsRecommended}
         onClose={() => setModalOpen(false)}
         onChosen={() => {
           void refreshSettings?.();

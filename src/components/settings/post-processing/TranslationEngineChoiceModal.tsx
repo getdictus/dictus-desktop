@@ -14,20 +14,25 @@ interface TranslationEngineChoiceModalProps {
   open: boolean;
   /** Whether translation is currently enabled (engine already chosen). */
   enabled?: boolean;
+  /** Persisted translation engine choice: "not_chosen" | "translate_gemma" | "generic_model" */
+  engineChoice?: string;
+  /** Resolved display name of the currently active engine (GGUF model name or provider label). */
+  activeEngineName?: string | null;
+  /** True only when the active GGUF model is the recommended Gemma 3 4B. */
+  activeIsRecommended?: boolean;
   onClose: () => void;
   onChosen: () => void;
 }
 
 export const TranslationEngineChoiceModal: React.FC<
   TranslationEngineChoiceModalProps
-> = ({ open, enabled = false, onClose, onChosen }) => {
+> = ({ open, enabled = false, engineChoice, activeEngineName, activeIsRecommended = false, onClose, onChosen }) => {
   const { t } = useTranslation();
   // Select only the slices we read (subscribing to the whole store would cause
   // a refresh→re-render loop).
   const models = useLlmModelStore((s) => s.models);
   const downloadProgress = useLlmModelStore((s) => s.downloadProgress);
   const verifyingModels = useLlmModelStore((s) => s.verifyingModels);
-  const activeModelId = useLlmModelStore((s) => s.activeModelId);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,13 +58,16 @@ export const TranslationEngineChoiceModal: React.FC<
     (recModel?.is_downloading ?? false) ||
     RECOMMENDED_MODEL_ID in downloadProgress;
   const recPct = downloadProgress[RECOMMENDED_MODEL_ID]?.percentage;
-  const recActive = enabled && activeModelId === RECOMMENDED_MODEL_ID;
 
-  const activeModel = models.find((m) => m.id === activeModelId);
-  const activeName = activeModel?.name ?? null;
-  const activeDownloaded = activeModel?.is_downloaded ?? false;
-  const currentActiveSelected =
-    enabled && activeModelId != null && activeModelId !== RECOMMENDED_MODEL_ID;
+  // Drive active-engine badge from persisted engineChoice + activeIsRecommended prop,
+  // not from activeModelId (which is null for non-GGUF providers like Apple Intelligence).
+  const chosen =
+    engineChoice === "generic_model" || engineChoice === "translate_gemma";
+  // "Recommended Gemma" badge: a choice is made AND the active engine IS Gemma 3 4B
+  const recActive = chosen && activeIsRecommended;
+  // "Use current model" badge: a choice is made AND the active engine is NOT the recommended Gemma
+  // (covers Apple Intelligence, cloud providers, custom, and non-Gemma GGUF models)
+  const currentActiveSelected = chosen && !activeIsRecommended;
 
   // Enable translation, optionally switching the active model first.
   const enableWith = async (setActiveTo?: string) => {
@@ -184,9 +192,9 @@ export const TranslationEngineChoiceModal: React.FC<
               )}
             </div>
             <p className="text-sm text-text/60 mt-1">
-              {activeName && activeDownloaded
+              {activeEngineName
                 ? t("smartModes.translation.modal.currentSubtext", {
-                    model: activeName,
+                    model: activeEngineName,
                   })
                 : t("smartModes.translation.modal.currentNone")}
             </p>
@@ -194,7 +202,7 @@ export const TranslationEngineChoiceModal: React.FC<
           <Button
             variant="secondary"
             size="md"
-            disabled={busy || !activeDownloaded || currentActiveSelected}
+            disabled={busy || currentActiveSelected || activeEngineName == null}
             onClick={() => void enableWith()}
           >
             {currentActiveSelected
