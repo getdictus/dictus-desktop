@@ -5,6 +5,7 @@ import type { SmartMode, TargetLanguage } from "@/bindings";
 import { commands } from "@/bindings";
 import { Button } from "@/components/ui/Button";
 import { useSettings } from "@/hooks/useSettings";
+import { useLlmModelStore } from "@/stores/llmModelStore";
 import { SmartModeCard } from "./SmartModeCard";
 import { SmartModeTemplatePicker } from "./SmartModeTemplatePicker";
 import { TranslationEngineChoiceModal } from "./TranslationEngineChoiceModal";
@@ -92,18 +93,24 @@ export const SmartModesSection: React.FC = () => {
   const engineChoice = getSetting("translation_engine_choice") ?? "not_chosen";
   const translationEnabled = engineChoice !== "not_chosen";
 
-  const availableLanguages =
-    engineChoice === "translate_gemma"
-      ? TRANSLATE_GEMMA_LANGUAGES
-      : GENERIC_LANGUAGES;
-  const genericEngineNote = engineChoice === "generic_model";
+  // Translation always runs through the active generic LLM model now.
+  const availableLanguages = GENERIC_LANGUAGES;
+  const genericEngineNote = translationEnabled;
+
+  const activeModelId = useLlmModelStore((s) => s.activeModelId);
+  const llmModels = useLlmModelStore((s) => s.models);
+  const activeModelName =
+    llmModels.find((m) => m.id === activeModelId)?.name ?? null;
 
   const refetchModes = useCallback(async () => {
     const r = await commands.listSmartModes();
     if (r.status === "ok") {
       setModes(r.data);
     }
-  }, []);
+    // Shortcut bindings live in the settings store (not in SmartMode), so any
+    // mode/binding change must refresh settings or the chip display goes stale.
+    await refreshSettings?.();
+  }, [refreshSettings]);
 
   useEffect(() => {
     void refetchModes();
@@ -168,10 +175,7 @@ export const SmartModesSection: React.FC = () => {
             <div className="flex items-center gap-2">
               <span className="text-xs text-mid-gray">
                 {t("smartModes.translation.currentEngine", {
-                  engine:
-                    engineChoice === "translate_gemma"
-                      ? t("smartModes.translation.engineGemma")
-                      : t("smartModes.translation.engineGeneric"),
+                  engine: activeModelName ?? t("smartModes.translation.engineGeneric"),
                 })}
               </span>
               <Button
@@ -248,6 +252,7 @@ export const SmartModesSection: React.FC = () => {
 
       <TranslationEngineChoiceModal
         open={modalOpen}
+        enabled={translationEnabled}
         onClose={() => setModalOpen(false)}
         onChosen={() => {
           void refreshSettings?.();

@@ -1,125 +1,218 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { commands } from "@/bindings";
 import { Button } from "@/components/ui/Button";
 import { useLlmModelStore } from "@/stores/llmModelStore";
 
-const TRANSLATE_GEMMA_MODEL_ID = "translate-gemma-4b";
+// Model recommended for translation. A general-purpose 4B model gives clean,
+// reliable translation across languages/idioms (benchmarked to match or beat a
+// dedicated translation model, without its runaway-output issues).
+const RECOMMENDED_MODEL_ID = "gemma-3-4b";
 
 interface TranslationEngineChoiceModalProps {
   open: boolean;
+  /** Whether translation is currently enabled (engine already chosen). */
+  enabled?: boolean;
   onClose: () => void;
   onChosen: () => void;
 }
 
 export const TranslationEngineChoiceModal: React.FC<
   TranslationEngineChoiceModalProps
-> = ({ open, onClose, onChosen }) => {
+> = ({ open, enabled = false, onClose, onChosen }) => {
   const { t } = useTranslation();
-  const store = useLlmModelStore();
+  // Select only the slices we read (subscribing to the whole store would cause
+  // a refresh→re-render loop).
+  const models = useLlmModelStore((s) => s.models);
+  const downloadProgress = useLlmModelStore((s) => s.downloadProgress);
+  const verifyingModels = useLlmModelStore((s) => s.verifyingModels);
+  const activeModelId = useLlmModelStore((s) => s.activeModelId);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
-    void store.refresh();
+    const { refresh, initListeners } = useLlmModelStore.getState();
+    void refresh();
     let unlistenFn: (() => void) | null = null;
-    void store.initListeners().then((fn) => {
+    void initListeners().then((fn) => {
       unlistenFn = fn;
     });
     return () => {
       unlistenFn?.();
     };
-  }, [open, store]);
+  }, [open]);
 
   if (!open) return null;
 
-  const gemmaModel = store.models.find((m) => m.id === TRANSLATE_GEMMA_MODEL_ID);
-  const isDownloaded = gemmaModel?.is_downloaded ?? false;
-  const isDownloading =
-    gemmaModel?.is_downloading ??
-    TRANSLATE_GEMMA_MODEL_ID in store.downloadProgress;
-  const downloadPercentage =
-    store.downloadProgress[TRANSLATE_GEMMA_MODEL_ID]?.percentage;
+  const recModel = models.find((m) => m.id === RECOMMENDED_MODEL_ID);
+  const recDownloaded = recModel?.is_downloaded ?? false;
+  const recVerifying = verifyingModels[RECOMMENDED_MODEL_ID] ?? false;
+  const recDownloading =
+    (recModel?.is_downloading ?? false) ||
+    RECOMMENDED_MODEL_ID in downloadProgress;
+  const recPct = downloadProgress[RECOMMENDED_MODEL_ID]?.percentage;
+  const recActive = enabled && activeModelId === RECOMMENDED_MODEL_ID;
 
-  const handleDownloadGemma = () => {
-    void store.downloadModel(TRANSLATE_GEMMA_MODEL_ID);
-  };
+  const activeModel = models.find((m) => m.id === activeModelId);
+  const activeName = activeModel?.name ?? null;
+  const activeDownloaded = activeModel?.is_downloaded ?? false;
+  const currentActiveSelected =
+    enabled && activeModelId != null && activeModelId !== RECOMMENDED_MODEL_ID;
 
-  const handleUseGemma = async () => {
-    const res = await commands.setTranslationEngineChoice("translate_gemma");
-    if (res.status === "ok") {
-      onChosen();
-      onClose();
+  // Enable translation, optionally switching the active model first.
+  const enableWith = async (setActiveTo?: string) => {
+    setError(null);
+    setBusy(true);
+    try {
+      if (setActiveTo) {
+        await useLlmModelStore.getState().setActiveModel(setActiveTo);
+      }
+      const res = await commands.setTranslationEngineChoice("generic_model");
+      if (res.status === "ok") {
+        onChosen();
+        onClose();
+      } else {
+        setError(res.error ?? t("smartModes.translation.modal.applyFailed"));
+      }
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : t("smartModes.translation.modal.applyFailed"),
+      );
+    } finally {
+      setBusy(false);
     }
   };
 
-  const handleUseGeneric = async () => {
-    const res = await commands.setTranslationEngineChoice("generic_model");
-    if (res.status === "ok") {
-      onChosen();
-      onClose();
-    }
+  const handleDownloadRec = () => {
+    void useLlmModelStore.getState().downloadModel(RECOMMENDED_MODEL_ID);
   };
 
   return (
-    /* Overlay backdrop */
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="relative bg-background border border-mid-gray/20 rounded-xl shadow-xl p-6 max-w-md w-full mx-4 flex flex-col gap-6">
-        {/* Option A: Dedicated translation model */}
-        <div className="flex flex-col gap-3 p-4 rounded-xl border-2 border-mid-gray/20">
+        <p className="text-base font-medium pr-6">
+          {t("smartModes.translation.modal.title")}
+        </p>
+
+        {/* Option A: recommended model (Gemma 3 4B) */}
+        <div
+          className={`flex flex-col gap-3 p-4 rounded-xl border-2 ${recActive ? "border-logo-primary bg-logo-primary/5" : "border-mid-gray/20"}`}
+        >
           <div>
-            <p className="text-base font-medium">
-              {t("smartModes.translation.modal.dedicatedHeading")}
-            </p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-base font-medium">
+                {t("smartModes.translation.modal.recommendedHeading")}
+              </p>
+              {recActive && (
+                <span className="inline-flex items-center gap-1 shrink-0 text-xs font-medium text-logo-primary">
+                  <Check className="w-3.5 h-3.5" />
+                  {t("smartModes.translation.modal.activeBadge")}
+                </span>
+              )}
+            </div>
             <p className="text-sm text-text/60 mt-1">
-              {t("smartModes.translation.modal.dedicatedSubtext")}
+              {t("smartModes.translation.modal.recommendedSubtext")}
             </p>
           </div>
 
-          {isDownloaded ? (
-            <Button variant="primary" size="md" onClick={handleUseGemma}>
-              {t("smartModes.translation.modal.useButton")}
+          {recActive ? (
+            <Button variant="primary" size="md" disabled>
+              {t("smartModes.translation.modal.activeButton")}
             </Button>
-          ) : isDownloading ? (
+          ) : recDownloaded ? (
+            <Button
+              variant="primary"
+              size="md"
+              disabled={busy}
+              onClick={() => void enableWith(RECOMMENDED_MODEL_ID)}
+            >
+              {busy
+                ? t("smartModes.translation.modal.applying")
+                : t("smartModes.translation.modal.useRecommended")}
+            </Button>
+          ) : recVerifying ? (
+            <div className="flex flex-col gap-2">
+              <div className="w-full bg-mid-gray/20 rounded-full h-2 overflow-hidden">
+                <div className="bg-logo-primary h-2 rounded-full w-1/3 animate-pulse" />
+              </div>
+              <p className="text-xs text-mid-gray/60">
+                {t("smartModes.translation.modal.verifying")}
+              </p>
+            </div>
+          ) : recDownloading ? (
             <div className="flex flex-col gap-2">
               <div className="w-full bg-mid-gray/20 rounded-full h-2">
                 <div
                   className="bg-logo-primary h-2 rounded-full transition-all"
-                  style={{ width: `${downloadPercentage ?? 0}%` }}
+                  style={{ width: `${recPct ?? 0}%` }}
                 />
               </div>
               <p className="text-xs text-mid-gray/60">
-                {Math.round(downloadPercentage ?? 0)}%
+                {t("smartModes.translation.modal.downloadingPercent", {
+                  percent: Math.round(recPct ?? 0),
+                })}
+              </p>
+              <p className="text-xs text-mid-gray/60">
+                {t("smartModes.translation.modal.downloadBackgroundNote")}
               </p>
             </div>
           ) : (
-            <Button variant="primary" size="md" onClick={handleDownloadGemma}>
-              {t("smartModes.translation.modal.downloadButton")}
+            <Button variant="primary" size="md" onClick={handleDownloadRec}>
+              {t("smartModes.translation.modal.downloadRecommended")}
             </Button>
           )}
         </div>
 
-        {/* Option B: Generic model */}
-        <div className="flex flex-col gap-3 p-4 rounded-xl border-2 border-mid-gray/20">
+        {/* Option B: use the current active model */}
+        <div
+          className={`flex flex-col gap-3 p-4 rounded-xl border-2 ${currentActiveSelected ? "border-logo-primary bg-logo-primary/5" : "border-mid-gray/20"}`}
+        >
           <div>
-            <p className="text-base font-medium">
-              {t("smartModes.translation.modal.genericHeading")}
-            </p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-base font-medium">
+                {t("smartModes.translation.modal.currentHeading")}
+              </p>
+              {currentActiveSelected && (
+                <span className="inline-flex items-center gap-1 shrink-0 text-xs font-medium text-logo-primary">
+                  <Check className="w-3.5 h-3.5" />
+                  {t("smartModes.translation.modal.activeBadge")}
+                </span>
+              )}
+            </div>
             <p className="text-sm text-text/60 mt-1">
-              {t("smartModes.translation.modal.genericSubtext")}
+              {activeName && activeDownloaded
+                ? t("smartModes.translation.modal.currentSubtext", {
+                    model: activeName,
+                  })
+                : t("smartModes.translation.modal.currentNone")}
             </p>
           </div>
-          <Button variant="secondary" size="md" onClick={handleUseGeneric}>
-            {t("smartModes.translation.modal.useGenericButton")}
+          <Button
+            variant="secondary"
+            size="md"
+            disabled={busy || !activeDownloaded || currentActiveSelected}
+            onClick={() => void enableWith()}
+          >
+            {currentActiveSelected
+              ? t("smartModes.translation.modal.activeButton")
+              : t("smartModes.translation.modal.useCurrent")}
           </Button>
         </div>
 
-        {/* Footnote */}
+        {error && (
+          <p role="alert" className="text-xs text-red-400">
+            {error}
+          </p>
+        )}
+
         <p className="text-xs text-mid-gray/70">
           {t("smartModes.translation.modal.footnote")}
         </p>
 
-        {/* Close button */}
         <button
           type="button"
           className="absolute top-4 right-4 text-mid-gray/60 hover:text-text focus:outline-none"

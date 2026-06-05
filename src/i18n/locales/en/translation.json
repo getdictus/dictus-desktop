@@ -710,7 +710,11 @@
     "modelLoadFailed": "Failed to load model: {{model}}",
     "modelLoadFailedUnknown": "unknown model",
     "pasteFailedTitle": "Failed to Paste Text",
-    "pasteFailed": "Text could not be pasted into the active application."
+    "pasteFailed": "Text could not be pasted into the active application.",
+    "boundary": {
+      "title": "Something went wrong.",
+      "reload": "Reload"
+    }
   },
   "appLanguage": {
     "title": "Application Language",
@@ -721,7 +725,10 @@
     "processing": "Processing..."
   },
   "smartModes": {
-    "sections": { "rewrite": "Rewrite", "translation": "Translation" },
+    "sections": {
+      "rewrite": "Rewrite",
+      "translation": "Translation"
+    },
     "createRewrite": "New Rewrite",
     "createTranslation": "New Translation",
     "card": {
@@ -747,7 +754,10 @@
       "clearAriaLabel": "Clear shortcut {{combo}}",
       "recording": "Press keys…"
     },
-    "kind": { "rewrite": "Rewrite", "translation": "Translation" },
+    "kind": {
+      "rewrite": "Rewrite",
+      "translation": "Translation"
+    },
     "translation": {
       "enableHeading": "Enable offline translation",
       "enableBody": "Translation runs fully offline through the embedded LLM. Choose an engine to get started.",
@@ -755,17 +765,25 @@
       "genericEngineNote": "Best-effort — quality varies by model",
       "changeEngine": "Change engine",
       "currentEngine": "Using: {{engine}}",
-      "engineGemma": "TranslateGemma",
       "engineGeneric": "Active model",
       "modal": {
-        "dedicatedHeading": "Download dedicated translation model (Recommended)",
-        "dedicatedSubtext": "TranslateGemma 4B: ~2.5 GB download. Best translation quality across 40+ languages.",
-        "downloadButton": "Download TranslateGemma",
-        "useButton": "Use TranslateGemma",
-        "genericHeading": "Use active processing model",
-        "genericSubtext": "Uses your current local model with a built-in translation prompt. No extra download. Quality varies.",
-        "useGenericButton": "Use active model",
-        "footnote": "Both options run fully offline. You can change this choice later in settings."
+        "footnote": "Both options run fully offline. You can change this choice later in settings.",
+        "applying": "Applying…",
+        "applyFailed": "Could not change the translation engine.",
+        "activeBadge": "Currently used",
+        "activeButton": "Currently used",
+        "downloadingPercent": "Downloading… {{percent}}%",
+        "downloadBackgroundNote": "You can close this window — the download continues in the background.",
+        "verifying": "Verifying download…",
+        "title": "Set up offline translation",
+        "recommendedHeading": "Recommended: Gemma 3 4B",
+        "recommendedSubtext": "A versatile 4B model with clean, reliable translation across languages and idioms. ~2.5 GB download.",
+        "downloadRecommended": "Download Gemma 3 4B",
+        "useRecommended": "Use Gemma 3 4B",
+        "currentHeading": "Use your current model",
+        "currentSubtext": "Translate with {{model}} (your active model). Quality varies by model.",
+        "currentNone": "No local model is active yet. Download one from the model library first.",
+        "useCurrent": "Use current model"
       }
     },
     "delete": {
@@ -773,7 +791,9 @@
       "confirm": "Delete \"{{name}}\"? This will also remove its shortcut binding.",
       "ariaLabel": "Delete {{name}}"
     },
-    "edit": { "ariaLabel": "Edit {{name}}" },
+    "edit": {
+      "ariaLabel": "Edit {{name}}"
+    },
     "noModel": {
       "heading": "No local model selected",
       "body": "Select or download a local model above to use Smart Modes."

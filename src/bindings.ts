@@ -312,9 +312,6 @@ async listSmartModes() : Promise<Result<SmartMode[], string>> {
     else return { status: "error", error: e  as any };
 }
 },
-async smartModeTemplates() : Promise<SmartMode[]> {
-    return await TAURI_INVOKE("smart_mode_templates");
-},
 async setSmartModeBinding(modeId: string, binding: string) : Promise<Result<BindingResponse, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("set_smart_mode_binding", { modeId, binding }) };
@@ -330,6 +327,9 @@ async clearSmartModeBinding(modeId: string) : Promise<Result<null, string>> {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+async smartModeTemplates() : Promise<SmartMode[]> {
+    return await TAURI_INVOKE("smart_mode_templates");
 },
 async updateCustomWords(words: string[]) : Promise<Result<null, string>> {
     try {

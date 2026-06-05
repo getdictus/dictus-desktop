@@ -177,7 +177,7 @@
     },
     "general": {
       "title": "Ogólne",
-          "shortcut": {
+      "shortcut": {
         "title": "Skróty Dictus",
         "description": "Skonfiguruj skróty klawiaturowe do uruchamiania nagrywania mowy",
         "loading": "Wczytywanie skrótów...",
@@ -710,7 +710,11 @@
     "modelLoadFailed": "Nie udało się załadować modelu: {{model}}",
     "modelLoadFailedUnknown": "nieznany model",
     "pasteFailedTitle": "Nie udało się wkleić tekstu",
-    "pasteFailed": "Nie można było wkleić tekstu do aktywnej aplikacji."
+    "pasteFailed": "Nie można było wkleić tekstu do aktywnej aplikacji.",
+    "boundary": {
+      "title": "Something went wrong.",
+      "reload": "Reload"
+    }
   },
   "appLanguage": {
     "title": "Język aplikacji",
@@ -761,17 +765,25 @@
       "genericEngineNote": "Best-effort — quality varies by model",
       "changeEngine": "Change engine",
       "currentEngine": "Using: {{engine}}",
-      "engineGemma": "TranslateGemma",
       "engineGeneric": "Active model",
       "modal": {
-        "dedicatedHeading": "Download dedicated translation model (Recommended)",
-        "dedicatedSubtext": "TranslateGemma 4B: ~2.5 GB download. Best translation quality across 40+ languages.",
-        "downloadButton": "Download TranslateGemma",
-        "useButton": "Use TranslateGemma",
-        "genericHeading": "Use active processing model",
-        "genericSubtext": "Uses your current local model with a built-in translation prompt. No extra download. Quality varies.",
-        "useGenericButton": "Use active model",
-        "footnote": "Both options run fully offline. You can change this choice later in settings."
+        "footnote": "Both options run fully offline. You can change this choice later in settings.",
+        "applying": "Applying…",
+        "applyFailed": "Could not change the translation engine.",
+        "activeBadge": "Currently used",
+        "activeButton": "Currently used",
+        "downloadingPercent": "Downloading… {{percent}}%",
+        "downloadBackgroundNote": "You can close this window — the download continues in the background.",
+        "verifying": "Verifying download…",
+        "title": "Set up offline translation",
+        "recommendedHeading": "Recommended: Gemma 3 4B",
+        "recommendedSubtext": "A versatile 4B model with clean, reliable translation across languages and idioms. ~2.5 GB download.",
+        "downloadRecommended": "Download Gemma 3 4B",
+        "useRecommended": "Use Gemma 3 4B",
+        "currentHeading": "Use your current model",
+        "currentSubtext": "Translate with {{model}} (your active model). Quality varies by model.",
+        "currentNone": "No local model is active yet. Download one from the model library first.",
+        "useCurrent": "Use current model"
       }
     },
     "delete": {

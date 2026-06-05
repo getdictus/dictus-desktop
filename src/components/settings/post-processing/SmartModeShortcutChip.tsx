@@ -44,10 +44,23 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
   const [isRecording, setIsRecording] = useState(false);
   // heldModifiers tracks currently pressed modifier keys for live preview
   const heldModifiersRef = useRef<Set<string>>(new Set());
+  // Whether a non-modifier (main) key was pressed during this recording. Used
+  // to decide between a combo (commit on main keydown) and a modifier-only
+  // binding like "option" (commit on modifier release).
+  const mainKeyPressedRef = useRef(false);
+  // Guards against double-commit (e.g. a keyup firing right after a keydown
+  // commit before the listeners are torn down).
+  const committedRef = useRef(false);
   const [recordedKeys, setRecordedKeys] = useState<string[]>([]);
   const [conflict, setConflict] = useState<string | null>(null);
 
   const chipRef = useRef<HTMLDivElement>(null);
+
+  const sortModifiers = (mods: string[]) =>
+    [...mods].sort(
+      (a, b) =>
+        MODIFIERS.indexOf(a.toLowerCase()) - MODIFIERS.indexOf(b.toLowerCase()),
+    );
 
   // Reset conflict when binding changes
   useEffect(() => {
@@ -56,6 +69,8 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
 
   const commitCombo = useCallback(
     async (combo: string) => {
+      if (committedRef.current) return;
+      committedRef.current = true;
       setIsRecording(false);
       heldModifiersRef.current.clear();
       setRecordedKeys([]);
@@ -99,14 +114,10 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
       if (isModifier(key)) {
         // Track held modifier; update live preview
         heldModifiersRef.current.add(key);
-        const sortedMods = [...heldModifiersRef.current].sort((a, b) => {
-          const aIdx = MODIFIERS.indexOf(a.toLowerCase());
-          const bIdx = MODIFIERS.indexOf(b.toLowerCase());
-          return aIdx - bIdx;
-        });
-        setRecordedKeys(sortedMods);
+        setRecordedKeys(sortModifiers([...heldModifiersRef.current]));
       } else {
         // Main (non-modifier) key pressed — this is the COMMIT trigger
+        mainKeyPressedRef.current = true;
         const sortedKeys = [...heldModifiersRef.current, key].sort((a, b) => {
           const aIsMod = isModifier(a);
           const bIsMod = isModifier(b);
@@ -127,17 +138,21 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
       const rawKey = getKeyName(e, osType);
       const key = normalizeKey(rawKey);
 
-      // Only track modifier releases to keep live preview accurate
-      if (isModifier(key)) {
-        heldModifiersRef.current.delete(key);
-        const sortedMods = [...heldModifiersRef.current].sort((a, b) => {
-          const aIdx = MODIFIERS.indexOf(a.toLowerCase());
-          const bIdx = MODIFIERS.indexOf(b.toLowerCase());
-          return aIdx - bIdx;
-        });
-        setRecordedKeys(sortedMods);
+      if (!isModifier(key)) return;
+
+      // Modifier-only shortcut (e.g. "option" alone): if a modifier is released
+      // and no main key was pressed during this recording, commit the held
+      // modifier(s) as the binding. Captured BEFORE removing the released key so
+      // it's included in the combo.
+      if (!mainKeyPressedRef.current && heldModifiersRef.current.size > 0) {
+        const combo = sortModifiers([...heldModifiersRef.current]).join("+");
+        void commitCombo(combo);
+        return;
       }
-      // No commit on keyup — the commit happens on main-key keydown
+
+      // Otherwise just keep the live preview accurate.
+      heldModifiersRef.current.delete(key);
+      setRecordedKeys(sortModifiers([...heldModifiersRef.current]));
     };
 
     const handleClickOutside = (e: MouseEvent) => {
@@ -169,6 +184,8 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
     if (disabled || isRecording) return;
     setConflict(null);
     heldModifiersRef.current.clear();
+    mainKeyPressedRef.current = false;
+    committedRef.current = false;
     setRecordedKeys([]);
     // Best-effort suspend — no-op if entry doesn't exist yet
     if (currentBinding) {
