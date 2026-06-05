@@ -1162,12 +1162,33 @@ pub fn update_smart_mode(
 #[tauri::command]
 #[specta::specta]
 pub fn delete_smart_mode(app: AppHandle, id: String) -> Result<(), String> {
+    let binding_id = smart_mode_binding_id(&id);
     let mut settings = settings::get_settings(&app);
+
+    // Remove the mode first (also reassigns active id). Errors (last-mode /
+    // not-found) bail early before we touch any binding state.
     delete_mode_in_place(
         &mut settings.smart_modes,
         &mut settings.smart_mode_active_id,
         &id,
     )?;
+
+    // Unregister the OS-level shortcut if one is currently bound, then remove
+    // the binding entry entirely (not just empty it) so init_shortcuts never
+    // re-registers it on the next launch. Both operations are folded into this
+    // single read/modify/write so the state is always consistent (UAT test 6).
+    if let Some(b) = settings.bindings.get(&binding_id).cloned() {
+        if !b.current_binding.trim().is_empty() {
+            if let Err(e) = unregister_shortcut(&app, b) {
+                error!(
+                    "delete_smart_mode: failed to unregister '{}': {}",
+                    binding_id, e
+                );
+            }
+        }
+    }
+    settings.bindings.remove(&binding_id);
+
     settings::write_settings(&app, settings);
     Ok(())
 }

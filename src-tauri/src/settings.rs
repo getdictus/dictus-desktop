@@ -924,6 +924,27 @@ fn migrate_settings_if_needed(settings: &mut AppSettings) -> bool {
     true
 }
 
+/// Remove any `bindings["smart_mode_*"]` whose mode id is not present in
+/// `smart_modes`. This prevents orphaned smart-mode shortcuts (e.g. from a
+/// reduced seed or a deleted mode that crashed before cleanup) from registering
+/// and firing invisibly after the next launch.
+///
+/// Returns `true` if any binding was removed (settings mutated).
+/// Called from `load_or_create_app_settings` AFTER `migrate_settings_if_needed`
+/// so it also catches seed-reduction orphans introduced by intermediary builds.
+pub fn reconcile_dangling_smart_mode_bindings(settings: &mut AppSettings) -> bool {
+    let live_ids: std::collections::HashSet<String> =
+        settings.smart_modes.iter().map(|m| m.id.clone()).collect();
+    let before = settings.bindings.len();
+    settings.bindings.retain(|key, _| {
+        match key.strip_prefix("smart_mode_") {
+            Some(mode_id) => live_ids.contains(mode_id),
+            None => true, // not a smart-mode binding — keep
+        }
+    });
+    settings.bindings.len() != before
+}
+
 pub const SETTINGS_STORE_PATH: &str = "settings_store.json";
 
 pub fn get_default_settings() -> AppSettings {
@@ -1091,7 +1112,12 @@ pub fn load_or_create_app_settings(app: &AppHandle) -> AppSettings {
         store.set("settings", serde_json::to_value(&settings).unwrap());
     }
 
-    if migrate_settings_if_needed(&mut settings) {
+    let migrated = migrate_settings_if_needed(&mut settings);
+    // Run reconciliation after migration so seed-reduction orphans and any
+    // binding left by a pre-cleanup build are removed before init_shortcuts
+    // iterates bindings. If either step mutated settings, persist once.
+    let reconciled = reconcile_dangling_smart_mode_bindings(&mut settings);
+    if migrated || reconciled {
         store.set("settings", serde_json::to_value(&settings).unwrap());
     }
 
