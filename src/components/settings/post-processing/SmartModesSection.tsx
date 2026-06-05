@@ -99,8 +99,6 @@ export const SmartModesSection: React.FC = () => {
 
   const activeModelId = useLlmModelStore((s) => s.activeModelId);
   const llmModels = useLlmModelStore((s) => s.models);
-  const activeModelName =
-    llmModels.find((m) => m.id === activeModelId)?.name ?? null;
 
   // Resolve the active-engine descriptor for the translation modal.
   // Uses the GGUF model name when one is active; otherwise falls back to the
@@ -108,12 +106,24 @@ export const SmartModesSection: React.FC = () => {
   // cloud providers, etc.).
   const providerId = (getSetting("post_process_provider_id") as string | undefined) ?? "";
   const providers = (getSetting("post_process_providers") as PostProcessProvider[] | undefined) ?? [];
+
+  // The embedded GGUF engine is the ONLY case where the GGUF model name should
+  // describe the active translation engine. activeModelId lingers non-null from
+  // a prior embedded session even after switching to Apple Foundation / cloud, so
+  // it must be gated on the canonical embedded-provider check (decision [Phase 11]).
+  const isEmbeddedActive = providerId === "embedded";
+  const activeModelName =
+    isEmbeddedActive
+      ? (llmModels.find((m) => m.id === activeModelId)?.name ?? null)
+      : null;
+
   const activeEngineName: string | null =
     activeModelName ??
     providers.find((p) => p.id === providerId)?.label ??
     (providerId ? providerId : null);
-  // True only when the active GGUF model is the recommended Gemma 3 4B
-  const activeIsRecommended = activeModelId === "gemma-3-4b";
+  // Recommended (Gemma) badge only applies when the embedded GGUF engine is
+  // active AND it is the recommended model — never for non-embedded providers.
+  const activeIsRecommended = isEmbeddedActive && activeModelId === "gemma-3-4b";
 
   const refetchModes = useCallback(async () => {
     const r = await commands.listSmartModes();
