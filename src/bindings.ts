@@ -365,8 +365,8 @@ async resumeBinding(id: string) : Promise<Result<null, string>> {
 /**
  * Temporarily unregister ALL global shortcuts (used while the user records a
  * new smart-mode shortcut so an already-bound combo is captured, not fired).
- *
- * The caller MUST call `resumeAllShortcuts` once capture is done
+ * 
+ * The caller MUST call `resume_all_shortcuts` once capture is done
  * (commit / conflict / cancel / unmount) so no binding stays permanently dead.
  */
 async suspendAllShortcuts() : Promise<Result<null, string>> {
@@ -379,7 +379,7 @@ async suspendAllShortcuts() : Promise<Result<null, string>> {
 },
 /**
  * Re-register all global shortcuts after a capture session ends.
- *
+ * 
  * Iterates every non-empty binding except "cancel" (which is dynamically
  * registered only during recording) and re-registers it for the active
  * keyboard implementation. Non-fatal per-binding errors are logged as
