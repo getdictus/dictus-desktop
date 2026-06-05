@@ -1294,6 +1294,31 @@ pub fn set_smart_mode_binding(
     let binding_id = smart_mode_binding_id(&mode_id);
     let mut settings = settings::get_settings(&app);
 
+    // Reject a combo already held by a DIFFERENT global binding (another smart
+    // mode, transcribe, cancel, …). A binding never conflicts with itself, so
+    // re-setting the same combo on the same mode (idempotent re-bind) still
+    // passes. Without this, two modes could both persist Cmd+2 and only collide
+    // at OS re-registration (`resume_all_shortcuts: Hotkey already registered`).
+    // UAT test 7 / [B5].
+    if let Some(other_id) =
+        find_conflicting_binding(&settings.bindings, &binding_id, &binding)
+    {
+        let other_name = settings
+            .bindings
+            .get(&other_id)
+            .map(|b| b.name.clone())
+            .filter(|n| !n.trim().is_empty())
+            .unwrap_or(other_id);
+        return Ok(BindingResponse {
+            success: false,
+            binding: None,
+            error: Some(format!(
+                "This shortcut is already used by: {}",
+                other_name
+            )),
+        });
+    }
+
     // Ensure a ShortcutBinding entry exists for this smart mode id.
     // change_binding falls back to default_settings.bindings for unknown ids, but
     // smart_mode_* ids are not in defaults. We insert one here so change_binding
