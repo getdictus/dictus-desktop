@@ -32,6 +32,11 @@ const MODIFIERS = [
 
 const isModifier = (k: string) => MODIFIERS.includes(k.toLowerCase());
 
+/** Re-registers all bound shortcuts. Best-effort — errors are suppressed. */
+const resumeAll = () => {
+  commands.resumeAllShortcuts().catch(() => {});
+};
+
 export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
   modeId,
   currentBinding,
@@ -80,22 +85,18 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
         const response = res.data;
         if (response.success) {
           setConflict(null);
+          resumeAll();
           onBound();
         } else {
           const errorMsg =
             response.error ??
             t("smartModes.card.shortcutConflict", { name: "" });
           setConflict(errorMsg);
-          // Restore the previous binding if mode was bound before
-          if (currentBinding) {
-            commands
-              .resumeBinding("smart_mode_" + modeId)
-              .catch(() => {});
-          }
+          resumeAll();
         }
       }
     },
-    [modeId, currentBinding, onBound, t],
+    [modeId, onBound, t],
   );
 
   useEffect(() => {
@@ -161,10 +162,7 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
         setIsRecording(false);
         heldModifiersRef.current.clear();
         setRecordedKeys([]);
-        // Resume binding if mode was bound before
-        if (currentBinding) {
-          commands.resumeBinding("smart_mode_" + modeId).catch(() => {});
-        }
+        resumeAll();
       }
     };
 
@@ -177,8 +175,12 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
       window.removeEventListener("click", handleClickOutside);
+      // Always resume all shortcuts when recording stops or the component
+      // unmounts mid-record; resumeAllShortcuts is idempotent so it is safe
+      // to call even if a prior exit path already resumed.
+      resumeAll();
     };
-  }, [isRecording, modeId, currentBinding, osType, commitCombo]);
+  }, [isRecording, modeId, osType, commitCombo]);
 
   const handleClick = () => {
     if (disabled || isRecording) return;
@@ -187,10 +189,9 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
     mainKeyPressedRef.current = false;
     committedRef.current = false;
     setRecordedKeys([]);
-    // Best-effort suspend — no-op if entry doesn't exist yet
-    if (currentBinding) {
-      commands.suspendBinding("smart_mode_" + modeId).catch(() => {});
-    }
+    // Suspend ALL global shortcuts so any already-bound combo is captured by
+    // the webview keydown listener instead of firing that mode's action.
+    commands.suspendAllShortcuts().catch(() => {});
     setIsRecording(true);
   };
 
