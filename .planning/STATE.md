@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
-status: gaps_found
-stopped_at: "Phase 13 gap-closure run (13-09/10/11/12 + 13-08 gates) live re-tested — 4 gaps resolved, 3 remain (tests 7, 11, 3). User chose formal /gsd:plan-phase 13 --gaps."
-last_updated: "2026-06-05T16:12:00.000Z"
+status: planning
+stopped_at: Completed 13-14-PLAN.md (engine-name gate for non-embedded providers)
+last_updated: "2026-06-05T20:27:28.186Z"
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 22
-  completed_plans: 20
+  total_plans: 25
+  completed_plans: 21
   percent: 95
 ---
 
@@ -70,6 +70,7 @@ Progress: [█████████░] ~95% (Phase 13: 3 gaps remain before 
 | Phase 13-smart-modes-ui-translation-presets-i18n P09 | 5 | 3 tasks | 4 files |
 | Phase 13-smart-modes-ui-translation-presets-i18n P11 | 2 | 2 tasks | 21 files |
 | Phase 13 P10 | 25 | 3 tasks | 2 files |
+| Phase 13-smart-modes-ui-translation-presets-i18n P14 | 2 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -128,6 +129,7 @@ Progress: [█████████░] ~95% (Phase 13: 3 gaps remain before 
 - [Phase 13]: [13-12] TranslationEngineChoiceModal active badge driven by engineChoice + activeIsRecommended props (not GGUF activeModelId) — covers Apple Intelligence and non-GGUF providers
 - [Phase 13]: [13-12] SmartModeShortcutChip: module-level resumeAll() helper + suspendAllShortcuts on record start; resumeAll on commitCombo (success+conflict), handleClickOutside, and effect cleanup — every exit path covered
 - [Phase 13]: 13-10 VERIFIED LIVE (macOS Apple Silicon): Apple Intelligence Smart Modes now correct — Spanish translation produced (not unchanged English), Bullet Points full multi-line (no 26-char truncation), Clean Up still works. Closes shared root cause behind UAT tests 10 + 11.
+- [Phase 13-smart-modes-ui-translation-presets-i18n]: [13-14] activeModelName gated on isEmbeddedActive (providerId === 'embedded') — prevents lingering GGUF activeModelId from short-circuiting to Gemma when Apple Foundation is active; activeIsRecommended = isEmbeddedActive && activeModelId === 'gemma-3-4b'
 
 ### Pending Todos
 
@@ -143,6 +145,6 @@ Progress: [█████████░] ~95% (Phase 13: 3 gaps remain before 
 
 ## Session Continuity
 
-Last session: 2026-06-05T15:49:40.636Z
-Stopped at: Completed 13-10-PLAN.md (Apple Intelligence task-agnostic path) — Task 3 human-verify approved live by user
+Last session: 2026-06-05T20:27:28.184Z
+Stopped at: Completed 13-14-PLAN.md (engine-name gate for non-embedded providers)
 Resume file: None
