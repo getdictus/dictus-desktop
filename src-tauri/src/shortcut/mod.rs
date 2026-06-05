@@ -1108,6 +1108,32 @@ pub fn smart_mode_binding_id(mode_id: &str) -> String {
     format!("smart_mode_{}", mode_id)
 }
 
+/// Find a global binding (other than `binding_id`) that already holds `combo`.
+/// Returns the conflicting binding id, or None when `combo` is free.
+///
+/// Used by `set_smart_mode_binding` to reject a combo already assigned to a
+/// DIFFERENT smart mode or any other global shortcut at commit time, so the
+/// chip's inline conflict UI fires instead of double-persisting two bindings
+/// that collide only at OS re-registration (UAT test 7 / [B5]).
+pub fn find_conflicting_binding(
+    bindings: &std::collections::HashMap<String, settings::ShortcutBinding>,
+    binding_id: &str,
+    combo: &str,
+) -> Option<String> {
+    let target = combo.trim();
+    if target.is_empty() {
+        return None;
+    }
+    bindings
+        .iter()
+        .find(|(other_id, b)| {
+            other_id.as_str() != binding_id
+                && !b.current_binding.trim().is_empty()
+                && b.current_binding.trim() == target
+        })
+        .map(|(other_id, _)| other_id.clone())
+}
+
 /// Resolve the stable id for a created mode. Returns Some(seed_id) when (name, kind)
 /// matches a seeded template, else None (caller mints a timestamp id).
 ///
@@ -1533,6 +1559,74 @@ mod tests {
             result,
             Some("mode_translate_en".to_string()),
             "Translate → English Translation must resolve to mode_translate_en"
+        );
+    }
+
+    // ── find_conflicting_binding tests ───────────────────────────────────────
+
+    fn make_binding(id: &str, current: &str) -> (String, crate::settings::ShortcutBinding) {
+        (
+            id.to_string(),
+            crate::settings::ShortcutBinding {
+                id: id.to_string(),
+                name: id.to_string(),
+                description: String::new(),
+                default_binding: String::new(),
+                current_binding: current.to_string(),
+            },
+        )
+    }
+
+    #[test]
+    fn conflict_detected_for_different_binding() {
+        let mut bindings = std::collections::HashMap::new();
+        let (k, v) = make_binding("transcribe", "Cmd+2");
+        bindings.insert(k, v);
+        let result = find_conflicting_binding(&bindings, "smart_mode_mode_a", "Cmd+2");
+        assert_eq!(
+            result,
+            Some("transcribe".to_string()),
+            "combo held by a different binding must be detected"
+        );
+    }
+
+    #[test]
+    fn no_conflict_when_combo_unused() {
+        let mut bindings = std::collections::HashMap::new();
+        let (k, v) = make_binding("transcribe", "Cmd+2");
+        bindings.insert(k, v);
+        let result = find_conflicting_binding(&bindings, "smart_mode_mode_a", "Cmd+9");
+        assert_eq!(result, None, "unused combo must return None");
+    }
+
+    #[test]
+    fn same_binding_id_is_not_a_conflict() {
+        let mut bindings = std::collections::HashMap::new();
+        let (k, v) = make_binding("smart_mode_mode_a", "Cmd+2");
+        bindings.insert(k, v);
+        let result = find_conflicting_binding(&bindings, "smart_mode_mode_a", "Cmd+2");
+        assert_eq!(result, None, "a binding must not conflict with itself");
+    }
+
+    #[test]
+    fn empty_current_binding_ignored() {
+        let mut bindings = std::collections::HashMap::new();
+        let (k, v) = make_binding("smart_mode_mode_b", "");
+        bindings.insert(k, v);
+        let result = find_conflicting_binding(&bindings, "smart_mode_mode_a", "Cmd+2");
+        assert_eq!(result, None, "empty/unbound entries are not collisions");
+    }
+
+    #[test]
+    fn cross_mode_conflict_returns_other_id() {
+        let mut bindings = std::collections::HashMap::new();
+        let (k, v) = make_binding("smart_mode_mode_b", "Cmd+2");
+        bindings.insert(k, v);
+        let result = find_conflicting_binding(&bindings, "smart_mode_mode_a", "Cmd+2");
+        assert_eq!(
+            result,
+            Some("smart_mode_mode_b".to_string()),
+            "conflicting mode binding must return the other mode's id"
         );
     }
 }
