@@ -203,6 +203,7 @@ export const SmartModeCard: React.FC<SmartModeCardProps> = ({
               variant="compact"
               value={draftName}
               onChange={(e) => setDraftName(e.target.value)}
+              placeholder={t("smartModes.card.namePlaceholder")}
               className="w-full"
             />
           </div>
@@ -217,8 +218,12 @@ export const SmartModeCard: React.FC<SmartModeCardProps> = ({
                 variant="compact"
                 value={draftPrompt}
                 onChange={(e) => setDraftPrompt(e.target.value)}
+                placeholder={t("smartModes.card.promptPlaceholder")}
                 className="w-full"
               />
+              <p className="text-xs text-mid-gray/70">
+                {t("smartModes.card.outputHint")}
+              </p>
             </div>
           )}
 

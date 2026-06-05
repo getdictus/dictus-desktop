@@ -740,14 +740,19 @@
       "shortcutConflict": "Already used by: {{name}}",
       "targetLanguage": "Target language",
       "nameLabel": "Name",
-      "promptLabel": "Prompt"
+      "namePlaceholder": "e.g. Make Concise",
+      "promptLabel": "Prompt",
+      "promptPlaceholder": "Rewrite the following text to be more concise.\n\nText:\n${output}",
+      "outputHint": "Use ${output} where the dictated transcript should be inserted."
     },
     "picker": {
       "rewriteTitle": "Add a rewrite mode",
       "translationTitle": "Add a translation mode",
       "custom": "Custom",
       "customSubtext": "Create a mode with your own name and prompt",
-      "added": "Added"
+      "added": "Added",
+      "overwriteTitle": "Mode already exists",
+      "overwriteConfirm": "\"{{name}}\" already exists. Re-adding it will overwrite the existing mode. Continue?"
     },
     "shortcut": {
       "clear": "Clear",
