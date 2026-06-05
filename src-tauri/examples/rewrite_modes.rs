@@ -65,7 +65,7 @@ fn modes() -> Vec<Mode> {
         Mode {
             id: "email",
             label: "Write as Email",
-            prompt: "Reformat this text as an email WITHOUT changing its tone, register, or wording more than necessary. Keep exactly the same level of familiarity or formality as the input: if it is casual and friendly, the email stays casual and friendly; if it is formal (vouvoiement), it stays formal. Apply ONLY email structure:\n- Start with exactly ONE greeting line, then a blank line. Use the same greeting word the user actually spoke and do not change it: if the text starts with \"salut\", the greeting must start with \"Salut\"; if it starts with \"bonjour\", it must start with \"Bonjour\". Add the recipient's name and fix capitalization. If the input has no greeting at all, use \"Bonjour,\". Never write a second greeting.\n- Then the message body, fixing capitalization and punctuation and splitting the run-on dictation into proper sentences (add periods and question marks where needed). Keep the user's own words and phrasing; do NOT make requests more polite and do NOT add words the user did not say (for example, never add \"s'il te plaît\" or \"please\").\nDo NOT add a subject line. Do NOT invent pleasantries such as \"I hope you are well\". Do NOT add a closing or signature unless the input explicitly contains one; if it does, place it after a blank line, with the closing word and the name on their own separate lines. Do not add, remove, or reword the actual content. Preserve the meaning and language. Return only the email.\n\nText:\n${output}",
+            prompt: "Reformat this text as an email WITHOUT changing its tone, register, or wording more than necessary. Keep exactly the same level of familiarity or formality as the input: if it is casual and friendly, the email stays casual and friendly; if it is formal (vouvoiement), it stays formal. Apply ONLY email structure:\n- Start with exactly ONE greeting line, then a blank line. Use the same greeting word the user actually spoke and do not change it: if the text starts with \"salut\", the greeting must start with \"Salut\"; if it starts with \"bonjour\", it must start with \"Bonjour\". Add the recipient's name and fix capitalization. If the input has no greeting at all, use \"Bonjour,\". Never write a second greeting.\n- Then the message body, fixing capitalization and punctuation and splitting the run-on dictation into proper sentences (add periods and question marks where needed). Keep the user's own words and phrasing; do NOT make requests more polite and do NOT add words the user did not say (for example, never add \"s'il te plaît\" or \"please\").\n- Closing: ONLY if the input ends with a closing phrase (such as \"cordialement\", \"bien cordialement\", \"à plus\", \"bien à vous\", \"merci\") followed by a name, you MUST move it OUT of the body into a separate signature block: end the body sentence, then a blank line, then the closing word on its own line, then the name on the next line. Example — input body \"...votre email ? Bien cordialement, Pierre.\" must become:\n...votre email ?\n\nBien cordialement,\nPierre\nIf the input contains no such closing, do NOT add one.\nDo NOT add a subject line. Do NOT invent pleasantries such as \"I hope you are well\". Do not add, remove, or reword the actual content. Preserve the meaning and language. Return only the email.\n\nText:\n${output}",
         },
         Mode {
             id: "bullet_points",
@@ -96,6 +96,12 @@ fn cases() -> Vec<Case> {
             text: "du coup le budget il est de vingt cinq mille euros environ et on a déjà dépensé genre dix pour cent point on en reparle demain point d'interrogation",
         },
         Case {
+            // Real case from logs: dictated !, ?, and line-break cues.
+            mode_id: "clean_up",
+            label: "Exclamation & line breaks (real)",
+            text: "Hello, je voulais juste te dire que je ne suis plus sûr du clean up qu'on a fait, point retour à la ligne, qu'on devrait peut-être faire autrement, point d'exclamation, retour à la ligne, qu'en penses-tu, point d'interrogation.",
+        },
+        Case {
             mode_id: "make_formal",
             label: "Casual ask to client",
             text: "salut faut absolument qu'on cale un call cette semaine pour parler du contrat c'est un peu chaud niveau délais",
@@ -114,6 +120,17 @@ fn cases() -> Vec<Case> {
             mode_id: "email",
             label: "With dictated signature",
             text: "bonjour madame durand suite à notre échange je vous confirme ma disponibilité pour le rendez vous de jeudi à quatorze heures cordialement pierre vivière",
+        },
+        Case {
+            // Real failing case from logs: closing glued to the body sentence.
+            mode_id: "email",
+            label: "Inline closing (real)",
+            text: "Bonjour madame, pourriez-vous m'envoyer votre email s'il vous plaît ? Bien cordialement, Pierre.",
+        },
+        Case {
+            mode_id: "email",
+            label: "Casual closing (real)",
+            text: "Salut, est-ce que tu as fait le document que je t'ai demandé hier ? A plus, Pierre.",
         },
         Case {
             mode_id: "bullet_points",
