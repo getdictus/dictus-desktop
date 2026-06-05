@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
 status: verifying
-stopped_at: Completed 13-11-PLAN.md
-last_updated: "2026-06-05T15:09:17.967Z"
+stopped_at: 13-12 Tasks 1+2 complete, stopped at Task 3 checkpoint (human-verify)
+last_updated: "2026-06-05T15:13:33.898Z"
 progress:
   total_phases: 4
   completed_phases: 3
@@ -123,6 +123,8 @@ Progress: [█████████░] ~95% (Phase 13 functionally complete;
 - [Phase 13-09]: [13-09] reconcile_dangling_smart_mode_bindings runs at load (after migration, before init_shortcuts) to drop orphaned smart_mode_* bindings including those from 13-04 seed reduction.
 - [Phase 13-09]: [13-09] resume_all_shortcuts skips cancel binding (dynamically managed during recording) to avoid permanently registering a dynamically-managed shortcut.
 - [Phase 13]: [13-11] Picker fetches listSmartModes() on open for name-based dedup; currentNames Set memoized with useMemo; outputHint gated to kind=rewrite; 5 new i18n keys in en + 19 non-English locales with English fallback
+- [Phase 13]: [13-12] TranslationEngineChoiceModal active badge driven by engineChoice + activeIsRecommended props (not GGUF activeModelId) — covers Apple Intelligence and non-GGUF providers
+- [Phase 13]: [13-12] SmartModeShortcutChip: module-level resumeAll() helper + suspendAllShortcuts on record start; resumeAll on commitCombo (success+conflict), handleClickOutside, and effect cleanup — every exit path covered
 
 ### Pending Todos
 
@@ -138,6 +140,6 @@ Progress: [█████████░] ~95% (Phase 13 functionally complete;
 
 ## Session Continuity
 
-Last session: 2026-06-05T15:09:17.965Z
-Stopped at: Completed 13-11-PLAN.md
+Last session: 2026-06-05T15:13:25.561Z
+Stopped at: 13-12 Tasks 1+2 complete, stopped at Task 3 checkpoint (human-verify)
 Resume file: None
