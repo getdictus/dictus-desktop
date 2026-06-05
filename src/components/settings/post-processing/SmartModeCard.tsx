@@ -26,7 +26,8 @@ export const SEEDED_MODE_ID_TO_I18N_KEY: Record<string, string> = {
 
 // Seeded mode ID -> stored default English name (from settings.rs smart_mode_templates)
 // Used to detect whether a seeded mode's name has been edited by the user.
-const SEEDED_MODE_DEFAULT_NAME: Record<string, string> = {
+// Exported so SmartModeTemplatePicker can perform name-based dedup.
+export const SEEDED_MODE_DEFAULT_NAME: Record<string, string> = {
   mode_clean_up: "Clean Up",
   mode_make_formal: "Make Formal",
   mode_make_casual: "Make Casual",
