@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
 status: planning
-stopped_at: Completed 13-14-PLAN.md (engine-name gate for non-embedded providers)
-last_updated: "2026-06-05T20:27:28.186Z"
+stopped_at: Completed 13-15-PLAN.md (seeded Smart Mode i18n names for all 19 non-en locales)
+last_updated: "2026-06-05T20:28:00.984Z"
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 25
-  completed_plans: 21
+  completed_plans: 22
   percent: 95
 ---
 
@@ -71,6 +71,7 @@ Progress: [█████████░] ~95% (Phase 13: 3 gaps remain before 
 | Phase 13-smart-modes-ui-translation-presets-i18n P11 | 2 | 2 tasks | 21 files |
 | Phase 13 P10 | 25 | 3 tasks | 2 files |
 | Phase 13-smart-modes-ui-translation-presets-i18n P14 | 2 | 1 tasks | 1 files |
+| Phase 13-smart-modes-ui-translation-presets-i18n P15 | 2 | 1 tasks | 19 files |
 
 ## Accumulated Context
 
@@ -130,6 +131,8 @@ Progress: [█████████░] ~95% (Phase 13: 3 gaps remain before 
 - [Phase 13]: [13-12] SmartModeShortcutChip: module-level resumeAll() helper + suspendAllShortcuts on record start; resumeAll on commitCombo (success+conflict), handleClickOutside, and effect cleanup — every exit path covered
 - [Phase 13]: 13-10 VERIFIED LIVE (macOS Apple Silicon): Apple Intelligence Smart Modes now correct — Spanish translation produced (not unchanged English), Bullet Points full multi-line (no 26-char truncation), Clean Up still works. Closes shared root cause behind UAT tests 10 + 11.
 - [Phase 13-smart-modes-ui-translation-presets-i18n]: [13-14] activeModelName gated on isEmbeddedActive (providerId === 'embedded') — prevents lingering GGUF activeModelId from short-circuiting to Gemma when Apple Foundation is active; activeIsRecommended = isEmbeddedActive && activeModelId === 'gemma-3-4b'
+- [Phase 13-smart-modes-ui-translation-presets-i18n]: [Phase 13-15]: Names-only scope confirmed — only smartModes.defaultModes.* values translated; prompt/description bodies remain English by user decision (2026-06-05)
+- [Phase 13-smart-modes-ui-translation-presets-i18n]: [Phase 13-15]: He writeAsEmail uses quote-free form (כתוב כאימייל) to avoid inner gershayim double-quote breaking JSON
 
 ### Pending Todos
 
@@ -145,6 +148,6 @@ Progress: [█████████░] ~95% (Phase 13: 3 gaps remain before 
 
 ## Session Continuity
 
-Last session: 2026-06-05T20:27:28.184Z
-Stopped at: Completed 13-14-PLAN.md (engine-name gate for non-embedded providers)
+Last session: 2026-06-05T20:28:00.982Z
+Stopped at: Completed 13-15-PLAN.md (seeded Smart Mode i18n names for all 19 non-en locales)
 Resume file: None

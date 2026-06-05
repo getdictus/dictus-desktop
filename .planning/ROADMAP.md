@@ -143,4 +143,4 @@
 | 10. Prerequisite Gate | 3/3 | Complete    | 2026-06-01 | 2026-06-01 |
 | 11. LLM Runtime Foundation | 3/4 | In Progress|  | - |
 | 12. Smart Modes Data Layer | 3/3 | Complete    | 2026-06-03 | - |
-| 13. Smart Modes UI + Translation + i18n | 11/15 | In Progress|  | - |
+| 13. Smart Modes UI + Translation + i18n | 12/15 | In Progress|  | - |
