@@ -1691,6 +1691,9 @@ mod tests {
         let mut settings = make_settings_with_modes_and_bindings(modes, &["transcribe"]);
 
         let changed = reconcile_dangling_smart_mode_bindings(&mut settings);
-        assert!(!changed, "must return false when no smart_mode_* bindings present");
+        assert!(
+            !changed,
+            "must return false when no smart_mode_* bindings present"
+        );
     }
 }

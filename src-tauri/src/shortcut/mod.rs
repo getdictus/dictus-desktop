@@ -1513,10 +1513,7 @@ mod tests {
     #[test]
     fn resolve_seeded_id_returns_none_for_custom_mode() {
         let result = resolve_seeded_id("My Custom Mode", &SmartModeKind::Rewrite);
-        assert_eq!(
-            result, None,
-            "a non-template name must return None"
-        );
+        assert_eq!(result, None, "a non-template name must return None");
     }
 
     #[test]

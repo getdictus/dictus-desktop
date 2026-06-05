@@ -1020,9 +1020,9 @@ mod tests {
     // ── Task 1 tests: catalogue + settings serde ──────────────────────────────
 
     #[test]
-    fn test_catalogue_has_five_models() {
+    fn test_catalogue_has_four_models() {
         let catalogue = LlmManager::catalogue();
-        assert_eq!(catalogue.len(), 5);
+        assert_eq!(catalogue.len(), 4);
     }
 
     #[test]

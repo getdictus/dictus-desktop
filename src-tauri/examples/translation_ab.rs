@@ -38,6 +38,7 @@ struct ModelSpec {
     is_translategemma: bool,
 }
 
+#[allow(dead_code)]
 struct Outcome {
     output: String,
     gen_tokens: usize,
