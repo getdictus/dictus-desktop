@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
 status: verifying
-stopped_at: 13-12 Tasks 1+2 complete, stopped at Task 3 checkpoint (human-verify)
-last_updated: "2026-06-05T15:13:33.898Z"
+stopped_at: Completed 13-10-PLAN.md (Apple Intelligence task-agnostic path) — Task 3 human-verify approved live by user
+last_updated: "2026-06-05T15:49:49.997Z"
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 22
-  completed_plans: 19
+  completed_plans: 20
   percent: 95
 ---
 
@@ -68,6 +68,7 @@ Progress: [█████████░] ~95% (Phase 13 functionally complete;
 | Phase 13 P07 | 45 | 4 tasks | 24 files |
 | Phase 13-smart-modes-ui-translation-presets-i18n P09 | 5 | 3 tasks | 4 files |
 | Phase 13-smart-modes-ui-translation-presets-i18n P11 | 2 | 2 tasks | 21 files |
+| Phase 13 P10 | 25 | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -125,6 +126,7 @@ Progress: [█████████░] ~95% (Phase 13 functionally complete;
 - [Phase 13]: [13-11] Picker fetches listSmartModes() on open for name-based dedup; currentNames Set memoized with useMemo; outputHint gated to kind=rewrite; 5 new i18n keys in en + 19 non-English locales with English fallback
 - [Phase 13]: [13-12] TranslationEngineChoiceModal active badge driven by engineChoice + activeIsRecommended props (not GGUF activeModelId) — covers Apple Intelligence and non-GGUF providers
 - [Phase 13]: [13-12] SmartModeShortcutChip: module-level resumeAll() helper + suspendAllShortcuts on record start; resumeAll on commitCombo (success+conflict), handleClickOutside, and effect cleanup — every exit path covered
+- [Phase 13]: 13-10 VERIFIED LIVE (macOS Apple Silicon): Apple Intelligence Smart Modes now correct — Spanish translation produced (not unchanged English), Bullet Points full multi-line (no 26-char truncation), Clean Up still works. Closes shared root cause behind UAT tests 10 + 11.
 
 ### Pending Todos
 
@@ -140,6 +142,6 @@ Progress: [█████████░] ~95% (Phase 13 functionally complete;
 
 ## Session Continuity
 
-Last session: 2026-06-05T15:13:25.561Z
-Stopped at: 13-12 Tasks 1+2 complete, stopped at Task 3 checkpoint (human-verify)
+Last session: 2026-06-05T15:49:40.636Z
+Stopped at: Completed 13-10-PLAN.md (Apple Intelligence task-agnostic path) — Task 3 human-verify approved live by user
 Resume file: None
