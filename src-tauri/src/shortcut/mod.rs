@@ -235,6 +235,47 @@ pub fn resume_binding(app: AppHandle, id: String) -> Result<(), String> {
     Ok(())
 }
 
+/// Temporarily unregister ALL global shortcuts (used while the user records a
+/// new smart-mode shortcut so an already-bound combo is captured, not fired).
+///
+/// The caller MUST call `resume_all_shortcuts` once capture is done
+/// (commit / conflict / cancel / unmount) so no binding stays permanently dead.
+#[tauri::command]
+#[specta::specta]
+pub fn suspend_all_shortcuts(app: AppHandle) -> Result<(), String> {
+    let impl_ = settings::get_settings(&app).keyboard_implementation;
+    unregister_all_shortcuts(&app, impl_);
+    Ok(())
+}
+
+/// Re-register all global shortcuts after a capture session ends.
+///
+/// Iterates every non-empty binding except "cancel" (which is dynamically
+/// registered only during recording) and re-registers it for the active
+/// keyboard implementation. Non-fatal per-binding errors are logged as
+/// warnings so a single broken binding does not block the others.
+#[tauri::command]
+#[specta::specta]
+pub fn resume_all_shortcuts(app: AppHandle) -> Result<(), String> {
+    let settings = settings::get_settings(&app);
+    for (id, binding) in &settings.bindings {
+        // cancel is registered dynamically on recording start — skip it here.
+        if id == "cancel" {
+            continue;
+        }
+        if binding.current_binding.trim().is_empty() {
+            continue;
+        }
+        if let Err(e) = register_shortcut(&app, binding.clone()) {
+            warn!(
+                "resume_all_shortcuts: failed to re-register '{}': {}",
+                id, e
+            );
+        }
+    }
+    Ok(())
+}
+
 // ============================================================================
 // Keyboard Implementation Switching
 // ============================================================================

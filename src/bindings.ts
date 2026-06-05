@@ -362,6 +362,37 @@ async resumeBinding(id: string) : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
+/**
+ * Temporarily unregister ALL global shortcuts (used while the user records a
+ * new smart-mode shortcut so an already-bound combo is captured, not fired).
+ *
+ * The caller MUST call `resumeAllShortcuts` once capture is done
+ * (commit / conflict / cancel / unmount) so no binding stays permanently dead.
+ */
+async suspendAllShortcuts() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("suspend_all_shortcuts") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Re-register all global shortcuts after a capture session ends.
+ *
+ * Iterates every non-empty binding except "cancel" (which is dynamically
+ * registered only during recording) and re-registers it for the active
+ * keyboard implementation. Non-fatal per-binding errors are logged as
+ * warnings so a single broken binding does not block the others.
+ */
+async resumeAllShortcuts() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("resume_all_shortcuts") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async changeMuteWhileRecordingSetting(enabled: boolean) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("change_mute_while_recording_setting", { enabled }) };
