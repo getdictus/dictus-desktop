@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 13-smart-modes-ui-translation-presets-i18n
 source:
   - 13-01-SUMMARY.md
@@ -104,90 +104,128 @@ skipped: 0
 ## Gaps
 
 - truth: "The create picker prevents/handles adding a mode that already exists"
-  status: failed
+  status: diagnosed
   reason: "User reported: a duplicate mode can be added with no visual distinction; re-importing an edited default (e.g. Clean Up) should warn it already exists and will overwrite — needs a uniqueness check by name or id"
   severity: major
   test: 4
-  root_cause: ""
+  root_cause: "The picker's only dedup guard (existingModeIds.includes(template.id), SmartModeTemplatePicker.tsx:83) is dead code: add_smart_mode (shortcut/mod.rs:1080) discards the template's seeded id and mints a fresh format!(\"mode_{}\", timestamp) id, so a mode created from 'Clean Up' becomes mode_1733… and never equals template.id (mode_clean_up). The 'added' badge never shows and the button stays clickable. This is a direct consequence of decision [13-07] (use addSmartMode/new id to avoid delete-then-recreate collisions), which removed the only signal the id check relied on. There is no name-based fallback and no overwrite path — handlePickTemplate only ever calls addSmartMode, never updateSmartMode."
   artifacts:
     - path: "src/components/settings/post-processing/SmartModeTemplatePicker.tsx"
-      issue: "Picker always addSmartMode (new id) with no duplicate detection; no 'already added' guard or overwrite warning"
+      issue: "Lines 39-51,83: add-only (no overwrite); id-based dedup is dead code; unused name map SEEDED_MODE_DEFAULT_NAME available"
+    - path: "src-tauri/src/shortcut/mod.rs"
+      issue: "Lines 1072-1091: add_smart_mode forces fresh timestamp id, defeating id-based detection"
+    - path: "src/components/settings/post-processing/SmartModeCard.tsx"
+      issue: "Lines 29-40: SEEDED_MODE_DEFAULT_NAME map exists but picker never uses it for name-based detection"
   missing:
-    - "Detect when a template is already present (by seeded id / name) and either disable it, mark it visually, or warn-before-overwrite"
-    - "Define and handle the duplicate cases (pristine default re-add vs edited default re-add vs identical custom)"
-  debug_session: ""
+    - "Switch picker dedup to name-based matching against current modes' display names (reuse SEEDED_MODE_DEFAULT_NAME + localized names)"
+    - "On match: mark the template visually and on click warn 'already exists / overwrite?' → updateSmartMode(existingId, ...) instead of addSmartMode"
+    - "Handle the duplicate cases: pristine default re-add vs edited default re-add vs identical custom"
+  debug_session: ".planning/debug/picker-duplicates-output-hint.md"
 
 - truth: "Custom mode form guides the user to reference the transcript via ${output}"
-  status: failed
+  status: diagnosed
   reason: "User reported: Custom form has no placeholders; crucially the prompt field gives no indication that ${output} must be included for the transcription to be used — users can't discover this"
   severity: major
   test: 4
-  root_cause: ""
+  root_cause: "Confirmed: the authoritative transcript token is the literal string ${output} (consumed in actions.rs:74 chat path / actions.rs:333 legacy path). The 6 built-in rewrite templates (settings.rs:672-757) already end with 'Text:\\n${output}', but in SmartModeCard.tsx the name Input (line 201) and prompt Textarea (line 215) have NO placeholder and NO helper/example text and never reference ${output}. A user building a custom rewrite mode cannot discover the token, so their prompt silently fails to inject the transcript on the substitution path."
   artifacts:
     - path: "src/components/settings/post-processing/SmartModeCard.tsx"
-      issue: "Name/prompt inputs lack placeholders; prompt has no ${output} example/hint"
+      issue: "Lines 201,215: name Input + prompt Textarea lack placeholders and any ${output} example/helper"
+    - path: "src-tauri/src/actions.rs"
+      issue: "Lines 74,333: authoritative ${output} substitution — the hint shown to users must match this exact token"
   missing:
-    - "Add a name placeholder and a prompt placeholder/example demonstrating ${output} (the transcript token)"
-    - "Optionally validate/auto-append ${output} or warn if a custom prompt omits it"
-  debug_session: ""
+    - "Add a name placeholder and a prompt placeholder/example demonstrating ${output} (e.g. 'Rewrite the following text…\\n\\nText:\\n${output}') plus a short helper line"
+    - "Optionally validate/warn (or auto-append) when a custom rewrite prompt omits ${output}"
+  debug_session: ".planning/debug/picker-duplicates-output-hint.md"
 
 - truth: "Deleting a mode clears its shortcut binding (no orphaned binding keeps firing)"
-  status: failed
+  status: diagnosed
   reason: "User reported: deleting a mode that had 'Option' did not free the binding; the combo stays assigned to the deleted mode, can't be reassigned, and still fires a transcription"
   severity: major
   test: 6
-  root_cause: ""
+  root_cause: "delete_smart_mode (shortcut/mod.rs:1116-1125) removes the mode from settings.smart_modes (via binding-agnostic delete_mode_in_place) but never unregisters the OS shortcut and never removes the smart_mode_{id} entry from settings.bindings. The correct cleanup primitive clear_smart_mode_binding (mod.rs:1188-1206) exists but is wired ONLY to the chip's X button (SmartModeShortcutChip.tsx:199). Frontend handleDelete (SmartModeCard.tsx:141-152) calls deleteSmartMode without clearSmartModeBinding. Result: the OS shortcut stays registered in-session and keeps firing; the orphaned bindings entry makes change_binding/register_shortcut for a new mode collide (success:false → surfaced as conflict). Note: after restart the deleted mode is NOT re-registered (init_shortcuts iterates smart_modes, handy_keys.rs:454-466), so the live in-session orphan is the active defect; the persisted bindings entry is inert at registration but should still be cleaned."
   artifacts:
     - path: "src-tauri/src/shortcut/mod.rs"
-      issue: "deleteSmartMode likely does not call clear_smart_mode_binding / unregister the OS shortcut for the deleted mode"
+      issue: "delete_smart_mode (1116) missing binding cleanup; clear_smart_mode_binding (1188) is the reusable primitive to fold in"
+    - path: "src/components/settings/post-processing/SmartModeCard.tsx"
+      issue: "handleDelete (141-152) does not invoke clearSmartModeBinding"
   missing:
-    - "On delete, unregister + remove the mode's shortcut binding so the combo is freed"
-  debug_session: ""
+    - "Make delete_smart_mode perform the same cleanup as clear_smart_mode_binding atomically (unregister OS shortcut if bound + remove settings.bindings[smart_mode_{id}]) within the same read/modify/write"
+    - "Optionally call clearSmartModeBinding in handleDelete as belt-and-suspenders"
+  debug_session: ".planning/debug/delete-orphan-binding.md"
 
-- truth: "An 'Option' binding the user no longer sees in the UI must not keep firing (binding/display stay in sync)"
-  status: failed
+- truth: "Every persisted smart-mode binding is shown on its card (no active-but-invisible binding)"
+  status: diagnosed
   reason: "User reported: 'Option' (set pre-phase-13 for post-process) still triggers something when pressed, but the UI shows no shortcut for it."
   severity: blocker
   test: 9
-  root_cause: "LOG EVIDENCE (dictus.log 14:02:25): Option is bound to smart_mode_mode_email and fires correctly as a smart mode (handy-keys event binding=smart_mode_mode_email hotkey=option Pressed → TranscribeAction::start → SmartModeAction::stop on release). It is NOT legacy transcribe_with_post_process. The bug is a DESYNC: the email mode's option binding is persisted/registered in the backend and fires, but the SmartModeCard does not display it — so it is invisible and uneditable/unclearable from the UI."
+  root_cause: "NOT a key-format mismatch (frontend SmartModeCard.tsx:87 'smart_mode_'+mode.id and backend smart_mode_binding_id() mod.rs:1066 produce the identical smart_mode_mode_email) and NOT a migration mapping. It is an IDENTITY/DUPLICATION desync: the user UAT'd at the 13-04 checkpoint when default_smart_modes() seeded the FULL 10-mode catalogue (commit a421a61), so their persisted smart_modes contained an entry id=mode_email. They bound Option to it → bindings[smart_mode_mode_email] + smart_modes[mode_email] persist (smart_modes is never rebuilt from defaults; commit 5243d60 only changed first-run seeding). handy_keys::init_shortcuts (handy_keys.rs:454-456) keeps registering Option from that persisted entry → it fires (SmartModeAction delegates to TranscribeAction). Meanwhile the 'Write as Email' card the user now sees is a DIFFERENT entity: the picker mints a fresh mode_{timestamp} id (no dedup), whose binding key is empty → its chip shows 'add shortcut'. The Option binding belongs to the orphaned seeded mode_email, invisible/unclearable from the UI while still firing. Same root family as the delete-orphan gap (test 6) and rooted in the same no-dedup picker as test 4."
   artifacts:
-    - path: "src/components/settings/post-processing/SmartModeCard.tsx"
-      issue: "Card shortcut chip does not reflect the persisted binding for smart_mode_mode_email (reads binding state from wrong source / not refreshed after migration or edit), so an active binding shows as unbound"
-    - path: "src-tauri/src/shortcut/mod.rs"
-      issue: "Binding registry can hold a smart_mode binding the UI never surfaces; need a single source of truth the card reads"
     - path: "src-tauri/src/settings.rs"
-      issue: "v12->v13 migration may have mapped the legacy option post-process binding onto smart_mode_mode_email without the UI picking it up"
+      issue: "default_smart_modes() seed-set history (a421a61 all 10 → 5243d60 Clean Up only); add_smart_mode mints mode_{timestamp} with no dedup; migration writes smart_mode_{active_id}"
+    - path: "src-tauri/src/shortcut/handy_keys.rs"
+      issue: "Lines 454-466: registers smart-mode shortcuts from smart_modes × bindings — registers an orphaned mode_email binding indefinitely"
+    - path: "src/components/settings/post-processing/SmartModeTemplatePicker.tsx"
+      issue: "No dedup → creates a duplicate Email card with a new id, splitting the identity"
+    - path: "src/components/settings/post-processing/SmartModeCard.tsx"
+      issue: "Lines 85-90: lookup is correct, but only sees the binding if the card's mode.id matches the persisted binding's id"
   missing:
-    - "Card must display every persisted smart-mode binding (read from the same store the backend registers from) so 'invisible but active' is impossible"
-    - "Verify the migration mapping of the old option binding and ensure the resulting binding is visible + clearable"
-  debug_session: ""
+    - "Add picker name-based dedup (shared with test 4) so re-adding a seeded template reuses/overwrites the existing id instead of minting mode_{timestamp} — prevents the duplicate-card identity split"
+    - "On migration/seed-reduction, reconcile dangling bindings: drop or re-home any bindings[smart_mode_*] whose mode id no longer exists in smart_modes (symmetric with the delete-orphan fix)"
+    - "Backstop: surface any smart_mode_* binding present in settings even when no matching card exists, so 'active but invisible' is structurally impossible"
+  debug_session: ".planning/debug/option-binding-invisible.md"
 
 - truth: "A translation mode runs offline and outputs translated text"
-  status: failed
+  status: diagnosed
   reason: "User reported: translation does not happen — a 'Traduction Espagnole' mode ('Translate the following text to Spanish. Return ONLY...') produces no translation"
   severity: major
   test: 10
-  root_cause: "PARTIALLY RESOLVED BY LOG EVIDENCE (dictus.log 14:08:06-11): a DEDICATED Translation mode (smart_mode_mode_translate_es) via the embedded generic LLM DID translate correctly ('La traducción se hará con el modelo predeterminado.'). So translation works on the embedded-LLM + Translation-mode path. The reported failure is likely the rewrite-style 'Traduction Espagnole' custom mode and/or the Apple Intelligence provider path — to confirm in diagnosis."
+  root_cause: "It is the Apple-Intelligence-structured-outputs path, NOT a missing ${output} token. The failing 'Traduction Espagnole' is a REWRITE-kind mode → post_process_with_prompt → the user's active post-process provider (apple_intelligence). Because apple_intelligence has supports_structured_output:true (settings.rs:617), the rewrite enters the structured branch (actions.rs:213-261) and calls Swift processTextWithSystemPrompt, which ALWAYS uses a hardcoded @Generable struct CleanedTranscript { let cleanedText: String } (apple_intelligence.swift:5-9). That schema frames every task as 'clean a transcript', so 'Translate to Spanish' yields near-unchanged text — translation does not happen. (The transcript IS sent as user_content, so ${output} is irrelevant here.) The dedicated Translation-kind mode → run_translation → embedded LLM works (log 14:08:06). Same Apple schema root cause as the test-11 truncation."
   artifacts:
     - path: "src-tauri/src/actions.rs"
-      issue: "Rewrite-style translation custom mode may run through apple_intelligence provider (which truncates output) rather than run_translation; verify which path a rewrite-with-translation-prompt takes"
-    - path: "src/components/settings/post-processing/SmartModeTemplatePicker.tsx"
-      issue: "Predefined translation/rewrite template prompts may omit ${output}"
+      issue: "Lines 973-985 rewrite vs run_translation split; lines 213-261 Apple structured-output branch"
+    - path: "src-tauri/src/apple_intelligence.swift"
+      issue: "Lines 5-9: hardcoded CleanedTranscript @Generable schema applied to ALL tasks (semantic mismatch)"
+    - path: "src-tauri/src/settings.rs"
+      issue: "Line 617: apple_intelligence.supports_structured_output=true is the entry point into the broken branch"
   missing:
-    - "Reproduce the exact failing case (rewrite 'Traduction Espagnole' vs dedicated Translation mode; Apple vs embedded engine) and confirm transcript injection + provider used"
-  debug_session: ""
+    - "Make the Apple Intelligence smart-mode path task-agnostic: use plain free-text session.respond(to:) carrying the user prompt as instructions instead of the hardcoded CleanedTranscript schema (fixes translation-as-rewrite AND non-cleanup rewrites)"
+    - "Optionally route translate-style rewrite modes to the working embedded translation path, or discourage hand-rolled translation-as-rewrite while a structured-output provider is active"
+  debug_session: ".planning/debug/translation-rewrite-apple-path.md"
 
 - truth: "Assigning an already-used shortcut shows an inline conflict and is blocked"
-  status: failed
+  status: diagnosed
   reason: "User reported: during capture, pressing an already-bound combo TRIGGERS that existing shortcut (fires transcription) instead of being captured — so no conflict is shown and no reassignment happens. Applies to single keys and combos alike."
   severity: major
   test: 7
-  root_cause: ""
+  root_cause: "SmartModeShortcutChip never suspends the OTHER (conflicting) global shortcuts while recording. Two defects: (1) Wrong scope — on record start (chip.tsx:191-193) it calls suspendBinding('smart_mode_'+modeId) and only if the chip is already bound, so it suspends at most its own binding; every other OS hotkey stays live and fires before any conflict can be detected. There is no command-layer 'suspend all global shortcuts' primitive (only private unregister_all_shortcuts, mod.rs:357, used for impl switching). (2) Wrong capture channel — the chip captures via webview window keydown (chip.tsx:171-173) only, which doesn't stop OS-level hotkeys. The app's working ShortcutInput/HandyKeysShortcutInput/GlobalShortcutInput edit ONE known binding and suspend it (GlobalShortcutInput.tsx:184), and on handy_keys also capture via the backend recording stream (handy-keys-event) regardless of focus. handy_keys recording is non-blocking (KeyboardListener::new, not new_with_blocking) so registered hotkeys still fire during recording — confirming suspension (not listener swallowing) is the mechanism that must change."
   artifacts:
     - path: "src/components/settings/post-processing/SmartModeShortcutChip.tsx"
-      issue: "Global OS shortcuts are not suspended during capture; the 13-03 best-effort suspend/resume (catch(()=>{})) does not actually disable existing bindings while recording"
+      issue: "Suspends only its own binding (and only if bound); captures via webview keydown; no global suspend"
     - path: "src-tauri/src/shortcut/mod.rs"
-      issue: "No reliable suspend-all / disable-global-shortcuts-during-capture path the chip can call"
+      issue: "suspend_binding (215) is per-id only; all-bindings logic (unregister_all_shortcuts, 357) exists but is not exposed as a command"
+    - path: "src/components/settings/HandyKeysShortcutInput.tsx"
+      issue: "Working reference: per-binding suspend + backend recording-stream capture on handy_keys"
   missing:
-    - "Suspend all global shortcuts while a chip is recording so the pressed combo is captured, conflict can be detected, and the binding is committed instead of firing the existing shortcut"
-  debug_session: ""
+    - "Expose a command-level suspend-all / resume-all global-shortcuts pair (reuse unregister_all_shortcuts + a re-register-all counterpart)"
+    - "Chip calls suspend-all on record start and resume-all on EVERY exit path (commit, conflict, click-outside chip.tsx:158-169, effect cleanup 175-181)"
+    - "For handy_keys correctness, capture via the backend recording stream when keyboard_implementation==='handy_keys' (mirror HandyKeysShortcutInput), since after suspend-all the OS hotkeys no longer reach the webview"
+  debug_session: ".planning/debug/capture-no-suspend.md"
+
+- truth: "Translation engine choice persists and the modal reflects it on reopen (incl. Apple Foundation); post-process output is not truncated"
+  status: diagnosed
+  reason: "User reported: with Apple Foundation active, choosing 'use current model' doesn't persist — reopening the modal still shows Gemma. Works with embedded Qwen. Separately, Apple bullet output truncated to 26 chars."
+  severity: major
+  test: 11
+  root_cause: "TWO independent Apple-path defects. (1) The choice DOES persist (setTranslationEngineChoice writes generic_model, commands/llm.rs:77-85; SmartModesSection reads it correctly). The modal MIS-DISPLAYS it: TranslationEngineChoiceModal infers the active engine from useLlmModelStore.activeModelId (the embedded GGUF id), not from translation_engine_choice — recActive = activeModelId==='gemma-3-4b' (line 56), currentActiveSelected = activeModelId!=null && !=='gemma-3-4b' (61-62). Apple Intelligence is a post-process PROVIDER, not a GGUF model, so active_llm_model_id is null → both flags false → 'use current model' never gets the active badge → looks like Gemma is still chosen. Works with Qwen because Qwen sets a real activeModelId. (2) Apple 26-char truncation = the SAME hardcoded CleanedTranscript @Generable schema (apple_intelligence.swift:5-9) with includeSchemaInPrompt:true biasing the model to a terse cleaned-text value; NOT a word/token cap (token_limit parses 'Apple Intelligence'→0→no-op; maximumResponseTokens unset)."
+  artifacts:
+    - path: "src/components/settings/post-processing/TranslationEngineChoiceModal.tsx"
+      issue: "Lines 27-62,197: derives active-engine UI from activeModelId instead of translation_engine_choice; gates 'use current' on activeDownloaded (false for Apple)"
+    - path: "src/stores/llmModelStore.ts"
+      issue: "Lines 51-68: activeModelId is GGUF-only (null for Apple Intelligence provider)"
+    - path: "src-tauri/src/apple_intelligence.swift"
+      issue: "Lines 5-9,96-107: hardcoded CleanedTranscript schema + schema-in-prompt → 26-char truncation (shared with test 10)"
+  missing:
+    - "Drive the modal's active-engine badge from the persisted translation_engine_choice (treat generic_model + non-Gemma active engine as 'use current model = active'); stop requiring activeModelId!=null / activeDownloaded for non-GGUF providers"
+    - "Apple truncation: covered by the test-10 fix (task-agnostic Apple path / drop the fixed CleanedTranscript schema for smart modes)"
+  debug_session: ".planning/debug/engine-persist-apple-truncation.md"
