@@ -227,7 +227,10 @@ async fn post_process_with_prompt(
                     return None;
                 }
 
-                let token_limit = model.trim().parse::<i32>().unwrap_or(0);
+                // Apple Intelligence "model" is a provider label ("Apple Intelligence"),
+                // not a word cap. Never truncate smart-mode output by word count.
+                // (debug: engine-persist-apple-truncation.md)
+                let token_limit: i32 = 0;
                 return match apple_intelligence::process_text_with_system_prompt(
                     &system_prompt,
                     &user_content,
