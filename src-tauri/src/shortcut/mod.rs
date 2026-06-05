@@ -1067,6 +1067,19 @@ pub fn smart_mode_binding_id(mode_id: &str) -> String {
     format!("smart_mode_{}", mode_id)
 }
 
+/// Resolve the stable id for a created mode. Returns Some(seed_id) when (name, kind)
+/// matches a seeded template, else None (caller mints a timestamp id).
+///
+/// This is the dedup anchor for add_smart_mode: re-adding a template from the
+/// picker reuses its seeded id rather than minting a fresh mode_{timestamp}, so
+/// there is never a card↔binding identity split.
+pub fn resolve_seeded_id(name: &str, kind: &settings::SmartModeKind) -> Option<String> {
+    settings::smart_mode_templates()
+        .into_iter()
+        .find(|t| t.name == name && &t.kind == kind)
+        .map(|t| t.id)
+}
+
 #[tauri::command]
 #[specta::specta]
 pub fn add_smart_mode(
@@ -1077,6 +1090,41 @@ pub fn add_smart_mode(
     target_language: Option<settings::TargetLanguage>,
 ) -> Result<settings::SmartMode, String> {
     let mut settings = settings::get_settings(&app);
+
+    // Dedup against the seeded template catalogue. If the incoming (name, kind)
+    // matches a seeded template, reuse its stable seed id instead of minting a
+    // timestamp. This prevents duplicate cards and the card↔binding identity
+    // split surfaced in UAT tests 4 and 9.
+    //
+    // Decision [13-07] originally used a fresh timestamp to avoid id collision
+    // when the user deletes a default and recreates it via the picker. The
+    // overwrite branch below handles the "still exists" case explicitly, and the
+    // reuse branch handles the "was deleted" case — both are safe with a stable
+    // seed id. See 13-09 SUMMARY for the full reversal rationale.
+    if let Some(seed_id) = resolve_seeded_id(&name, &kind) {
+        if let Some(existing) = settings.smart_modes.iter_mut().find(|m| m.id == seed_id) {
+            // Overwrite in place — do NOT push a duplicate.
+            existing.name = name;
+            existing.prompt = prompt;
+            existing.target_language = target_language;
+            let updated = existing.clone();
+            settings::write_settings(&app, settings);
+            return Ok(updated);
+        }
+        // Seed id not yet in list — insert with the stable seed id.
+        let new_mode = settings::SmartMode {
+            id: seed_id,
+            name,
+            kind,
+            prompt,
+            target_language,
+        };
+        settings.smart_modes.push(new_mode.clone());
+        settings::write_settings(&app, settings);
+        return Ok(new_mode);
+    }
+
+    // Genuine custom mode (no template match) — mint a timestamp id.
     let id = format!("mode_{}", chrono::Utc::now().timestamp_millis());
     let new_mode = settings::SmartMode {
         id: id.clone(),
