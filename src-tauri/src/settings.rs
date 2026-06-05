@@ -675,7 +675,7 @@ pub fn smart_mode_templates() -> Vec<SmartMode> {
             id: "mode_clean_up".to_string(),
             name: "Clean Up".to_string(),
             kind: SmartModeKind::Rewrite,
-            prompt: "Clean up this transcript: fix spelling, capitalization, and punctuation; remove filler words (um, uh, like-as-filler); keep the original language and exact meaning. Do not paraphrase or reorder. Return only the cleaned text.\n\nTranscript:\n${output}".to_string(),
+            prompt: "Clean this transcript:\n1. Fix spelling, capitalization, and punctuation errors\n2. ALWAYS write numbers and quantities as digits, never spelled out. Convert every single one: vingt-cinq mille euros → 25 000 €, dix pour cent → 10 %, quatorze heures → 14 h, trois → 3, twenty-five → 25, ten percent → 10%\n3. Replace spoken punctuation with symbols (point/period → ., virgule/comma → ,, point d'interrogation/question mark → ?)\n4. Remove filler words (euh, um, uh, like as filler)\n5. Keep the language in the original version (if it was french, keep it in french for example)\n6. Never output two punctuation marks in a row (for example \".,\" or \",.\")\n\nPreserve exact meaning and word order. Do not paraphrase or reorder content.\n\nReturn only the cleaned transcript.\n\nTranscript:\n${output}".to_string(),
             target_language: None,
         },
         SmartMode {
@@ -696,14 +696,14 @@ pub fn smart_mode_templates() -> Vec<SmartMode> {
             id: "mode_email".to_string(),
             name: "Write as Email".to_string(),
             kind: SmartModeKind::Rewrite,
-            prompt: "Rewrite this text as a clear, well-structured email with an appropriate greeting and sign-off, preserving its meaning and language. Return only the email.\n\nText:\n${output}".to_string(),
+            prompt: "Reformat this text as an email WITHOUT changing its tone, register, or wording more than necessary. Keep exactly the same level of familiarity or formality as the input: if it is casual and friendly, the email stays casual and friendly; if it is formal (vouvoiement), it stays formal. Apply ONLY email structure:\n- Start with exactly ONE greeting line, then a blank line. Use the same greeting word the user actually spoke and do not change it: if the text starts with \"salut\", the greeting must start with \"Salut\"; if it starts with \"bonjour\", it must start with \"Bonjour\". Add the recipient's name and fix capitalization. If the input has no greeting at all, use \"Bonjour,\". Never write a second greeting.\n- Then the message body, fixing capitalization and punctuation and splitting the run-on dictation into proper sentences (add periods and question marks where needed). Keep the user's own words and phrasing; do NOT make requests more polite and do NOT add words the user did not say (for example, never add \"s'il te plaît\" or \"please\").\nDo NOT add a subject line. Do NOT invent pleasantries such as \"I hope you are well\". Do NOT add a closing or signature unless the input explicitly contains one; if it does, place it after a blank line, with the closing word and the name on their own separate lines. Do not add, remove, or reword the actual content. Preserve the meaning and language. Return only the email.\n\nText:\n${output}".to_string(),
             target_language: None,
         },
         SmartMode {
             id: "mode_bullet_points".to_string(),
             name: "Bullet Points".to_string(),
             kind: SmartModeKind::Rewrite,
-            prompt: "Restructure this text as a concise bulleted list, one idea per bullet, preserving meaning and language. Return only the bullet list.\n\nText:\n${output}".to_string(),
+            prompt: "Restructure this text as a concise bulleted list, one idea per bullet, preserving meaning and language. Use a hyphen \"- \" as the bullet marker for every item. Return only the bullet list.\n\nText:\n${output}".to_string(),
             target_language: None,
         },
         SmartMode {
