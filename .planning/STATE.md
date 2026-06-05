@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
 status: verifying
-stopped_at: Completed 13-09-PLAN.md
-last_updated: "2026-06-05T15:04:50.975Z"
+stopped_at: Completed 13-11-PLAN.md
+last_updated: "2026-06-05T15:09:17.967Z"
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 22
-  completed_plans: 18
+  completed_plans: 19
   percent: 95
 ---
 
@@ -67,6 +67,7 @@ Progress: [█████████░] ~95% (Phase 13 functionally complete;
 | Phase 13 P06 | 15 | 2 tasks | 22 files |
 | Phase 13 P07 | 45 | 4 tasks | 24 files |
 | Phase 13-smart-modes-ui-translation-presets-i18n P09 | 5 | 3 tasks | 4 files |
+| Phase 13-smart-modes-ui-translation-presets-i18n P11 | 2 | 2 tasks | 21 files |
 
 ## Accumulated Context
 
@@ -121,6 +122,7 @@ Progress: [█████████░] ~95% (Phase 13 functionally complete;
 - [Phase 13-09]: [13-09] Reversal of [13-07]: add_smart_mode reuses stable seed id for template re-adds. Overwrite+reuse branches cover both collision cases safely.
 - [Phase 13-09]: [13-09] reconcile_dangling_smart_mode_bindings runs at load (after migration, before init_shortcuts) to drop orphaned smart_mode_* bindings including those from 13-04 seed reduction.
 - [Phase 13-09]: [13-09] resume_all_shortcuts skips cancel binding (dynamically managed during recording) to avoid permanently registering a dynamically-managed shortcut.
+- [Phase 13]: [13-11] Picker fetches listSmartModes() on open for name-based dedup; currentNames Set memoized with useMemo; outputHint gated to kind=rewrite; 5 new i18n keys in en + 19 non-English locales with English fallback
 
 ### Pending Todos
 
@@ -136,6 +138,6 @@ Progress: [█████████░] ~95% (Phase 13 functionally complete;
 
 ## Session Continuity
 
-Last session: 2026-06-05T15:04:50.973Z
-Stopped at: Completed 13-09-PLAN.md
+Last session: 2026-06-05T15:09:17.965Z
+Stopped at: Completed 13-11-PLAN.md
 Resume file: None
