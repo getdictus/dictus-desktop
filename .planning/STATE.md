@@ -2,16 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
-status: completed
-stopped_at: "Phase 13 live UAT + post-UAT fixes done; 13-08 formal closure (SUMMARY + VERIFICATION) pending"
-last_updated: "2026-06-05T10:45:00.000Z"
-last_activity: "2026-06-05 — Live UAT of Phase 13 surfaced (and we fixed) several real issues beyond the original 8 gaps: settings-store refresh after shortcut bind/clear, infinite-loop webview crash in translation modal, ErrorBoundary, download UX (progress/verify), modifier-only shortcuts (Option), and language-preservation directive. Major decision: TranslateGemma DROPPED (benchmark showed a same-size generic Gemma-3-4B matches/beats it reliably); translation now uses the active generic model. All work committed (35e63d9, f8dc2c0, dd4f9e7)."
+status: verifying
+stopped_at: Completed 13-09-PLAN.md
+last_updated: "2026-06-05T15:04:50.975Z"
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 18
-  completed_plans: 17
-  percent: 85
+  total_plans: 22
+  completed_plans: 18
+  percent: 95
 ---
 
 # Project State
@@ -67,6 +66,7 @@ Progress: [█████████░] ~95% (Phase 13 functionally complete;
 | Phase 13 P05 (gap-closure backend) | 4 | 3 tasks | 5 files |
 | Phase 13 P06 | 15 | 2 tasks | 22 files |
 | Phase 13 P07 | 45 | 4 tasks | 24 files |
+| Phase 13-smart-modes-ui-translation-presets-i18n P09 | 5 | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -117,6 +117,10 @@ Progress: [█████████░] ~95% (Phase 13 functionally complete;
 - [Phase 13 post-UAT]: Settings store must be refreshed after shortcut bind/clear/edit — SmartModeCard reads bindings from the Zustand settings store, but the chip mutates via direct commands; refetchModes now also calls refreshSettings.
 - [Phase 13 post-UAT]: Modifier-only shortcuts (e.g. Option alone) commit on modifier RELEASE when no main key was pressed; combos still commit on main keydown. Guarded against double-commit.
 - [Phase 13 post-UAT]: Translation modal infinite loop fixed — `useLlmModelStore()` whole-store subscription + store-dependent effect caused refresh->re-render->refresh (froze UI / webview black-screen). Use narrow selectors + effect depending only on `open`. Root ErrorBoundary added as a backstop.
+- [Phase 13]: 13-10: Apple Intelligence free-text path — CleanedTranscript @Generable struct removed from apple_intelligence.swift; plain session.respond(to:) now used for all Smart Mode prompts so translate/bullets/etc. work correctly via the system-prompt instructions field rather than being biased by the transcript-cleanup schema. token_limit hardcoded to 0 in actions.rs Apple branch (model label is not a word cap).
+- [Phase 13-09]: [13-09] Reversal of [13-07]: add_smart_mode reuses stable seed id for template re-adds. Overwrite+reuse branches cover both collision cases safely.
+- [Phase 13-09]: [13-09] reconcile_dangling_smart_mode_bindings runs at load (after migration, before init_shortcuts) to drop orphaned smart_mode_* bindings including those from 13-04 seed reduction.
+- [Phase 13-09]: [13-09] resume_all_shortcuts skips cancel binding (dynamically managed during recording) to avoid permanently registering a dynamically-managed shortcut.
 
 ### Pending Todos
 
@@ -132,6 +136,6 @@ Progress: [█████████░] ~95% (Phase 13 functionally complete;
 
 ## Session Continuity
 
-Last session: 2026-06-04T10:04:46.636Z
-Stopped at: Completed 13-07-PLAN.md
+Last session: 2026-06-05T15:04:50.973Z
+Stopped at: Completed 13-09-PLAN.md
 Resume file: None
