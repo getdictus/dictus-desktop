@@ -9,8 +9,17 @@ source:
   - 13-05-SUMMARY.md
   - 13-06-SUMMARY.md
   - 13-07-SUMMARY.md
+  - 13-09-SUMMARY.md
+  - 13-10-SUMMARY.md
+  - 13-11-SUMMARY.md
 started: 2026-06-05T12:53:42Z
-updated: 2026-06-05T12:53:42Z
+updated: 2026-06-05T16:10:00Z
+retest:
+  date: 2026-06-05
+  closed_plans: [13-09, 13-10, 13-11]
+  resolved_gaps: 4
+  remaining_gaps: 3  # tests 7, 11, 3 — see ## Gaps (status: failed)
+  next: "/gsd:plan-phase 13 --gaps"
 note: |
   Fresh full re-test (user choice). The first UAT was run at the 13-04 checkpoint
   and found 4 issues / 8 gaps; plans 13-05, 13-06, 13-07 were written to close them.
@@ -101,10 +110,19 @@ issues: 6
 pending: 0
 skipped: 0
 
+### Re-test 2026-06-05 (after gap-closure plans 13-09, 13-10, 13-11, 13-12 + 13-08 gates)
+resolved: 4  # picker dedup (test 4), ${output} hint (test 9), delete-orphan (test 6), invisible binding (test 9/blocker), translation-via-Apple (test 10)
+remaining: 3
+  - test 7  — duplicate shortcut not blocked/warned (capture/suspend fixed by 13-12; backend cross-mode collision check still missing) [B5]
+  - test 11 — engine modal still shows Gemma when Apple Foundation active (truncation half fixed by 13-10; frontend badge precedence bug remains) [C7]
+  - test 3  — seeded mode names not localized (English fallback values in non-en locales; names-only translation needed) [D8]
+next: /gsd:plan-phase 13 --gaps  (user chose formal gap-closure cycle, 2026-06-05)
+
 ## Gaps
 
 - truth: "The create picker prevents/handles adding a mode that already exists"
-  status: diagnosed
+  status: resolved
+  resolved_by: "13-11 (name-based dedup + overwrite-warn in picker) + 13-09 (seeded-id reuse/overwrite in add_smart_mode). Re-test 2026-06-05: PASS."
   reason: "User reported: a duplicate mode can be added with no visual distinction; re-importing an edited default (e.g. Clean Up) should warn it already exists and will overwrite — needs a uniqueness check by name or id"
   severity: major
   test: 4
@@ -123,7 +141,8 @@ skipped: 0
   debug_session: ".planning/debug/picker-duplicates-output-hint.md"
 
 - truth: "Custom mode form guides the user to reference the transcript via ${output}"
-  status: diagnosed
+  status: resolved
+  resolved_by: "13-11 (custom-form name/prompt placeholders + ${output} outputHint helper). Re-test 2026-06-05: PASS (test 9)."
   reason: "User reported: Custom form has no placeholders; crucially the prompt field gives no indication that ${output} must be included for the transcription to be used — users can't discover this"
   severity: major
   test: 4
@@ -139,7 +158,8 @@ skipped: 0
   debug_session: ".planning/debug/picker-duplicates-output-hint.md"
 
 - truth: "Deleting a mode clears its shortcut binding (no orphaned binding keeps firing)"
-  status: diagnosed
+  status: resolved
+  resolved_by: "13-09 (atomic delete_smart_mode: unregister OS shortcut + remove bindings entry in one write). Re-test 2026-06-05: PASS."
   reason: "User reported: deleting a mode that had 'Option' did not free the binding; the combo stays assigned to the deleted mode, can't be reassigned, and still fires a transcription"
   severity: major
   test: 6
@@ -155,7 +175,8 @@ skipped: 0
   debug_session: ".planning/debug/delete-orphan-binding.md"
 
 - truth: "Every persisted smart-mode binding is shown on its card (no active-but-invisible binding)"
-  status: diagnosed
+  status: resolved
+  resolved_by: "13-09 (seeded-id reuse in add_smart_mode kills the duplicate-card identity split + reconcile_dangling_smart_mode_bindings drops orphaned smart_mode_* bindings on load). Re-test 2026-06-05: PASS."
   reason: "User reported: 'Option' (set pre-phase-13 for post-process) still triggers something when pressed, but the UI shows no shortcut for it."
   severity: blocker
   test: 9
@@ -176,7 +197,8 @@ skipped: 0
   debug_session: ".planning/debug/option-binding-invisible.md"
 
 - truth: "A translation mode runs offline and outputs translated text"
-  status: diagnosed
+  status: resolved
+  resolved_by: "13-10 (Apple Intelligence path made task-agnostic: dropped hardcoded CleanedTranscript @Generable schema, plain free-text session.respond). Re-test 2026-06-05: PASS — Apple Intelligence now produces actual Spanish output, user-verified live."
   reason: "User reported: translation does not happen — a 'Traduction Espagnole' mode ('Translate the following text to Spanish. Return ONLY...') produces no translation"
   severity: major
   test: 10
@@ -194,10 +216,12 @@ skipped: 0
   debug_session: ".planning/debug/translation-rewrite-apple-path.md"
 
 - truth: "Assigning an already-used shortcut shows an inline conflict and is blocked"
-  status: diagnosed
-  reason: "User reported: during capture, pressing an already-bound combo TRIGGERS that existing shortcut (fires transcription) instead of being captured — so no conflict is shown and no reassignment happens. Applies to single keys and combos alike."
+  status: failed
+  reason: "RE-TEST 2026-06-05 (after 13-12): the CAPTURE half is fixed — suspend-all during recording means an already-bound combo no longer fires its action; it is captured. But the BLOCK/WARN half still fails: the same combo can be bound to two different cards with NO conflict message; both cards keep showing it; at runtime the last-bound one wins. Logs confirm the duplicate is persisted on both modes and only collides at OS re-registration: `resume_all_shortcuts: failed to re-register 'smart_mode_mode_...': Hotkey already registered: Cmd+2`."
   severity: major
   test: 7
+  remaining_root_cause: "Cross-mode duplicate detection is missing at commit time. SmartModeShortcutChip.commitCombo (chip.tsx:83) already renders response.error when setSmartModeBinding returns success:false — but the backend set_smart_mode_binding/change_binding accepts a combo already bound to a DIFFERENT mode without returning a conflict. So no error surfaces, both bindings persist, and resume_all_shortcuts hits 'Hotkey already registered'. The 13-12 suspend-all work is correct and should be kept; the new fix is purely the backend collision check."
+  fixed_so_far: "13-12 task 1 — chip suspends ALL global shortcuts during capture and resumes on every exit path (commit 262576b). Verified: combo no longer fires during capture."
   root_cause: "SmartModeShortcutChip never suspends the OTHER (conflicting) global shortcuts while recording. Two defects: (1) Wrong scope — on record start (chip.tsx:191-193) it calls suspendBinding('smart_mode_'+modeId) and only if the chip is already bound, so it suspends at most its own binding; every other OS hotkey stays live and fires before any conflict can be detected. There is no command-layer 'suspend all global shortcuts' primitive (only private unregister_all_shortcuts, mod.rs:357, used for impl switching). (2) Wrong capture channel — the chip captures via webview window keydown (chip.tsx:171-173) only, which doesn't stop OS-level hotkeys. The app's working ShortcutInput/HandyKeysShortcutInput/GlobalShortcutInput edit ONE known binding and suspend it (GlobalShortcutInput.tsx:184), and on handy_keys also capture via the backend recording stream (handy-keys-event) regardless of focus. handy_keys recording is non-blocking (KeyboardListener::new, not new_with_blocking) so registered hotkeys still fire during recording — confirming suspension (not listener swallowing) is the mechanism that must change."
   artifacts:
     - path: "src/components/settings/post-processing/SmartModeShortcutChip.tsx"
@@ -213,10 +237,12 @@ skipped: 0
   debug_session: ".planning/debug/capture-no-suspend.md"
 
 - truth: "Translation engine choice persists and the modal reflects it on reopen (incl. Apple Foundation); post-process output is not truncated"
-  status: diagnosed
-  reason: "User reported: with Apple Foundation active, choosing 'use current model' doesn't persist — reopening the modal still shows Gemma. Works with embedded Qwen. Separately, Apple bullet output truncated to 26 chars."
+  status: failed
+  reason: "RE-TEST 2026-06-05 (after 13-10 + 13-12): TRUNCATION half RESOLVED — Apple bullet output is now full-length (13-10, user-verified). MODAL-DISPLAY half STILL FAILS: with Apple Foundation active, the engine modal still shows Gemma as the current model instead of the active Apple provider."
   severity: major
   test: 11
+  remaining_root_cause: "13-12 moved the badge off useLlmModelStore onto an activeEngineName prop, but SmartModesSection.tsx:111-114 resolves it as `activeModelName ?? providerLabel ?? providerId`. activeModelName comes from the LLM store's lingering activeModelId (gemma-3-4b), which is non-null even when the active POST-PROCESS provider is Apple Foundation — so the `??` short-circuits to Gemma. Fix: gate on post_process_provider_id — use the GGUF model name ONLY when the embedded/local-LLM provider is active; otherwise use the provider's label. activeIsRecommended must likewise be false when the active provider is not the embedded GGUF one."
+  fixed_so_far: "13-10 — Apple truncation gone (task-agnostic path, user-verified full bullets). 13-12 task 2 — badge plumbed via engineChoice/activeEngineName/activeIsRecommended props (commit 89e17d6) but the precedence bug above means it still mis-resolves to Gemma for non-GGUF providers."
   root_cause: "TWO independent Apple-path defects. (1) The choice DOES persist (setTranslationEngineChoice writes generic_model, commands/llm.rs:77-85; SmartModesSection reads it correctly). The modal MIS-DISPLAYS it: TranslationEngineChoiceModal infers the active engine from useLlmModelStore.activeModelId (the embedded GGUF id), not from translation_engine_choice — recActive = activeModelId==='gemma-3-4b' (line 56), currentActiveSelected = activeModelId!=null && !=='gemma-3-4b' (61-62). Apple Intelligence is a post-process PROVIDER, not a GGUF model, so active_llm_model_id is null → both flags false → 'use current model' never gets the active badge → looks like Gemma is still chosen. Works with Qwen because Qwen sets a real activeModelId. (2) Apple 26-char truncation = the SAME hardcoded CleanedTranscript @Generable schema (apple_intelligence.swift:5-9) with includeSchemaInPrompt:true biasing the model to a terse cleaned-text value; NOT a word/token cap (token_limit parses 'Apple Intelligence'→0→no-op; maximumResponseTokens unset)."
   artifacts:
     - path: "src/components/settings/post-processing/TranslationEngineChoiceModal.tsx"
@@ -229,3 +255,19 @@ skipped: 0
     - "Drive the modal's active-engine badge from the persisted translation_engine_choice (treat generic_model + non-Gemma active engine as 'use current model = active'); stop requiring activeModelId!=null / activeDownloaded for non-GGUF providers"
     - "Apple truncation: covered by the test-10 fix (task-agnostic Apple path / drop the fixed CleanedTranscript schema for smart modes)"
   debug_session: ".planning/debug/engine-persist-apple-truncation.md"
+
+- truth: "Seeded smart-mode names display localized to the active app language (MODE-06 / L10N-01)"
+  status: failed
+  reason: "RE-TEST 2026-06-05 (newly surfaced; test 3 was auto-marked pass on code inspection but live test fails): with the app set to French, the seeded mode names render in English — 'Clean Up', 'Bullet Points', 'Write as Email', 'Trad Span' — instead of localized labels (e.g. 'Nettoyage'). A renamed mode correctly keeps the user's literal name; the defect is only the un-renamed seeded names."
+  severity: minor
+  test: 3
+  remaining_root_cause: "NOT an architecture problem — id↔label is already decoupled correctly. SmartModeCard.tsx:73-75 localizes an un-renamed seeded mode via t(SEEDED_MODE_ID_TO_I18N_KEY[mode.id]) (e.g. mode_clean_up → smartModes.defaultModes.cleanUp). The defect is i18n DATA: the smartModes.defaultModes.* values in all 19 non-English locales are still the English fallback strings (translation was explicitly deferred — decision [Phase 13] 'English fallback values used verbatim … real translations deferred'). So t() returns 'Clean Up' even under fr. Fix = supply real translations for the ~10 smartModes.defaultModes.* NAME keys across all 20 shipped locales (names only; prompt/description text stays English per user decision 2026-06-05). check:translations must stay green."
+  artifacts:
+    - path: "src/components/settings/post-processing/SmartModeCard.tsx"
+      issue: "Lines 14-24,73-75: SEEDED_MODE_ID_TO_I18N_KEY map + t(i18nKey) localization is correct; depends entirely on the locale VALUES being real translations"
+    - path: "src/i18n/locales/*/translation.json"
+      issue: "smartModes.defaultModes.* keys hold English fallback values in all 19 non-English locales (cleanUp, makeFormal, makeCasual, writeAsEmail, bulletPoints, summarize, translateToEnglish/Spanish/French/Chinese)"
+  missing:
+    - "Translate the ~10 smartModes.defaultModes.* NAME keys into real strings for all 20 shipped locales (names only)"
+    - "Keep en as source of truth; do NOT translate the prompt/description bodies (user decision: names only)"
+    - "Re-run bun run check:translations (must stay green at full key count)"

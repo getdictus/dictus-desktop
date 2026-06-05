@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
-status: verifying
-stopped_at: Completed 13-10-PLAN.md (Apple Intelligence task-agnostic path) — Task 3 human-verify approved live by user
-last_updated: "2026-06-05T15:49:49.997Z"
+status: gaps_found
+stopped_at: "Phase 13 gap-closure run (13-09/10/11/12 + 13-08 gates) live re-tested — 4 gaps resolved, 3 remain (tests 7, 11, 3). User chose formal /gsd:plan-phase 13 --gaps."
+last_updated: "2026-06-05T16:12:00.000Z"
 progress:
   total_phases: 4
   completed_phases: 3
@@ -24,18 +24,19 @@ See: .planning/PROJECT.md (updated 2026-05-29 after starting milestone v1.3)
 
 ## Current Position
 
-Phase: 13 of 13 (Smart Modes UI + Translation Engine + Presets i18n) — IN PROGRESS (functionally done, GSD closure pending)
-Plan: 13-01..13-07 complete (SUMMARYs present). 13-08 (UAT re-verification) was run as a LIVE session rather than a checkpoint — it found real issues that were fixed directly (see Decisions). 13-08 SUMMARY + VERIFICATION.md + `phase complete` still pending.
-Status: All 8 original gaps + several newly-discovered live-UAT issues are FIXED and committed. App verified working in live tests (FR rewrite/translate output stays French; shortcuts; modal; no crash).
+Phase: 13 of 13 (Smart Modes UI + Translation Engine + Presets i18n) — IN PROGRESS (gap-closure round 2 needed)
+Plan: 13-01..13-11 have SUMMARYs. Gap-closure run 2026-06-05 executed 13-09 (backend binding/identity dedup + suspend/resume), 13-10 (Apple Intelligence task-agnostic path — live-verified), 13-11 (picker dedup + ${output} hint). 13-12 (frontend conflict-capture + engine modal) committed tasks 1-2 (262576b, 89e17d6) but its Task-3 live verify FAILED. 13-08 (re-verify) Task-1 gates green (64deeeb) but Task-2 live re-test found 3 remaining gaps. No 13-08/13-12 SUMMARY (incomplete). Phase NOT marked complete.
+Status: Live re-test resolved 4 of 6 prior gaps + truncation. 3 gaps remain → see .planning/phases/13-.../13-UAT.md ## Gaps (status: failed).
 
-### Remaining before formal phase closure
-- Generate 13-08-SUMMARY.md + 13-VERIFICATION.md, run `gsd-tools phase complete 13`.
-- Manual tests still worth doing: Option-only shortcut on a mode; set Gemma-3-4B as ACTIVE model and validate rewrite + translation quality; confirm no mode re-downloads/re-crashes.
+### Remaining gaps (→ /gsd:plan-phase 13 --gaps; user chose formal cycle 2026-06-05)
+- **[B5] test 7** — duplicate shortcut not blocked/warned. Capture/suspend works (13-12); BACKEND `set_smart_mode_binding`/`change_binding` must reject a combo already bound to a different mode (return success:false so the chip shows the existing conflict UI). Logs: `resume_all_shortcuts: Hotkey already registered: Cmd+2`.
+- **[C7] test 11** — engine modal shows Gemma when Apple Foundation active. FRONTEND `SmartModesSection.tsx:111-114` precedence `activeModelName ?? providerLabel` prefers lingering GGUF id; gate on `post_process_provider_id` (model name only when embedded provider active, else provider label; activeIsRecommended false for non-GGUF).
+- **[D8] test 3** — seeded mode names show English in non-en app. i18n DATA only: translate ~10 `smartModes.defaultModes.*` NAME keys across all 20 locales (names only — user decision; descriptions stay English). Architecture already correct (SmartModeCard.tsx:73-75).
 
-### Next session (post /clear) — NEW WORK
-- **Improve/adapt the default Smart Mode prompts.** User finds output quality on the default prompts (clean-up, email, bullets, etc.) not quite matching intent; wants to refine the prompt wording. This is a fresh task, not part of Phase 13 gap closure.
+### Next session (post /clear) — separate NEW WORK (not gap closure)
+- **Improve/adapt the default Smart Mode prompts.** User finds output quality on the default prompts not quite matching intent; refine wording. Fresh task.
 
-Progress: [█████████░] ~95% (Phase 13 functionally complete; formal GSD closure pending)
+Progress: [█████████░] ~95% (Phase 13: 3 gaps remain before closure)
 
 ## Performance Metrics
 
