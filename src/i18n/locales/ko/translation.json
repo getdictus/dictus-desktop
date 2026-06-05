@@ -804,16 +804,16 @@
       "body": "Select or download a local model above to use Smart Modes."
     },
     "defaultModes": {
-      "cleanUp": "Clean Up",
-      "makeFormal": "Make Formal",
-      "makeCasual": "Make Casual",
-      "writeAsEmail": "Write as Email",
-      "bulletPoints": "Bullet Points",
-      "summarize": "Summarize",
-      "translateToEnglish": "Translate to English",
-      "translateToSpanish": "Translate to Spanish",
-      "translateToFrench": "Translate to French",
-      "translateToChinese": "Translate to Chinese"
+      "cleanUp": "정리하기",
+      "makeFormal": "격식 있게",
+      "makeCasual": "편하게",
+      "writeAsEmail": "이메일로 작성",
+      "bulletPoints": "글머리 기호",
+      "summarize": "요약하기",
+      "translateToEnglish": "영어로 번역",
+      "translateToSpanish": "스페인어로 번역",
+      "translateToFrench": "프랑스어로 번역",
+      "translateToChinese": "중국어로 번역"
     }
   }
 }

@@ -804,16 +804,16 @@
       "body": "Select or download a local model above to use Smart Modes."
     },
     "defaultModes": {
-      "cleanUp": "Clean Up",
-      "makeFormal": "Make Formal",
-      "makeCasual": "Make Casual",
-      "writeAsEmail": "Write as Email",
-      "bulletPoints": "Bullet Points",
-      "summarize": "Summarize",
-      "translateToEnglish": "Translate to English",
-      "translateToSpanish": "Translate to Spanish",
-      "translateToFrench": "Translate to French",
-      "translateToChinese": "Translate to Chinese"
+      "cleanUp": "清理",
+      "makeFormal": "轉為正式",
+      "makeCasual": "轉為隨意",
+      "writeAsEmail": "寫成電子郵件",
+      "bulletPoints": "重點列表",
+      "summarize": "摘要",
+      "translateToEnglish": "翻譯成英文",
+      "translateToSpanish": "翻譯成西班牙文",
+      "translateToFrench": "翻譯成法文",
+      "translateToChinese": "翻譯成中文"
     }
   }
 }

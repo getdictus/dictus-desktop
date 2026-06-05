@@ -804,16 +804,16 @@
       "body": "Select or download a local model above to use Smart Modes."
     },
     "defaultModes": {
-      "cleanUp": "Clean Up",
-      "makeFormal": "Make Formal",
-      "makeCasual": "Make Casual",
-      "writeAsEmail": "Write as Email",
-      "bulletPoints": "Bullet Points",
-      "summarize": "Summarize",
-      "translateToEnglish": "Translate to English",
-      "translateToSpanish": "Translate to Spanish",
-      "translateToFrench": "Translate to French",
-      "translateToChinese": "Translate to Chinese"
+      "cleanUp": "Очистити",
+      "makeFormal": "Зробити офіційним",
+      "makeCasual": "Зробити неформальним",
+      "writeAsEmail": "Оформити як лист",
+      "bulletPoints": "Список пунктів",
+      "summarize": "Стисло викласти",
+      "translateToEnglish": "Перекласти англійською",
+      "translateToSpanish": "Перекласти іспанською",
+      "translateToFrench": "Перекласти французькою",
+      "translateToChinese": "Перекласти китайською"
     }
   }
 }

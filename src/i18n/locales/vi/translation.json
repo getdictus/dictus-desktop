@@ -804,16 +804,16 @@
       "body": "Select or download a local model above to use Smart Modes."
     },
     "defaultModes": {
-      "cleanUp": "Clean Up",
-      "makeFormal": "Make Formal",
-      "makeCasual": "Make Casual",
-      "writeAsEmail": "Write as Email",
-      "bulletPoints": "Bullet Points",
-      "summarize": "Summarize",
-      "translateToEnglish": "Translate to English",
-      "translateToSpanish": "Translate to Spanish",
-      "translateToFrench": "Translate to French",
-      "translateToChinese": "Translate to Chinese"
+      "cleanUp": "Dọn dẹp",
+      "makeFormal": "Chuyển trang trọng",
+      "makeCasual": "Chuyển thân mật",
+      "writeAsEmail": "Viết dưới dạng email",
+      "bulletPoints": "Gạch đầu dòng",
+      "summarize": "Tóm tắt",
+      "translateToEnglish": "Dịch sang tiếng Anh",
+      "translateToSpanish": "Dịch sang tiếng Tây Ban Nha",
+      "translateToFrench": "Dịch sang tiếng Pháp",
+      "translateToChinese": "Dịch sang tiếng Trung"
     }
   }
 }

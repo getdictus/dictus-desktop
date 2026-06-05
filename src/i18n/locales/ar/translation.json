@@ -804,16 +804,16 @@
       "body": "Select or download a local model above to use Smart Modes."
     },
     "defaultModes": {
-      "cleanUp": "Clean Up",
-      "makeFormal": "Make Formal",
-      "makeCasual": "Make Casual",
-      "writeAsEmail": "Write as Email",
-      "bulletPoints": "Bullet Points",
-      "summarize": "Summarize",
-      "translateToEnglish": "Translate to English",
-      "translateToSpanish": "Translate to Spanish",
-      "translateToFrench": "Translate to French",
-      "translateToChinese": "Translate to Chinese"
+      "cleanUp": "تنظيف",
+      "makeFormal": "جعله رسميًا",
+      "makeCasual": "جعله غير رسمي",
+      "writeAsEmail": "كتابة كبريد إلكتروني",
+      "bulletPoints": "نقاط",
+      "summarize": "تلخيص",
+      "translateToEnglish": "ترجمة إلى الإنجليزية",
+      "translateToSpanish": "ترجمة إلى الإسبانية",
+      "translateToFrench": "ترجمة إلى الفرنسية",
+      "translateToChinese": "ترجمة إلى الصينية"
     }
   }
 }

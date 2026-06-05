@@ -804,16 +804,16 @@
       "body": "Select or download a local model above to use Smart Modes."
     },
     "defaultModes": {
-      "cleanUp": "Clean Up",
-      "makeFormal": "Make Formal",
-      "makeCasual": "Make Casual",
-      "writeAsEmail": "Write as Email",
-      "bulletPoints": "Bullet Points",
-      "summarize": "Summarize",
-      "translateToEnglish": "Translate to English",
-      "translateToSpanish": "Translate to Spanish",
-      "translateToFrench": "Translate to French",
-      "translateToChinese": "Translate to Chinese"
+      "cleanUp": "Rensa upp",
+      "makeFormal": "Gör formell",
+      "makeCasual": "Gör ledig",
+      "writeAsEmail": "Skriv som e-post",
+      "bulletPoints": "Punktlista",
+      "summarize": "Sammanfatta",
+      "translateToEnglish": "Översätt till engelska",
+      "translateToSpanish": "Översätt till spanska",
+      "translateToFrench": "Översätt till franska",
+      "translateToChinese": "Översätt till kinesiska"
     }
   }
 }

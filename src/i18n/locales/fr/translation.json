@@ -804,16 +804,16 @@
       "body": "Select or download a local model above to use Smart Modes."
     },
     "defaultModes": {
-      "cleanUp": "Clean Up",
-      "makeFormal": "Make Formal",
-      "makeCasual": "Make Casual",
-      "writeAsEmail": "Write as Email",
-      "bulletPoints": "Bullet Points",
-      "summarize": "Summarize",
-      "translateToEnglish": "Translate to English",
-      "translateToSpanish": "Translate to Spanish",
-      "translateToFrench": "Translate to French",
-      "translateToChinese": "Translate to Chinese"
+      "cleanUp": "Nettoyage",
+      "makeFormal": "Rendre formel",
+      "makeCasual": "Rendre informel",
+      "writeAsEmail": "Rédiger en e-mail",
+      "bulletPoints": "Points clés",
+      "summarize": "Résumer",
+      "translateToEnglish": "Traduire en anglais",
+      "translateToSpanish": "Traduire en espagnol",
+      "translateToFrench": "Traduire en français",
+      "translateToChinese": "Traduire en chinois"
     }
   }
 }
