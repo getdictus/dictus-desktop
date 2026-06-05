@@ -1600,4 +1600,97 @@ mod tests {
             "transferred combo must match original"
         );
     }
+
+    // ── reconcile_dangling_smart_mode_bindings tests ─────────────────────────
+
+    fn make_settings_with_modes_and_bindings(
+        modes: Vec<SmartMode>,
+        binding_keys: &[&str],
+    ) -> AppSettings {
+        let mut settings = get_default_settings();
+        settings.smart_modes = modes;
+        for key in binding_keys {
+            settings.bindings.insert(
+                key.to_string(),
+                ShortcutBinding {
+                    id: key.to_string(),
+                    name: key.to_string(),
+                    description: String::new(),
+                    default_binding: String::new(),
+                    current_binding: "option+shift+x".to_string(),
+                },
+            );
+        }
+        settings
+    }
+
+    #[test]
+    fn reconcile_removes_orphaned_smart_mode_binding() {
+        // "ghost" has no corresponding mode in smart_modes
+        let modes = vec![SmartMode {
+            id: "mode_clean_up".to_string(),
+            name: "Clean Up".to_string(),
+            kind: SmartModeKind::Rewrite,
+            prompt: "p".to_string(),
+            target_language: None,
+        }];
+        let mut settings = make_settings_with_modes_and_bindings(
+            modes,
+            &["smart_mode_ghost", "smart_mode_mode_clean_up"],
+        );
+
+        let changed = reconcile_dangling_smart_mode_bindings(&mut settings);
+
+        assert!(changed, "must return true when a binding was removed");
+        assert!(
+            !settings.bindings.contains_key("smart_mode_ghost"),
+            "orphaned smart_mode_ghost must be removed"
+        );
+        assert!(
+            settings.bindings.contains_key("smart_mode_mode_clean_up"),
+            "live smart_mode_mode_clean_up must be kept"
+        );
+    }
+
+    #[test]
+    fn reconcile_keeps_non_smart_mode_bindings() {
+        let modes = vec![SmartMode {
+            id: "mode_clean_up".to_string(),
+            name: "Clean Up".to_string(),
+            kind: SmartModeKind::Rewrite,
+            prompt: "p".to_string(),
+            target_language: None,
+        }];
+        let mut settings = make_settings_with_modes_and_bindings(
+            modes,
+            &["transcribe", "smart_mode_mode_clean_up"],
+        );
+
+        let changed = reconcile_dangling_smart_mode_bindings(&mut settings);
+
+        assert!(!changed, "must return false when nothing was removed");
+        assert!(
+            settings.bindings.contains_key("transcribe"),
+            "non-smart-mode binding must be kept"
+        );
+        assert!(
+            settings.bindings.contains_key("smart_mode_mode_clean_up"),
+            "live smart_mode binding must be kept"
+        );
+    }
+
+    #[test]
+    fn reconcile_returns_false_when_nothing_to_remove() {
+        let modes = vec![SmartMode {
+            id: "mode_clean_up".to_string(),
+            name: "Clean Up".to_string(),
+            kind: SmartModeKind::Rewrite,
+            prompt: "p".to_string(),
+            target_language: None,
+        }];
+        let mut settings = make_settings_with_modes_and_bindings(modes, &["transcribe"]);
+
+        let changed = reconcile_dangling_smart_mode_bindings(&mut settings);
+        assert!(!changed, "must return false when no smart_mode_* bindings present");
+    }
 }

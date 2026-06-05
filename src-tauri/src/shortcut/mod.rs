@@ -1456,4 +1456,45 @@ mod tests {
             "binding id must be prefixed with smart_mode_"
         );
     }
+
+    // ── resolve_seeded_id tests ──────────────────────────────────────────────
+
+    #[test]
+    fn resolve_seeded_id_matches_clean_up_rewrite() {
+        let result = resolve_seeded_id("Clean Up", &SmartModeKind::Rewrite);
+        assert_eq!(
+            result,
+            Some("mode_clean_up".to_string()),
+            "Clean Up Rewrite must resolve to mode_clean_up"
+        );
+    }
+
+    #[test]
+    fn resolve_seeded_id_returns_none_for_custom_mode() {
+        let result = resolve_seeded_id("My Custom Mode", &SmartModeKind::Rewrite);
+        assert_eq!(
+            result, None,
+            "a non-template name must return None"
+        );
+    }
+
+    #[test]
+    fn resolve_seeded_id_requires_kind_match() {
+        // "Clean Up" exists as Rewrite only — querying as Translation must return None
+        let result = resolve_seeded_id("Clean Up", &SmartModeKind::Translation);
+        assert_eq!(
+            result, None,
+            "wrong kind must not match even with correct name"
+        );
+    }
+
+    #[test]
+    fn resolve_seeded_id_matches_translate_template() {
+        let result = resolve_seeded_id("Translate \u{2192} English", &SmartModeKind::Translation);
+        assert_eq!(
+            result,
+            Some("mode_translate_en".to_string()),
+            "Translate → English Translation must resolve to mode_translate_en"
+        );
+    }
 }
