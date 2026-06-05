@@ -171,20 +171,6 @@ impl LlmManager {
                 is_custom: false,
                 is_recommended: false,
             },
-            LlmModelInfo {
-                id: "translate-gemma-4b".to_string(),
-                name: "TranslateGemma 4B".to_string(),
-                description: "Dedicated translation model — 55 benchmarked languages".to_string(),
-                filename: "translategemma-4b-it-Q4_K_M.gguf".to_string(),
-                url: Some("https://huggingface.co/bullerwins/translategemma-4b-it-GGUF/resolve/main/translategemma-4b-it-Q4_K_M.gguf".to_string()),
-                sha256: Some("7f7357c14abd9da4eb200b38b05da502cd6e10d7e1d403fbc9f78c19f3209b72".to_string()),
-                size_mb: 2490,
-                is_downloaded: false,
-                is_downloading: false,
-                partial_size: 0,
-                is_custom: false,
-                is_recommended: false,
-            },
         ]
     }
 
@@ -363,6 +349,17 @@ impl LlmManager {
 
     pub fn is_model_loaded(&self) -> bool {
         self.loaded_model.lock().unwrap().is_some()
+    }
+
+    /// Id of the currently loaded model, if any. Lets callers ensure the
+    /// *correct* model is loaded (e.g. translation must not run on a generic
+    /// model left loaded by a prior Rewrite mode).
+    pub fn loaded_model_id(&self) -> Option<String> {
+        self.loaded_model
+            .lock()
+            .unwrap()
+            .as_ref()
+            .map(|m| m.id.clone())
     }
 
     pub fn get_models(&self) -> Vec<LlmModelInfo> {

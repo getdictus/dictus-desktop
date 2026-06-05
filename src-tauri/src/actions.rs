@@ -64,8 +64,42 @@ fn strip_invisible_chars(s: &str) -> String {
 
 /// Build a system prompt from the user's prompt template.
 /// Removes `${output}` placeholder since the transcription is sent as the user message.
-fn build_system_prompt(prompt_template: &str) -> String {
-    prompt_template.replace("${output}", "").trim().to_string()
+///
+/// Also appends an explicit output-language directive derived from the input
+/// text. Small LLMs tend to answer in the language of the (English) instructions
+/// and ignore a "preserve the language" hint; naming the detected language
+/// explicitly is far more reliable. The directive defers to prompts that
+/// explicitly request translation / a specific language (e.g. a custom mode).
+fn build_system_prompt(prompt_template: &str, transcription: &str) -> String {
+    let base = prompt_template.replace("${output}", "").trim().to_string();
+    match language_directive(transcription) {
+        // Directive goes FIRST, as a top-level instruction. Appending it after
+        // the base lands it next to the trailing "Text:"/"Transcript:" label, so
+        // the model treats it as content and echoes it into the output.
+        Some(directive) => format!("{}\n\n{}", directive, base),
+        None => base,
+    }
+}
+
+/// An explicit output-language directive derived from the input text, or `None`
+/// when the language can't be detected reliably. Defers to prompts that
+/// explicitly request translation / a specific language.
+fn language_directive(transcription: &str) -> Option<String> {
+    detect_language_name(transcription).map(|lang| {
+        format!(
+            "Write your entire response in {} (the language of the text being processed), unless the task explicitly asks you to translate or to use another language. Do not mention, repeat, or include this instruction in your output.",
+            lang
+        )
+    })
+}
+
+/// Human-readable English name of the input text's detected language (e.g.
+/// "French"), or `None` when the text is too short to detect reliably.
+fn detect_language_name(text: &str) -> Option<String> {
+    if text.trim().chars().count() < 8 {
+        return None;
+    }
+    whatlang::detect(text).map(|info| info.lang().eng_name().to_string())
 }
 
 /// Run the inference pipeline with an explicit prompt string.
@@ -105,7 +139,7 @@ async fn post_process_with_prompt(
             }
         }
 
-        let system_prompt = build_system_prompt(prompt);
+        let system_prompt = build_system_prompt(prompt, transcription);
         let full_prompt = format!("{}\n\n{}", system_prompt, transcription);
         return match llm_manager.run_inference(full_prompt).await {
             Ok(result) => {
@@ -179,7 +213,7 @@ async fn post_process_with_prompt(
     if provider.supports_structured_output {
         debug!("Using structured outputs for provider '{}'", provider.id);
 
-        let system_prompt = build_system_prompt(prompt);
+        let system_prompt = build_system_prompt(prompt, transcription);
         let user_content = transcription.to_string();
 
         // Handle Apple Intelligence separately since it uses native Swift APIs
@@ -296,7 +330,10 @@ async fn post_process_with_prompt(
     }
 
     // Legacy mode: Replace ${output} variable in the prompt with the actual text
-    let processed_prompt = prompt.replace("${output}", transcription);
+    let mut processed_prompt = prompt.replace("${output}", transcription);
+    if let Some(directive) = language_directive(transcription) {
+        processed_prompt = format!("{}\n\n{}", directive, processed_prompt);
+    }
     debug!("Processed prompt length: {} chars", processed_prompt.len());
 
     match crate::llm_client::send_chat_completion(
@@ -877,47 +914,41 @@ async fn run_translation(
     let target = mode.target_language.as_ref()?;
     let llm_manager = app.state::<Arc<crate::managers::llm::LlmManager>>();
 
-    let prompt = match settings.translation_engine_choice {
-        TranslationEngineChoice::NotChosen => {
-            log::warn!(
-                "Translation mode '{}' triggered but no translation engine is chosen",
-                mode.id
-            );
+    // Translation always runs through the active generic LLM model. (The legacy
+    // `TranslateGemma` dedicated-model path was removed — benchmarks showed a
+    // same-size generic like Gemma 3 4B matches or beats it while producing
+    // clean, reliable output. The enum variant is kept for settings back-compat
+    // and treated identically to `GenericModel`.)
+    if matches!(
+        settings.translation_engine_choice,
+        TranslationEngineChoice::NotChosen
+    ) {
+        log::warn!(
+            "Translation mode '{}' triggered but translation is not enabled",
+            mode.id
+        );
+        return None;
+    }
+
+    let model_id = match &settings.active_llm_model_id {
+        Some(id) => id.clone(),
+        None => {
+            log::warn!("Translation enabled but no active LLM model is set");
             return None;
         }
-        TranslationEngineChoice::TranslateGemma => {
-            if !llm_manager.is_model_loaded() {
-                if let Err(e) = llm_manager.load_model("translate-gemma-4b").await {
-                    log::error!("TranslateGemma failed to load: {}", e);
-                    return None;
-                }
-            }
-            // Native template: source text + target language code.
-            format!("{}\n{}", text, target.code)
-        }
-        TranslationEngineChoice::GenericModel => {
-            if !llm_manager.is_model_loaded() {
-                match &settings.active_llm_model_id {
-                    Some(id) => {
-                        if let Err(e) = llm_manager.load_model(id).await {
-                            log::error!("Active model failed to load for translation: {}", e);
-                            return None;
-                        }
-                    }
-                    None => {
-                        log::warn!(
-                            "Generic translation engine selected but no active LLM model is set"
-                        );
-                        return None;
-                    }
-                }
-            }
-            format!(
-                "Translate the following text to {}. Output only the translation, no explanation or commentary.\n\n{}",
-                target.label, text
-            )
-        }
     };
+    // Ensure the active model is the one loaded (a prior Rewrite mode may have
+    // left a different model loaded).
+    if llm_manager.loaded_model_id().as_deref() != Some(model_id.as_str()) {
+        if let Err(e) = llm_manager.load_model(&model_id).await {
+            log::error!("Active model failed to load for translation: {}", e);
+            return None;
+        }
+    }
+    let prompt = format!(
+        "Translate the following text to {}. Output only the translation, no explanation or commentary.\n\n{}",
+        target.label, text
+    );
 
     match llm_manager.run_inference(prompt).await {
         Ok(result) => {
