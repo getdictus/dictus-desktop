@@ -113,7 +113,7 @@
 
 > **NOTE on MODE-03:** This requirement spans two phases. Phase 12 delivers the backend CRUD commands and type bindings. Phase 13 delivers the UI surface. The requirement is assigned to Phase 13 (the phase that completes the user-observable deliverable), and Phase 12 success criterion 3 documents the backend prerequisite.
 
-**Plans**: 19 plans (4 original + 4 gap-closure from 13-04 UAT + 4 gap-closure from 13-08 re-test + 3 gap-closure from 13-12 re-test + 2 gap-closure from 13-08 round-2 re-test + 2 gap-closure from 13-16/13-17 round-3 re-test)
+**Plans**: 24 plans (4 original + 4 gap-closure from 13-04 UAT + 4 gap-closure from 13-08 re-test + 3 gap-closure from 13-12 re-test + 2 gap-closure from 13-08 round-2 re-test + 2 gap-closure from 13-16/13-17 round-3 re-test + 5 gap-closure from 13-08 round-4 re-test [G13]/[G14]/[G15])
 - [x] 13-01-PLAN.md — Backend: TranslateGemma catalogue entry + translation_engine_choice setting/command + Translation execution wiring in actions.rs [Wave 1]
 - [x] 13-02-PLAN.md — i18n: smartModes.* keys in en + propagation to all 19 non-English locales (L10N-01) [Wave 1]
 - [x] 13-03-PLAN.md — React components: SmartModeShortcutChip + SmartModeCard + TranslationEngineChoiceModal + SmartModesSection [Wave 2]
@@ -131,8 +131,13 @@
 - [x] 13-15-PLAN.md — Gap closure (i18n): seeded Smart Mode NAME keys translated across all 20 locales ([D8] test 3) [Wave 1]
 - [x] 13-16-PLAN.md — Gap closure ([E9] test 7): chip captures via backend handy-keys-event stream on handy_keys to preserve left/right-distinct modifiers (CmdRight) + idempotent resume_all_shortcuts (MODE-04, MODE-05) [Wave 1] — VERIFIED LIVE PASS; new gap [G11] surfaced
 - [x] 13-17-PLAN.md — Gap closure ([F10] test 11): provider-switch built + works mechanically, but UX SUPERSEDED → recommendation-only [G12] (TRANS-02) [Wave 1]
-- [ ] 13-18-PLAN.md — Gap closure ([G11] test 7): backend prefix/base-key overlap rule in find_conflicting_binding — block a combo whose leading key is already bound, surfaced via the existing chip conflict UI (MODE-04, MODE-05) [Wave 1]
-- [ ] 13-19-PLAN.md — Gap closure ([G12] test 11): revert 13-17 global provider-switch + convert translation engine modal/section to recommendation-only (Gemma recommended; single active model via main selector) + 20-locale i18n (TRANS-01, TRANS-02) [Wave 1]
+- [x] 13-18-PLAN.md — Gap closure ([G11] test 7): backend prefix/base-key overlap rule in find_conflicting_binding — block a combo whose leading key is already bound, surfaced via the existing chip conflict UI (MODE-04, MODE-05) [Wave 1]
+- [x] 13-19-PLAN.md — Gap closure ([G12] test 11): revert 13-17 global provider-switch + convert translation engine modal/section to recommendation-only (Gemma recommended; single active model via main selector) + 20-locale i18n (TRANS-01, TRANS-02) [Wave 1]
+- [ ] 13-20-PLAN.md — Gap closure ([G13] test 7): backend structured conflict error — ConflictKind enum + find_conflicting_binding returns the kind + set_smart_mode_binding emits codified SHORTCUT_CONFLICT payload (no English prose) (MODE-04, MODE-05, L10N-01) [Wave 1]
+- [ ] 13-21-PLAN.md — Gap closure ([G13] test 7): chip maps SHORTCUT_CONFLICT code → localized t() with distinct base-key message; 2 new conflict keys across 20 locales (English fallback pending 13-23) (MODE-04, MODE-05, L10N-01) [Wave 2]
+- [ ] 13-22-PLAN.md — Gap closure ([G14]/[G15]): i18n English-fallback audit + check:translations --check-untranslated guardrail + Gemma 3 4B EN-source reword (lead on translation) (L10N-01, TRANS-01, TRANS-02) [Wave 1]
+- [ ] 13-23-PLAN.md — Gap closure ([G14]/[G15]): translate 62 smartModes.* + ~7 debt keys + 2 [G13] keys + reworded Gemma description into all 19 non-English locales (RTL-safe) (L10N-01, TRANS-01, TRANS-02) [Wave 3]
+- [ ] 13-24-PLAN.md — Gap closure ([G13]/[G14]/[G15]): automated gates + human-verify live FR-build checkpoint (no English leakage, distinct localized conflict messages, Gemma description) (L10N-01, MODE-05, TRANS-01) [Wave 4]
 
 ## Progress
 
@@ -150,4 +155,4 @@
 | 10. Prerequisite Gate | 3/3 | Complete    | 2026-06-01 | 2026-06-01 |
 | 11. LLM Runtime Foundation | 3/4 | In Progress|  | - |
 | 12. Smart Modes Data Layer | 3/3 | Complete    | 2026-06-03 | - |
-| 13. Smart Modes UI + Translation + i18n | 18/19 | In Progress|  | - |
+| 13. Smart Modes UI + Translation + i18n | 23/24 | In Progress|  | - |
