@@ -738,6 +738,8 @@
       "discardNewCta": "Discard",
       "addShortcut": "Add shortcut",
       "shortcutConflict": "Already used by: {{name}}",
+      "shortcutConflictBase": "The start of this shortcut ({{base}}) is already used by {{name}} — it would fire before the next key",
+      "shortcutBaseHint": "A shortcut whose start matches another shortcut can't work — the first key fires before you finish.",
       "targetLanguage": "Target language",
       "nameLabel": "Name",
       "promptLabel": "Prompt",
