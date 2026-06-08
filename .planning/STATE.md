@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
 status: planning
-stopped_at: "Checkpoint: 13-12 Task 3 human-verify (conflict capture + engine modal display awaiting live-build verification)"
-last_updated: "2026-06-05T20:31:35.452Z"
+stopped_at: "Checkpoint: 13-17 Task 3 human-verify (Gemma engine switch persists + translates under Apple provider awaiting live-build verification)"
+last_updated: "2026-06-08T14:00:13.037Z"
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 25
+  total_plans: 27
   completed_plans: 24
   percent: 95
 ---
@@ -138,6 +138,7 @@ Progress: [█████████░] ~95% (Phase 13: 3 gaps remain before 
 - [Phase 13]: [13-13] find_conflicting_binding scoped to set_smart_mode_binding only — change_binding unchanged; raw combo string comparison; other_id != binding_id guard for idempotent re-bind
 - [Phase 13-smart-modes-ui-translation-presets-i18n]: [13-12] TranslationEngineChoiceModal active badge driven by engineChoice + activeIsRecommended props (not GGUF activeModelId) — covers Apple Intelligence and non-GGUF providers
 - [Phase 13-smart-modes-ui-translation-presets-i18n]: [13-12] SmartModeShortcutChip: module-level resumeAll() helper + suspendAllShortcuts on record start; resumeAll on commitCombo (success+conflict), handleClickOutside, and effect cleanup — every exit path covered
+- [Phase 13-smart-modes-ui-translation-presets-i18n]: [13-17] set_translation_engine_to_embedded saves prior provider in previous_post_process_provider_id only when not already on embedded, preventing double-save on repeated Gemma clicks
 
 ### Pending Todos
 
@@ -153,6 +154,6 @@ Progress: [█████████░] ~95% (Phase 13: 3 gaps remain before 
 
 ## Session Continuity
 
-Last session: 2026-06-05T20:31:35.449Z
-Stopped at: Checkpoint: 13-12 Task 3 human-verify (conflict capture + engine modal display awaiting live-build verification)
+Last session: 2026-06-08T14:00:08.721Z
+Stopped at: Checkpoint: 13-17 Task 3 human-verify (Gemma engine switch persists + translates under Apple provider awaiting live-build verification)
 Resume file: None
