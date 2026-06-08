@@ -510,6 +510,8 @@ pub fn run(cli_args: CliArgs) {
             commands::llm::get_active_llm_model,
             commands::llm::import_custom_llm_model,
             commands::llm::set_translation_engine_choice,
+            commands::llm::set_translation_engine_to_embedded,
+            commands::llm::restore_translation_engine_provider,
             commands::audio::update_microphone_mode,
             commands::audio::get_microphone_mode,
             commands::audio::get_windows_microphone_permission_status,

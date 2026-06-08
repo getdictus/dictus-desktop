@@ -86,6 +86,47 @@ pub async fn set_translation_engine_choice(
 
 #[tauri::command]
 #[specta::specta]
+pub async fn set_translation_engine_to_embedded(
+    app_handle: AppHandle,
+    llm_manager: State<'_, Arc<LlmManager>>,
+    model_id: String,
+) -> Result<(), String> {
+    // Load the GGUF model first (same as set_active_llm_model).
+    llm_manager
+        .load_model(&model_id)
+        .await
+        .map_err(|e| e.to_string())?;
+    let mut settings = get_settings(&app_handle);
+    // Remember the prior real provider ONLY if we are not already on embedded,
+    // so a second Gemma click does not clobber the saved provider with "embedded".
+    if settings.post_process_provider_id != "embedded" {
+        settings.previous_post_process_provider_id =
+            Some(settings.post_process_provider_id.clone());
+    }
+    settings.post_process_provider_id = "embedded".to_string();
+    settings.active_llm_model_id = Some(model_id);
+    settings.translation_engine_choice = crate::settings::TranslationEngineChoice::GenericModel;
+    write_settings(&app_handle, settings);
+    Ok(())
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn restore_translation_engine_provider(app_handle: AppHandle) -> Result<(), String> {
+    let mut settings = get_settings(&app_handle);
+    // Only restore if we previously switched away from a real provider into embedded.
+    if settings.post_process_provider_id == "embedded" {
+        if let Some(prev) = settings.previous_post_process_provider_id.take() {
+            settings.post_process_provider_id = prev;
+        }
+    }
+    settings.translation_engine_choice = crate::settings::TranslationEngineChoice::GenericModel;
+    write_settings(&app_handle, settings);
+    Ok(())
+}
+
+#[tauri::command]
+#[specta::specta]
 pub async fn import_custom_llm_model(
     _app_handle: AppHandle,
     llm_manager: State<'_, Arc<LlmManager>>,
