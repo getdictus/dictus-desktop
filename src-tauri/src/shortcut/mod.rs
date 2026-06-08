@@ -1657,4 +1657,65 @@ mod tests {
             "conflicting mode binding must return the other mode's id"
         );
     }
+
+    // ── prefix/base-key overlap tests (13-18 / [G11]) ────────────────────────
+
+    #[test]
+    fn base_prefix_collision_blocks() {
+        // existing "command_left" → binding "command_left+digit1" must be blocked
+        let mut bindings = std::collections::HashMap::new();
+        let (k, v) = make_binding("transcribe", "command_left");
+        bindings.insert(k, v);
+        let result =
+            find_conflicting_binding(&bindings, "smart_mode_mode_a", "command_left+digit1");
+        assert_eq!(
+            result,
+            Some("transcribe".to_string()),
+            "combo whose base key is already bound must be blocked"
+        );
+    }
+
+    #[test]
+    fn symmetric_base_collision_blocks() {
+        // existing "command_left+digit1" → binding "command_left" must be blocked
+        let mut bindings = std::collections::HashMap::new();
+        let (k, v) = make_binding("smart_mode_mode_b", "command_left+digit1");
+        bindings.insert(k, v);
+        let result = find_conflicting_binding(&bindings, "smart_mode_mode_a", "command_left");
+        assert_eq!(
+            result,
+            Some("smart_mode_mode_b".to_string()),
+            "base key that is a prefix of an existing combo must be blocked"
+        );
+    }
+
+    #[test]
+    fn no_collision_when_bases_differ() {
+        // existing "command_right" — candidate "command_left+digit1" has a different base
+        let mut bindings = std::collections::HashMap::new();
+        let (k, v) = make_binding("transcribe", "command_right");
+        bindings.insert(k, v);
+        let result =
+            find_conflicting_binding(&bindings, "smart_mode_mode_a", "command_left+digit1");
+        assert_eq!(
+            result, None,
+            "different base keys must not collide"
+        );
+    }
+
+    #[test]
+    fn distinct_full_combos_no_base_overlap() {
+        // existing "command_left+digit2" — candidate "command_left+digit1"
+        // Both share modifier prefix "command_left" but neither IS that base binding.
+        // They must remain bindable (no false positive).
+        let mut bindings = std::collections::HashMap::new();
+        let (k, v) = make_binding("transcribe", "command_left+digit2");
+        bindings.insert(k, v);
+        let result =
+            find_conflicting_binding(&bindings, "smart_mode_mode_a", "command_left+digit1");
+        assert_eq!(
+            result, None,
+            "two distinct full combos sharing only a modifier prefix must not block each other"
+        );
+    }
 }
