@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
+import { listen } from "@tauri-apps/api/event";
 import { commands } from "@/bindings";
 import {
   formatKeyCombination,
@@ -8,6 +9,14 @@ import {
   normalizeKey,
 } from "@/lib/utils/keyboard";
 import { useOsType } from "@/hooks/useOsType";
+import { useSettings } from "@/hooks/useSettings";
+
+interface HandyKeysEvent {
+  modifiers: string[];
+  key: string | null;
+  is_key_down: boolean;
+  hotkey_string: string;
+}
 
 interface SmartModeShortcutChipProps {
   modeId: string;
@@ -45,6 +54,10 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
 }) => {
   const { t } = useTranslation();
   const osType = useOsType();
+  const { getSetting } = useSettings();
+
+  // Determine which capture path to use based on keyboard implementation
+  const useHandyKeys = getSetting("keyboard_implementation") === "handy_keys";
 
   const [isRecording, setIsRecording] = useState(false);
   // heldModifiers tracks currently pressed modifier keys for live preview
@@ -56,6 +69,9 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
   // Guards against double-commit (e.g. a keyup firing right after a keydown
   // commit before the listeners are torn down).
   const committedRef = useRef(false);
+  // Tracks the current handy-keys hotkey_string (ref avoids stale closure in
+  // the async listen callback — mirrors HandyKeysShortcutInput.tsx:41).
+  const currentKeysRef = useRef<string>("");
   const [recordedKeys, setRecordedKeys] = useState<string[]>([]);
   const [conflict, setConflict] = useState<string | null>(null);
 
@@ -99,8 +115,58 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
     [modeId, onBound, t],
   );
 
+  // ── Handy-keys capture path (backend stream, preserves left/right modifiers) ──
+  // Mirrors HandyKeysShortcutInput.tsx:76-153. Active only when
+  // keyboard_implementation === "handy_keys".
   useEffect(() => {
-    if (!isRecording) return;
+    if (!isRecording || !useHandyKeys) return;
+
+    let cleanup = false;
+
+    const setupListener = async () => {
+      const unlisten = await listen<HandyKeysEvent>(
+        "handy-keys-event",
+        async (event) => {
+          if (cleanup) return;
+          const { hotkey_string, is_key_down } = event.payload;
+
+          if (is_key_down && hotkey_string) {
+            // Live preview — store side-distinct hotkey_string in both ref and
+            // state so the chip renders it. Do NOT run through getKeyName.
+            currentKeysRef.current = hotkey_string;
+            setRecordedKeys(hotkey_string.split("+"));
+          } else if (!is_key_down && currentKeysRef.current) {
+            // Key released — commit with the raw side-distinct string so that
+            // find_conflicting_binding can match "command_right" exactly.
+            const keysToCommit = currentKeysRef.current;
+            unlisten();
+            await commands.stopHandyKeysRecording().catch(() => {});
+            await commitCombo(keysToCommit);
+          }
+        },
+      );
+
+      if (cleanup) {
+        // Component unmounted between async start and listener attach
+        unlisten();
+        await commands.stopHandyKeysRecording().catch(() => {});
+        return;
+      }
+    };
+
+    setupListener();
+
+    return () => {
+      cleanup = true;
+      commands.stopHandyKeysRecording().catch(() => {});
+      resumeAll();
+    };
+  }, [isRecording, useHandyKeys, commitCombo]);
+
+  // ── Webview keydown/keyup capture path (fallback for "tauri" implementation) ──
+  // Guarded to NOT run when keyboard_implementation === "handy_keys".
+  useEffect(() => {
+    if (!isRecording || useHandyKeys) return;
 
     let cleanup = false;
 
@@ -180,7 +246,7 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
       // to call even if a prior exit path already resumed.
       resumeAll();
     };
-  }, [isRecording, modeId, osType, commitCombo]);
+  }, [isRecording, useHandyKeys, modeId, osType, commitCombo]);
 
   const handleClick = () => {
     if (disabled || isRecording) return;
@@ -188,10 +254,19 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
     heldModifiersRef.current.clear();
     mainKeyPressedRef.current = false;
     committedRef.current = false;
+    currentKeysRef.current = "";
     setRecordedKeys([]);
     // Suspend ALL global shortcuts so any already-bound combo is captured by
-    // the webview keydown listener instead of firing that mode's action.
+    // the keydown listener (webview path) or the backend stream (handy-keys
+    // path) instead of firing that mode's action.
     commands.suspendAllShortcuts().catch(() => {});
+    if (useHandyKeys) {
+      // Start backend recording before setting isRecording so the useEffect
+      // listener is set up with an already-active backend stream.
+      commands
+        .startHandyKeysRecording(`smart_mode_${modeId}`)
+        .catch(() => {});
+    }
     setIsRecording(true);
   };
 
