@@ -460,7 +460,7 @@
               "description": "Rapide et léger — fonctionne sur toutes les machines"
             },
             "gemma3_4b": {
-              "description": "Polyvalent et multilingue — excellent en français"
+              "description": "Excellent pour la traduction — polyvalent et multilingue"
             },
             "phi4_mini": {
               "description": "Suivi d'instructions précis — mise en forme et structure"
@@ -469,7 +469,7 @@
               "description": "Généraliste équilibré — bon en français"
             },
             "translateGemma4b": {
-              "description": "Dedicated translation model — 55 benchmarked languages"
+              "description": "Modèle de traduction dédié — 55 langues évaluées"
             }
           }
         },
@@ -594,9 +594,9 @@
         "description": "Temps supplémentaire (en millisecondes) pour continuer l'enregistrement après avoir relâché la touche, pour capturer l'audio restant. 0 = pas de tampon supplémentaire."
       },
       "simulateUpdaterRestart": {
-        "title": "Simulate Updater Restart",
-        "description": "Relaunches Dictus via the same API tauri-plugin-updater uses after applying an update. Use this to validate SHUT-03 (clean post-update relaunch) without publishing a throwaway test release.",
-        "button": "Simulate Restart"
+        "title": "Simuler un redémarrage de mise à jour",
+        "description": "Relance Dictus via la même API que tauri-plugin-updater utilise après l’application d’une mise à jour. Utilisez ceci pour valider SHUT-03 (redémarrage propre après mise à jour) sans publier une version de test temporaire.",
+        "button": "Simuler le redémarrage"
       }
     },
     "about": {
@@ -663,9 +663,9 @@
     "installing": "Installation...",
     "preparing": "Préparation...",
     "checkForUpdates": "Rechercher des mises à jour",
-    "portableUpdateTitle": "Manual update required",
-    "portableUpdateMessage": "Portable installs cannot be updated automatically. To update: download the latest NSIS installer from GitHub Releases, install it to the same folder, then copy your Data/ folder (settings, models, recordings) from the old version to the new one.",
-    "portableUpdateButton": "Open GitHub Releases"
+    "portableUpdateTitle": "Mise à jour manuelle requise",
+    "portableUpdateMessage": "Les installations portables ne peuvent pas être mises à jour automatiquement. Pour mettre à jour : téléchargez le dernier installateur NSIS depuis GitHub Releases, installez-le dans le même dossier, puis copiez votre dossier Data/ (paramètres, modèles, enregistrements) de l'ancienne version vers la nouvelle.",
+    "portableUpdateButton": "Ouvrir GitHub Releases"
   },
   "common": {
     "loading": "Chargement...",
@@ -712,8 +712,8 @@
     "pasteFailedTitle": "Échec du collage du texte",
     "pasteFailed": "Le texte n'a pas pu être collé dans l'application active.",
     "boundary": {
-      "title": "Something went wrong.",
-      "reload": "Reload"
+      "title": "Une erreur est survenue.",
+      "reload": "Recharger"
     }
   },
   "appLanguage": {
@@ -726,88 +726,88 @@
   },
   "smartModes": {
     "sections": {
-      "rewrite": "Rewrite",
-      "translation": "Translation"
+      "rewrite": "Réécriture",
+      "translation": "Traduction"
     },
-    "createRewrite": "New Rewrite",
-    "createTranslation": "New Translation",
+    "createRewrite": "Nouvelle réécriture",
+    "createTranslation": "Nouvelle traduction",
     "card": {
-      "saveCta": "Save mode",
-      "discardCta": "Discard changes",
-      "createCta": "Create mode",
-      "discardNewCta": "Discard",
-      "addShortcut": "Add shortcut",
-      "shortcutConflict": "Already used by: {{name}}",
-      "shortcutConflictBase": "The start of this shortcut ({{base}}) is already used by {{name}} — it would fire before the next key",
-      "shortcutBaseHint": "A shortcut whose start matches another shortcut can't work — the first key fires before you finish.",
-      "targetLanguage": "Target language",
-      "nameLabel": "Name",
-      "promptLabel": "Prompt",
-      "namePlaceholder": "e.g. Make Concise",
-      "promptPlaceholder": "Rewrite the following text to be more concise.\n\nText:\n${output}",
-      "outputHint": "Use ${output} where the dictated transcript should be inserted."
+      "saveCta": "Enregistrer le mode",
+      "discardCta": "Annuler les modifications",
+      "createCta": "Créer le mode",
+      "discardNewCta": "Annuler",
+      "addShortcut": "Ajouter un raccourci",
+      "shortcutConflict": "Déjà utilisé par : {{name}}",
+      "shortcutConflictBase": "Le début de ce raccourci ({{base}}) est déjà utilisé par {{name}} — il se déclenchera avant la prochaine touche",
+      "shortcutBaseHint": "Un raccourci dont le début correspond à un autre ne peut pas fonctionner — la première touche se déclenche avant que vous ayez terminé.",
+      "targetLanguage": "Langue cible",
+      "nameLabel": "Nom",
+      "promptLabel": "Invite",
+      "namePlaceholder": "Ex. Rendre concis",
+      "promptPlaceholder": "Réécrivez le texte suivant pour le rendre plus concis.\n\nTexte :\n${output}",
+      "outputHint": "Utilisez ${output} à l’endroit où la transcription doit être insérée."
     },
     "picker": {
-      "rewriteTitle": "Add a rewrite mode",
-      "translationTitle": "Add a translation mode",
-      "custom": "Custom",
-      "customSubtext": "Create a mode with your own name and prompt",
-      "added": "Added",
-      "overwriteTitle": "Mode already exists",
-      "overwriteConfirm": "\"{{name}}\" already exists. Re-adding it will overwrite the existing mode. Continue?"
+      "rewriteTitle": "Ajouter un mode de réécriture",
+      "translationTitle": "Ajouter un mode de traduction",
+      "custom": "Personnalisé",
+      "customSubtext": "Créez un mode avec votre propre nom et invite",
+      "added": "Ajouté",
+      "overwriteTitle": "Le mode existe déjà",
+      "overwriteConfirm": "« {{name}} » existe déjà. Le rajouter écrasera le mode existant. Continuer ?"
     },
     "shortcut": {
-      "clear": "Clear",
-      "clearAriaLabel": "Clear shortcut {{combo}}",
-      "recording": "Press keys…"
+      "clear": "Effacer",
+      "clearAriaLabel": "Effacer le raccourci {{combo}}",
+      "recording": "Appuyez sur les touches…"
     },
     "kind": {
-      "rewrite": "Rewrite",
-      "translation": "Translation"
+      "rewrite": "Réécriture",
+      "translation": "Traduction"
     },
     "translation": {
-      "enableHeading": "Enable offline translation",
-      "enableBody": "Translation runs fully offline through the embedded LLM. Choose an engine to get started.",
-      "chooseCta": "Choose translation engine",
-      "genericEngineNote": "Best-effort — quality varies by model",
-      "changeEngine": "Change engine",
-      "currentEngine": "Using: {{engine}}",
-      "engineGeneric": "Active model",
+      "enableHeading": "Activer la traduction hors ligne",
+      "enableBody": "La traduction s’effectue entièrement hors ligne via le LLM intégré. Choisissez un moteur pour commencer.",
+      "chooseCta": "Choisir le moteur de traduction",
+      "genericEngineNote": "Au mieux — la qualité varie selon le modèle",
+      "changeEngine": "Changer de moteur",
+      "currentEngine": "En cours d’utilisation : {{engine}}",
+      "engineGeneric": "Modèle actif",
       "modal": {
-        "footnote": "Both options run fully offline. You can change this choice later in settings.",
-        "applying": "Applying…",
-        "applyFailed": "Could not change the translation engine.",
-        "activeBadge": "Currently used",
-        "activeButton": "Currently used",
-        "downloadingPercent": "Downloading… {{percent}}%",
-        "downloadBackgroundNote": "You can close this window — the download continues in the background.",
-        "verifying": "Verifying download…",
-        "title": "Set up offline translation",
-        "recommendedHeading": "Recommended: Gemma 3 4B",
-        "recommendedSubtext": "A versatile 4B model with clean, reliable translation across languages and idioms. ~2.5 GB download.",
-        "downloadRecommended": "Download Gemma 3 4B",
-        "useRecommended": "Use Gemma 3 4B",
-        "currentHeading": "Use your current model",
-        "currentSubtext": "Translate with {{model}} (your active model). Quality varies by model.",
-        "currentNone": "No local model is active yet. Download one from the model library first.",
-        "useCurrent": "Use current model",
-        "recommendOnlyHeading": "Gemma 3 4B recommended for translation",
-        "recommendOnlyBody": "For the best translation quality, select Gemma 3 4B in the model selector above. Translation runs through your single active model.",
-        "enableCta": "Enable offline translation"
+        "footnote": "Les deux options fonctionnent entièrement hors ligne. Vous pouvez modifier ce choix plus tard dans les paramètres.",
+        "applying": "Application…",
+        "applyFailed": "Impossible de changer le moteur de traduction.",
+        "activeBadge": "Actuellement utilisé",
+        "activeButton": "Actuellement utilisé",
+        "downloadingPercent": "Téléchargement… {{percent}}%",
+        "downloadBackgroundNote": "Vous pouvez fermer cette fenêtre — le téléchargement continue en arrière-plan.",
+        "verifying": "Vérification du téléchargement…",
+        "title": "Configurer la traduction hors ligne",
+        "recommendedHeading": "Recommandé : Gemma 3 4B",
+        "recommendedSubtext": "Un modèle 4B polyvalent avec une traduction fiable et précise dans de nombreuses langues et idiomes. ~2,5 Go à télécharger.",
+        "downloadRecommended": "Télécharger Gemma 3 4B",
+        "useRecommended": "Utiliser Gemma 3 4B",
+        "currentHeading": "Utiliser votre modèle actuel",
+        "currentSubtext": "Traduire avec {{model}} (votre modèle actif). La qualité varie selon le modèle.",
+        "currentNone": "Aucun modèle local n’est encore actif. Téléchargez-en un depuis la bibliothèque de modèles.",
+        "useCurrent": "Utiliser le modèle actuel",
+        "recommendOnlyHeading": "Gemma 3 4B recommandé pour la traduction",
+        "recommendOnlyBody": "Pour une meilleure qualité de traduction, sélectionnez Gemma 3 4B dans le sélecteur de modèle ci-dessus. La traduction s’effectue via votre unique modèle actif.",
+        "enableCta": "Activer la traduction hors ligne"
       },
-      "recommendNote": "Gemma 3 4B is recommended for translation. Choose it in the model selector above."
+      "recommendNote": "Gemma 3 4B est recommandé pour la traduction. Choisissez-le dans le sélecteur de modèle ci-dessus."
     },
     "delete": {
-      "title": "Delete mode",
-      "confirm": "Delete \"{{name}}\"? This will also remove its shortcut binding.",
-      "ariaLabel": "Delete {{name}}"
+      "title": "Supprimer le mode",
+      "confirm": "Supprimer « {{name}} » ? Le raccourci associé sera également supprimé.",
+      "ariaLabel": "Supprimer {{name}}"
     },
     "edit": {
-      "ariaLabel": "Edit {{name}}"
+      "ariaLabel": "Modifier {{name}}"
     },
     "noModel": {
-      "heading": "No local model selected",
-      "body": "Select or download a local model above to use Smart Modes."
+      "heading": "Aucun modèle local sélectionné",
+      "body": "Sélectionnez ou téléchargez un modèle local ci-dessus pour utiliser les modes intelligents."
     },
     "defaultModes": {
       "cleanUp": "Nettoyage",

@@ -379,7 +379,7 @@
             "custom": "Custom (lokálně)"
           },
           "descriptions": {
-            "apple_intelligence": "No download required — macOS Apple Silicon",
+            "apple_intelligence": "Nevyžaduje stahování — macOS Apple Silicon",
             "custom": "Ollama / LM Studio na localhost"
           }
         },
@@ -443,42 +443,42 @@
           "cloudSelectedNotice": "Vámi vybraný model je cloudový poskytovatel. Klikněte na záložku „Cloud\" níže, abyste jej viděli, nebo zvolte lokální model."
         },
         "library": {
-          "title": "Local Model Library",
-          "description": "Download and manage local GGUF models. Models run entirely on your device — no data leaves your machine.",
-          "yourModels": "Your Models",
-          "availableModels": "Available to Download",
-          "recommendedBadge": "Recommended",
-          "downloadModel": "Download model",
-          "activateModel": "Use this model",
-          "addCustomModel": "Add custom model",
-          "dropZoneLabel": "Drop a .gguf file here",
-          "dropZoneSublabel": "or use the button above",
-          "invalidGguf": "Not a valid GGUF model file. Please select a .gguf file.",
-          "cancelDownload": "Cancel download",
+          "title": "Knihovna lokálních modelů",
+          "description": "Stahuj a spravuj lokální modely GGUF. Modely běží zcela na tvém zařízení — žádná data neopouštějí tvůj počítač.",
+          "yourModels": "Moje modely",
+          "availableModels": "Dostupné ke stažení",
+          "recommendedBadge": "Doporučeno",
+          "downloadModel": "Stáhnout model",
+          "activateModel": "Použít tento model",
+          "addCustomModel": "Přidat vlastní model",
+          "dropZoneLabel": "Přetáhni sem soubor .gguf",
+          "dropZoneSublabel": "nebo použij tlačítko výše",
+          "invalidGguf": "Neplatný soubor modelu GGUF. Vyberte soubor .gguf.",
+          "cancelDownload": "Zrušit stahování",
           "models": {
             "qwen25_1b5": {
-              "description": "Fast, lightweight — runs on any machine"
+              "description": "Rychlý a nenáročný — funguje na jakémkoli počítači"
             },
             "gemma3_4b": {
-              "description": "Versatile and multilingual — strong in many languages"
+              "description": "Výborný pro překlad — všestranný a vícejazyčný"
             },
             "phi4_mini": {
-              "description": "Precise instruction-following — formatting and structure"
+              "description": "Přesné dodržování pokynů — formátování a struktura"
             },
             "llama32_3b": {
-              "description": "Balanced generalist — solid multilingual quality"
+              "description": "Vyvážený generalista — solidní vícejazyčná kvalita"
             },
             "translateGemma4b": {
-              "description": "Dedicated translation model — 55 benchmarked languages"
+              "description": "Dedikovaný překladový model — 55 otestovaných jazyků"
             }
           }
         },
         "embedded": {
-          "noModelHeading": "No local model selected",
-          "noModelBody": "Download a model below to enable embedded processing. The Qwen2.5-1.5B model is recommended for most machines.",
-          "downloadNowLink": "Download a model",
-          "providerLabel": "Embedded (local)",
-          "providerDescription": "Runs on your device. Requires a downloaded local model."
+          "noModelHeading": "Není vybrán žádný lokální model",
+          "noModelBody": "Stáhni model níže, abys aktivoval integrované zpracování. Model Qwen2.5-1.5B je doporučen pro většinu počítačů.",
+          "downloadNowLink": "Stáhnout model",
+          "providerLabel": "Integrovaný (lokální)",
+          "providerDescription": "Funguje na vašem zařízení. Vyžaduje stažený místní model."
         }
       },
       "prompts": {
@@ -594,9 +594,9 @@
         "description": "Extra čas (v milisekundách) pro pokračování nahrávání po uvolnění klávesy, pro zachycení zbývajícího zvuku. 0 = žádná extra vyrovnávací paměť."
       },
       "simulateUpdaterRestart": {
-        "title": "Simulate Updater Restart",
-        "description": "Relaunches Dictus via the same API tauri-plugin-updater uses after applying an update. Use this to validate SHUT-03 (clean post-update relaunch) without publishing a throwaway test release.",
-        "button": "Simulate Restart"
+        "title": "Simulovat restart aktualizátoru",
+        "description": "Restartuje Dictus přes stejné API, které tauri-plugin-updater používá po aplikaci aktualizace. Použij to k ověření SHUT-03 (čistý restart po aktualizaci) bez publikování dočasné testovací verze.",
+        "button": "Simulovat restart"
       }
     },
     "about": {
@@ -620,9 +620,9 @@
         "button": "Přispět"
       },
       "privacy": {
-        "title": "Privacy Policy",
-        "description": "Your voice stays on your device. Read our privacy policy.",
-        "button": "View Privacy Policy"
+        "title": "Zásady ochrany osobních údajů",
+        "description": "Váš hlas zůstane na vašem zařízení. Přečtěte si naše zásady ochrany osobních údajů.",
+        "button": "Zobrazit zásady ochrany osobních údajů"
       },
       "networkSurface": {
         "title": "Síťová plocha",
@@ -630,17 +630,17 @@
         "button": "Zobrazit dokument o soukromí"
       },
       "ecosystem": {
-        "title": "Dictus Ecosystem",
-        "description": "Dictus is available on iOS, Android, and Desktop.",
-        "button": "Learn More"
+        "title": "Ekosystém Dictus",
+        "description": "Dictus je dostupný na iOS, Android a Desktop.",
+        "button": "Zjistit více"
       },
       "acknowledgments": {
         "title": "Poděkování",
         "handy": {
           "title": "Handy",
-          "description": "Open-source desktop speech-to-text application by CJ Pais",
-          "details": "Dictus Desktop is a fork of Handy. Thanks to CJ Pais and the Handy community for building the foundation that Dictus is built upon.",
-          "button": "View on GitHub"
+          "description": "Open-source aplikace pro převod řeči na text od CJ Pais",
+          "details": "Dictus Desktop je fork Handy. Díky CJ Pais a komunitě Handy za vybudování základu, na kterém je Dictus postaven.",
+          "button": "Zobrazit na GitHubu"
         },
         "whisper": {
           "title": "Whisper.cpp",
@@ -663,9 +663,9 @@
     "installing": "Instalace...",
     "preparing": "Příprava...",
     "checkForUpdates": "Zkontrolovat aktualizace",
-    "portableUpdateTitle": "Manual update required",
-    "portableUpdateMessage": "Portable installs cannot be updated automatically. To update: download the latest NSIS installer from GitHub Releases, install it to the same folder, then copy your Data/ folder (settings, models, recordings) from the old version to the new one.",
-    "portableUpdateButton": "Open GitHub Releases"
+    "portableUpdateTitle": "Vyžaduje se ruční aktualizace",
+    "portableUpdateMessage": "Přenosné instalace nelze aktualizovat automaticky. Chcete-li aktualizovat: stáhni nejnovější instalátor NSIS z GitHub Releases, nainstaluj ho do stejné složky a poté zkopíruj složku Data/ (nastavení, modely, nahrávky) ze staré verze do nové.",
+    "portableUpdateButton": "Otevřít GitHub Releases"
   },
   "common": {
     "loading": "Načítání...",
@@ -712,8 +712,8 @@
     "pasteFailedTitle": "Vložení textu se nezdařilo",
     "pasteFailed": "Text nebylo možné vložit do aktivní aplikace.",
     "boundary": {
-      "title": "Something went wrong.",
-      "reload": "Reload"
+      "title": "Něco se pokazilo.",
+      "reload": "Znovu načíst"
     }
   },
   "appLanguage": {
@@ -726,88 +726,88 @@
   },
   "smartModes": {
     "sections": {
-      "rewrite": "Rewrite",
-      "translation": "Translation"
+      "rewrite": "Přepis",
+      "translation": "Překlad"
     },
-    "createRewrite": "New Rewrite",
-    "createTranslation": "New Translation",
+    "createRewrite": "Nový přepis",
+    "createTranslation": "Nový překlad",
     "card": {
-      "saveCta": "Save mode",
-      "discardCta": "Discard changes",
-      "createCta": "Create mode",
-      "discardNewCta": "Discard",
-      "addShortcut": "Add shortcut",
-      "shortcutConflict": "Already used by: {{name}}",
-      "shortcutConflictBase": "The start of this shortcut ({{base}}) is already used by {{name}} — it would fire before the next key",
-      "shortcutBaseHint": "A shortcut whose start matches another shortcut can't work — the first key fires before you finish.",
-      "targetLanguage": "Target language",
-      "nameLabel": "Name",
-      "promptLabel": "Prompt",
-      "namePlaceholder": "e.g. Make Concise",
-      "promptPlaceholder": "Rewrite the following text to be more concise.\n\nText:\n${output}",
-      "outputHint": "Use ${output} where the dictated transcript should be inserted."
+      "saveCta": "Uložit mód",
+      "discardCta": "Zahodit změny",
+      "createCta": "Vytvořit mód",
+      "discardNewCta": "Zahodit",
+      "addShortcut": "Přidat zkratku",
+      "shortcutConflict": "Již používáno: {{name}}",
+      "shortcutConflictBase": "Začátek této zkratky ({{base}}) je již používán {{name}} — aktivuje se před dalším klávesou",
+      "shortcutBaseHint": "Zkratka, jejíž začátek odpovídá jiné zkratce, nemůže fungovat — první kláves se aktivuje dřív, než dokončíš vstup.",
+      "targetLanguage": "Cílový jazyk",
+      "nameLabel": "Název",
+      "promptLabel": "Pokyn",
+      "namePlaceholder": "např. Zestručnit",
+      "promptPlaceholder": "Přepiš následující text, aby byl stručnější.\n\nText:\n${output}",
+      "outputHint": "Použij ${output} na místě, kde má být vložen nadiktovaný přepis."
     },
     "picker": {
-      "rewriteTitle": "Add a rewrite mode",
-      "translationTitle": "Add a translation mode",
-      "custom": "Custom",
-      "customSubtext": "Create a mode with your own name and prompt",
-      "added": "Added",
-      "overwriteTitle": "Mode already exists",
-      "overwriteConfirm": "\"{{name}}\" already exists. Re-adding it will overwrite the existing mode. Continue?"
+      "rewriteTitle": "Přidat mód přepisu",
+      "translationTitle": "Přidat mód překladu",
+      "custom": "Vlastní",
+      "customSubtext": "Vytvoř mód s vlastním názvem a pokynem",
+      "added": "Přidáno",
+      "overwriteTitle": "Mód již existuje",
+      "overwriteConfirm": "„{{name}}\" již existuje. Opětovné přidání přepíše existující mód. Pokračovat?"
     },
     "shortcut": {
-      "clear": "Clear",
-      "clearAriaLabel": "Clear shortcut {{combo}}",
-      "recording": "Press keys…"
+      "clear": "Vymazat",
+      "clearAriaLabel": "Vymazat zkratku {{combo}}",
+      "recording": "Stiskni klávesy…"
     },
     "kind": {
-      "rewrite": "Rewrite",
-      "translation": "Translation"
+      "rewrite": "Přepis",
+      "translation": "Překlad"
     },
     "translation": {
-      "enableHeading": "Enable offline translation",
-      "enableBody": "Translation runs fully offline through the embedded LLM. Choose an engine to get started.",
-      "chooseCta": "Choose translation engine",
-      "genericEngineNote": "Best-effort — quality varies by model",
-      "changeEngine": "Change engine",
-      "currentEngine": "Using: {{engine}}",
-      "engineGeneric": "Active model",
+      "enableHeading": "Zapnout offline překlad",
+      "enableBody": "Překlad probíhá zcela offline přes integrovaný jazykový model. Vyber engine a začni.",
+      "chooseCta": "Zvolit překladatelský engine",
+      "genericEngineNote": "Nejlepší snaha — kvalita závisí na modelu",
+      "changeEngine": "Změnit engine",
+      "currentEngine": "Používán: {{engine}}",
+      "engineGeneric": "Aktivní model",
       "modal": {
-        "footnote": "Both options run fully offline. You can change this choice later in settings.",
-        "applying": "Applying…",
-        "applyFailed": "Could not change the translation engine.",
-        "activeBadge": "Currently used",
-        "activeButton": "Currently used",
-        "downloadingPercent": "Downloading… {{percent}}%",
-        "downloadBackgroundNote": "You can close this window — the download continues in the background.",
-        "verifying": "Verifying download…",
-        "title": "Set up offline translation",
-        "recommendedHeading": "Recommended: Gemma 3 4B",
-        "recommendedSubtext": "A versatile 4B model with clean, reliable translation across languages and idioms. ~2.5 GB download.",
-        "downloadRecommended": "Download Gemma 3 4B",
-        "useRecommended": "Use Gemma 3 4B",
-        "currentHeading": "Use your current model",
-        "currentSubtext": "Translate with {{model}} (your active model). Quality varies by model.",
-        "currentNone": "No local model is active yet. Download one from the model library first.",
-        "useCurrent": "Use current model",
-        "recommendOnlyHeading": "Gemma 3 4B recommended for translation",
-        "recommendOnlyBody": "For the best translation quality, select Gemma 3 4B in the model selector above. Translation runs through your single active model.",
-        "enableCta": "Enable offline translation"
+        "footnote": "Obě možnosti fungují zcela offline. Tento výběr lze změnit později v nastavení.",
+        "applying": "Aplikování…",
+        "applyFailed": "Nepodařilo se změnit překladatelský engine.",
+        "activeBadge": "Aktuálně používán",
+        "activeButton": "Aktuálně používán",
+        "downloadingPercent": "Stahování… {{percent}}%",
+        "downloadBackgroundNote": "Okno lze zavřít — stahování pokračuje na pozadí.",
+        "verifying": "Ověřování stahování…",
+        "title": "Nastavit offline překlad",
+        "recommendedHeading": "Doporučeno: Gemma 3 4B",
+        "recommendedSubtext": "Všestranný model 4B se spolehlivým překladem v mnoha jazycích. ~2,5 GB ke stažení.",
+        "downloadRecommended": "Stáhnout Gemma 3 4B",
+        "useRecommended": "Použít Gemma 3 4B",
+        "currentHeading": "Použít aktuální model",
+        "currentSubtext": "Přeložit pomocí {{model}} (aktivní model). Kvalita závisí na modelu.",
+        "currentNone": "Žádný lokální model zatím není aktivní. Nejprve stáhni jeden z knihovny modelů.",
+        "useCurrent": "Použít aktuální model",
+        "recommendOnlyHeading": "Gemma 3 4B doporučen pro překlad",
+        "recommendOnlyBody": "Pro nejlepší kvalitu překladu zvolte Gemma 3 4B v selektoru modelů výše. Překlad probíhá přes váš jediný aktivní model.",
+        "enableCta": "Zapnout offline překlad"
       },
-      "recommendNote": "Gemma 3 4B is recommended for translation. Choose it in the model selector above."
+      "recommendNote": "Pro překlad se doporučuje Gemma 3 4B. Zvol jej v selektoru modelů výše."
     },
     "delete": {
-      "title": "Delete mode",
-      "confirm": "Delete \"{{name}}\"? This will also remove its shortcut binding.",
-      "ariaLabel": "Delete {{name}}"
+      "title": "Smazat mód",
+      "confirm": "Smazat „{{name}}\"? Tím se odstraní i přiřazená klávesová zkratka.",
+      "ariaLabel": "Smazat {{name}}"
     },
     "edit": {
-      "ariaLabel": "Edit {{name}}"
+      "ariaLabel": "Upravit {{name}}"
     },
     "noModel": {
-      "heading": "No local model selected",
-      "body": "Select or download a local model above to use Smart Modes."
+      "heading": "Není vybrán žádný lokální model",
+      "body": "Vyber nebo stáhni lokální model výše, abys mohl používat chytré módy."
     },
     "defaultModes": {
       "cleanUp": "Vyčistit",

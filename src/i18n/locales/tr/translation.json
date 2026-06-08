@@ -379,7 +379,7 @@
             "custom": "Custom (yerel)"
           },
           "descriptions": {
-            "apple_intelligence": "No download required — macOS Apple Silicon",
+            "apple_intelligence": "İndirme gerekmez — macOS Apple Silicon",
             "custom": "localhost üzerinde Ollama / LM Studio"
           }
         },
@@ -443,42 +443,42 @@
           "cloudSelectedNotice": "Seçtiğiniz model bir bulut sağlayıcısıdır. Görüntülemek için aşağıdaki \"Bulut\" sekmesine tıklayın veya yerel bir model seçin."
         },
         "library": {
-          "title": "Local Model Library",
-          "description": "Download and manage local GGUF models. Models run entirely on your device — no data leaves your machine.",
-          "yourModels": "Your Models",
-          "availableModels": "Available to Download",
-          "recommendedBadge": "Recommended",
-          "downloadModel": "Download model",
-          "activateModel": "Use this model",
-          "addCustomModel": "Add custom model",
-          "dropZoneLabel": "Drop a .gguf file here",
-          "dropZoneSublabel": "or use the button above",
-          "invalidGguf": "Not a valid GGUF model file. Please select a .gguf file.",
-          "cancelDownload": "Cancel download",
+          "title": "Yerel Model Kütüphanesi",
+          "description": "Yerel GGUF modellerini indir ve yönet. Modeller tamamen cihazında çalışır — hiçbir veri bilgisayarını terk etmez.",
+          "yourModels": "Modellerim",
+          "availableModels": "İndirilebilir",
+          "recommendedBadge": "Önerilen",
+          "downloadModel": "Modeli indir",
+          "activateModel": "Bu modeli kullan",
+          "addCustomModel": "Özel model ekle",
+          "dropZoneLabel": "Buraya bir .gguf dosyası bırak",
+          "dropZoneSublabel": "ya da yukarıdaki düğmeyi kullan",
+          "invalidGguf": "Geçerli bir GGUF model dosyası değil. Lütfen bir .gguf dosyası seçin.",
+          "cancelDownload": "İndirmeyi iptal et",
           "models": {
             "qwen25_1b5": {
-              "description": "Fast, lightweight — runs on any machine"
+              "description": "Hızlı ve hafif — her makinede çalışır"
             },
             "gemma3_4b": {
-              "description": "Versatile and multilingual — strong in many languages"
+              "description": "Çeviri için mükemmel — çok yönlü ve çok dilli"
             },
             "phi4_mini": {
-              "description": "Precise instruction-following — formatting and structure"
+              "description": "Hassas talimat takibi — biçimlendirme ve yapı"
             },
             "llama32_3b": {
-              "description": "Balanced generalist — solid multilingual quality"
+              "description": "Dengeli generalist — sağlam çok dilli kalite"
             },
             "translateGemma4b": {
-              "description": "Dedicated translation model — 55 benchmarked languages"
+              "description": "Özel çeviri modeli — 55 değerlendirilmiş dil"
             }
           }
         },
         "embedded": {
-          "noModelHeading": "No local model selected",
-          "noModelBody": "Download a model below to enable embedded processing. The Qwen2.5-1.5B model is recommended for most machines.",
-          "downloadNowLink": "Download a model",
-          "providerLabel": "Embedded (local)",
-          "providerDescription": "Runs on your device. Requires a downloaded local model."
+          "noModelHeading": "Yerel model seçilmedi",
+          "noModelBody": "Yerleşik işlemeyi etkinleştirmek için aşağıdan bir model indir. Qwen2.5-1.5B modeli çoğu makine için önerilir.",
+          "downloadNowLink": "Model indir",
+          "providerLabel": "Yerleşik (yerel)",
+          "providerDescription": "Cihazınızda çalışır. İndirilmiş bir yerel model gerektirir."
         }
       },
       "prompts": {
@@ -594,9 +594,9 @@
         "description": "Tuşu bıraktıktan sonra arka plandaki sesi yakalamak için kaydı sürdürme süresi (milisaniye). 0 = ekstra tampon yok."
       },
       "simulateUpdaterRestart": {
-        "title": "Simulate Updater Restart",
-        "description": "Relaunches Dictus via the same API tauri-plugin-updater uses after applying an update. Use this to validate SHUT-03 (clean post-update relaunch) without publishing a throwaway test release.",
-        "button": "Simulate Restart"
+        "title": "Güncelleyici Yeniden Başlatmasını Simüle Et",
+        "description": "Dictus'u, tauri-plugin-updater'ın güncelleme uyguladıktan sonra kullandığı aynı API aracılığıyla yeniden başlatır. Tek kullanımlık bir test sürümü yayınlamadan SHUT-03'ü (güncellemeden sonra temiz yeniden başlatma) doğrulamak için kullan.",
+        "button": "Yeniden Başlatmayı Simüle Et"
       }
     },
     "about": {
@@ -620,9 +620,9 @@
         "button": "Bağış Yap"
       },
       "privacy": {
-        "title": "Privacy Policy",
-        "description": "Your voice stays on your device. Read our privacy policy.",
-        "button": "View Privacy Policy"
+        "title": "Gizlilik Politikası",
+        "description": "Sesiniz cihazınızda kalır. Gizlilik politikamızı okuyun.",
+        "button": "Gizlilik Politikasını Görüntüle"
       },
       "networkSurface": {
         "title": "Ağ yüzeyi",
@@ -630,17 +630,17 @@
         "button": "Gizlilik belgesini görüntüle"
       },
       "ecosystem": {
-        "title": "Dictus Ecosystem",
-        "description": "Dictus is available on iOS, Android, and Desktop.",
-        "button": "Learn More"
+        "title": "Dictus Ekosistemi",
+        "description": "Dictus iOS, Android ve Masaüstü'nde kullanılabilir.",
+        "button": "Daha Fazla Bilgi"
       },
       "acknowledgments": {
         "title": "Teşekkürler",
         "handy": {
           "title": "Handy",
-          "description": "Open-source desktop speech-to-text application by CJ Pais",
-          "details": "Dictus Desktop is a fork of Handy. Thanks to CJ Pais and the Handy community for building the foundation that Dictus is built upon.",
-          "button": "View on GitHub"
+          "description": "CJ Pais tarafından geliştirilmiş açık kaynaklı masaüstü konuşma tanıma uygulaması",
+          "details": "Dictus Desktop, Handy'nin bir çatalıdır. Dictus'un üzerine inşa edildiği temeli oluşturan CJ Pais ve Handy topluluğuna teşekkürler.",
+          "button": "GitHub'da Görüntüle"
         },
         "whisper": {
           "title": "Whisper.cpp",
@@ -663,9 +663,9 @@
     "installing": "Yükleniyor...",
     "preparing": "Hazırlanıyor...",
     "checkForUpdates": "Güncellemeleri kontrol et",
-    "portableUpdateTitle": "Manual update required",
-    "portableUpdateMessage": "Portable installs cannot be updated automatically. To update: download the latest NSIS installer from GitHub Releases, install it to the same folder, then copy your Data/ folder (settings, models, recordings) from the old version to the new one.",
-    "portableUpdateButton": "Open GitHub Releases"
+    "portableUpdateTitle": "Manuel güncelleme gerekli",
+    "portableUpdateMessage": "Taşınabilir kurulumlar otomatik olarak güncellenemez. Güncellemek için: GitHub Releases'tan en son NSIS yükleyicisini indir, aynı klasöre kur, ardından Data/ klasörünü (ayarlar, modeller, kayıtlar) eski sürümden yenisine kopyala.",
+    "portableUpdateButton": "GitHub Releases'ı aç"
   },
   "common": {
     "loading": "Yükleniyor...",
@@ -712,8 +712,8 @@
     "pasteFailedTitle": "Metin yapıştırılamadı",
     "pasteFailed": "Metin etkin uygulamaya yapıştırılamadı.",
     "boundary": {
-      "title": "Something went wrong.",
-      "reload": "Reload"
+      "title": "Bir şeyler ters gitti.",
+      "reload": "Yenile"
     }
   },
   "appLanguage": {
@@ -726,88 +726,88 @@
   },
   "smartModes": {
     "sections": {
-      "rewrite": "Rewrite",
-      "translation": "Translation"
+      "rewrite": "Yeniden Yazma",
+      "translation": "Çeviri"
     },
-    "createRewrite": "New Rewrite",
-    "createTranslation": "New Translation",
+    "createRewrite": "Yeni Yeniden Yazma",
+    "createTranslation": "Yeni Çeviri",
     "card": {
-      "saveCta": "Save mode",
-      "discardCta": "Discard changes",
-      "createCta": "Create mode",
-      "discardNewCta": "Discard",
-      "addShortcut": "Add shortcut",
-      "shortcutConflict": "Already used by: {{name}}",
-      "shortcutConflictBase": "The start of this shortcut ({{base}}) is already used by {{name}} — it would fire before the next key",
-      "shortcutBaseHint": "A shortcut whose start matches another shortcut can't work — the first key fires before you finish.",
-      "targetLanguage": "Target language",
-      "nameLabel": "Name",
-      "promptLabel": "Prompt",
-      "namePlaceholder": "e.g. Make Concise",
-      "promptPlaceholder": "Rewrite the following text to be more concise.\n\nText:\n${output}",
-      "outputHint": "Use ${output} where the dictated transcript should be inserted."
+      "saveCta": "Modu kaydet",
+      "discardCta": "Değişiklikleri iptal et",
+      "createCta": "Mod oluştur",
+      "discardNewCta": "İptal et",
+      "addShortcut": "Kısayol ekle",
+      "shortcutConflict": "Zaten kullanılıyor: {{name}}",
+      "shortcutConflictBase": "Bu kısayolun başlangıcı ({{base}}) zaten {{name}} tarafından kullanılıyor — bir sonraki tuştan önce tetiklenirdi",
+      "shortcutBaseHint": "Başlangıcı başka bir kısayolla eşleşen bir kısayol çalışamaz — ilk tuş siz bitirmeden tetiklenir.",
+      "targetLanguage": "Hedef dil",
+      "nameLabel": "Ad",
+      "promptLabel": "Talimat",
+      "namePlaceholder": "örn. Özlü yap",
+      "promptPlaceholder": "Aşağıdaki metni daha özlü olacak şekilde yeniden yaz.\n\nMetin:\n${output}",
+      "outputHint": "Dikte edilen transkriptin ekleneceği yerde ${output} kullan."
     },
     "picker": {
-      "rewriteTitle": "Add a rewrite mode",
-      "translationTitle": "Add a translation mode",
-      "custom": "Custom",
-      "customSubtext": "Create a mode with your own name and prompt",
-      "added": "Added",
-      "overwriteTitle": "Mode already exists",
-      "overwriteConfirm": "\"{{name}}\" already exists. Re-adding it will overwrite the existing mode. Continue?"
+      "rewriteTitle": "Yeniden yazma modu ekle",
+      "translationTitle": "Çeviri modu ekle",
+      "custom": "Özel",
+      "customSubtext": "Kendi adın ve talimatınla bir mod oluştur",
+      "added": "Eklendi",
+      "overwriteTitle": "Mod zaten mevcut",
+      "overwriteConfirm": "«{{name}}» zaten mevcut. Yeniden eklemek mevcut modun üzerine yazar. Devam edilsin mi?"
     },
     "shortcut": {
-      "clear": "Clear",
-      "clearAriaLabel": "Clear shortcut {{combo}}",
-      "recording": "Press keys…"
+      "clear": "Temizle",
+      "clearAriaLabel": "{{combo}} kısayolunu temizle",
+      "recording": "Tuşlara bas…"
     },
     "kind": {
-      "rewrite": "Rewrite",
-      "translation": "Translation"
+      "rewrite": "Yeniden Yazma",
+      "translation": "Çeviri"
     },
     "translation": {
-      "enableHeading": "Enable offline translation",
-      "enableBody": "Translation runs fully offline through the embedded LLM. Choose an engine to get started.",
-      "chooseCta": "Choose translation engine",
-      "genericEngineNote": "Best-effort — quality varies by model",
-      "changeEngine": "Change engine",
-      "currentEngine": "Using: {{engine}}",
-      "engineGeneric": "Active model",
+      "enableHeading": "Çevrimdışı çeviriyi etkinleştir",
+      "enableBody": "Çeviri, yerleşik dil modeli aracılığıyla tamamen çevrimdışı çalışır. Başlamak için bir motor seç.",
+      "chooseCta": "Çeviri motoru seç",
+      "genericEngineNote": "En iyi çaba — kalite modele göre değişir",
+      "changeEngine": "Motor değiştir",
+      "currentEngine": "Kullanılıyor: {{engine}}",
+      "engineGeneric": "Etkin model",
       "modal": {
-        "footnote": "Both options run fully offline. You can change this choice later in settings.",
-        "applying": "Applying…",
-        "applyFailed": "Could not change the translation engine.",
-        "activeBadge": "Currently used",
-        "activeButton": "Currently used",
-        "downloadingPercent": "Downloading… {{percent}}%",
-        "downloadBackgroundNote": "You can close this window — the download continues in the background.",
-        "verifying": "Verifying download…",
-        "title": "Set up offline translation",
-        "recommendedHeading": "Recommended: Gemma 3 4B",
-        "recommendedSubtext": "A versatile 4B model with clean, reliable translation across languages and idioms. ~2.5 GB download.",
-        "downloadRecommended": "Download Gemma 3 4B",
-        "useRecommended": "Use Gemma 3 4B",
-        "currentHeading": "Use your current model",
-        "currentSubtext": "Translate with {{model}} (your active model). Quality varies by model.",
-        "currentNone": "No local model is active yet. Download one from the model library first.",
-        "useCurrent": "Use current model",
-        "recommendOnlyHeading": "Gemma 3 4B recommended for translation",
-        "recommendOnlyBody": "For the best translation quality, select Gemma 3 4B in the model selector above. Translation runs through your single active model.",
-        "enableCta": "Enable offline translation"
+        "footnote": "Her iki seçenek de tamamen çevrimdışı çalışır. Bu seçimi daha sonra ayarlardan değiştirebilirsin.",
+        "applying": "Uygulanıyor…",
+        "applyFailed": "Çeviri motoru değiştirilemedi.",
+        "activeBadge": "Şu an kullanılıyor",
+        "activeButton": "Şu an kullanılıyor",
+        "downloadingPercent": "İndiriliyor… {{percent}}%",
+        "downloadBackgroundNote": "Bu pencereyi kapatabilirsin — indirme arka planda devam eder.",
+        "verifying": "İndirme doğrulanıyor…",
+        "title": "Çevrimdışı çeviriyi ayarla",
+        "recommendedHeading": "Önerilen: Gemma 3 4B",
+        "recommendedSubtext": "Birçok dilde güvenilir çeviri sunan çok yönlü bir 4B modeli. ~2,5 GB indirme.",
+        "downloadRecommended": "Gemma 3 4B indir",
+        "useRecommended": "Gemma 3 4B kullan",
+        "currentHeading": "Mevcut modeli kullan",
+        "currentSubtext": "{{model}} ile çevir (etkin modeliniz). Kalite modele göre değişir.",
+        "currentNone": "Henüz etkin bir yerel model yok. Önce model kitaplığından bir tane indir.",
+        "useCurrent": "Mevcut modeli kullan",
+        "recommendOnlyHeading": "Gemma 3 4B çeviri için önerilir",
+        "recommendOnlyBody": "En iyi çeviri kalitesi için yukarıdaki model seçiciden Gemma 3 4B seçin. Çeviri, tek etkin modeliniz aracılığıyla çalışır.",
+        "enableCta": "Çevrimdışı çeviriyi etkinleştir"
       },
-      "recommendNote": "Gemma 3 4B is recommended for translation. Choose it in the model selector above."
+      "recommendNote": "Gemma 3 4B çeviri için önerilir. Yukarıdaki model seçiciden seçin."
     },
     "delete": {
-      "title": "Delete mode",
-      "confirm": "Delete \"{{name}}\"? This will also remove its shortcut binding.",
-      "ariaLabel": "Delete {{name}}"
+      "title": "Modu sil",
+      "confirm": "«{{name}}» silinsin mi? Bu işlem ilişkili kısayol bağlamasını da kaldırır.",
+      "ariaLabel": "{{name}} sil"
     },
     "edit": {
-      "ariaLabel": "Edit {{name}}"
+      "ariaLabel": "{{name}} düzenle"
     },
     "noModel": {
-      "heading": "No local model selected",
-      "body": "Select or download a local model above to use Smart Modes."
+      "heading": "Yerel model seçilmedi",
+      "body": "Akıllı Modları kullanmak için yukarıdan bir yerel model seç veya indir."
     },
     "defaultModes": {
       "cleanUp": "Temizle",

@@ -379,7 +379,7 @@
             "custom": "Custom (מקומי)"
           },
           "descriptions": {
-            "apple_intelligence": "No download required — macOS Apple Silicon",
+            "apple_intelligence": "אין צורך בהורדה — macOS Apple Silicon",
             "custom": "Ollama / LM Studio ב-localhost"
           }
         },
@@ -399,7 +399,7 @@
           "unavailable": "Apple Intelligence לא זמין במכשיר הזה. נדרש Mac עם Apple Silicon שמריץ macOS Tahoe (26.0) ומעלה, עם Apple Intelligence מופעל בהגדרות המערכת."
         },
         "baseUrl": {
-          "title": "Base URL",
+          "title": "כתובת בסיס",
           "description": "כתובת ה-API הבסיסית עבור הספק הנבחר. רק ספק מותאם אישית ניתן לעריכה.",
           "placeholder": "https://api.openai.com/v1"
         },
@@ -443,42 +443,42 @@
           "cloudSelectedNotice": "המודל שבחרת הוא ספק ענן. לחץ על הכרטיסייה \"ענן\" למטה כדי לראותו, או בחר במודל מקומי."
         },
         "library": {
-          "title": "Local Model Library",
-          "description": "Download and manage local GGUF models. Models run entirely on your device — no data leaves your machine.",
-          "yourModels": "Your Models",
-          "availableModels": "Available to Download",
-          "recommendedBadge": "Recommended",
-          "downloadModel": "Download model",
-          "activateModel": "Use this model",
-          "addCustomModel": "Add custom model",
-          "dropZoneLabel": "Drop a .gguf file here",
-          "dropZoneSublabel": "or use the button above",
-          "invalidGguf": "Not a valid GGUF model file. Please select a .gguf file.",
-          "cancelDownload": "Cancel download",
+          "title": "ספריית מודלים מקומית",
+          "description": "הורד ונהל מודלי GGUF מקומיים. המודלים פועלים לחלוטין במכשיר שלך — אין נתונים שיוצאים מהמחשב.",
+          "yourModels": "המודלים שלי",
+          "availableModels": "זמין להורדה",
+          "recommendedBadge": "מומלץ",
+          "downloadModel": "הורדת מודל",
+          "activateModel": "שימוש במודל זה",
+          "addCustomModel": "הוספת מודל מותאם אישית",
+          "dropZoneLabel": "שחרר קובץ .gguf כאן",
+          "dropZoneSublabel": "או השתמש בכפתור למעלה",
+          "invalidGguf": "קובץ מודל GGUF לא חוקי. בחר קובץ .gguf.",
+          "cancelDownload": "בטל הורדה",
           "models": {
             "qwen25_1b5": {
-              "description": "Fast, lightweight — runs on any machine"
+              "description": "מהיר וקל — פועל על כל מחשב"
             },
             "gemma3_4b": {
-              "description": "Versatile and multilingual — strong in many languages"
+              "description": "מצוין לתרגום — רב-תכליתי ורב-לשוני"
             },
             "phi4_mini": {
-              "description": "Precise instruction-following — formatting and structure"
+              "description": "מעקב מדויק אחר הוראות — עיצוב ומבנה"
             },
             "llama32_3b": {
-              "description": "Balanced generalist — solid multilingual quality"
+              "description": "כלל-תכליתי מאוזן — איכות רב-לשונית מוצקה"
             },
             "translateGemma4b": {
-              "description": "Dedicated translation model — 55 benchmarked languages"
+              "description": "מודל תרגום ייעודי — 55 שפות שנבדקו"
             }
           }
         },
         "embedded": {
-          "noModelHeading": "No local model selected",
-          "noModelBody": "Download a model below to enable embedded processing. The Qwen2.5-1.5B model is recommended for most machines.",
-          "downloadNowLink": "Download a model",
-          "providerLabel": "Embedded (local)",
-          "providerDescription": "Runs on your device. Requires a downloaded local model."
+          "noModelHeading": "לא נבחר מודל מקומי",
+          "noModelBody": "הורד מודל למטה כדי להפעיל את העיבוד המובנה. מודל Qwen2.5-1.5B מומלץ לרוב המחשבים.",
+          "downloadNowLink": "הורד מודל",
+          "providerLabel": "מובנה (מקומי)",
+          "providerDescription": "פועל במכשיר שלך. דורש מודל מקומי שהורד."
         }
       },
       "prompts": {
@@ -594,9 +594,9 @@
         "description": "זמן נוסף (במילישניות) להמשך הקלטה אחרי שחרור המקש, כדי ללכוד סוף דיבור. 0 = בלי באפר נוסף."
       },
       "simulateUpdaterRestart": {
-        "title": "Simulate Updater Restart",
-        "description": "Relaunches Dictus via the same API tauri-plugin-updater uses after applying an update. Use this to validate SHUT-03 (clean post-update relaunch) without publishing a throwaway test release.",
-        "button": "Simulate Restart"
+        "title": "סימולציה של הפעלה מחדש לעדכון",
+        "description": "מפעיל מחדש את Dictus דרך אותה API שמשתמשת בה tauri-plugin-updater לאחר החלת עדכון. השתמש בזה לאימות SHUT-03 (הפעלה מחדש נקייה לאחר עדכון) מבלי לפרסם גרסת בדיקה חד-פעמית.",
+        "button": "סימולציה של הפעלה מחדש"
       }
     },
     "about": {
@@ -620,9 +620,9 @@
         "button": "תרומה"
       },
       "privacy": {
-        "title": "Privacy Policy",
-        "description": "Your voice stays on your device. Read our privacy policy.",
-        "button": "View Privacy Policy"
+        "title": "מדיניות פרטיות",
+        "description": "הקול שלך נשאר במכשיר שלך. קרא את מדיניות הפרטיות שלנו.",
+        "button": "צפה במדיניות הפרטיות"
       },
       "networkSurface": {
         "title": "משטח רשת",
@@ -630,17 +630,17 @@
         "button": "הצג מסמך פרטיות"
       },
       "ecosystem": {
-        "title": "Dictus Ecosystem",
-        "description": "Dictus is available on iOS, Android, and Desktop.",
-        "button": "Learn More"
+        "title": "מערכת Dictus",
+        "description": "Dictus זמין ב-iOS, Android ובשולחן העבודה.",
+        "button": "למד עוד"
       },
       "acknowledgments": {
         "title": "תודות",
         "handy": {
           "title": "Handy",
-          "description": "Open-source desktop speech-to-text application by CJ Pais",
-          "details": "Dictus Desktop is a fork of Handy. Thanks to CJ Pais and the Handy community for building the foundation that Dictus is built upon.",
-          "button": "View on GitHub"
+          "description": "אפליקציית תמלול קוד פתוח מאת CJ Pais",
+          "details": "Dictus Desktop הוא fork של Handy. תודה ל-CJ Pais ולקהילת Handy על בניית הבסיס עליו נבנה Dictus.",
+          "button": "צפה ב-GitHub"
         },
         "whisper": {
           "title": "Whisper.cpp",
@@ -712,8 +712,8 @@
     "pasteFailedTitle": "ההדבקה נכשלה",
     "pasteFailed": "לא ניתן היה להדביק את הטקסט ביישום הפעיל.",
     "boundary": {
-      "title": "Something went wrong.",
-      "reload": "Reload"
+      "title": "משהו השתבש.",
+      "reload": "טעינה מחדש"
     }
   },
   "appLanguage": {
@@ -726,88 +726,88 @@
   },
   "smartModes": {
     "sections": {
-      "rewrite": "Rewrite",
-      "translation": "Translation"
+      "rewrite": "כתיבה מחדש",
+      "translation": "תרגום"
     },
-    "createRewrite": "New Rewrite",
-    "createTranslation": "New Translation",
+    "createRewrite": "כתיבה מחדש חדשה",
+    "createTranslation": "תרגום חדש",
     "card": {
-      "saveCta": "Save mode",
-      "discardCta": "Discard changes",
-      "createCta": "Create mode",
-      "discardNewCta": "Discard",
-      "addShortcut": "Add shortcut",
-      "shortcutConflict": "Already used by: {{name}}",
-      "shortcutConflictBase": "The start of this shortcut ({{base}}) is already used by {{name}} — it would fire before the next key",
-      "shortcutBaseHint": "A shortcut whose start matches another shortcut can't work — the first key fires before you finish.",
-      "targetLanguage": "Target language",
-      "nameLabel": "Name",
-      "promptLabel": "Prompt",
-      "namePlaceholder": "e.g. Make Concise",
-      "promptPlaceholder": "Rewrite the following text to be more concise.\n\nText:\n${output}",
-      "outputHint": "Use ${output} where the dictated transcript should be inserted."
+      "saveCta": "שמירת מצב",
+      "discardCta": "ביטול שינויים",
+      "createCta": "יצירת מצב",
+      "discardNewCta": "ביטול",
+      "addShortcut": "הוספת קיצור דרך",
+      "shortcutConflict": "כבר בשימוש על ידי: {{name}}",
+      "shortcutConflictBase": "תחילת קיצור הדרך הזה ({{base}}) כבר בשימוש על ידי {{name}} — יופעל לפני המקש הבא",
+      "shortcutBaseHint": "קיצור דרך שתחילתו תואמת קיצור אחר לא יפעל — המקש הראשון מופעל לפני שתסיים.",
+      "targetLanguage": "שפת יעד",
+      "nameLabel": "שם",
+      "promptLabel": "הנחיה",
+      "namePlaceholder": "לדוגמה: קצר ותמציתי",
+      "promptPlaceholder": "כתוב מחדש את הטקסט הבא כך שיהיה תמציתי יותר.\n\nטקסט:\n${output}",
+      "outputHint": "השתמש ב-${output} במקום שבו יש להכניס את תמלול ההכתבה."
     },
     "picker": {
-      "rewriteTitle": "Add a rewrite mode",
-      "translationTitle": "Add a translation mode",
-      "custom": "Custom",
-      "customSubtext": "Create a mode with your own name and prompt",
-      "added": "Added",
-      "overwriteTitle": "Mode already exists",
-      "overwriteConfirm": "\"{{name}}\" already exists. Re-adding it will overwrite the existing mode. Continue?"
+      "rewriteTitle": "הוספת מצב כתיבה מחדש",
+      "translationTitle": "הוספת מצב תרגום",
+      "custom": "מותאם אישית",
+      "customSubtext": "צור מצב עם שם והנחיה משלך",
+      "added": "נוסף",
+      "overwriteTitle": "המצב כבר קיים",
+      "overwriteConfirm": "המצב {{name}} כבר קיים. הוספה מחדש תדרוס את המצב הקיים. להמשיך?"
     },
     "shortcut": {
-      "clear": "Clear",
-      "clearAriaLabel": "Clear shortcut {{combo}}",
-      "recording": "Press keys…"
+      "clear": "ניקוי",
+      "clearAriaLabel": "ניקוי קיצור {{combo}}",
+      "recording": "לחץ על מקשים…"
     },
     "kind": {
-      "rewrite": "Rewrite",
-      "translation": "Translation"
+      "rewrite": "כתיבה מחדש",
+      "translation": "תרגום"
     },
     "translation": {
-      "enableHeading": "Enable offline translation",
-      "enableBody": "Translation runs fully offline through the embedded LLM. Choose an engine to get started.",
-      "chooseCta": "Choose translation engine",
-      "genericEngineNote": "Best-effort — quality varies by model",
-      "changeEngine": "Change engine",
-      "currentEngine": "Using: {{engine}}",
-      "engineGeneric": "Active model",
+      "enableHeading": "הפעלת תרגום לא מקוון",
+      "enableBody": "התרגום פועל לחלוטין ללא חיבור לאינטרנט דרך מודל השפה המובנה. בחר מנוע כדי להתחיל.",
+      "chooseCta": "בחירת מנוע תרגום",
+      "genericEngineNote": "מאמץ מיטבי — איכות משתנה בהתאם למודל",
+      "changeEngine": "החלפת מנוע",
+      "currentEngine": "בשימוש: {{engine}}",
+      "engineGeneric": "מודל פעיל",
       "modal": {
-        "footnote": "Both options run fully offline. You can change this choice later in settings.",
-        "applying": "Applying…",
-        "applyFailed": "Could not change the translation engine.",
-        "activeBadge": "Currently used",
-        "activeButton": "Currently used",
-        "downloadingPercent": "Downloading… {{percent}}%",
-        "downloadBackgroundNote": "You can close this window — the download continues in the background.",
-        "verifying": "Verifying download…",
-        "title": "Set up offline translation",
-        "recommendedHeading": "Recommended: Gemma 3 4B",
-        "recommendedSubtext": "A versatile 4B model with clean, reliable translation across languages and idioms. ~2.5 GB download.",
-        "downloadRecommended": "Download Gemma 3 4B",
-        "useRecommended": "Use Gemma 3 4B",
-        "currentHeading": "Use your current model",
-        "currentSubtext": "Translate with {{model}} (your active model). Quality varies by model.",
-        "currentNone": "No local model is active yet. Download one from the model library first.",
-        "useCurrent": "Use current model",
-        "recommendOnlyHeading": "Gemma 3 4B recommended for translation",
-        "recommendOnlyBody": "For the best translation quality, select Gemma 3 4B in the model selector above. Translation runs through your single active model.",
-        "enableCta": "Enable offline translation"
+        "footnote": "שתי האפשרויות פועלות לחלוטין ללא חיבור. ניתן לשנות בחירה זו מאוחר יותר בהגדרות.",
+        "applying": "...מיושם",
+        "applyFailed": "לא ניתן לשנות את מנוע התרגום.",
+        "activeBadge": "בשימוש כעת",
+        "activeButton": "בשימוש כעת",
+        "downloadingPercent": "...{{percent}}% מוריד",
+        "downloadBackgroundNote": "ניתן לסגור חלון זה — ההורדה ממשיכה ברקע.",
+        "verifying": "...מאמת הורדה",
+        "title": "הגדרת תרגום לא מקוון",
+        "recommendedHeading": "מומלץ: Gemma 3 4B",
+        "recommendedSubtext": "מודל 4B רב-תכליתי עם תרגום אמין בשפות ובביטויים מגוונים. הורדה של כ-2.5 GB.",
+        "downloadRecommended": "הורדת Gemma 3 4B",
+        "useRecommended": "שימוש ב-Gemma 3 4B",
+        "currentHeading": "שימוש במודל הנוכחי",
+        "currentSubtext": "תרגום עם {{model}} (המודל הפעיל). האיכות משתנה בהתאם למודל.",
+        "currentNone": "אין עדיין מודל מקומי פעיל. הורד אחד מספריית המודלים תחילה.",
+        "useCurrent": "שימוש במודל הנוכחי",
+        "recommendOnlyHeading": "Gemma 3 4B מומלץ לתרגום",
+        "recommendOnlyBody": "לאיכות תרגום מיטבית, בחר Gemma 3 4B בבורר המודלים למעלה. התרגום פועל דרך המודל הפעיל היחיד שלך.",
+        "enableCta": "הפעלת תרגום לא מקוון"
       },
-      "recommendNote": "Gemma 3 4B is recommended for translation. Choose it in the model selector above."
+      "recommendNote": "Gemma 3 4B מומלץ לתרגום. בחר אותו בבורר המודלים למעלה."
     },
     "delete": {
-      "title": "Delete mode",
-      "confirm": "Delete \"{{name}}\"? This will also remove its shortcut binding.",
-      "ariaLabel": "Delete {{name}}"
+      "title": "מחיקת מצב",
+      "confirm": "למחוק את המצב {{name}}? גם קיצור הדרך המשויך יוסר.",
+      "ariaLabel": "מחיקת {{name}}"
     },
     "edit": {
-      "ariaLabel": "Edit {{name}}"
+      "ariaLabel": "עריכת {{name}}"
     },
     "noModel": {
-      "heading": "No local model selected",
-      "body": "Select or download a local model above to use Smart Modes."
+      "heading": "לא נבחר מודל מקומי",
+      "body": "בחר או הורד מודל מקומי למעלה כדי להשתמש במצבים החכמים."
     },
     "defaultModes": {
       "cleanUp": "ניקוי",

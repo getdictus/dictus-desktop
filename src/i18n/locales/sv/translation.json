@@ -379,7 +379,7 @@
             "custom": "Custom (lokalt)"
           },
           "descriptions": {
-            "apple_intelligence": "No download required — macOS Apple Silicon",
+            "apple_intelligence": "Ingen nedladdning krävs — macOS Apple Silicon",
             "custom": "Ollama / LM Studio på localhost"
           }
         },
@@ -443,42 +443,42 @@
           "cloudSelectedNotice": "Din valda modell är en molnleverantör. Klicka på fliken ”Moln” nedan för att se den, eller välj en lokal modell."
         },
         "library": {
-          "title": "Local Model Library",
-          "description": "Download and manage local GGUF models. Models run entirely on your device — no data leaves your machine.",
-          "yourModels": "Your Models",
-          "availableModels": "Available to Download",
-          "recommendedBadge": "Recommended",
-          "downloadModel": "Download model",
-          "activateModel": "Use this model",
-          "addCustomModel": "Add custom model",
-          "dropZoneLabel": "Drop a .gguf file here",
-          "dropZoneSublabel": "or use the button above",
-          "invalidGguf": "Not a valid GGUF model file. Please select a .gguf file.",
-          "cancelDownload": "Cancel download",
+          "title": "Lokal modellbibliotek",
+          "description": "Ladda ner och hantera lokala GGUF-modeller. Modeller körs helt på din enhet — inga data lämnar din maskin.",
+          "yourModels": "Dina modeller",
+          "availableModels": "Tillgängliga för nedladdning",
+          "recommendedBadge": "Rekommenderad",
+          "downloadModel": "Ladda ner modell",
+          "activateModel": "Använd den här modellen",
+          "addCustomModel": "Lägg till anpassad modell",
+          "dropZoneLabel": "Släpp en .gguf-fil här",
+          "dropZoneSublabel": "eller använd knappen ovan",
+          "invalidGguf": "Ogiltig GGUF-modellfil. Välj en .gguf-fil.",
+          "cancelDownload": "Avbryt nedladdning",
           "models": {
             "qwen25_1b5": {
-              "description": "Fast, lightweight — runs on any machine"
+              "description": "Snabb och lätt — fungerar på alla datorer"
             },
             "gemma3_4b": {
-              "description": "Versatile and multilingual — strong in many languages"
+              "description": "Utmärkt för översättning — mångsidig och flerspråkig"
             },
             "phi4_mini": {
-              "description": "Precise instruction-following — formatting and structure"
+              "description": "Exakt instruktionsföljning — formatering och struktur"
             },
             "llama32_3b": {
-              "description": "Balanced generalist — solid multilingual quality"
+              "description": "Balanserad generalist — solid flerspråkig kvalitet"
             },
             "translateGemma4b": {
-              "description": "Dedicated translation model — 55 benchmarked languages"
+              "description": "Dedikerad översättningsmodell — 55 utvärderade språk"
             }
           }
         },
         "embedded": {
-          "noModelHeading": "No local model selected",
-          "noModelBody": "Download a model below to enable embedded processing. The Qwen2.5-1.5B model is recommended for most machines.",
-          "downloadNowLink": "Download a model",
-          "providerLabel": "Embedded (local)",
-          "providerDescription": "Runs on your device. Requires a downloaded local model."
+          "noModelHeading": "Ingen lokal modell vald",
+          "noModelBody": "Ladda ner en modell nedan för att aktivera inbyggd bearbetning. Qwen2.5-1.5B-modellen rekommenderas för de flesta datorer.",
+          "downloadNowLink": "Ladda ner en modell",
+          "providerLabel": "Inbyggd (lokal)",
+          "providerDescription": "Körs på din enhet. Kräver en nedladdad lokal modell."
         }
       },
       "prompts": {
@@ -594,9 +594,9 @@
         "description": "Extra tid (i millisekunder) för att fortsätta spela in efter att du släppt tangenten, för att fånga upp avslutande ljud. 0 = ingen extra buffert."
       },
       "simulateUpdaterRestart": {
-        "title": "Simulate Updater Restart",
-        "description": "Relaunches Dictus via the same API tauri-plugin-updater uses after applying an update. Use this to validate SHUT-03 (clean post-update relaunch) without publishing a throwaway test release.",
-        "button": "Simulate Restart"
+        "title": "Simulera uppdateringsomstart",
+        "description": "Startar om Dictus via samma API som tauri-plugin-updater använder efter en uppdatering. Använd detta för att verifiera SHUT-03 (ren omstart efter uppdatering) utan att publicera en tillfällig testversion.",
+        "button": "Simulera omstart"
       }
     },
     "about": {
@@ -620,9 +620,9 @@
         "button": "Donera"
       },
       "privacy": {
-        "title": "Privacy Policy",
-        "description": "Your voice stays on your device. Read our privacy policy.",
-        "button": "View Privacy Policy"
+        "title": "Integritetspolicy",
+        "description": "Din röst stannar på din enhet. Läs vår integritetspolicy.",
+        "button": "Visa integritetspolicy"
       },
       "networkSurface": {
         "title": "Nätverksyta",
@@ -630,17 +630,17 @@
         "button": "Visa integritetsdokument"
       },
       "ecosystem": {
-        "title": "Dictus Ecosystem",
-        "description": "Dictus is available on iOS, Android, and Desktop.",
-        "button": "Learn More"
+        "title": "Dictus-ekosystem",
+        "description": "Dictus finns tillgängligt på iOS, Android och Desktop.",
+        "button": "Lär dig mer"
       },
       "acknowledgments": {
         "title": "Tack till",
         "handy": {
           "title": "Handy",
-          "description": "Open-source desktop speech-to-text application by CJ Pais",
-          "details": "Dictus Desktop is a fork of Handy. Thanks to CJ Pais and the Handy community for building the foundation that Dictus is built upon.",
-          "button": "View on GitHub"
+          "description": "Öppen källkod skrivbordsprogram för tal-till-text av CJ Pais",
+          "details": "Dictus Desktop är en fork av Handy. Tack till CJ Pais och Handy-gemenskapen för att ha byggt grunden som Dictus är byggd på.",
+          "button": "Visa på GitHub"
         },
         "whisper": {
           "title": "Whisper.cpp",
@@ -663,9 +663,9 @@
     "installing": "Installerar...",
     "preparing": "Förbereder...",
     "checkForUpdates": "Sök efter uppdateringar",
-    "portableUpdateTitle": "Manual update required",
-    "portableUpdateMessage": "Portable installs cannot be updated automatically. To update: download the latest NSIS installer from GitHub Releases, install it to the same folder, then copy your Data/ folder (settings, models, recordings) from the old version to the new one.",
-    "portableUpdateButton": "Open GitHub Releases"
+    "portableUpdateTitle": "Manuell uppdatering krävs",
+    "portableUpdateMessage": "Portabla installationer kan inte uppdateras automatiskt. För att uppdatera: ladda ner det senaste NSIS-installationsprogrammet från GitHub Releases, installera det i samma mapp och kopiera sedan din Data/-mapp (inställningar, modeller, inspelningar) från den gamla versionen till den nya.",
+    "portableUpdateButton": "Öppna GitHub Releases"
   },
   "common": {
     "loading": "Laddar...",
@@ -712,8 +712,8 @@
     "pasteFailedTitle": "Det gick inte att klistra in texten",
     "pasteFailed": "Texten kunde inte klistras in i det aktiva programmet.",
     "boundary": {
-      "title": "Something went wrong.",
-      "reload": "Reload"
+      "title": "Något gick fel.",
+      "reload": "Ladda om"
     }
   },
   "appLanguage": {
@@ -726,88 +726,88 @@
   },
   "smartModes": {
     "sections": {
-      "rewrite": "Rewrite",
-      "translation": "Translation"
+      "rewrite": "Omskrivning",
+      "translation": "Översättning"
     },
-    "createRewrite": "New Rewrite",
-    "createTranslation": "New Translation",
+    "createRewrite": "Ny omskrivning",
+    "createTranslation": "Ny översättning",
     "card": {
-      "saveCta": "Save mode",
-      "discardCta": "Discard changes",
-      "createCta": "Create mode",
-      "discardNewCta": "Discard",
-      "addShortcut": "Add shortcut",
-      "shortcutConflict": "Already used by: {{name}}",
-      "shortcutConflictBase": "The start of this shortcut ({{base}}) is already used by {{name}} — it would fire before the next key",
-      "shortcutBaseHint": "A shortcut whose start matches another shortcut can't work — the first key fires before you finish.",
-      "targetLanguage": "Target language",
-      "nameLabel": "Name",
-      "promptLabel": "Prompt",
-      "namePlaceholder": "e.g. Make Concise",
-      "promptPlaceholder": "Rewrite the following text to be more concise.\n\nText:\n${output}",
-      "outputHint": "Use ${output} where the dictated transcript should be inserted."
+      "saveCta": "Spara läge",
+      "discardCta": "Ignorera ändringar",
+      "createCta": "Skapa läge",
+      "discardNewCta": "Ignorera",
+      "addShortcut": "Lägg till genväg",
+      "shortcutConflict": "Används redan av: {{name}}",
+      "shortcutConflictBase": "Början av den här genvägen ({{base}}) används redan av {{name}} — den skulle aktiveras före nästa tangent",
+      "shortcutBaseHint": "En genväg vars början matchar en annan genväg kan inte fungera — den första tangenten aktiveras innan du är klar.",
+      "targetLanguage": "Målspråk",
+      "nameLabel": "Namn",
+      "promptLabel": "Instruktion",
+      "namePlaceholder": "t.ex. Gör kortfattad",
+      "promptPlaceholder": "Skriv om följande text för att göra den kortfattad.\n\nText:\n${output}",
+      "outputHint": "Använd ${output} där den dikterade transkriptionen ska infogas."
     },
     "picker": {
-      "rewriteTitle": "Add a rewrite mode",
-      "translationTitle": "Add a translation mode",
-      "custom": "Custom",
-      "customSubtext": "Create a mode with your own name and prompt",
-      "added": "Added",
-      "overwriteTitle": "Mode already exists",
-      "overwriteConfirm": "\"{{name}}\" already exists. Re-adding it will overwrite the existing mode. Continue?"
+      "rewriteTitle": "Lägg till omskrivningsläge",
+      "translationTitle": "Lägg till översättningsläge",
+      "custom": "Anpassad",
+      "customSubtext": "Skapa ett läge med eget namn och instruktion",
+      "added": "Tillagt",
+      "overwriteTitle": "Läget finns redan",
+      "overwriteConfirm": "«{{name}}» finns redan. Att lägga till det igen skriver över det befintliga läget. Fortsätta?"
     },
     "shortcut": {
-      "clear": "Clear",
-      "clearAriaLabel": "Clear shortcut {{combo}}",
-      "recording": "Press keys…"
+      "clear": "Rensa",
+      "clearAriaLabel": "Rensa genväg {{combo}}",
+      "recording": "Tryck på tangenter…"
     },
     "kind": {
-      "rewrite": "Rewrite",
-      "translation": "Translation"
+      "rewrite": "Omskrivning",
+      "translation": "Översättning"
     },
     "translation": {
-      "enableHeading": "Enable offline translation",
-      "enableBody": "Translation runs fully offline through the embedded LLM. Choose an engine to get started.",
-      "chooseCta": "Choose translation engine",
-      "genericEngineNote": "Best-effort — quality varies by model",
-      "changeEngine": "Change engine",
-      "currentEngine": "Using: {{engine}}",
-      "engineGeneric": "Active model",
+      "enableHeading": "Aktivera offlineöversättning",
+      "enableBody": "Översättning körs helt offline via den inbyggda språkmodellen. Välj en motor för att komma igång.",
+      "chooseCta": "Välj översättningsmotor",
+      "genericEngineNote": "Bästa möjliga — kvaliteten varierar beroende på modell",
+      "changeEngine": "Byt motor",
+      "currentEngine": "Används: {{engine}}",
+      "engineGeneric": "Aktiv modell",
       "modal": {
-        "footnote": "Both options run fully offline. You can change this choice later in settings.",
-        "applying": "Applying…",
-        "applyFailed": "Could not change the translation engine.",
-        "activeBadge": "Currently used",
-        "activeButton": "Currently used",
-        "downloadingPercent": "Downloading… {{percent}}%",
-        "downloadBackgroundNote": "You can close this window — the download continues in the background.",
-        "verifying": "Verifying download…",
-        "title": "Set up offline translation",
-        "recommendedHeading": "Recommended: Gemma 3 4B",
-        "recommendedSubtext": "A versatile 4B model with clean, reliable translation across languages and idioms. ~2.5 GB download.",
-        "downloadRecommended": "Download Gemma 3 4B",
-        "useRecommended": "Use Gemma 3 4B",
-        "currentHeading": "Use your current model",
-        "currentSubtext": "Translate with {{model}} (your active model). Quality varies by model.",
-        "currentNone": "No local model is active yet. Download one from the model library first.",
-        "useCurrent": "Use current model",
-        "recommendOnlyHeading": "Gemma 3 4B recommended for translation",
-        "recommendOnlyBody": "For the best translation quality, select Gemma 3 4B in the model selector above. Translation runs through your single active model.",
-        "enableCta": "Enable offline translation"
+        "footnote": "Båda alternativen fungerar helt offline. Du kan ändra detta val senare i inställningarna.",
+        "applying": "Tillämpar…",
+        "applyFailed": "Det gick inte att byta översättningsmotor.",
+        "activeBadge": "Används för närvarande",
+        "activeButton": "Används för närvarande",
+        "downloadingPercent": "Laddar ner… {{percent}}%",
+        "downloadBackgroundNote": "Du kan stänga det här fönstret — nedladdningen fortsätter i bakgrunden.",
+        "verifying": "Verifierar nedladdning…",
+        "title": "Konfigurera offlineöversättning",
+        "recommendedHeading": "Rekommenderat: Gemma 3 4B",
+        "recommendedSubtext": "En mångsidig 4B-modell med tillförlitlig översättning på många språk. ~2,5 GB nedladdning.",
+        "downloadRecommended": "Ladda ner Gemma 3 4B",
+        "useRecommended": "Använd Gemma 3 4B",
+        "currentHeading": "Använd aktuell modell",
+        "currentSubtext": "Översätt med {{model}} (din aktiva modell). Kvaliteten varierar beroende på modell.",
+        "currentNone": "Ingen lokal modell är aktiv ännu. Ladda ner en från modellbiblioteket först.",
+        "useCurrent": "Använd aktuell modell",
+        "recommendOnlyHeading": "Gemma 3 4B rekommenderas för översättning",
+        "recommendOnlyBody": "För bästa översättningskvalitet, välj Gemma 3 4B i modellväljaren ovan. Översättning körs via din enda aktiva modell.",
+        "enableCta": "Aktivera offlineöversättning"
       },
-      "recommendNote": "Gemma 3 4B is recommended for translation. Choose it in the model selector above."
+      "recommendNote": "Gemma 3 4B rekommenderas för översättning. Välj den i modellväljaren ovan."
     },
     "delete": {
-      "title": "Delete mode",
-      "confirm": "Delete \"{{name}}\"? This will also remove its shortcut binding.",
-      "ariaLabel": "Delete {{name}}"
+      "title": "Ta bort läge",
+      "confirm": "Ta bort «{{name}}»? Det tillhörande genvägsuppdraget tas också bort.",
+      "ariaLabel": "Ta bort {{name}}"
     },
     "edit": {
-      "ariaLabel": "Edit {{name}}"
+      "ariaLabel": "Redigera {{name}}"
     },
     "noModel": {
-      "heading": "No local model selected",
-      "body": "Select or download a local model above to use Smart Modes."
+      "heading": "Ingen lokal modell vald",
+      "body": "Välj eller ladda ner en lokal modell ovan för att använda smarta lägen."
     },
     "defaultModes": {
       "cleanUp": "Rensa upp",

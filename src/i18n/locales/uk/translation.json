@@ -379,7 +379,7 @@
             "custom": "Custom (локально)"
           },
           "descriptions": {
-            "apple_intelligence": "No download required — macOS Apple Silicon",
+            "apple_intelligence": "Не потребує завантаження — macOS Apple Silicon",
             "custom": "Ollama / LM Studio на localhost"
           }
         },
@@ -443,42 +443,42 @@
           "cloudSelectedNotice": "Обрана вами модель — це хмарний постачальник. Натисніть вкладку «Хмара» нижче, щоб побачити її, або оберіть локальну модель."
         },
         "library": {
-          "title": "Local Model Library",
-          "description": "Download and manage local GGUF models. Models run entirely on your device — no data leaves your machine.",
-          "yourModels": "Your Models",
-          "availableModels": "Available to Download",
-          "recommendedBadge": "Recommended",
-          "downloadModel": "Download model",
-          "activateModel": "Use this model",
-          "addCustomModel": "Add custom model",
-          "dropZoneLabel": "Drop a .gguf file here",
-          "dropZoneSublabel": "or use the button above",
-          "invalidGguf": "Not a valid GGUF model file. Please select a .gguf file.",
-          "cancelDownload": "Cancel download",
+          "title": "Бібліотека локальних моделей",
+          "description": "Завантажуй та керуй локальними GGUF-моделями. Моделі працюють повністю на твоєму пристрої — жодні дані не виходять за межі твого комп'ютера.",
+          "yourModels": "Мої моделі",
+          "availableModels": "Доступно для завантаження",
+          "recommendedBadge": "Рекомендується",
+          "downloadModel": "Завантажити модель",
+          "activateModel": "Використати цю модель",
+          "addCustomModel": "Додати власну модель",
+          "dropZoneLabel": "Перетягни сюди файл .gguf",
+          "dropZoneSublabel": "або використовуй кнопку вище",
+          "invalidGguf": "Невірний файл моделі GGUF. Будь ласка, вибери файл .gguf.",
+          "cancelDownload": "Скасувати завантаження",
           "models": {
             "qwen25_1b5": {
-              "description": "Fast, lightweight — runs on any machine"
+              "description": "Швидкий та легкий — працює на будь-якому комп'ютері"
             },
             "gemma3_4b": {
-              "description": "Versatile and multilingual — strong in many languages"
+              "description": "Відмінний для перекладу — універсальний та багатомовний"
             },
             "phi4_mini": {
-              "description": "Precise instruction-following — formatting and structure"
+              "description": "Точне дотримання інструкцій — форматування та структура"
             },
             "llama32_3b": {
-              "description": "Balanced generalist — solid multilingual quality"
+              "description": "Збалансований універсал — стабільна багатомовна якість"
             },
             "translateGemma4b": {
-              "description": "Dedicated translation model — 55 benchmarked languages"
+              "description": "Спеціалізована модель перекладу — 55 протестованих мов"
             }
           }
         },
         "embedded": {
-          "noModelHeading": "No local model selected",
-          "noModelBody": "Download a model below to enable embedded processing. The Qwen2.5-1.5B model is recommended for most machines.",
-          "downloadNowLink": "Download a model",
-          "providerLabel": "Embedded (local)",
-          "providerDescription": "Runs on your device. Requires a downloaded local model."
+          "noModelHeading": "Локальну модель не вибрано",
+          "noModelBody": "Завантаж модель нижче, щоб активувати вбудовану обробку. Для більшості комп'ютерів рекомендується модель Qwen2.5-1.5B.",
+          "downloadNowLink": "Завантажити модель",
+          "providerLabel": "Вбудований (локальний)",
+          "providerDescription": "Працює на вашому пристрої. Потрібна завантажена локальна модель."
         }
       },
       "prompts": {
@@ -594,9 +594,9 @@
         "description": "Додатковий час (у мілісекундах) для продовження запису після відпускання клавіші, щоб захопити завершальний звук. 0 = без додаткового буфера."
       },
       "simulateUpdaterRestart": {
-        "title": "Simulate Updater Restart",
-        "description": "Relaunches Dictus via the same API tauri-plugin-updater uses after applying an update. Use this to validate SHUT-03 (clean post-update relaunch) without publishing a throwaway test release.",
-        "button": "Simulate Restart"
+        "title": "Симулювати перезапуск оновлення",
+        "description": "Перезапускає Dictus через той самий API, який tauri-plugin-updater використовує після застосування оновлення. Використовуй для перевірки SHUT-03 (чистий перезапуск після оновлення) без публікації одноразової тестової версії.",
+        "button": "Симулювати перезапуск"
       }
     },
     "about": {
@@ -620,9 +620,9 @@
         "button": "Підтримати"
       },
       "privacy": {
-        "title": "Privacy Policy",
-        "description": "Your voice stays on your device. Read our privacy policy.",
-        "button": "View Privacy Policy"
+        "title": "Політика конфіденційності",
+        "description": "Ваш голос залишається на вашому пристрої. Прочитайте нашу політику конфіденційності.",
+        "button": "Переглянути політику конфіденційності"
       },
       "networkSurface": {
         "title": "Мережева поверхня",
@@ -630,17 +630,17 @@
         "button": "Відкрити документ про приватність"
       },
       "ecosystem": {
-        "title": "Dictus Ecosystem",
-        "description": "Dictus is available on iOS, Android, and Desktop.",
-        "button": "Learn More"
+        "title": "Екосистема Dictus",
+        "description": "Dictus доступний на iOS, Android та Desktop.",
+        "button": "Дізнатись більше"
       },
       "acknowledgments": {
         "title": "Подяки",
         "handy": {
           "title": "Handy",
-          "description": "Open-source desktop speech-to-text application by CJ Pais",
-          "details": "Dictus Desktop is a fork of Handy. Thanks to CJ Pais and the Handy community for building the foundation that Dictus is built upon.",
-          "button": "View on GitHub"
+          "description": "Відкрите настільне застосування для перетворення мови в текст від CJ Pais",
+          "details": "Dictus Desktop є форком Handy. Дякуємо CJ Pais та спільноті Handy за побудову основи, на якій побудований Dictus.",
+          "button": "Переглянути на GitHub"
         },
         "whisper": {
           "title": "Whisper.cpp",
@@ -663,9 +663,9 @@
     "installing": "Встановлення...",
     "preparing": "Підготовка...",
     "checkForUpdates": "Перевірити оновлення",
-    "portableUpdateTitle": "Manual update required",
-    "portableUpdateMessage": "Portable installs cannot be updated automatically. To update: download the latest NSIS installer from GitHub Releases, install it to the same folder, then copy your Data/ folder (settings, models, recordings) from the old version to the new one.",
-    "portableUpdateButton": "Open GitHub Releases"
+    "portableUpdateTitle": "Потрібне ручне оновлення",
+    "portableUpdateMessage": "Портативні встановлення не можна оновити автоматично. Для оновлення: завантаж останній NSIS-інсталятор з GitHub Releases, встанови його в ту саму папку, а потім скопіюй папку Data/ (налаштування, моделі, записи) зі старої версії до нової.",
+    "portableUpdateButton": "Відкрити GitHub Releases"
   },
   "common": {
     "loading": "Завантаження...",
@@ -712,8 +712,8 @@
     "pasteFailedTitle": "Не вдалося вставити текст",
     "pasteFailed": "Не вдалося вставити текст до активної програми.",
     "boundary": {
-      "title": "Something went wrong.",
-      "reload": "Reload"
+      "title": "Щось пішло не так.",
+      "reload": "Перезавантажити"
     }
   },
   "appLanguage": {
@@ -726,88 +726,88 @@
   },
   "smartModes": {
     "sections": {
-      "rewrite": "Rewrite",
-      "translation": "Translation"
+      "rewrite": "Переробка",
+      "translation": "Переклад"
     },
-    "createRewrite": "New Rewrite",
-    "createTranslation": "New Translation",
+    "createRewrite": "Нова переробка",
+    "createTranslation": "Новий переклад",
     "card": {
-      "saveCta": "Save mode",
-      "discardCta": "Discard changes",
-      "createCta": "Create mode",
-      "discardNewCta": "Discard",
-      "addShortcut": "Add shortcut",
-      "shortcutConflict": "Already used by: {{name}}",
-      "shortcutConflictBase": "The start of this shortcut ({{base}}) is already used by {{name}} — it would fire before the next key",
-      "shortcutBaseHint": "A shortcut whose start matches another shortcut can't work — the first key fires before you finish.",
-      "targetLanguage": "Target language",
-      "nameLabel": "Name",
-      "promptLabel": "Prompt",
-      "namePlaceholder": "e.g. Make Concise",
-      "promptPlaceholder": "Rewrite the following text to be more concise.\n\nText:\n${output}",
-      "outputHint": "Use ${output} where the dictated transcript should be inserted."
+      "saveCta": "Зберегти режим",
+      "discardCta": "Скасувати зміни",
+      "createCta": "Створити режим",
+      "discardNewCta": "Скасувати",
+      "addShortcut": "Додати скорочення",
+      "shortcutConflict": "Вже використовується: {{name}}",
+      "shortcutConflictBase": "Початок цього скорочення ({{base}}) вже використовується {{name}} — воно спрацює перед наступною клавішею",
+      "shortcutBaseHint": "Скорочення, початок якого збігається з іншим, не може працювати — перша клавіша спрацьовує до завершення вводу.",
+      "targetLanguage": "Цільова мова",
+      "nameLabel": "Назва",
+      "promptLabel": "Інструкція",
+      "namePlaceholder": "напр. Зробити коротким",
+      "promptPlaceholder": "Перепиши наступний текст, зробивши його більш коротким.\n\nТекст:\n${output}",
+      "outputHint": "Використовуй ${output} там, де має бути вставлена записана транскрипція."
     },
     "picker": {
-      "rewriteTitle": "Add a rewrite mode",
-      "translationTitle": "Add a translation mode",
-      "custom": "Custom",
-      "customSubtext": "Create a mode with your own name and prompt",
-      "added": "Added",
-      "overwriteTitle": "Mode already exists",
-      "overwriteConfirm": "\"{{name}}\" already exists. Re-adding it will overwrite the existing mode. Continue?"
+      "rewriteTitle": "Додати режим переробки",
+      "translationTitle": "Додати режим перекладу",
+      "custom": "Власний",
+      "customSubtext": "Створи режим із власною назвою та інструкцією",
+      "added": "Додано",
+      "overwriteTitle": "Режим вже існує",
+      "overwriteConfirm": "«{{name}}» вже існує. Повторне додавання перезапише існуючий режим. Продовжити?"
     },
     "shortcut": {
-      "clear": "Clear",
-      "clearAriaLabel": "Clear shortcut {{combo}}",
-      "recording": "Press keys…"
+      "clear": "Очистити",
+      "clearAriaLabel": "Очистити скорочення {{combo}}",
+      "recording": "Натисніть клавіші…"
     },
     "kind": {
-      "rewrite": "Rewrite",
-      "translation": "Translation"
+      "rewrite": "Переробка",
+      "translation": "Переклад"
     },
     "translation": {
-      "enableHeading": "Enable offline translation",
-      "enableBody": "Translation runs fully offline through the embedded LLM. Choose an engine to get started.",
-      "chooseCta": "Choose translation engine",
-      "genericEngineNote": "Best-effort — quality varies by model",
-      "changeEngine": "Change engine",
-      "currentEngine": "Using: {{engine}}",
-      "engineGeneric": "Active model",
+      "enableHeading": "Увімкнути офлайн-переклад",
+      "enableBody": "Переклад виконується повністю офлайн через вбудовану мовну модель. Виберіть рушій для початку.",
+      "chooseCta": "Вибрати рушій перекладу",
+      "genericEngineNote": "За можливістю — якість залежить від моделі",
+      "changeEngine": "Змінити рушій",
+      "currentEngine": "Використовується: {{engine}}",
+      "engineGeneric": "Активна модель",
       "modal": {
-        "footnote": "Both options run fully offline. You can change this choice later in settings.",
-        "applying": "Applying…",
-        "applyFailed": "Could not change the translation engine.",
-        "activeBadge": "Currently used",
-        "activeButton": "Currently used",
-        "downloadingPercent": "Downloading… {{percent}}%",
-        "downloadBackgroundNote": "You can close this window — the download continues in the background.",
-        "verifying": "Verifying download…",
-        "title": "Set up offline translation",
-        "recommendedHeading": "Recommended: Gemma 3 4B",
-        "recommendedSubtext": "A versatile 4B model with clean, reliable translation across languages and idioms. ~2.5 GB download.",
-        "downloadRecommended": "Download Gemma 3 4B",
-        "useRecommended": "Use Gemma 3 4B",
-        "currentHeading": "Use your current model",
-        "currentSubtext": "Translate with {{model}} (your active model). Quality varies by model.",
-        "currentNone": "No local model is active yet. Download one from the model library first.",
-        "useCurrent": "Use current model",
-        "recommendOnlyHeading": "Gemma 3 4B recommended for translation",
-        "recommendOnlyBody": "For the best translation quality, select Gemma 3 4B in the model selector above. Translation runs through your single active model.",
-        "enableCta": "Enable offline translation"
+        "footnote": "Обидва варіанти працюють повністю офлайн. Цей вибір можна змінити пізніше в налаштуваннях.",
+        "applying": "Застосування…",
+        "applyFailed": "Не вдалося змінити рушій перекладу.",
+        "activeBadge": "Використовується",
+        "activeButton": "Використовується",
+        "downloadingPercent": "Завантаження… {{percent}}%",
+        "downloadBackgroundNote": "Можна закрити вікно — завантаження продовжиться у фоні.",
+        "verifying": "Перевірка завантаження…",
+        "title": "Налаштування офлайн-перекладу",
+        "recommendedHeading": "Рекомендується: Gemma 3 4B",
+        "recommendedSubtext": "Універсальна модель 4B з надійним перекладом на багато мов. ~2,5 ГБ для завантаження.",
+        "downloadRecommended": "Завантажити Gemma 3 4B",
+        "useRecommended": "Використати Gemma 3 4B",
+        "currentHeading": "Використати поточну модель",
+        "currentSubtext": "Перекладати за допомогою {{model}} (активна модель). Якість залежить від моделі.",
+        "currentNone": "Локальна модель ще не активована. Спочатку завантажте одну з бібліотеки моделей.",
+        "useCurrent": "Використати поточну модель",
+        "recommendOnlyHeading": "Gemma 3 4B рекомендується для перекладу",
+        "recommendOnlyBody": "Для найкращої якості перекладу виберіть Gemma 3 4B у виборі моделей вище. Переклад виконується через єдину активну модель.",
+        "enableCta": "Увімкнути офлайн-переклад"
       },
-      "recommendNote": "Gemma 3 4B is recommended for translation. Choose it in the model selector above."
+      "recommendNote": "Для перекладу рекомендується Gemma 3 4B. Виберіть її у виборі моделей вище."
     },
     "delete": {
-      "title": "Delete mode",
-      "confirm": "Delete \"{{name}}\"? This will also remove its shortcut binding.",
-      "ariaLabel": "Delete {{name}}"
+      "title": "Видалити режим",
+      "confirm": "Видалити «{{name}}»? Це також видалить пов'язане скорочення.",
+      "ariaLabel": "Видалити {{name}}"
     },
     "edit": {
-      "ariaLabel": "Edit {{name}}"
+      "ariaLabel": "Редагувати {{name}}"
     },
     "noModel": {
-      "heading": "No local model selected",
-      "body": "Select or download a local model above to use Smart Modes."
+      "heading": "Локальну модель не вибрано",
+      "body": "Виберіть або завантажте локальну модель вище, щоб використовувати розумні режими."
     },
     "defaultModes": {
       "cleanUp": "Очистити",

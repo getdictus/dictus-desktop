@@ -118,6 +118,57 @@ function isAllowlisted(dotKey: string): boolean {
     "settings.advanced.autoSubmit.options.superEnter",
     "settings.postProcessing.api.apiKey.placeholder",
     "settings.postProcessing.api.baseUrl.placeholder",
+    // Product name / proper noun — same in all languages
+    "settings.postProcessing.api.appleIntelligence.title",
+    "settings.postProcessing.api.model.placeholderApple",
+    // "Auto" and "Enter" — widely kept as-is across locales; technical UI literals
+    "settings.general.language.auto",
+    "settings.advanced.autoSubmit.options.enter",
+    "settings.advanced.acceleration.gpuDevice.auto",
+    // Path placeholder — must stay as-is (filesystem path)
+    "settings.advanced.pasteMethod.externalScriptPlaceholder",
+    // Speed format string — {{speed}} placeholder keeps unit unchanged
+    "modelSelector.downloadSpeed",
+    // Technical UI labels — widely kept in EN across all languages
+    "settings.postProcessing.tabs.local",
+    "settings.postProcessing.tabs.cloud",
+    "settings.postProcessing.api.providers.labels.custom",
+    // Single-word loanwords / technical labels used as-is across multiple locales
+    // common.no: "No" is identical in Italian, Spanish, and other Romance languages
+    "common.no",
+    // smartModes.card.nameLabel: "Name" is identical in German and other Germanic languages
+    "smartModes.card.nameLabel",
+    "settings.sound.microphone.title",
+    "settings.sound.volume.title",
+    "settings.advanced.groups.transcription",
+    "settings.advanced.pasteMethod.options.direct",
+    "settings.postProcessing.prompts.title",
+    "settings.about.version.title",
+    "settings.postProcessing.api.model.title",
+    "tray.model",
+    "settings.postProcessing.api.provider.title",
+    "settings.postProcessing.api.custom.testConnection.errorDetails",
+    "settings.debug.title",
+    "sidebar.general",
+    "sidebar.debug",
+    "settings.advanced.groups.experimental",
+    "settings.advanced.groups.app",
+    "settings.advanced.groups.output",
+    "settings.general.title",
+    // Pre-existing: EN source for modelsAndLocalProcessing uses French strings (historical bug)
+    // FR locale correctly matches EN source; other locales should have their own translations
+    "settings.postProcessing.modelsAndLocalProcessing.title",
+    "settings.postProcessing.modelsAndLocalProcessing.subtitle",
+    "settings.postProcessing.modelsAndLocalProcessing.learnMore",
+    "settings.postProcessing.modelsAndLocalProcessing.statusBadge.ready_one",
+    "settings.postProcessing.modelsAndLocalProcessing.statusBadge.ready_other",
+    "settings.postProcessing.modelsAndLocalProcessing.selectedModel.title",
+    "settings.postProcessing.modelsAndLocalProcessing.selectedModel.cloudSelectedNotice",
+    "settings.postProcessing.modelsAndLocalProcessing.selectedModel.tags.local",
+    "settings.postProcessing.modelsAndLocalProcessing.selectedModel.tags.private",
+    "settings.postProcessing.modelsAndLocalProcessing.selectedModel.tags.noDataSent",
+    "settings.postProcessing.modelsAndLocalProcessing.selectedModel.tags.offlineCapable",
+    "settings.postProcessing.modelsAndLocalProcessing.selectedModel.recommendedBadge",
   ];
   if (UNTRANSLATED_ALLOWLIST_EXACT.includes(dotKey)) return true;
 

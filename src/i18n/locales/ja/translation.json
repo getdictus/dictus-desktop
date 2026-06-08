@@ -379,7 +379,7 @@
             "custom": "Custom (local)"
           },
           "descriptions": {
-            "apple_intelligence": "No download required — macOS Apple Silicon",
+            "apple_intelligence": "ダウンロード不要 — macOS Apple Silicon",
             "custom": "localhost 上の Ollama / LM Studio"
           }
         },
@@ -443,42 +443,42 @@
           "cloudSelectedNotice": "選択したモデルはクラウドプロバイダーです。表示するには下の「クラウド」タブをクリックするか、ローカルモデルを選択してください。"
         },
         "library": {
-          "title": "Local Model Library",
-          "description": "Download and manage local GGUF models. Models run entirely on your device — no data leaves your machine.",
-          "yourModels": "Your Models",
-          "availableModels": "Available to Download",
-          "recommendedBadge": "Recommended",
-          "downloadModel": "Download model",
-          "activateModel": "Use this model",
-          "addCustomModel": "Add custom model",
-          "dropZoneLabel": "Drop a .gguf file here",
-          "dropZoneSublabel": "or use the button above",
-          "invalidGguf": "Not a valid GGUF model file. Please select a .gguf file.",
-          "cancelDownload": "Cancel download",
+          "title": "ローカルモデルライブラリ",
+          "description": "ローカル GGUF モデルのダウンロードと管理。モデルはデバイス上で完全に動作します — データが外部に送信されることはありません。",
+          "yourModels": "マイモデル",
+          "availableModels": "ダウンロード可能",
+          "recommendedBadge": "おすすめ",
+          "downloadModel": "モデルをダウンロード",
+          "activateModel": "このモデルを使用",
+          "addCustomModel": "カスタムモデルを追加",
+          "dropZoneLabel": ".gguf ファイルをここにドロップ",
+          "dropZoneSublabel": "または上のボタンを使用",
+          "invalidGguf": "有効な GGUF モデルファイルではありません。.gguf ファイルを選択してください。",
+          "cancelDownload": "ダウンロードをキャンセル",
           "models": {
             "qwen25_1b5": {
-              "description": "Fast, lightweight — runs on any machine"
+              "description": "高速・軽量 — どのマシンでも動作"
             },
             "gemma3_4b": {
-              "description": "Versatile and multilingual — strong in many languages"
+              "description": "翻訳に優れています — 汎用的で多言語対応"
             },
             "phi4_mini": {
-              "description": "Precise instruction-following — formatting and structure"
+              "description": "正確な指示追従 — フォーマットと構造"
             },
             "llama32_3b": {
-              "description": "Balanced generalist — solid multilingual quality"
+              "description": "バランスの取れた汎用モデル — 高い多言語品質"
             },
             "translateGemma4b": {
-              "description": "Dedicated translation model — 55 benchmarked languages"
+              "description": "専用翻訳モデル — 55 言語でベンチマーク済み"
             }
           }
         },
         "embedded": {
-          "noModelHeading": "No local model selected",
-          "noModelBody": "Download a model below to enable embedded processing. The Qwen2.5-1.5B model is recommended for most machines.",
-          "downloadNowLink": "Download a model",
-          "providerLabel": "Embedded (local)",
-          "providerDescription": "Runs on your device. Requires a downloaded local model."
+          "noModelHeading": "ローカルモデルが選択されていません",
+          "noModelBody": "内蔵処理を有効にするには、下からモデルをダウンロードしてください。Qwen2.5-1.5B モデルはほとんどのマシンに推奨されます。",
+          "downloadNowLink": "モデルをダウンロード",
+          "providerLabel": "組み込み（ローカル）",
+          "providerDescription": "デバイス上で動作します。ダウンロードされたローカルモデルが必要です。"
         }
       },
       "prompts": {
@@ -594,9 +594,9 @@
         "description": "キーを離した後に録音を続ける追加時間（ミリ秒）。末尾の音声を捕捉するため。0 = 追加バッファなし。"
       },
       "simulateUpdaterRestart": {
-        "title": "Simulate Updater Restart",
-        "description": "Relaunches Dictus via the same API tauri-plugin-updater uses after applying an update. Use this to validate SHUT-03 (clean post-update relaunch) without publishing a throwaway test release.",
-        "button": "Simulate Restart"
+        "title": "アップデーター再起動をシミュレート",
+        "description": "Dictus を tauri-plugin-updater が更新適用後に使用するのと同じ API 経由で再起動します。使い捨てのテストリリースを公開せずに SHUT-03（更新後のクリーン再起動）を検証するために使用します。",
+        "button": "再起動をシミュレート"
       }
     },
     "about": {
@@ -620,9 +620,9 @@
         "button": "寄付する"
       },
       "privacy": {
-        "title": "Privacy Policy",
-        "description": "Your voice stays on your device. Read our privacy policy.",
-        "button": "View Privacy Policy"
+        "title": "プライバシーポリシー",
+        "description": "あなたの声はデバイス上に留まります。プライバシーポリシーをお読みください。",
+        "button": "プライバシーポリシーを見る"
       },
       "networkSurface": {
         "title": "ネットワークサーフェス",
@@ -630,17 +630,17 @@
         "button": "プライバシードキュメントを表示"
       },
       "ecosystem": {
-        "title": "Dictus Ecosystem",
-        "description": "Dictus is available on iOS, Android, and Desktop.",
-        "button": "Learn More"
+        "title": "Dictusエコシステム",
+        "description": "DictusはiOS、Android、Desktopで利用可能です。",
+        "button": "詳細を見る"
       },
       "acknowledgments": {
         "title": "謝辞",
         "handy": {
           "title": "Handy",
-          "description": "Open-source desktop speech-to-text application by CJ Pais",
-          "details": "Dictus Desktop is a fork of Handy. Thanks to CJ Pais and the Handy community for building the foundation that Dictus is built upon.",
-          "button": "View on GitHub"
+          "description": "CJ Paisによるオープンソースのデスクトップ音声テキスト変換アプリ",
+          "details": "Dictus DesktopはHandyのフォークです。Dictusの基盤を構築したCJ PaisとHandyコミュニティに感謝します。",
+          "button": "GitHubで見る"
         },
         "whisper": {
           "title": "Whisper.cpp",
@@ -663,9 +663,9 @@
     "installing": "インストール中...",
     "preparing": "準備中...",
     "checkForUpdates": "アップデートを確認",
-    "portableUpdateTitle": "Manual update required",
-    "portableUpdateMessage": "Portable installs cannot be updated automatically. To update: download the latest NSIS installer from GitHub Releases, install it to the same folder, then copy your Data/ folder (settings, models, recordings) from the old version to the new one.",
-    "portableUpdateButton": "Open GitHub Releases"
+    "portableUpdateTitle": "手動アップデートが必要",
+    "portableUpdateMessage": "ポータブルインストールは自動更新できません。更新するには: GitHub Releases から最新の NSIS インストーラーをダウンロードし、同じフォルダーにインストールしてから、Data/ フォルダー（設定、モデル、録音）を古いバージョンから新しいバージョンにコピーしてください。",
+    "portableUpdateButton": "GitHub Releases を開く"
   },
   "common": {
     "loading": "読み込み中...",
@@ -712,8 +712,8 @@
     "pasteFailedTitle": "テキストの貼り付けに失敗しました",
     "pasteFailed": "アクティブなアプリケーションにテキストを貼り付けられませんでした。",
     "boundary": {
-      "title": "Something went wrong.",
-      "reload": "Reload"
+      "title": "エラーが発生しました。",
+      "reload": "再読み込み"
     }
   },
   "appLanguage": {
@@ -726,88 +726,88 @@
   },
   "smartModes": {
     "sections": {
-      "rewrite": "Rewrite",
-      "translation": "Translation"
+      "rewrite": "書き直し",
+      "translation": "翻訳"
     },
-    "createRewrite": "New Rewrite",
-    "createTranslation": "New Translation",
+    "createRewrite": "新しい書き直し",
+    "createTranslation": "新しい翻訳",
     "card": {
-      "saveCta": "Save mode",
-      "discardCta": "Discard changes",
-      "createCta": "Create mode",
-      "discardNewCta": "Discard",
-      "addShortcut": "Add shortcut",
-      "shortcutConflict": "Already used by: {{name}}",
-      "shortcutConflictBase": "The start of this shortcut ({{base}}) is already used by {{name}} — it would fire before the next key",
-      "shortcutBaseHint": "A shortcut whose start matches another shortcut can't work — the first key fires before you finish.",
-      "targetLanguage": "Target language",
-      "nameLabel": "Name",
-      "promptLabel": "Prompt",
-      "namePlaceholder": "e.g. Make Concise",
-      "promptPlaceholder": "Rewrite the following text to be more concise.\n\nText:\n${output}",
-      "outputHint": "Use ${output} where the dictated transcript should be inserted."
+      "saveCta": "モードを保存",
+      "discardCta": "変更を破棄",
+      "createCta": "モードを作成",
+      "discardNewCta": "破棄",
+      "addShortcut": "ショートカットを追加",
+      "shortcutConflict": "{{name}} が使用中",
+      "shortcutConflictBase": "このショートカットの先頭 ({{base}}) はすでに {{name}} が使用しており、次のキーの前に発火します",
+      "shortcutBaseHint": "先頭が別のショートカットと一致するショートカットは機能しません — 入力が完了する前に最初のキーが発火します。",
+      "targetLanguage": "翻訳先の言語",
+      "nameLabel": "名前",
+      "promptLabel": "指示",
+      "namePlaceholder": "例：簡潔にする",
+      "promptPlaceholder": "以下のテキストをより簡潔に書き直してください。\n\nテキスト：\n${output}",
+      "outputHint": "録音したテキストを挿入する場所に ${output} を使用してください。"
     },
     "picker": {
-      "rewriteTitle": "Add a rewrite mode",
-      "translationTitle": "Add a translation mode",
-      "custom": "Custom",
-      "customSubtext": "Create a mode with your own name and prompt",
-      "added": "Added",
-      "overwriteTitle": "Mode already exists",
-      "overwriteConfirm": "\"{{name}}\" already exists. Re-adding it will overwrite the existing mode. Continue?"
+      "rewriteTitle": "書き直しモードを追加",
+      "translationTitle": "翻訳モードを追加",
+      "custom": "カスタム",
+      "customSubtext": "独自の名前と指示でモードを作成",
+      "added": "追加済み",
+      "overwriteTitle": "モードがすでに存在します",
+      "overwriteConfirm": "「{{name}}」はすでに存在します。再度追加すると既存のモードが上書きされます。続行しますか？"
     },
     "shortcut": {
-      "clear": "Clear",
-      "clearAriaLabel": "Clear shortcut {{combo}}",
-      "recording": "Press keys…"
+      "clear": "クリア",
+      "clearAriaLabel": "ショートカット {{combo}} をクリア",
+      "recording": "キーを押してください…"
     },
     "kind": {
-      "rewrite": "Rewrite",
-      "translation": "Translation"
+      "rewrite": "書き直し",
+      "translation": "翻訳"
     },
     "translation": {
-      "enableHeading": "Enable offline translation",
-      "enableBody": "Translation runs fully offline through the embedded LLM. Choose an engine to get started.",
-      "chooseCta": "Choose translation engine",
-      "genericEngineNote": "Best-effort — quality varies by model",
-      "changeEngine": "Change engine",
-      "currentEngine": "Using: {{engine}}",
-      "engineGeneric": "Active model",
+      "enableHeading": "オフライン翻訳を有効化",
+      "enableBody": "翻訳は組み込みの言語モデルを通じて完全オフラインで動作します。エンジンを選択して開始してください。",
+      "chooseCta": "翻訳エンジンを選択",
+      "genericEngineNote": "ベストエフォート — 品質はモデルによって異なります",
+      "changeEngine": "エンジンを変更",
+      "currentEngine": "使用中: {{engine}}",
+      "engineGeneric": "アクティブモデル",
       "modal": {
-        "footnote": "Both options run fully offline. You can change this choice later in settings.",
-        "applying": "Applying…",
-        "applyFailed": "Could not change the translation engine.",
-        "activeBadge": "Currently used",
-        "activeButton": "Currently used",
-        "downloadingPercent": "Downloading… {{percent}}%",
-        "downloadBackgroundNote": "You can close this window — the download continues in the background.",
-        "verifying": "Verifying download…",
-        "title": "Set up offline translation",
-        "recommendedHeading": "Recommended: Gemma 3 4B",
-        "recommendedSubtext": "A versatile 4B model with clean, reliable translation across languages and idioms. ~2.5 GB download.",
-        "downloadRecommended": "Download Gemma 3 4B",
-        "useRecommended": "Use Gemma 3 4B",
-        "currentHeading": "Use your current model",
-        "currentSubtext": "Translate with {{model}} (your active model). Quality varies by model.",
-        "currentNone": "No local model is active yet. Download one from the model library first.",
-        "useCurrent": "Use current model",
-        "recommendOnlyHeading": "Gemma 3 4B recommended for translation",
-        "recommendOnlyBody": "For the best translation quality, select Gemma 3 4B in the model selector above. Translation runs through your single active model.",
-        "enableCta": "Enable offline translation"
+        "footnote": "どちらのオプションも完全オフラインで動作します。この選択は設定で後から変更できます。",
+        "applying": "適用中…",
+        "applyFailed": "翻訳エンジンを変更できませんでした。",
+        "activeBadge": "現在使用中",
+        "activeButton": "現在使用中",
+        "downloadingPercent": "ダウンロード中… {{percent}}%",
+        "downloadBackgroundNote": "このウィンドウを閉じても — ダウンロードはバックグラウンドで続きます。",
+        "verifying": "ダウンロードを確認中…",
+        "title": "オフライン翻訳を設定",
+        "recommendedHeading": "おすすめ: Gemma 3 4B",
+        "recommendedSubtext": "多言語で信頼性の高い翻訳を提供する汎用 4B モデル。~2.5 GB のダウンロード。",
+        "downloadRecommended": "Gemma 3 4B をダウンロード",
+        "useRecommended": "Gemma 3 4B を使用",
+        "currentHeading": "現在のモデルを使用",
+        "currentSubtext": "{{model}} で翻訳（アクティブモデル）。品質はモデルによって異なります。",
+        "currentNone": "まだローカルモデルがアクティブになっていません。まずモデルライブラリからダウンロードしてください。",
+        "useCurrent": "現在のモデルを使用",
+        "recommendOnlyHeading": "翻訳には Gemma 3 4B を推奨",
+        "recommendOnlyBody": "最高の翻訳品質のために、上のモデルセレクターで Gemma 3 4B を選択してください。翻訳は単一のアクティブモデルを通じて実行されます。",
+        "enableCta": "オフライン翻訳を有効化"
       },
-      "recommendNote": "Gemma 3 4B is recommended for translation. Choose it in the model selector above."
+      "recommendNote": "翻訳には Gemma 3 4B をお勧めします。上のモデルセレクターで選択してください。"
     },
     "delete": {
-      "title": "Delete mode",
-      "confirm": "Delete \"{{name}}\"? This will also remove its shortcut binding.",
-      "ariaLabel": "Delete {{name}}"
+      "title": "モードを削除",
+      "confirm": "「{{name}}」を削除しますか？ショートカットの割り当ても削除されます。",
+      "ariaLabel": "{{name}} を削除"
     },
     "edit": {
-      "ariaLabel": "Edit {{name}}"
+      "ariaLabel": "{{name}} を編集"
     },
     "noModel": {
-      "heading": "No local model selected",
-      "body": "Select or download a local model above to use Smart Modes."
+      "heading": "ローカルモデルが選択されていません",
+      "body": "スマートモードを使用するには、上からローカルモデルを選択またはダウンロードしてください。"
     },
     "defaultModes": {
       "cleanUp": "クリーンアップ",

@@ -379,7 +379,7 @@
             "custom": "Custom (local)"
           },
           "descriptions": {
-            "apple_intelligence": "No download required — macOS Apple Silicon",
+            "apple_intelligence": "다운로드 불필요 — macOS Apple Silicon",
             "custom": "localhost의 Ollama / LM Studio"
           }
         },
@@ -443,42 +443,42 @@
           "cloudSelectedNotice": "선택한 모델은 클라우드 공급자입니다. 아래의 \"클라우드\" 탭을 클릭하여 확인하거나 로컬 모델을 선택하세요."
         },
         "library": {
-          "title": "Local Model Library",
-          "description": "Download and manage local GGUF models. Models run entirely on your device — no data leaves your machine.",
-          "yourModels": "Your Models",
-          "availableModels": "Available to Download",
-          "recommendedBadge": "Recommended",
-          "downloadModel": "Download model",
-          "activateModel": "Use this model",
-          "addCustomModel": "Add custom model",
-          "dropZoneLabel": "Drop a .gguf file here",
-          "dropZoneSublabel": "or use the button above",
-          "invalidGguf": "Not a valid GGUF model file. Please select a .gguf file.",
-          "cancelDownload": "Cancel download",
+          "title": "로컬 모델 라이브러리",
+          "description": "로컬 GGUF 모델을 다운로드하고 관리하세요. 모델은 기기에서 완전히 실행됩니다 — 데이터가 외부로 전송되지 않습니다.",
+          "yourModels": "내 모델",
+          "availableModels": "다운로드 가능",
+          "recommendedBadge": "추천",
+          "downloadModel": "모델 다운로드",
+          "activateModel": "이 모델 사용",
+          "addCustomModel": "사용자 지정 모델 추가",
+          "dropZoneLabel": ".gguf 파일을 여기에 드롭",
+          "dropZoneSublabel": "또는 위의 버튼 사용",
+          "invalidGguf": "유효한 GGUF 모델 파일이 아닙니다. .gguf 파일을 선택해 주세요.",
+          "cancelDownload": "다운로드 취소",
           "models": {
             "qwen25_1b5": {
-              "description": "Fast, lightweight — runs on any machine"
+              "description": "빠르고 가벼움 — 모든 기기에서 작동"
             },
             "gemma3_4b": {
-              "description": "Versatile and multilingual — strong in many languages"
+              "description": "번역에 탁월 — 다재다능하고 다국어 지원"
             },
             "phi4_mini": {
-              "description": "Precise instruction-following — formatting and structure"
+              "description": "정확한 지시 준수 — 서식 및 구조"
             },
             "llama32_3b": {
-              "description": "Balanced generalist — solid multilingual quality"
+              "description": "균형 잡힌 범용 모델 — 탄탄한 다국어 품질"
             },
             "translateGemma4b": {
-              "description": "Dedicated translation model — 55 benchmarked languages"
+              "description": "전용 번역 모델 — 55개 언어 벤치마크"
             }
           }
         },
         "embedded": {
-          "noModelHeading": "No local model selected",
-          "noModelBody": "Download a model below to enable embedded processing. The Qwen2.5-1.5B model is recommended for most machines.",
-          "downloadNowLink": "Download a model",
-          "providerLabel": "Embedded (local)",
-          "providerDescription": "Runs on your device. Requires a downloaded local model."
+          "noModelHeading": "로컬 모델이 선택되지 않았습니다",
+          "noModelBody": "내장 처리를 활성화하려면 아래에서 모델을 다운로드하세요. Qwen2.5-1.5B 모델은 대부분의 기기에 권장됩니다.",
+          "downloadNowLink": "모델 다운로드",
+          "providerLabel": "내장됨(로컬)",
+          "providerDescription": "기기에서 실행됩니다. 다운로드된 로컬 모델이 필요합니다."
         }
       },
       "prompts": {
@@ -594,9 +594,9 @@
         "settings": "설정:"
       },
       "simulateUpdaterRestart": {
-        "title": "Simulate Updater Restart",
-        "description": "Relaunches Dictus via the same API tauri-plugin-updater uses after applying an update. Use this to validate SHUT-03 (clean post-update relaunch) without publishing a throwaway test release.",
-        "button": "Simulate Restart"
+        "title": "업데이터 재시작 시뮬레이션",
+        "description": "Dictus를 tauri-plugin-updater가 업데이트 적용 후 사용하는 것과 동일한 API를 통해 재시작합니다. 임시 테스트 릴리스를 게시하지 않고 SHUT-03(업데이트 후 깨끗한 재시작)을 검증하는 데 사용합니다.",
+        "button": "재시작 시뮬레이션"
       }
     },
     "about": {
@@ -620,9 +620,9 @@
         "button": "후원하기"
       },
       "privacy": {
-        "title": "Privacy Policy",
-        "description": "Your voice stays on your device. Read our privacy policy.",
-        "button": "View Privacy Policy"
+        "title": "개인정보 처리방침",
+        "description": "내 음성은 기기에 남습니다. 개인정보 처리방침을 읽어보세요.",
+        "button": "개인정보 처리방침 보기"
       },
       "networkSurface": {
         "title": "네트워크 표면",
@@ -630,17 +630,17 @@
         "button": "개인정보 문서 보기"
       },
       "ecosystem": {
-        "title": "Dictus Ecosystem",
-        "description": "Dictus is available on iOS, Android, and Desktop.",
-        "button": "Learn More"
+        "title": "Dictus 에코시스템",
+        "description": "Dictus는 iOS, Android, 데스크탑에서 이용 가능합니다.",
+        "button": "자세히 보기"
       },
       "acknowledgments": {
         "title": "감사의 말",
         "handy": {
           "title": "Handy",
-          "description": "Open-source desktop speech-to-text application by CJ Pais",
-          "details": "Dictus Desktop is a fork of Handy. Thanks to CJ Pais and the Handy community for building the foundation that Dictus is built upon.",
-          "button": "View on GitHub"
+          "description": "CJ Pais의 오픈소스 데스크탑 음성-텍스트 변환 앱",
+          "details": "Dictus Desktop은 Handy의 포크입니다. Dictus가 구축된 기반을 만들어 준 CJ Pais와 Handy 커뮤니티에 감사드립니다.",
+          "button": "GitHub에서 보기"
         },
         "whisper": {
           "title": "Whisper.cpp",
@@ -663,9 +663,9 @@
     "installing": "설치 중...",
     "preparing": "준비 중...",
     "checkForUpdates": "업데이트 확인",
-    "portableUpdateTitle": "Manual update required",
-    "portableUpdateMessage": "Portable installs cannot be updated automatically. To update: download the latest NSIS installer from GitHub Releases, install it to the same folder, then copy your Data/ folder (settings, models, recordings) from the old version to the new one.",
-    "portableUpdateButton": "Open GitHub Releases"
+    "portableUpdateTitle": "수동 업데이트 필요",
+    "portableUpdateMessage": "이식용 설치는 자동으로 업데이트할 수 없습니다. 업데이트하려면: GitHub Releases에서 최신 NSIS 설치 관리자를 다운로드하고 동일한 폴더에 설치한 다음 이전 버전에서 새 버전으로 Data/ 폴더(설정, 모델, 녹음)를 복사하세요.",
+    "portableUpdateButton": "GitHub Releases 열기"
   },
   "common": {
     "loading": "로딩 중...",
@@ -712,8 +712,8 @@
     "pasteFailedTitle": "텍스트 붙여넣기 실패",
     "pasteFailed": "활성 애플리케이션에 텍스트를 붙여넣을 수 없습니다.",
     "boundary": {
-      "title": "Something went wrong.",
-      "reload": "Reload"
+      "title": "오류가 발생했습니다.",
+      "reload": "새로 고침"
     }
   },
   "appLanguage": {
@@ -726,88 +726,88 @@
   },
   "smartModes": {
     "sections": {
-      "rewrite": "Rewrite",
-      "translation": "Translation"
+      "rewrite": "다시 쓰기",
+      "translation": "번역"
     },
-    "createRewrite": "New Rewrite",
-    "createTranslation": "New Translation",
+    "createRewrite": "새 다시 쓰기",
+    "createTranslation": "새 번역",
     "card": {
-      "saveCta": "Save mode",
-      "discardCta": "Discard changes",
-      "createCta": "Create mode",
-      "discardNewCta": "Discard",
-      "addShortcut": "Add shortcut",
-      "shortcutConflict": "Already used by: {{name}}",
-      "shortcutConflictBase": "The start of this shortcut ({{base}}) is already used by {{name}} — it would fire before the next key",
-      "shortcutBaseHint": "A shortcut whose start matches another shortcut can't work — the first key fires before you finish.",
-      "targetLanguage": "Target language",
-      "nameLabel": "Name",
-      "promptLabel": "Prompt",
-      "namePlaceholder": "e.g. Make Concise",
-      "promptPlaceholder": "Rewrite the following text to be more concise.\n\nText:\n${output}",
-      "outputHint": "Use ${output} where the dictated transcript should be inserted."
+      "saveCta": "모드 저장",
+      "discardCta": "변경 사항 버리기",
+      "createCta": "모드 만들기",
+      "discardNewCta": "버리기",
+      "addShortcut": "단축키 추가",
+      "shortcutConflict": "이미 사용 중: {{name}}",
+      "shortcutConflictBase": "이 단축키의 시작 부분({{base}})이 이미 {{name}}에서 사용 중입니다 — 다음 키 전에 실행됩니다",
+      "shortcutBaseHint": "시작 부분이 다른 단축키와 일치하는 단축키는 작동할 수 없습니다 — 입력을 마치기 전에 첫 번째 키가 실행됩니다.",
+      "targetLanguage": "대상 언어",
+      "nameLabel": "이름",
+      "promptLabel": "지시",
+      "namePlaceholder": "예: 간결하게 만들기",
+      "promptPlaceholder": "다음 텍스트를 더 간결하게 다시 작성하세요.\n\n텍스트:\n${output}",
+      "outputHint": "받아쓰기 전사본이 삽입될 위치에 ${output}을 사용하세요."
     },
     "picker": {
-      "rewriteTitle": "Add a rewrite mode",
-      "translationTitle": "Add a translation mode",
-      "custom": "Custom",
-      "customSubtext": "Create a mode with your own name and prompt",
-      "added": "Added",
-      "overwriteTitle": "Mode already exists",
-      "overwriteConfirm": "\"{{name}}\" already exists. Re-adding it will overwrite the existing mode. Continue?"
+      "rewriteTitle": "다시 쓰기 모드 추가",
+      "translationTitle": "번역 모드 추가",
+      "custom": "사용자 지정",
+      "customSubtext": "자신만의 이름과 지시로 모드 만들기",
+      "added": "추가됨",
+      "overwriteTitle": "모드가 이미 존재합니다",
+      "overwriteConfirm": "«{{name}}»이(가) 이미 존재합니다. 다시 추가하면 기존 모드를 덮어씁니다. 계속할까요?"
     },
     "shortcut": {
-      "clear": "Clear",
-      "clearAriaLabel": "Clear shortcut {{combo}}",
-      "recording": "Press keys…"
+      "clear": "지우기",
+      "clearAriaLabel": "단축키 {{combo}} 지우기",
+      "recording": "키를 누르세요…"
     },
     "kind": {
-      "rewrite": "Rewrite",
-      "translation": "Translation"
+      "rewrite": "다시 쓰기",
+      "translation": "번역"
     },
     "translation": {
-      "enableHeading": "Enable offline translation",
-      "enableBody": "Translation runs fully offline through the embedded LLM. Choose an engine to get started.",
-      "chooseCta": "Choose translation engine",
-      "genericEngineNote": "Best-effort — quality varies by model",
-      "changeEngine": "Change engine",
-      "currentEngine": "Using: {{engine}}",
-      "engineGeneric": "Active model",
+      "enableHeading": "오프라인 번역 활성화",
+      "enableBody": "번역은 내장 언어 모델을 통해 완전히 오프라인으로 실행됩니다. 시작하려면 엔진을 선택하세요.",
+      "chooseCta": "번역 엔진 선택",
+      "genericEngineNote": "최선의 시도 — 품질은 모델에 따라 다릅니다",
+      "changeEngine": "엔진 변경",
+      "currentEngine": "사용 중: {{engine}}",
+      "engineGeneric": "활성 모델",
       "modal": {
-        "footnote": "Both options run fully offline. You can change this choice later in settings.",
-        "applying": "Applying…",
-        "applyFailed": "Could not change the translation engine.",
-        "activeBadge": "Currently used",
-        "activeButton": "Currently used",
-        "downloadingPercent": "Downloading… {{percent}}%",
-        "downloadBackgroundNote": "You can close this window — the download continues in the background.",
-        "verifying": "Verifying download…",
-        "title": "Set up offline translation",
-        "recommendedHeading": "Recommended: Gemma 3 4B",
-        "recommendedSubtext": "A versatile 4B model with clean, reliable translation across languages and idioms. ~2.5 GB download.",
-        "downloadRecommended": "Download Gemma 3 4B",
-        "useRecommended": "Use Gemma 3 4B",
-        "currentHeading": "Use your current model",
-        "currentSubtext": "Translate with {{model}} (your active model). Quality varies by model.",
-        "currentNone": "No local model is active yet. Download one from the model library first.",
-        "useCurrent": "Use current model",
-        "recommendOnlyHeading": "Gemma 3 4B recommended for translation",
-        "recommendOnlyBody": "For the best translation quality, select Gemma 3 4B in the model selector above. Translation runs through your single active model.",
-        "enableCta": "Enable offline translation"
+        "footnote": "두 옵션 모두 완전히 오프라인으로 실행됩니다. 나중에 설정에서 이 선택을 변경할 수 있습니다.",
+        "applying": "적용 중…",
+        "applyFailed": "번역 엔진을 변경할 수 없습니다.",
+        "activeBadge": "현재 사용 중",
+        "activeButton": "현재 사용 중",
+        "downloadingPercent": "다운로드 중… {{percent}}%",
+        "downloadBackgroundNote": "이 창을 닫아도 됩니다 — 다운로드는 백그라운드에서 계속됩니다.",
+        "verifying": "다운로드 확인 중…",
+        "title": "오프라인 번역 설정",
+        "recommendedHeading": "추천: Gemma 3 4B",
+        "recommendedSubtext": "다양한 언어에서 신뢰할 수 있는 번역을 제공하는 다재다능한 4B 모델. ~2.5 GB 다운로드.",
+        "downloadRecommended": "Gemma 3 4B 다운로드",
+        "useRecommended": "Gemma 3 4B 사용",
+        "currentHeading": "현재 모델 사용",
+        "currentSubtext": "{{model}}로 번역(활성 모델). 품질은 모델에 따라 다릅니다.",
+        "currentNone": "아직 활성화된 로컬 모델이 없습니다. 먼저 모델 라이브러리에서 다운로드하세요.",
+        "useCurrent": "현재 모델 사용",
+        "recommendOnlyHeading": "번역에는 Gemma 3 4B 권장",
+        "recommendOnlyBody": "최상의 번역 품질을 위해 위의 모델 선택기에서 Gemma 3 4B를 선택하세요. 번역은 단일 활성 모델을 통해 실행됩니다.",
+        "enableCta": "오프라인 번역 활성화"
       },
-      "recommendNote": "Gemma 3 4B is recommended for translation. Choose it in the model selector above."
+      "recommendNote": "번역에는 Gemma 3 4B를 권장합니다. 위의 모델 선택기에서 선택하세요."
     },
     "delete": {
-      "title": "Delete mode",
-      "confirm": "Delete \"{{name}}\"? This will also remove its shortcut binding.",
-      "ariaLabel": "Delete {{name}}"
+      "title": "모드 삭제",
+      "confirm": "«{{name}}»을(를) 삭제할까요? 관련 단축키 바인딩도 제거됩니다.",
+      "ariaLabel": "{{name}} 삭제"
     },
     "edit": {
-      "ariaLabel": "Edit {{name}}"
+      "ariaLabel": "{{name}} 편집"
     },
     "noModel": {
-      "heading": "No local model selected",
-      "body": "Select or download a local model above to use Smart Modes."
+      "heading": "로컬 모델이 선택되지 않았습니다",
+      "body": "스마트 모드를 사용하려면 위에서 로컬 모델을 선택하거나 다운로드하세요."
     },
     "defaultModes": {
       "cleanUp": "정리하기",

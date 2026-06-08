@@ -379,7 +379,7 @@
             "custom": "Custom (本機)"
           },
           "descriptions": {
-            "apple_intelligence": "No download required — macOS Apple Silicon",
+            "apple_intelligence": "無需下載 — macOS Apple Silicon",
             "custom": "localhost 上的 Ollama / LM Studio"
           }
         },
@@ -443,42 +443,42 @@
           "cloudSelectedNotice": "您選擇的模型是雲端提供商。點擊下方的「雲端」分頁查看，或選擇本地模型。"
         },
         "library": {
-          "title": "Local Model Library",
-          "description": "Download and manage local GGUF models. Models run entirely on your device — no data leaves your machine.",
-          "yourModels": "Your Models",
-          "availableModels": "Available to Download",
-          "recommendedBadge": "Recommended",
-          "downloadModel": "Download model",
-          "activateModel": "Use this model",
-          "addCustomModel": "Add custom model",
-          "dropZoneLabel": "Drop a .gguf file here",
-          "dropZoneSublabel": "or use the button above",
-          "invalidGguf": "Not a valid GGUF model file. Please select a .gguf file.",
-          "cancelDownload": "Cancel download",
+          "title": "本地模型庫",
+          "description": "下載並管理本地 GGUF 模型。模型完全在您的裝置上執行 — 沒有任何資料離開您的電腦。",
+          "yourModels": "我的模型",
+          "availableModels": "可供下載",
+          "recommendedBadge": "推薦",
+          "downloadModel": "下載模型",
+          "activateModel": "使用此模型",
+          "addCustomModel": "新增自訂模型",
+          "dropZoneLabel": "將 .gguf 檔案拖放到此處",
+          "dropZoneSublabel": "或使用上方按鈕",
+          "invalidGguf": "不是有效的 GGUF 模型檔案。請選擇一個 .gguf 檔案。",
+          "cancelDownload": "取消下載",
           "models": {
             "qwen25_1b5": {
-              "description": "Fast, lightweight — runs on any machine"
+              "description": "快速輕量 — 在任何機器上運行"
             },
             "gemma3_4b": {
-              "description": "Versatile and multilingual — strong in many languages"
+              "description": "出色的翻譯能力——多功能且支援多語言"
             },
             "phi4_mini": {
-              "description": "Precise instruction-following — formatting and structure"
+              "description": "精確的指令遵循 — 格式和結構"
             },
             "llama32_3b": {
-              "description": "Balanced generalist — solid multilingual quality"
+              "description": "均衡通用型 — 穩健的多語言品質"
             },
             "translateGemma4b": {
-              "description": "Dedicated translation model — 55 benchmarked languages"
+              "description": "專用翻譯模型——55種語言基準測試"
             }
           }
         },
         "embedded": {
-          "noModelHeading": "No local model selected",
-          "noModelBody": "Download a model below to enable embedded processing. The Qwen2.5-1.5B model is recommended for most machines.",
-          "downloadNowLink": "Download a model",
-          "providerLabel": "Embedded (local)",
-          "providerDescription": "Runs on your device. Requires a downloaded local model."
+          "noModelHeading": "未選擇本地模型",
+          "noModelBody": "在下方下載模型以啟用嵌入式處理。Qwen2.5-1.5B 模型適用於大多數電腦。",
+          "downloadNowLink": "下載模型",
+          "providerLabel": "內建（本地）",
+          "providerDescription": "在您的裝置上執行。需要已下載的本地模型。"
         }
       },
       "prompts": {
@@ -594,9 +594,9 @@
         "description": "放開按鍵後繼續錄音的額外時間（毫秒），以捕捉尾音。0 = 無額外緩衝。"
       },
       "simulateUpdaterRestart": {
-        "title": "Simulate Updater Restart",
-        "description": "Relaunches Dictus via the same API tauri-plugin-updater uses after applying an update. Use this to validate SHUT-03 (clean post-update relaunch) without publishing a throwaway test release.",
-        "button": "Simulate Restart"
+        "title": "模擬更新器重啟",
+        "description": "Dictus 透過 tauri-plugin-updater 套用更新後使用的相同 API 重新啟動。無需發布臨時測試版本即可驗證 SHUT-03（更新後的乾淨重啟）。",
+        "button": "模擬重啟"
       }
     },
     "about": {
@@ -620,9 +620,9 @@
         "button": "捐贈"
       },
       "privacy": {
-        "title": "Privacy Policy",
-        "description": "Your voice stays on your device. Read our privacy policy.",
-        "button": "View Privacy Policy"
+        "title": "隱私權政策",
+        "description": "您的聲音保留在您的裝置上。請閱讀我們的隱私權政策。",
+        "button": "查看隱私權政策"
       },
       "networkSurface": {
         "title": "網路範圍",
@@ -630,17 +630,17 @@
         "button": "檢視隱私文件"
       },
       "ecosystem": {
-        "title": "Dictus Ecosystem",
-        "description": "Dictus is available on iOS, Android, and Desktop.",
-        "button": "Learn More"
+        "title": "Dictus 生態系統",
+        "description": "Dictus 可在 iOS、Android 和桌面端使用。",
+        "button": "了解更多"
       },
       "acknowledgments": {
         "title": "致謝",
         "handy": {
           "title": "Handy",
-          "description": "Open-source desktop speech-to-text application by CJ Pais",
-          "details": "Dictus Desktop is a fork of Handy. Thanks to CJ Pais and the Handy community for building the foundation that Dictus is built upon.",
-          "button": "View on GitHub"
+          "description": "由 CJ Pais 開發的開源桌面語音識別應用",
+          "details": "Dictus Desktop 是 Handy 的分支。感謝 CJ Pais 和 Handy 社區為 Dictus 奠定的基礎。",
+          "button": "在 GitHub 上查看"
         },
         "whisper": {
           "title": "Whisper.cpp",
@@ -663,9 +663,9 @@
     "installing": "安裝中...",
     "preparing": "準備中...",
     "checkForUpdates": "檢查更新",
-    "portableUpdateTitle": "Manual update required",
-    "portableUpdateMessage": "Portable installs cannot be updated automatically. To update: download the latest NSIS installer from GitHub Releases, install it to the same folder, then copy your Data/ folder (settings, models, recordings) from the old version to the new one.",
-    "portableUpdateButton": "Open GitHub Releases"
+    "portableUpdateTitle": "需要手動更新",
+    "portableUpdateMessage": "便攜版安裝無法自動更新。要更新：請從 GitHub Releases 下載最新的 NSIS 安裝程式，安裝到同一資料夾，然後將 Data/ 資料夾（設定、模型、錄音）從舊版本複製到新版本。",
+    "portableUpdateButton": "開啟 GitHub Releases"
   },
   "common": {
     "loading": "載入中...",
@@ -712,8 +712,8 @@
     "pasteFailedTitle": "貼上文字失敗",
     "pasteFailed": "無法將文字貼上至目前作用中的應用程式。",
     "boundary": {
-      "title": "Something went wrong.",
-      "reload": "Reload"
+      "title": "發生錯誤。",
+      "reload": "重新載入"
     }
   },
   "appLanguage": {
@@ -726,88 +726,88 @@
   },
   "smartModes": {
     "sections": {
-      "rewrite": "Rewrite",
-      "translation": "Translation"
+      "rewrite": "改寫",
+      "translation": "翻譯"
     },
-    "createRewrite": "New Rewrite",
-    "createTranslation": "New Translation",
+    "createRewrite": "新增改寫",
+    "createTranslation": "新增翻譯",
     "card": {
-      "saveCta": "Save mode",
-      "discardCta": "Discard changes",
-      "createCta": "Create mode",
-      "discardNewCta": "Discard",
-      "addShortcut": "Add shortcut",
-      "shortcutConflict": "Already used by: {{name}}",
-      "shortcutConflictBase": "The start of this shortcut ({{base}}) is already used by {{name}} — it would fire before the next key",
-      "shortcutBaseHint": "A shortcut whose start matches another shortcut can't work — the first key fires before you finish.",
-      "targetLanguage": "Target language",
-      "nameLabel": "Name",
-      "promptLabel": "Prompt",
-      "namePlaceholder": "e.g. Make Concise",
-      "promptPlaceholder": "Rewrite the following text to be more concise.\n\nText:\n${output}",
-      "outputHint": "Use ${output} where the dictated transcript should be inserted."
+      "saveCta": "儲存模式",
+      "discardCta": "捨棄變更",
+      "createCta": "建立模式",
+      "discardNewCta": "捨棄",
+      "addShortcut": "新增快捷鍵",
+      "shortcutConflict": "已被使用：{{name}}",
+      "shortcutConflictBase": "此快捷鍵的開頭 ({{base}}) 已被 {{name}} 使用——會在下一個按鍵前觸發",
+      "shortcutBaseHint": "開頭與另一個快捷鍵相同的快捷鍵無法正常運作——第一個鍵會在您完成輸入前觸發。",
+      "targetLanguage": "目標語言",
+      "nameLabel": "名稱",
+      "promptLabel": "提示詞",
+      "namePlaceholder": "例如：使內容簡潔",
+      "promptPlaceholder": "將以下文字改寫得更簡潔。\n\n文字：\n${output}",
+      "outputHint": "在需要插入聽寫文字的位置使用 ${output}。"
     },
     "picker": {
-      "rewriteTitle": "Add a rewrite mode",
-      "translationTitle": "Add a translation mode",
-      "custom": "Custom",
-      "customSubtext": "Create a mode with your own name and prompt",
-      "added": "Added",
-      "overwriteTitle": "Mode already exists",
-      "overwriteConfirm": "\"{{name}}\" already exists. Re-adding it will overwrite the existing mode. Continue?"
+      "rewriteTitle": "新增改寫模式",
+      "translationTitle": "新增翻譯模式",
+      "custom": "自訂",
+      "customSubtext": "使用您自己的名稱和提示詞建立模式",
+      "added": "已新增",
+      "overwriteTitle": "模式已存在",
+      "overwriteConfirm": "「{{name}}」已存在。重新新增將覆蓋現有模式。是否繼續？"
     },
     "shortcut": {
-      "clear": "Clear",
-      "clearAriaLabel": "Clear shortcut {{combo}}",
-      "recording": "Press keys…"
+      "clear": "清除",
+      "clearAriaLabel": "清除快捷鍵 {{combo}}",
+      "recording": "請按鍵…"
     },
     "kind": {
-      "rewrite": "Rewrite",
-      "translation": "Translation"
+      "rewrite": "改寫",
+      "translation": "翻譯"
     },
     "translation": {
-      "enableHeading": "Enable offline translation",
-      "enableBody": "Translation runs fully offline through the embedded LLM. Choose an engine to get started.",
-      "chooseCta": "Choose translation engine",
-      "genericEngineNote": "Best-effort — quality varies by model",
-      "changeEngine": "Change engine",
-      "currentEngine": "Using: {{engine}}",
-      "engineGeneric": "Active model",
+      "enableHeading": "啟用離線翻譯",
+      "enableBody": "翻譯透過內建語言模型完全離線運行。選擇引擎即可開始。",
+      "chooseCta": "選擇翻譯引擎",
+      "genericEngineNote": "盡力而為——品質因模型而異",
+      "changeEngine": "更換引擎",
+      "currentEngine": "正在使用：{{engine}}",
+      "engineGeneric": "目前模型",
       "modal": {
-        "footnote": "Both options run fully offline. You can change this choice later in settings.",
-        "applying": "Applying…",
-        "applyFailed": "Could not change the translation engine.",
-        "activeBadge": "Currently used",
-        "activeButton": "Currently used",
-        "downloadingPercent": "Downloading… {{percent}}%",
-        "downloadBackgroundNote": "You can close this window — the download continues in the background.",
-        "verifying": "Verifying download…",
-        "title": "Set up offline translation",
-        "recommendedHeading": "Recommended: Gemma 3 4B",
-        "recommendedSubtext": "A versatile 4B model with clean, reliable translation across languages and idioms. ~2.5 GB download.",
-        "downloadRecommended": "Download Gemma 3 4B",
-        "useRecommended": "Use Gemma 3 4B",
-        "currentHeading": "Use your current model",
-        "currentSubtext": "Translate with {{model}} (your active model). Quality varies by model.",
-        "currentNone": "No local model is active yet. Download one from the model library first.",
-        "useCurrent": "Use current model",
-        "recommendOnlyHeading": "Gemma 3 4B recommended for translation",
-        "recommendOnlyBody": "For the best translation quality, select Gemma 3 4B in the model selector above. Translation runs through your single active model.",
-        "enableCta": "Enable offline translation"
+        "footnote": "兩個選項均完全離線運行。您可以稍後在設定中更改此選擇。",
+        "applying": "套用中…",
+        "applyFailed": "無法更改翻譯引擎。",
+        "activeBadge": "目前使用中",
+        "activeButton": "目前使用中",
+        "downloadingPercent": "下載中… {{percent}}%",
+        "downloadBackgroundNote": "您可以關閉此視窗——下載將在背景繼續。",
+        "verifying": "正在驗證下載…",
+        "title": "設定離線翻譯",
+        "recommendedHeading": "建議：Gemma 3 4B",
+        "recommendedSubtext": "一款多功能的 4B 模型，提供多語言可靠翻譯。~2.5 GB 下載。",
+        "downloadRecommended": "下載 Gemma 3 4B",
+        "useRecommended": "使用 Gemma 3 4B",
+        "currentHeading": "使用目前模型",
+        "currentSubtext": "使用 {{model}} 進行翻譯（目前活躍模型）。品質因模型而異。",
+        "currentNone": "尚無活躍的本地模型。請先從模型庫下載一個。",
+        "useCurrent": "使用目前模型",
+        "recommendOnlyHeading": "翻譯建議使用 Gemma 3 4B",
+        "recommendOnlyBody": "為獲得最佳翻譯品質，請在上方的模型選擇器中選擇 Gemma 3 4B。翻譯透過您唯一的活躍模型運行。",
+        "enableCta": "啟用離線翻譯"
       },
-      "recommendNote": "Gemma 3 4B is recommended for translation. Choose it in the model selector above."
+      "recommendNote": "翻譯建議使用 Gemma 3 4B。請在上方的模型選擇器中選擇。"
     },
     "delete": {
-      "title": "Delete mode",
-      "confirm": "Delete \"{{name}}\"? This will also remove its shortcut binding.",
-      "ariaLabel": "Delete {{name}}"
+      "title": "刪除模式",
+      "confirm": "刪除「{{name}}」？相關快捷鍵綁定也將被移除。",
+      "ariaLabel": "刪除 {{name}}"
     },
     "edit": {
-      "ariaLabel": "Edit {{name}}"
+      "ariaLabel": "編輯 {{name}}"
     },
     "noModel": {
-      "heading": "No local model selected",
-      "body": "Select or download a local model above to use Smart Modes."
+      "heading": "未選擇本地模型",
+      "body": "請在上方選擇或下載本地模型以使用智慧模式。"
     },
     "defaultModes": {
       "cleanUp": "清理",

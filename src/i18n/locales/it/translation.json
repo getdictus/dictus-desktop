@@ -243,7 +243,7 @@
     "advanced": {
       "title": "Avanzate",
       "groups": {
-        "app": "App",
+        "app": "Applicazione",
         "output": "Output",
         "transcription": "Trascrizione",
         "postProcessing": "Post-elaborazione",
@@ -379,7 +379,7 @@
             "custom": "Custom (local)"
           },
           "descriptions": {
-            "apple_intelligence": "No download required — macOS Apple Silicon",
+            "apple_intelligence": "Nessun download richiesto — macOS Apple Silicon",
             "custom": "Ollama / LM Studio su localhost"
           }
         },
@@ -443,42 +443,42 @@
           "cloudSelectedNotice": "Il modello selezionato è un fornitore cloud. Clicca sulla scheda «Cloud» qui sotto per visualizzarlo, oppure scegli un modello locale."
         },
         "library": {
-          "title": "Local Model Library",
-          "description": "Download and manage local GGUF models. Models run entirely on your device — no data leaves your machine.",
-          "yourModels": "Your Models",
-          "availableModels": "Available to Download",
-          "recommendedBadge": "Recommended",
-          "downloadModel": "Download model",
-          "activateModel": "Use this model",
-          "addCustomModel": "Add custom model",
-          "dropZoneLabel": "Drop a .gguf file here",
-          "dropZoneSublabel": "or use the button above",
-          "invalidGguf": "Not a valid GGUF model file. Please select a .gguf file.",
-          "cancelDownload": "Cancel download",
+          "title": "Libreria modelli locali",
+          "description": "Scarica e gestisci modelli GGUF locali. I modelli vengono eseguiti interamente sul tuo dispositivo — nessun dato lascia il computer.",
+          "yourModels": "I tuoi modelli",
+          "availableModels": "Disponibili per il download",
+          "recommendedBadge": "Consigliato",
+          "downloadModel": "Scarica modello",
+          "activateModel": "Usa questo modello",
+          "addCustomModel": "Aggiungi modello personalizzato",
+          "dropZoneLabel": "Trascina un file .gguf qui",
+          "dropZoneSublabel": "o usa il pulsante sopra",
+          "invalidGguf": "File di modello GGUF non valido. Seleziona un file .gguf.",
+          "cancelDownload": "Annulla download",
           "models": {
             "qwen25_1b5": {
-              "description": "Fast, lightweight — runs on any machine"
+              "description": "Veloce e leggero — funziona su qualsiasi macchina"
             },
             "gemma3_4b": {
-              "description": "Versatile and multilingual — strong in many languages"
+              "description": "Ottimo per la traduzione — versatile e multilingue"
             },
             "phi4_mini": {
-              "description": "Precise instruction-following — formatting and structure"
+              "description": "Preciso nel seguire istruzioni — formattazione e struttura"
             },
             "llama32_3b": {
-              "description": "Balanced generalist — solid multilingual quality"
+              "description": "Generalista equilibrato — buona qualità multilingue"
             },
             "translateGemma4b": {
-              "description": "Dedicated translation model — 55 benchmarked languages"
+              "description": "Modello di traduzione dedicato — 55 lingue valutate"
             }
           }
         },
         "embedded": {
-          "noModelHeading": "No local model selected",
-          "noModelBody": "Download a model below to enable embedded processing. The Qwen2.5-1.5B model is recommended for most machines.",
-          "downloadNowLink": "Download a model",
-          "providerLabel": "Embedded (local)",
-          "providerDescription": "Runs on your device. Requires a downloaded local model."
+          "noModelHeading": "Nessun modello locale selezionato",
+          "noModelBody": "Scarica un modello qui sotto per abilitare l'elaborazione integrata. Il modello Qwen2.5-1.5B è consigliato per la maggior parte dei computer.",
+          "downloadNowLink": "Scarica un modello",
+          "providerLabel": "Integrato (locale)",
+          "providerDescription": "Funziona sul tuo dispositivo. Richiede un modello locale scaricato."
         }
       },
       "prompts": {
@@ -594,9 +594,9 @@
         "description": "Tempo extra (in millisecondi) per continuare a registrare dopo aver rilasciato il tasto, per catturare l'audio finale. 0 = nessun buffer extra."
       },
       "simulateUpdaterRestart": {
-        "title": "Simulate Updater Restart",
-        "description": "Relaunches Dictus via the same API tauri-plugin-updater uses after applying an update. Use this to validate SHUT-03 (clean post-update relaunch) without publishing a throwaway test release.",
-        "button": "Simulate Restart"
+        "title": "Simula riavvio aggiornamento",
+        "description": "Riavvia Dictus tramite la stessa API usata da tauri-plugin-updater dopo l'applicazione di un aggiornamento. Usalo per validare SHUT-03 (riavvio pulito dopo aggiornamento) senza pubblicare una versione di test usa e getta.",
+        "button": "Simula riavvio"
       }
     },
     "about": {
@@ -620,9 +620,9 @@
         "button": "Dona"
       },
       "privacy": {
-        "title": "Privacy Policy",
-        "description": "Your voice stays on your device. Read our privacy policy.",
-        "button": "View Privacy Policy"
+        "title": "Informativa sulla privacy",
+        "description": "La tua voce rimane sul tuo dispositivo. Leggi la nostra informativa sulla privacy.",
+        "button": "Visualizza l'informativa sulla privacy"
       },
       "networkSurface": {
         "title": "Superficie di rete",
@@ -630,17 +630,17 @@
         "button": "Visualizza doc privacy"
       },
       "ecosystem": {
-        "title": "Dictus Ecosystem",
-        "description": "Dictus is available on iOS, Android, and Desktop.",
-        "button": "Learn More"
+        "title": "Ecosistema Dictus",
+        "description": "Dictus è disponibile su iOS, Android e Desktop.",
+        "button": "Ulteriori informazioni"
       },
       "acknowledgments": {
         "title": "Ringraziamenti",
         "handy": {
           "title": "Handy",
-          "description": "Open-source desktop speech-to-text application by CJ Pais",
-          "details": "Dictus Desktop is a fork of Handy. Thanks to CJ Pais and the Handy community for building the foundation that Dictus is built upon.",
-          "button": "View on GitHub"
+          "description": "Applicazione desktop open source di sintesi vocale di CJ Pais",
+          "details": "Dictus Desktop è un fork di Handy. Grazie a CJ Pais e alla community di Handy per aver costruito le basi su cui è costruito Dictus.",
+          "button": "Visualizza su GitHub"
         },
         "whisper": {
           "title": "Whisper.cpp",
@@ -683,8 +683,8 @@
     "default": "Predefinito",
     "enabled": "Abilitato",
     "disabled": "Disabilitato",
-    "on": "On",
-    "off": "Off",
+    "on": "Attivato",
+    "off": "Disattivato",
     "yes": "Sì",
     "no": "No",
     "noOptionsFound": "Nessuna opzione trovata"
@@ -712,8 +712,8 @@
     "pasteFailedTitle": "Impossibile incollare il testo",
     "pasteFailed": "Non è stato possibile incollare il testo nell'applicazione attiva.",
     "boundary": {
-      "title": "Something went wrong.",
-      "reload": "Reload"
+      "title": "Si è verificato un errore.",
+      "reload": "Ricarica"
     }
   },
   "appLanguage": {
@@ -726,88 +726,88 @@
   },
   "smartModes": {
     "sections": {
-      "rewrite": "Rewrite",
-      "translation": "Translation"
+      "rewrite": "Riscrittura",
+      "translation": "Traduzione"
     },
-    "createRewrite": "New Rewrite",
-    "createTranslation": "New Translation",
+    "createRewrite": "Nuova riscrittura",
+    "createTranslation": "Nuova traduzione",
     "card": {
-      "saveCta": "Save mode",
-      "discardCta": "Discard changes",
-      "createCta": "Create mode",
-      "discardNewCta": "Discard",
-      "addShortcut": "Add shortcut",
-      "shortcutConflict": "Already used by: {{name}}",
-      "shortcutConflictBase": "The start of this shortcut ({{base}}) is already used by {{name}} — it would fire before the next key",
-      "shortcutBaseHint": "A shortcut whose start matches another shortcut can't work — the first key fires before you finish.",
-      "targetLanguage": "Target language",
-      "nameLabel": "Name",
-      "promptLabel": "Prompt",
-      "namePlaceholder": "e.g. Make Concise",
-      "promptPlaceholder": "Rewrite the following text to be more concise.\n\nText:\n${output}",
-      "outputHint": "Use ${output} where the dictated transcript should be inserted."
+      "saveCta": "Salva modalità",
+      "discardCta": "Annulla modifiche",
+      "createCta": "Crea modalità",
+      "discardNewCta": "Annulla",
+      "addShortcut": "Aggiungi scorciatoia",
+      "shortcutConflict": "Già utilizzato da: {{name}}",
+      "shortcutConflictBase": "L'inizio di questa scorciatoia ({{base}}) è già usato da {{name}} — si attiverebbe prima del tasto successivo",
+      "shortcutBaseHint": "Una scorciatoia il cui inizio coincide con un'altra non può funzionare — il primo tasto si attiva prima che tu abbia finito.",
+      "targetLanguage": "Lingua di destinazione",
+      "nameLabel": "Nome",
+      "promptLabel": "Istruzione",
+      "namePlaceholder": "es. Rendi conciso",
+      "promptPlaceholder": "Riscrivi il seguente testo per renderlo più conciso.\n\nTesto:\n${output}",
+      "outputHint": "Usa ${output} dove deve essere inserita la trascrizione dettata."
     },
     "picker": {
-      "rewriteTitle": "Add a rewrite mode",
-      "translationTitle": "Add a translation mode",
-      "custom": "Custom",
-      "customSubtext": "Create a mode with your own name and prompt",
-      "added": "Added",
-      "overwriteTitle": "Mode already exists",
-      "overwriteConfirm": "\"{{name}}\" already exists. Re-adding it will overwrite the existing mode. Continue?"
+      "rewriteTitle": "Aggiungi modalità di riscrittura",
+      "translationTitle": "Aggiungi modalità di traduzione",
+      "custom": "Personalizzato",
+      "customSubtext": "Crea una modalità con il tuo nome e la tua istruzione",
+      "added": "Aggiunto",
+      "overwriteTitle": "La modalità esiste già",
+      "overwriteConfirm": "«{{name}}» esiste già. Aggiungerla di nuovo sovrascriverà la modalità esistente. Continuare?"
     },
     "shortcut": {
-      "clear": "Clear",
-      "clearAriaLabel": "Clear shortcut {{combo}}",
-      "recording": "Press keys…"
+      "clear": "Cancella",
+      "clearAriaLabel": "Cancella scorciatoia {{combo}}",
+      "recording": "Premi i tasti…"
     },
     "kind": {
-      "rewrite": "Rewrite",
-      "translation": "Translation"
+      "rewrite": "Riscrittura",
+      "translation": "Traduzione"
     },
     "translation": {
-      "enableHeading": "Enable offline translation",
-      "enableBody": "Translation runs fully offline through the embedded LLM. Choose an engine to get started.",
-      "chooseCta": "Choose translation engine",
-      "genericEngineNote": "Best-effort — quality varies by model",
-      "changeEngine": "Change engine",
-      "currentEngine": "Using: {{engine}}",
-      "engineGeneric": "Active model",
+      "enableHeading": "Abilita traduzione offline",
+      "enableBody": "La traduzione avviene completamente offline tramite il LLM integrato. Scegli un motore per iniziare.",
+      "chooseCta": "Scegli motore di traduzione",
+      "genericEngineNote": "Al meglio possibile — la qualità varia in base al modello",
+      "changeEngine": "Cambia motore",
+      "currentEngine": "In uso: {{engine}}",
+      "engineGeneric": "Modello attivo",
       "modal": {
-        "footnote": "Both options run fully offline. You can change this choice later in settings.",
-        "applying": "Applying…",
-        "applyFailed": "Could not change the translation engine.",
-        "activeBadge": "Currently used",
-        "activeButton": "Currently used",
-        "downloadingPercent": "Downloading… {{percent}}%",
-        "downloadBackgroundNote": "You can close this window — the download continues in the background.",
-        "verifying": "Verifying download…",
-        "title": "Set up offline translation",
-        "recommendedHeading": "Recommended: Gemma 3 4B",
-        "recommendedSubtext": "A versatile 4B model with clean, reliable translation across languages and idioms. ~2.5 GB download.",
-        "downloadRecommended": "Download Gemma 3 4B",
-        "useRecommended": "Use Gemma 3 4B",
-        "currentHeading": "Use your current model",
-        "currentSubtext": "Translate with {{model}} (your active model). Quality varies by model.",
-        "currentNone": "No local model is active yet. Download one from the model library first.",
-        "useCurrent": "Use current model",
-        "recommendOnlyHeading": "Gemma 3 4B recommended for translation",
-        "recommendOnlyBody": "For the best translation quality, select Gemma 3 4B in the model selector above. Translation runs through your single active model.",
-        "enableCta": "Enable offline translation"
+        "footnote": "Entrambe le opzioni funzionano completamente offline. Puoi cambiare questa scelta in seguito nelle impostazioni.",
+        "applying": "Applicazione…",
+        "applyFailed": "Impossibile cambiare il motore di traduzione.",
+        "activeBadge": "Attualmente in uso",
+        "activeButton": "Attualmente in uso",
+        "downloadingPercent": "Download in corso… {{percent}}%",
+        "downloadBackgroundNote": "Puoi chiudere questa finestra — il download continua in background.",
+        "verifying": "Verifica del download…",
+        "title": "Configura traduzione offline",
+        "recommendedHeading": "Consigliato: Gemma 3 4B",
+        "recommendedSubtext": "Un modello 4B versatile con traduzione affidabile in molte lingue e idiomi. ~2,5 GB di download.",
+        "downloadRecommended": "Scarica Gemma 3 4B",
+        "useRecommended": "Usa Gemma 3 4B",
+        "currentHeading": "Usa il modello attuale",
+        "currentSubtext": "Traduci con {{model}} (il tuo modello attivo). La qualità varia in base al modello.",
+        "currentNone": "Nessun modello locale ancora attivo. Scaricane uno prima dalla libreria dei modelli.",
+        "useCurrent": "Usa modello attuale",
+        "recommendOnlyHeading": "Gemma 3 4B consigliato per la traduzione",
+        "recommendOnlyBody": "Per la migliore qualità di traduzione, seleziona Gemma 3 4B nel selettore di modelli qui sopra. La traduzione avviene tramite il tuo unico modello attivo.",
+        "enableCta": "Abilita traduzione offline"
       },
-      "recommendNote": "Gemma 3 4B is recommended for translation. Choose it in the model selector above."
+      "recommendNote": "Gemma 3 4B è consigliato per la traduzione. Selezionalo nel selettore di modelli qui sopra."
     },
     "delete": {
-      "title": "Delete mode",
-      "confirm": "Delete \"{{name}}\"? This will also remove its shortcut binding.",
-      "ariaLabel": "Delete {{name}}"
+      "title": "Elimina modalità",
+      "confirm": "Eliminare «{{name}}»? Verrà rimossa anche la scorciatoia associata.",
+      "ariaLabel": "Elimina {{name}}"
     },
     "edit": {
-      "ariaLabel": "Edit {{name}}"
+      "ariaLabel": "Modifica {{name}}"
     },
     "noModel": {
-      "heading": "No local model selected",
-      "body": "Select or download a local model above to use Smart Modes."
+      "heading": "Nessun modello locale selezionato",
+      "body": "Seleziona o scarica un modello locale qui sopra per usare le Modalità Smart."
     },
     "defaultModes": {
       "cleanUp": "Pulisci",
