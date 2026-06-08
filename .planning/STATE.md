@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
 status: planning
-stopped_at: Completed 13-18-PLAN.md (gap [G11] prefix/base-key overlap conflict detection)
-last_updated: "2026-06-08T16:59:22.203Z"
+stopped_at: Completed 13-19-PLAN.md ([G12] translation recommendation-only closure)
+last_updated: "2026-06-08T17:01:04.678Z"
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 29
-  completed_plans: 27
+  completed_plans: 28
   percent: 95
 ---
 
@@ -78,6 +78,7 @@ Progress: [█████████░] ~95% (Phase 13: 2 gaps remain before 
 | Phase 13-smart-modes-ui-translation-presets-i18n P13 | 2 | 2 tasks | 1 files |
 | Phase 13-smart-modes-ui-translation-presets-i18n P12 | 20 | 2 tasks | 3 files |
 | Phase 13 P18 | 3 | 2 tasks | 1 files |
+| Phase 13-smart-modes-ui-translation-presets-i18n P19 | 15 | 3 tasks | 24 files |
 
 ## Accumulated Context
 
@@ -144,6 +145,7 @@ Progress: [█████████░] ~95% (Phase 13: 2 gaps remain before 
 - [Phase 13-smart-modes-ui-translation-presets-i18n]: [13-12] SmartModeShortcutChip: module-level resumeAll() helper + suspendAllShortcuts on record start; resumeAll on commitCombo (success+conflict), handleClickOutside, and effect cleanup — every exit path covered
 - [Phase 13-smart-modes-ui-translation-presets-i18n]: [13-17] set_translation_engine_to_embedded saves prior provider in previous_post_process_provider_id only when not already on embedded, preventing double-save on repeated Gemma clicks
 - [Phase 13]: combo_base uses rfind('+') checking modifier-only prefix; is_modifier_token lowercases only for this helper; set_smart_mode_binding unchanged (already maps conflict to BindingResponse error)
+- [Phase 13-smart-modes-ui-translation-presets-i18n]: [13-19/G12] Translation engine = recommendation-only. ONE active model chosen in main selector; modal informs without mutating provider/model state. set_translation_engine_to_embedded/restore + previous_post_process_provider_id fully removed.
 
 ### Pending Todos
 
@@ -159,6 +161,6 @@ Progress: [█████████░] ~95% (Phase 13: 2 gaps remain before 
 
 ## Session Continuity
 
-Last session: 2026-06-08T16:59:22.200Z
-Stopped at: Completed 13-18-PLAN.md (gap [G11] prefix/base-key overlap conflict detection)
+Last session: 2026-06-08T17:01:04.675Z
+Stopped at: Completed 13-19-PLAN.md ([G12] translation recommendation-only closure)
 Resume file: None
