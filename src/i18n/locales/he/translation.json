@@ -788,8 +788,12 @@
         "currentHeading": "Use your current model",
         "currentSubtext": "Translate with {{model}} (your active model). Quality varies by model.",
         "currentNone": "No local model is active yet. Download one from the model library first.",
-        "useCurrent": "Use current model"
-      }
+        "useCurrent": "Use current model",
+        "recommendOnlyHeading": "Gemma 3 4B recommended for translation",
+        "recommendOnlyBody": "For the best translation quality, select Gemma 3 4B in the model selector above. Translation runs through your single active model.",
+        "enableCta": "Enable offline translation"
+      },
+      "recommendNote": "Gemma 3 4B is recommended for translation. Choose it in the model selector above."
     },
     "delete": {
       "title": "Delete mode",
