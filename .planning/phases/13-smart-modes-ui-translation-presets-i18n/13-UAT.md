@@ -13,13 +13,19 @@ source:
   - 13-10-SUMMARY.md
   - 13-11-SUMMARY.md
 started: 2026-06-05T12:53:42Z
-updated: 2026-06-05T16:10:00Z
+updated: 2026-06-08T13:10:00Z
 retest:
+  date: 2026-06-08
+  closed_plans: [13-13, 13-14, 13-15]
+  resolved_gaps: 3  # test 3 [D8] fully; test 7 [B5] block-half; test 11 [C7] display-half
+  new_gaps: 2       # [E9] chip left/right modifier parity (test 7); [F10] Gemma engine switch no-op under Apple provider (test 11)
+  remaining_gaps: 2  # [E9], [F10] — see ## Gaps (status: failed)
+  next: "/gsd:plan-phase 13 --gaps"
+prior_retest:
   date: 2026-06-05
   closed_plans: [13-09, 13-10, 13-11]
   resolved_gaps: 4
-  remaining_gaps: 3  # tests 7, 11, 3 — see ## Gaps (status: failed)
-  next: "/gsd:plan-phase 13 --gaps"
+  remaining_gaps: 3  # tests 7, 11, 3 — closed in 13-13/14/15
 note: |
   Fresh full re-test (user choice). The first UAT was run at the 13-04 checkpoint
   and found 4 issues / 8 gaps; plans 13-05, 13-06, 13-07 were written to close them.
@@ -69,6 +75,8 @@ expected: Click a card's shortcut chip, press Cmd+1 (or similar modifier+key) �
 result: issue
 reported: "la persistance des combos est OK (Command+4 / Command+0 enregistrés). MAIS quand on essaie d'attribuer à une 2e carte un raccourci déjà utilisé, pendant la capture le raccourci EXISTANT se déclenche (lance la transcription) au lieu d'être capturé → aucun conflit affiché, aucune attribution. Vrai pour une touche simple (Command seul) comme pour les combos. Les raccourcis globaux ne sont pas suspendus pendant la capture."
 severity: major
+retest_2026-06-08: "COLLISION-BLOCK HALF RESOLVED (13-12 suspend-all + 13-13 backend collision check — duplicate combos now blocked with inline error). NEW DEFECT found: the chip does NOT distinguish left/right modifiers. User's main dictation (General tab) is CmdRight; binding 'Command Right' to the English-translation mode stored it as generic Cmd (logs: smart_mode_mode_translate_en → Cmd, HotkeyId 118), so it fires on EITHER command key — Command Left triggered the EN translation and Command Right produced mixed FR/EN output (transcribe on CmdRight + generic Cmd mode both firing). Root cause: chip captures via webview keydown; getKeyName (keyboard.ts:65-66) collapses MetaLeft/MetaRight → generic meta. The General-tab HandyKeysShortcutInput captures via the backend handy-keys-event recording stream which preserves CmdRight/CmdLeft. Chip was never switched to that stream (deferred sub-item of the original gap)."
+severity_retest: major
 
 ### 8. Clear a bound shortcut from the UI (gap-4 fix)
 expected: A bound shortcut shows an X (clear) button; clicking it removes the binding and the shortcut stops firing
@@ -91,6 +99,8 @@ expected: After the first engine choice, the Translation section header shows th
 result: issue
 reported: "le changement de moteur fonctionne avec le LLM embarqué (Qwen 2.5): bascule OK dans les deux sens. MAIS avec Apple Foundation/Apple Intelligence comme modèle actif: j'ouvre le modal, je choisis 'utiliser le moteur actuel', je ferme, la traduction espagnole se fait — mais quand je rouvre le modal, c'est encore Gemma qui est marqué activé. Le choix 'moteur actuel/generic' ne persiste pas quand le modèle actif est Apple Foundation."
 severity: major
+retest_2026-06-08: "DISPLAY HALF RESOLVED (13-14): with Apple Intelligence active the modal now correctly shows 'Use your current model → Apple Intelligence — Currently used' (user screenshot confirms). NEW DEFECT (opposite direction): clicking 'Use Gemma 3 4B' does NOT take — after a translation + reopen, the badge reverts to Apple Intelligence; the switch to the dedicated Gemma engine never persists. Root cause: enableWith() (TranslationEngineChoiceModal.tsx:73-96) ALWAYS persists setTranslationEngineChoice('generic_model'); 'Use Gemma' only additionally calls setActiveModel('gemma-3-4b'), but set_active_llm_model (commands/llm.rs:51-66) writes active_llm_model_id ONLY — it never flips post_process_provider_id off apple_intelligence. The 13-14 badge gate (providerId==='embedded') therefore stays false → recActive false, currentActiveSelected true → reverts to Apple. The modal conflates 'active GGUF model' with 'active post-process provider'."
+severity_retest: major
 
 ### 12. Compact chip layout + no active-mode UI (visual)
 expected: The shortcut control is a compact chip in the card header (not a full-width bar); there is no "set active" / primary post-process button anywhere — modes fire only via their own shortcuts
@@ -117,6 +127,13 @@ remaining: 3
   - test 11 — engine modal still shows Gemma when Apple Foundation active (truncation half fixed by 13-10; frontend badge precedence bug remains) [C7]
   - test 3  — seeded mode names not localized (English fallback values in non-en locales; names-only translation needed) [D8]
 next: /gsd:plan-phase 13 --gaps  (user chose formal gap-closure cycle, 2026-06-05)
+
+### Re-test 2026-06-08 (after gap-closure plans 13-13 [B5], 13-14 [C7], 13-15 [D8])
+resolved: 3  # test 3 [D8] seeded-name i18n (auto-verified — fr/es/de/ja/zh/ar names native, check:translations green); test 7 [B5] collision-BLOCK half (13-13 backend gate rejects duplicate combos w/ inline error); test 11 [C7] display half (13-14 — Apple Intelligence now shown correctly, user screenshot)
+new_gaps: 2
+  - test 7  [E9] — chip cannot bind left/right-distinct modifiers (CmdRight degrades to generic Cmd → cross-fires with General-tab CmdRight dictation). Major.
+  - test 11 [F10] — 'Use Gemma 3 4B' does not persist when active provider is Apple Intelligence (setActiveModel writes active_llm_model_id only; never flips post_process_provider_id → badge reverts to Apple, Gemma engine never engaged). Major.
+next: /gsd:plan-phase 13 --gaps  (close [E9] modifier-side parity + [F10] engine-switch provider flip)
 
 ## Gaps
 
@@ -271,3 +288,43 @@ next: /gsd:plan-phase 13 --gaps  (user chose formal gap-closure cycle, 2026-06-0
     - "Translate the ~10 smartModes.defaultModes.* NAME keys into real strings for all 20 shipped locales (names only)"
     - "Keep en as source of truth; do NOT translate the prompt/description bodies (user decision: names only)"
     - "Re-run bun run check:translations (must stay green at full key count)"
+
+- truth: "Smart Mode shortcut chip binds left/right-distinct modifiers (CmdRight/CmdLeft) the same way the General-tab shortcut input does"
+  status: failed
+  reason: "RE-TEST 2026-06-08 (newly surfaced while confirming test 7 [B5]): the collision-block half is now fixed (13-13), but the chip cannot capture a left/right-distinct modifier. User's main dictation (General tab) is CmdRight; binding 'Command Right' to the EN-translation mode stored generic Cmd (logs: smart_mode_mode_translate_en → Cmd, HotkeyId 118). Generic Cmd fires on EITHER command key → Command Left triggered the EN translation, Command Right gave mixed FR/EN output. The General tab correctly stored CmdRight (transcribe, HotkeyId 117/121). Parity is broken between the two inputs."
+  severity: major
+  test: 7
+  tag: E9
+  root_cause: "SmartModeShortcutChip captures via webview window keydown (SmartModeShortcutChip.tsx:107-133, getKeyName(e,osType)). getKeyName (src/lib/utils/keyboard.ts:65-66) maps BOTH MetaLeft and MetaRight → getModifierName('meta'), and likewise collapses ShiftLeft/Right, ControlLeft/Right, AltLeft/Right (keyboard.ts:59-68) — so the webview path can never produce a side-distinct modifier. The General-tab HandyKeysShortcutInput captures via the backend 'handy-keys-event' recording stream (HandyKeysShortcutInput.tsx:82-84, startRecording 173-186) which preserves CmdRight/CmdLeft. The chip was never switched to that backend stream — this is the deferred 'capture via the backend recording stream when keyboard_implementation===handy_keys' sub-item from the original test-7 gap (13-12/13-13 added suspend-all + backend collision check but kept webview capture). Because the combo is degraded to Cmd BEFORE setSmartModeBinding runs, the 13-13 collision check cannot catch it (generic Cmd != CmdRight, so no conflict is reported and the generic binding persists and cross-fires)."
+  artifacts:
+    - path: "src/components/settings/post-processing/SmartModeShortcutChip.tsx"
+      issue: "Lines 107-133,169-171: captures via webview window keydown + getKeyName; no left/right side. Does not use the backend handy-keys-event recording stream the General tab uses."
+    - path: "src/lib/utils/keyboard.ts"
+      issue: "Lines 59-68: MetaLeft/MetaRight (+ Shift/Control/Alt L/R) both collapse to a single generic modifier name — webview capture is structurally side-blind."
+    - path: "src/components/settings/HandyKeysShortcutInput.tsx"
+      issue: "Lines 82-84,173-186: working reference — captures via backend recording stream, preserves CmdRight/CmdLeft."
+  missing:
+    - "When keyboard_implementation==='handy_keys', capture the chip's shortcut via the backend handy-keys-event recording stream (mirror HandyKeysShortcutInput) so left/right-distinct modifiers (CmdRight/CmdLeft, OptRight, etc.) are preserved end-to-end"
+    - "Ensure the captured side-distinct combo string matches what set_smart_mode_binding/find_conflicting_binding compare against, so a CmdRight smart-mode binding both persists as CmdRight AND collides correctly with the General-tab CmdRight dictation"
+    - "Secondary (observed in logs): resume_all_shortcuts logs many 'Hotkey already registered' warnings — resumeAll is called on multiple exit paths (commitCombo + effect cleanup) and the backend re-register is not idempotent; make resume_all_shortcuts tolerate already-registered hotkeys (or guard double-resume) to keep logs clean and avoid leaving a stale suspend state"
+  debug_session: ""
+
+- truth: "Choosing 'Use Gemma 3 4B' in the translation engine modal actually switches the translation engine to Gemma and persists across reopen (even when the active provider is Apple Intelligence)"
+  status: failed
+  reason: "RE-TEST 2026-06-08 (newly surfaced while confirming test 11 [C7]): the display half is resolved (Apple Intelligence shown correctly), but switching FROM 'use current model' TO the dedicated Gemma does not take. User clicks 'Use Gemma 3 4B', modal closes, runs a translation, reopens → badge is back on 'Use your current model — Apple Intelligence — Currently used'. The Gemma engine is never engaged; translation keeps using Apple Intelligence."
+  severity: major
+  test: 11
+  tag: F10
+  root_cause: "enableWith() (TranslationEngineChoiceModal.tsx:73-96) ALWAYS persists commands.setTranslationEngineChoice('generic_model') for BOTH options; the recommended-Gemma path differs only by an extra useLlmModelStore.setActiveModel('gemma-3-4b') (line 78). setActiveModel → set_active_llm_model (commands/llm.rs:51-66) loads the GGUF and writes settings.active_llm_model_id ONLY — it never changes settings.post_process_provider_id (stays 'apple_intelligence'). The 13-14 badge gate resolves activeIsRecommended = isEmbeddedActive && activeModelId==='gemma-3-4b' where isEmbeddedActive = providerId==='embedded'. Provider is still apple_intelligence → isEmbeddedActive false → activeIsRecommended false → recActive false, currentActiveSelected true → modal reverts to Apple. The modal models translation-engine choice as a single 'generic_model' value + active GGUF id, conflating 'active GGUF model' with 'active post-process provider'; choosing Gemma while a non-embedded provider is active cannot express itself. (Mirror of [C7]: 13-14 fixed the display but exposed that the switch action never flips the provider.)"
+  artifacts:
+    - path: "src/components/settings/post-processing/TranslationEngineChoiceModal.tsx"
+      issue: "Lines 73-96: enableWith() hardcodes setTranslationEngineChoice('generic_model') for both buttons; 'Use Gemma' only calls setActiveModel(gemma) which does not switch the active provider. Lines 64-70: recActive/currentActiveSelected derive entirely from activeIsRecommended (provider-gated), so a Gemma choice under an Apple provider can never show as active."
+    - path: "src-tauri/src/commands/llm.rs"
+      issue: "Lines 51-66 set_active_llm_model: writes active_llm_model_id only; never touches post_process_provider_id. Lines 75-85 set_translation_engine_choice: persists choice but choice='generic_model' is identical for both options, so it carries no Gemma-vs-current signal."
+    - path: "src/components/settings/post-processing/SmartModesSection.tsx"
+      issue: "13-14 gate: activeIsRecommended = isEmbeddedActive && activeModelId==='gemma-3-4b'; correct for display but means the engine choice must actually flip providerId to 'embedded' for the Gemma badge to ever show."
+  missing:
+    - "Make 'Use Gemma 3 4B' actually switch the active post-process provider to the embedded/local-LLM provider (set post_process_provider_id='embedded' + active_llm_model_id='gemma-3-4b') so providerId==='embedded' and the badge + translation engine both reflect Gemma"
+    - "Verify the translation path consumes the switched engine end-to-end (run_translation / post_process uses the embedded Gemma, not the lingering Apple provider) — confirm with a live Spanish translation after switching"
+    - "Define the reverse: 'Use your current model' restores the user's prior real provider; ensure choosing it after Gemma flips post_process_provider_id back. Persist enough to distinguish the two choices across reopen (don't collapse both to 'generic_model' if that loses the Gemma intent)."
+  debug_session: ""
