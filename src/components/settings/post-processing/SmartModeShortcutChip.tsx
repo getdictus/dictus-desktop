@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { X } from "lucide-react";
 import { listen } from "@tauri-apps/api/event";
 import { commands } from "@/bindings";
@@ -45,6 +46,30 @@ const isModifier = (k: string) => MODIFIERS.includes(k.toLowerCase());
 const resumeAll = () => {
   commands.resumeAllShortcuts().catch(() => {});
 };
+
+/**
+ * Maps a structured backend binding error payload to a localized string.
+ *
+ * Backend payloads (from 13-20):
+ *   SHORTCUT_CONFLICT|exact_duplicate|{name}
+ *   SHORTCUT_CONFLICT|base_overlap|{name}|{base}
+ *
+ * Unknown or legacy errors fall back to the generic conflict message.
+ */
+function localizeBindingError(
+  raw: string | null | undefined,
+  t: TFunction,
+): string {
+  if (raw && raw.startsWith("SHORTCUT_CONFLICT|")) {
+    const [, code, name = "", base = ""] = raw.split("|");
+    if (code === "base_overlap") {
+      return t("smartModes.card.shortcutConflictBase", { name, base });
+    }
+    return t("smartModes.card.shortcutConflict", { name });
+  }
+  // Unknown / legacy error → fall back to the generic conflict message
+  return raw ?? t("smartModes.card.shortcutConflict", { name: "" });
+}
 
 export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
   modeId,
@@ -104,10 +129,7 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
           resumeAll();
           onBound();
         } else {
-          const errorMsg =
-            response.error ??
-            t("smartModes.card.shortcutConflict", { name: "" });
-          setConflict(errorMsg);
+          setConflict(localizeBindingError(response.error, t));
           resumeAll();
         }
       }
