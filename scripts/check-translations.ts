@@ -1,3 +1,15 @@
+/**
+ * Translation consistency checker.
+ *
+ * Default mode (no flags): checks that every non-English locale has exactly the
+ * same set of keys as the English reference. Exit 0 = all keys present, exit 1 = missing/extra.
+ *
+ * --check-untranslated (opt-in): additionally flags keys whose locale value is
+ * byte-equal to the English source value (i.e. still using the English fallback),
+ * minus the UNTRANSLATED_ALLOWLIST of legitimately-identical keys. Exit non-zero
+ * if any non-allowlisted English-fallback values are found.
+ */
+
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -87,6 +99,104 @@ function loadTranslationFile(lang: string): TranslationData | null {
     console.error(`  ${(error as Error).message}`);
     return null;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Allowlist for --check-untranslated mode
+// Keys that are legitimately identical across all locales (proper nouns,
+// brand names, keyboard literals, UI placeholders that must stay as-is).
+// ---------------------------------------------------------------------------
+
+/** Returns true if the given dotted key path is on the allowlist. */
+function isAllowlisted(dotKey: string): boolean {
+  // Exact matches
+  const UNTRANSLATED_ALLOWLIST_EXACT: string[] = [
+    "settings.about.acknowledgments.handy.title",
+    "settings.about.acknowledgments.whisper.title",
+    "settings.advanced.autoSubmit.options.cmdEnter",
+    "settings.advanced.autoSubmit.options.ctrlEnter",
+    "settings.advanced.autoSubmit.options.superEnter",
+    "settings.postProcessing.api.apiKey.placeholder",
+    "settings.postProcessing.api.baseUrl.placeholder",
+  ];
+  if (UNTRANSLATED_ALLOWLIST_EXACT.includes(dotKey)) return true;
+
+  // Prefix + suffix: onboarding.models.*.name
+  if (dotKey.startsWith("onboarding.models.") && dotKey.endsWith(".name")) {
+    return true;
+  }
+
+  return false;
+}
+
+function checkUntranslated(referenceData: TranslationData): boolean {
+  console.log(colorize("\n🔍 Untranslated (English-fallback) Check\n", "blue"));
+
+  const referenceKeyPaths = getAllKeyPaths(referenceData);
+  let hasUntranslated = false;
+
+  for (const lang of LANGUAGES) {
+    const langData = loadTranslationFile(lang);
+    if (!langData) continue;
+
+    const untranslatedKeys: string[] = [];
+
+    for (const keyPath of referenceKeyPaths) {
+      const dotKey = keyPath.join(".");
+      if (isAllowlisted(dotKey)) continue;
+
+      const enValue = (() => {
+        let cur: unknown = referenceData;
+        for (const k of keyPath) {
+          if (typeof cur !== "object" || cur === null) return undefined;
+          cur = (cur as Record<string, unknown>)[k];
+        }
+        return cur;
+      })();
+      if (typeof enValue !== "string" || enValue.trim() === "") continue;
+
+      const localeValue = (() => {
+        let cur: unknown = langData;
+        for (const k of keyPath) {
+          if (typeof cur !== "object" || cur === null) return undefined;
+          cur = (cur as Record<string, unknown>)[k];
+        }
+        return cur;
+      })();
+
+      if (localeValue === enValue) {
+        untranslatedKeys.push(dotKey);
+      }
+    }
+
+    if (untranslatedKeys.length > 0) {
+      hasUntranslated = true;
+      console.log(
+        colorize(
+          `✗ ${lang.toUpperCase()}: ${untranslatedKeys.length} untranslated key(s)`,
+          "red",
+        ),
+      );
+      untranslatedKeys.slice(0, 10).forEach((k) => {
+        console.log(`    - ${k}`);
+      });
+      if (untranslatedKeys.length > 10) {
+        console.log(
+          colorize(
+            `    ... and ${untranslatedKeys.length - 10} more`,
+            "yellow",
+          ),
+        );
+      }
+    } else {
+      console.log(
+        colorize(`✓ ${lang.toUpperCase()}: No untranslated keys`, "green"),
+      );
+    }
+  }
+
+  console.log("─".repeat(60));
+  return hasUntranslated;
 }
 
 function validateTranslations(): void {
@@ -221,4 +331,32 @@ function validateTranslations(): void {
 }
 
 // Run validation
-validateTranslations();
+const CHECK_UNTRANSLATED = process.argv.includes("--check-untranslated");
+
+if (CHECK_UNTRANSLATED) {
+  // Load reference for untranslated check
+  const refData = loadTranslationFile(REFERENCE_LANG);
+  if (!refData) {
+    console.error(
+      colorize(`\n✗ Failed to load reference file (${REFERENCE_LANG})`, "red"),
+    );
+    process.exit(1);
+  }
+  const hasUntranslated = checkUntranslated(refData);
+  if (hasUntranslated) {
+    console.log(
+      colorize(
+        "\n✗ Untranslated check failed: English-fallback values found (see above).",
+        "red",
+      ),
+    );
+    process.exit(1);
+  } else {
+    console.log(
+      colorize("\n✓ No untranslated keys found!", "green"),
+    );
+    process.exit(0);
+  }
+} else {
+  validateTranslations();
+}
