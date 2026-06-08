@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
 status: planning
-stopped_at: "Checkpoint: 13-17 Task 3 human-verify (Gemma engine switch persists + translates under Apple provider awaiting live-build verification)"
-last_updated: "2026-06-08T14:00:13.037Z"
+stopped_at: "13-16 PASS live; 13-17 superseded by recommendation-only decision. 2 new gaps [G11][G12] → /gsd:plan-phase 13 --gaps"
+last_updated: "2026-06-08T16:35:00.000Z"
 progress:
   total_phases: 4
   completed_phases: 3
@@ -24,19 +24,22 @@ See: .planning/PROJECT.md (updated 2026-05-29 after starting milestone v1.3)
 
 ## Current Position
 
-Phase: 13 of 13 (Smart Modes UI + Translation Engine + Presets i18n) — IN PROGRESS (gap-closure round 2 needed)
-Plan: 13-01..13-11 have SUMMARYs. Gap-closure run 2026-06-05 executed 13-09 (backend binding/identity dedup + suspend/resume), 13-10 (Apple Intelligence task-agnostic path — live-verified), 13-11 (picker dedup + ${output} hint). 13-12 (frontend conflict-capture + engine modal) committed tasks 1-2 (262576b, 89e17d6) but its Task-3 live verify FAILED. 13-08 (re-verify) Task-1 gates green (64deeeb) but Task-2 live re-test found 3 remaining gaps. No 13-08/13-12 SUMMARY (incomplete). Phase NOT marked complete.
-Status: Live re-test resolved 4 of 6 prior gaps + truncation. 3 gaps remain → see .planning/phases/13-.../13-UAT.md ## Gaps (status: failed).
+Phase: 13 of 13 (Smart Modes UI + Translation Engine + Presets i18n) — IN PROGRESS (gap-closure round 3 needed)
+Plan: 13-16 + 13-17 executed 2026-06-08. 13-16 ([E9] chip side-distinct modifier parity: backend handy-keys-event capture + idempotent resume_all_shortcuts, commits 366fe9a/8a7c90e) VERIFIED LIVE PASS. 13-17 ([F10] Gemma provider-switch, commits ef8e559/30b6078) works mechanically + persists, but live UAT revealed it re-points EVERY Smart Mode at Gemma (single global active model) → UX rejected. Both have SUMMARYs. 13-08 (re-verify) still incomplete (superseded by ongoing gap rounds). Phase NOT marked complete.
+Status: [E9] resolved. [F10] superseded by design decision. 2 new gaps remain → see .planning/phases/13-.../13-UAT.md ## Gaps (status: failed).
 
-### Remaining gaps (→ /gsd:plan-phase 13 --gaps; user chose formal cycle 2026-06-05)
-- **[B5] test 7** — duplicate shortcut not blocked/warned. Capture/suspend works (13-12); BACKEND `set_smart_mode_binding`/`change_binding` must reject a combo already bound to a different mode (return success:false so the chip shows the existing conflict UI). Logs: `resume_all_shortcuts: Hotkey already registered: Cmd+2`.
-- **[C7] test 11** — engine modal shows Gemma when Apple Foundation active. FRONTEND `SmartModesSection.tsx:111-114` precedence `activeModelName ?? providerLabel` prefers lingering GGUF id; gate on `post_process_provider_id` (model name only when embedded provider active, else provider label; activeIsRecommended false for non-GGUF).
-- **[D8] test 3** — seeded mode names show English in non-en app. i18n DATA only: translate ~10 `smartModes.defaultModes.*` NAME keys across all 20 locales (names only — user decision; descriptions stay English). Architecture already correct (SmartModeCard.tsx:73-75).
+### Remaining gaps (→ /gsd:plan-phase 13 --gaps)
+- **[G11] test 7** — combo prefix/base-key collision. Binding a combo whose FIRST key is already a shortcut (e.g. CmdLeft bound + CmdLeft+1) is accepted but never fires (OS triggers the base key on press before +1). BACKEND: extend find_conflicting_binding (mod.rs ~1118) with a prefix/base-key overlap rule → return success:false so the existing chip conflict UI fires. No frontend redesign.
+- **[G12] test 11** — translation engine → recommendation-only. DECISION 2026-06-08: do NOT ship a second in-modal model-switcher (it mutates the single global active model). Revert 13-17's provider-switch (set_translation_engine_to_embedded/restore + previous_post_process_provider_id), convert the modal/section to an informational "Gemma 3 4B recommended for translation" note; user picks the model via the existing main selector. Two-models-in-RAM rejected for v1.3 (memory + contradicts "translation routes through the active model").
+
+### Decisions this round (2026-06-08)
+- [13-16] Chip dual capture path: backend handy-keys-event stream on handy_keys (preserves CmdLeft/CmdRight), webview keydown only for 'tauri'; pass backend hotkey_string verbatim (never via getKeyName). resume_all_shortcuts idempotent (clean-slate unregister-before-register).
+- [F10/G12] Translation engine = recommendation-only. ONE active post-process model chosen in the main selector; translation runs through it. No per-task model routing in v1.3.
 
 ### Next session (post /clear) — separate NEW WORK (not gap closure)
 - **Improve/adapt the default Smart Mode prompts.** User finds output quality on the default prompts not quite matching intent; refine wording. Fresh task.
 
-Progress: [█████████░] ~95% (Phase 13: 3 gaps remain before closure)
+Progress: [█████████░] ~95% (Phase 13: 2 gaps remain before closure)
 
 ## Performance Metrics
 

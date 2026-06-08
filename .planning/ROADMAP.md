@@ -129,8 +129,8 @@
 - [x] 13-13-PLAN.md — Gap closure (backend): cross-mode collision detection in set_smart_mode_binding/find_conflicting_binding ([B5] test 7 block-half) [Wave 1]
 - [x] 13-14-PLAN.md — Gap closure (frontend): engine badge gated on post_process_provider_id==='embedded' ([C7] test 11 display-half) [Wave 1]
 - [x] 13-15-PLAN.md — Gap closure (i18n): seeded Smart Mode NAME keys translated across all 20 locales ([D8] test 3) [Wave 1]
-- [ ] 13-16-PLAN.md — Gap closure ([E9] test 7): chip captures via backend handy-keys-event stream on handy_keys to preserve left/right-distinct modifiers (CmdRight) + idempotent resume_all_shortcuts (MODE-04, MODE-05) [Wave 1]
-- [ ] 13-17-PLAN.md — Gap closure ([F10] test 11): 'Use Gemma 3 4B' flips post_process_provider_id to 'embedded' + reverse provider restore (TRANS-02) [Wave 1]
+- [x] 13-16-PLAN.md — Gap closure ([E9] test 7): chip captures via backend handy-keys-event stream on handy_keys to preserve left/right-distinct modifiers (CmdRight) + idempotent resume_all_shortcuts (MODE-04, MODE-05) [Wave 1] — VERIFIED LIVE PASS; new gap [G11] surfaced
+- [x] 13-17-PLAN.md — Gap closure ([F10] test 11): provider-switch built + works mechanically, but UX SUPERSEDED → recommendation-only [G12] (TRANS-02) [Wave 1]
 
 ## Progress
 
@@ -148,4 +148,4 @@
 | 10. Prerequisite Gate | 3/3 | Complete    | 2026-06-01 | 2026-06-01 |
 | 11. LLM Runtime Foundation | 3/4 | In Progress|  | - |
 | 12. Smart Modes Data Layer | 3/3 | Complete    | 2026-06-03 | - |
-| 13. Smart Modes UI + Translation + i18n | 14/15 | In Progress|  | - |
+| 13. Smart Modes UI + Translation + i18n | 16/17 | In Progress|  | - |

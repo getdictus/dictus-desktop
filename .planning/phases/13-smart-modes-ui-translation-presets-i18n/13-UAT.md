@@ -16,12 +16,18 @@ started: 2026-06-05T12:53:42Z
 updated: 2026-06-08T13:10:00Z
 retest:
   date: 2026-06-08
+  closed_plans: [13-16, 13-17]
+  resolved_gaps: 1  # [E9] chip side-distinct modifier parity — verified live PASS (13-16)
+  superseded_gaps: 1  # [F10] Gemma provider-switch built+works but UX rejected → recommendation-only [G12]
+  new_gaps: 2       # [G11] combo prefix/base-key collision (test 7); [G12] translation engine → recommendation-only (test 11)
+  remaining_gaps: 2  # [G11], [G12] — see ## Gaps (status: failed)
+  next: "/gsd:plan-phase 13 --gaps"
+prior_retest:
+  date: 2026-06-08
   closed_plans: [13-13, 13-14, 13-15]
   resolved_gaps: 3  # test 3 [D8] fully; test 7 [B5] block-half; test 11 [C7] display-half
   new_gaps: 2       # [E9] chip left/right modifier parity (test 7); [F10] Gemma engine switch no-op under Apple provider (test 11)
-  remaining_gaps: 2  # [E9], [F10] — see ## Gaps (status: failed)
-  next: "/gsd:plan-phase 13 --gaps"
-prior_retest:
+earlier_retest:
   date: 2026-06-05
   closed_plans: [13-09, 13-10, 13-11]
   resolved_gaps: 4
@@ -290,7 +296,8 @@ next: /gsd:plan-phase 13 --gaps  (close [E9] modifier-side parity + [F10] engine
     - "Re-run bun run check:translations (must stay green at full key count)"
 
 - truth: "Smart Mode shortcut chip binds left/right-distinct modifiers (CmdRight/CmdLeft) the same way the General-tab shortcut input does"
-  status: failed
+  status: resolved
+  resolved_by: "13-16 (backend handy-keys-event capture path in SmartModeShortcutChip + idempotent resume_all_shortcuts). Live re-test 2026-06-08: PASS — CmdLeft binds side-distinct, CmdRight blocked as conflict with General-tab dictation, side preserved end-to-end, no log spam."
   reason: "RE-TEST 2026-06-08 (newly surfaced while confirming test 7 [B5]): the collision-block half is now fixed (13-13), but the chip cannot capture a left/right-distinct modifier. User's main dictation (General tab) is CmdRight; binding 'Command Right' to the EN-translation mode stored generic Cmd (logs: smart_mode_mode_translate_en → Cmd, HotkeyId 118). Generic Cmd fires on EITHER command key → Command Left triggered the EN translation, Command Right gave mixed FR/EN output. The General tab correctly stored CmdRight (transcribe, HotkeyId 117/121). Parity is broken between the two inputs."
   severity: major
   test: 7
@@ -310,7 +317,8 @@ next: /gsd:plan-phase 13 --gaps  (close [E9] modifier-side parity + [F10] engine
   debug_session: ""
 
 - truth: "Choosing 'Use Gemma 3 4B' in the translation engine modal actually switches the translation engine to Gemma and persists across reopen (even when the active provider is Apple Intelligence)"
-  status: failed
+  status: superseded
+  superseded_by: "[G12] — design decision 2026-06-08. 13-17 implemented the provider-switch (set_translation_engine_to_embedded / restore) and it works mechanically + persists, BUT live UAT showed it re-points EVERY Smart Mode at Gemma (single active model, global mutation). User decided the translation engine becomes recommendation-only (one active model via the main selector; modal shows an informational 'Gemma recommended' note). Two-models-in-RAM routing rejected for v1.3. [G12] will revert 13-17's global-mutation path and convert the modal to informational."
   reason: "RE-TEST 2026-06-08 (newly surfaced while confirming test 11 [C7]): the display half is resolved (Apple Intelligence shown correctly), but switching FROM 'use current model' TO the dedicated Gemma does not take. User clicks 'Use Gemma 3 4B', modal closes, runs a translation, reopens → badge is back on 'Use your current model — Apple Intelligence — Currently used'. The Gemma engine is never engaged; translation keeps using Apple Intelligence."
   severity: major
   test: 11
@@ -327,4 +335,45 @@ next: /gsd:plan-phase 13 --gaps  (close [E9] modifier-side parity + [F10] engine
     - "Make 'Use Gemma 3 4B' actually switch the active post-process provider to the embedded/local-LLM provider (set post_process_provider_id='embedded' + active_llm_model_id='gemma-3-4b') so providerId==='embedded' and the badge + translation engine both reflect Gemma"
     - "Verify the translation path consumes the switched engine end-to-end (run_translation / post_process uses the embedded Gemma, not the lingering Apple provider) — confirm with a live Spanish translation after switching"
     - "Define the reverse: 'Use your current model' restores the user's prior real provider; ensure choosing it after Gemma flips post_process_provider_id back. Persist enough to distinguish the two choices across reopen (don't collapse both to 'generic_model' if that loses the Gemma intent)."
+  debug_session: ""
+
+- truth: "Binding a combo whose prefix (base) key is already a shortcut is blocked, never silently unreachable"
+  status: failed
+  reason: "LIVE TEST 2026-06-08 (surfaced while confirming [E9] 13-16 pass): with a base key already bound (e.g. Command Left = a dictation/Smart Mode shortcut), binding a combo that STARTS with that same key (Command Left + 1) produces a binding that never fires the intended mode — the OS triggers the base-key action on the prefix press before the '+1' is registered. User reproduced: CmdLeft alone ran one mode; CmdLeft+1 still ran the CmdLeft mode (the '+1' is unreachable). The combo is accepted with no warning."
+  severity: major
+  test: 7
+  tag: G11
+  root_cause: "find_conflicting_binding (src-tauri/src/shortcut/mod.rs ~1118-1135, used by set_smart_mode_binding) compares the FULL raw combo string for equality only. It has no rule for prefix/base-key overlap: a combo 'command_left+digit1' does not string-equal the existing 'command_left' binding, so no conflict is reported. But at the OS level a modifier/base key that is itself a complete binding fires on press (push-to-talk / commit-on-release semantics) before any following main key, making the combo physically injouable. There is no validation that the LEADING key of a new combo is free."
+  artifacts:
+    - path: "src-tauri/src/shortcut/mod.rs"
+      issue: "find_conflicting_binding only does full-string equality; no prefix/base-key overlap rule. set_smart_mode_binding accepts a combo whose first key already belongs to another binding."
+    - path: "src/components/settings/post-processing/SmartModeShortcutChip.tsx"
+      issue: "Surfaces response.error inline already (88-95) — once the backend returns success:false for a prefix collision, the existing conflict UI fires; no frontend redesign needed."
+  missing:
+    - "Extend find_conflicting_binding (or set_smart_mode_binding's commit check) with a prefix/base-key overlap rule: reject a new combo if its leading key (the base modifier or first key) is already bound — alone or as another combo's base — to a different binding, returning success:false with a clear conflict error."
+    - "Decide the symmetric case: an existing combo whose base equals a newly-bound base key. Document which direction(s) are blocked."
+    - "Confirm the inline chip conflict UI displays the new error message (no new frontend logic, just the error string)."
+  debug_session: ""
+
+- truth: "The translation engine modal does not act as a second model-switcher; it recommends a model and the user selects via the single main model selector"
+  status: failed
+  reason: "DESIGN DECISION 2026-06-08 (replaces [F10] provider-switch). 13-17's 'Use Gemma 3 4B' button re-points EVERY Smart Mode at Gemma because the app has a single active post-process model and the button mutates that global state. User decided: the translation engine choice is recommendation-only — show an informational note ('Gemma 3 4B recommended for translation'), keep ONE active model selected via the existing main model selector, and remove the in-modal model-switch buttons. Two-models-in-RAM routing rejected for v1.3 (memory cost; contradicts the established 'translation routes through the active LLM model' decision)."
+  severity: major
+  test: 11
+  tag: G12
+  root_cause: "The translation-engine modal was conceived (13-01/13-03) to pick a translation engine (originally the dedicated TranslateGemma vs generic). After TranslateGemma was dropped and translation was routed through the active LLM model, the modal's 'switch to Gemma' became a redundant second model-switcher that mutates the single global active model — confusing and contradicting the one-active-model mental model. 13-17 made the switch persist (provider flip) but that only made the global mutation more visible."
+  artifacts:
+    - path: "src/components/settings/post-processing/TranslationEngineChoiceModal.tsx"
+      issue: "Model-switch buttons (setTranslationEngineToEmbedded / restoreTranslationEngineProvider wiring from 13-17) must become an informational recommendation; remove the in-modal model switch."
+    - path: "src-tauri/src/commands/llm.rs"
+      issue: "set_translation_engine_to_embedded / restore_translation_engine_provider (13-17) — the global-mutation path to revert/remove."
+    - path: "src-tauri/src/settings.rs"
+      issue: "previous_post_process_provider_id (13-17) — remove if the provider-switch is fully reverted."
+    - path: "src/components/settings/post-processing/SmartModesSection.tsx"
+      issue: "Translation section: surface the recommendation + point users to the main model selector instead of opening a switch modal."
+  missing:
+    - "Revert 13-17's global provider mutation (set_translation_engine_to_embedded / restore_translation_engine_provider + previous_post_process_provider_id) cleanly, regenerate bindings."
+    - "Convert the translation engine modal/section to recommendation-only: informational copy ('Gemma 3 4B recommended for translation'), no model-switch buttons; reuse/extend i18n keys (no hardcoded strings)."
+    - "Ensure translation still runs through whatever single active model the user picked via the main selector (no regression to run_translation / post_process path)."
+    - "i18n: add/repurpose keys for the recommendation note across en + 19 locales (English fallback per established precedent), keep check:translations green."
   debug_session: ""
