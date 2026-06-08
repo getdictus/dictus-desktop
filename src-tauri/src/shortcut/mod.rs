@@ -1170,9 +1170,7 @@ fn combo_base(combo: &str) -> &str {
         // All segments in the prefix must be modifiers for this to be the
         // modifier-base split.  A single leading modifier (e.g. "command_left")
         // or a chain ("ctrl+option") both qualify.
-        let all_modifier = prefix
-            .split('+')
-            .all(|seg| is_modifier_token(seg));
+        let all_modifier = prefix.split('+').all(is_modifier_token);
         if all_modifier {
             return prefix;
         }
@@ -1783,10 +1781,7 @@ mod tests {
         bindings.insert(k, v);
         let result =
             find_conflicting_binding(&bindings, "smart_mode_mode_a", "command_left+digit1");
-        assert_eq!(
-            result, None,
-            "different base keys must not collide"
-        );
+        assert_eq!(result, None, "different base keys must not collide");
     }
 
     #[test]
