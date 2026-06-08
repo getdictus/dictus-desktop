@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
 status: planning
-stopped_at: Completed 13-20-PLAN.md ([G13] structured conflict error backend)
-last_updated: "2026-06-08T19:04:11.112Z"
+stopped_at: Completed 13-22-PLAN.md (G14 audit + untranslated guard + G15 EN baseline)
+last_updated: "2026-06-08T19:05:33.214Z"
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 34
-  completed_plans: 30
+  completed_plans: 31
   percent: 95
 ---
 
@@ -83,6 +83,7 @@ Progress: [█████████░] ~95% (Phase 13: 3 UX/i18n gaps remain
 | Phase 13 P18 | 3 | 2 tasks | 1 files |
 | Phase 13-smart-modes-ui-translation-presets-i18n P19 | 15 | 3 tasks | 24 files |
 | Phase 13 P20 | 3 | 2 tasks | 1 files |
+| Phase 13 P22 | 15 | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -151,6 +152,9 @@ Progress: [█████████░] ~95% (Phase 13: 3 UX/i18n gaps remain
 - [Phase 13]: combo_base uses rfind('+') checking modifier-only prefix; is_modifier_token lowercases only for this helper; set_smart_mode_binding unchanged (already maps conflict to BindingResponse error)
 - [Phase 13-smart-modes-ui-translation-presets-i18n]: [13-19/G12] Translation engine = recommendation-only. ONE active model chosen in main selector; modal informs without mutating provider/model state. set_translation_engine_to_embedded/restore + previous_post_process_provider_id fully removed.
 - [Phase 13-20]: ConflictKind enum serde snake_case; CandidateBaseIsExisting+CandidateIsBaseOfExisting collapse to base_overlap in SHORTCUT_CONFLICT payload; BindingResponse.error shape unchanged (Option<String>)
+- [Phase 13]: [13-22] 91 keys equal to EN in all 19 locales; 69 to translate (62 smartModes.*, 3 simulateUpdaterRestart, 2 errors.boundary, 1 translateGemma4b.description); 22 allowlisted
+- [Phase 13]: [13-22/G15] Gemma 3 4B description reworded to 'Excellent for translation — versatile and multilingual' in EN source + Rust catalogue fallback
+- [Phase 13]: [13-22] --check-untranslated opt-in flag + UNTRANSLATED_ALLOWLIST added to check-translations.ts; default CI behavior unchanged
 
 ### Pending Todos
 
@@ -166,6 +170,6 @@ Progress: [█████████░] ~95% (Phase 13: 3 UX/i18n gaps remain
 
 ## Session Continuity
 
-Last session: 2026-06-08T19:04:11.109Z
-Stopped at: Completed 13-20-PLAN.md ([G13] structured conflict error backend)
+Last session: 2026-06-08T19:05:33.211Z
+Stopped at: Completed 13-22-PLAN.md (G14 audit + untranslated guard + G15 EN baseline)
 Resume file: None
