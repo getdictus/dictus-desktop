@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
 status: planning
-stopped_at: Completed 13-19-PLAN.md ([G12] translation recommendation-only closure)
-last_updated: "2026-06-08T17:01:04.678Z"
+stopped_at: "13-18 [G11] + 13-19 [G12] PASS live; 13-08 re-verify checkpoint done. 3 new gaps [G13][G14][G15] (UX/i18n) → /gsd:plan-phase 13 --gaps round 4"
+last_updated: "2026-06-08T20:45:00.000Z"
 progress:
   total_phases: 4
   completed_phases: 3
@@ -24,22 +24,25 @@ See: .planning/PROJECT.md (updated 2026-05-29 after starting milestone v1.3)
 
 ## Current Position
 
-Phase: 13 of 13 (Smart Modes UI + Translation Engine + Presets i18n) — IN PROGRESS (gap-closure round 3 needed)
-Plan: 13-16 + 13-17 executed 2026-06-08. 13-16 ([E9] chip side-distinct modifier parity: backend handy-keys-event capture + idempotent resume_all_shortcuts, commits 366fe9a/8a7c90e) VERIFIED LIVE PASS. 13-17 ([F10] Gemma provider-switch, commits ef8e559/30b6078) works mechanically + persists, but live UAT revealed it re-points EVERY Smart Mode at Gemma (single global active model) → UX rejected. Both have SUMMARYs. 13-08 (re-verify) still incomplete (superseded by ongoing gap rounds). Phase NOT marked complete.
-Status: [E9] resolved. [F10] superseded by design decision. 2 new gaps remain → see .planning/phases/13-.../13-UAT.md ## Gaps (status: failed).
+Phase: 13 of 13 (Smart Modes UI + Translation Engine + Presets i18n) — IN PROGRESS (gap-closure round 4 needed)
+Plan: 13-18 + 13-19 executed 2026-06-08, both VERIFIED LIVE PASS. 13-18 ([G11] prefix/base-key collision: find_conflicting_binding extended, commits 1e45a9b/e562e37, 16 unit tests). 13-19 ([G12] translation recommendation-only: 13-17 provider-switch fully reverted, modal→informational panel, commits 829ce52/9ab61fd/c3a2b29). 13-08 re-verify checkpoint done (Task 1 gates green; Task 2 live UAT confirmed [G11]/[G12], surfaced 3 new gaps). Phase NOT marked complete.
+Status: [G11] resolved (13-18). [G12] resolved (13-19). 3 new UX/i18n gaps remain → see .planning/phases/13-.../13-UAT.md ## Gaps (status: failed).
 
-### Remaining gaps (→ /gsd:plan-phase 13 --gaps)
-- **[G11] test 7** — combo prefix/base-key collision. Binding a combo whose FIRST key is already a shortcut (e.g. CmdLeft bound + CmdLeft+1) is accepted but never fires (OS triggers the base key on press before +1). BACKEND: extend find_conflicting_binding (mod.rs ~1118) with a prefix/base-key overlap rule → return success:false so the existing chip conflict UI fires. No frontend redesign.
-- **[G12] test 11** — translation engine → recommendation-only. DECISION 2026-06-08: do NOT ship a second in-modal model-switcher (it mutates the single global active model). Revert 13-17's provider-switch (set_translation_engine_to_embedded/restore + previous_post_process_provider_id), convert the modal/section to an informational "Gemma 3 4B recommended for translation" note; user picks the model via the existing main selector. Two-models-in-RAM rejected for v1.3 (memory + contradicts "translation routes through the active model").
+### Remaining gaps (→ /gsd:plan-phase 13 --gaps, round 4)
+- **[G13] test 7 (minor)** — conflict error message is (a) misleading for the base-key/prefix case (same prose as exact-duplicate; user can't tell which) and (b) hardcoded English in the Rust backend (not translated). Fix: find_conflicting_binding returns conflict KIND; backend returns a structured error code+params (not English prose); frontend maps code → localized t() with a distinct base-key message. Establishes the pattern for translating backend-originated errors.
+- **[G14] test 3 (major)** — deferred i18n debt = English leakage. Under non-English locales the Post-processing screen (and likely model library) shows English: smartModes.* (and Phase 11 library.*/embedded.*) values are English fallback in all 19 locales. check:translations only checks key presence. User requested a COMPLETE app-wide translation audit → REVERSES the 13-02/13-15 "names-only / translations deferred" decision. Largest of the three.
+- **[G15] test 11 (minor)** — Gemma 3 4B description should lead on translation strength ("excellent pour la traduction") not "excellent en français", since it's the recommended translation engine. Across 20 locales.
 
 ### Decisions this round (2026-06-08)
-- [13-16] Chip dual capture path: backend handy-keys-event stream on handy_keys (preserves CmdLeft/CmdRight), webview keydown only for 'tauri'; pass backend hotkey_string verbatim (never via getKeyName). resume_all_shortcuts idempotent (clean-slate unregister-before-register).
-- [F10/G12] Translation engine = recommendation-only. ONE active post-process model chosen in the main selector; translation runs through it. No per-task model routing in v1.3.
+- [G13] Translate ALL backend-originated user-facing error messages: backend returns error code+params, frontend renders localized string via t() with interpolation (no English prose crossing the boundary).
+- [G14] REVERSE the "translations deferred" decision (13-02/13-15 names-only): every user-facing string must be translated in every supported language. Strengthen the translation check to flag English-fallback values if feasible.
+- [13-18] find_conflicting_binding: 3 conflict rules (exact dup / candidate-base-is-existing / candidate-is-base-of-existing); combos sharing only a modifier prefix do NOT conflict.
+- [13-19] Translation engine = recommendation-only (confirmed live). ONE active post-process model via main selector; translation runs through it.
 
 ### Next session (post /clear) — separate NEW WORK (not gap closure)
 - **Improve/adapt the default Smart Mode prompts.** User finds output quality on the default prompts not quite matching intent; refine wording. Fresh task.
 
-Progress: [█████████░] ~95% (Phase 13: 2 gaps remain before closure)
+Progress: [█████████░] ~95% (Phase 13: 3 UX/i18n gaps remain before closure)
 
 ## Performance Metrics
 

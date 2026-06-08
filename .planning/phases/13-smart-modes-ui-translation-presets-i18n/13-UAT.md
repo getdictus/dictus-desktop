@@ -13,15 +13,20 @@ source:
   - 13-10-SUMMARY.md
   - 13-11-SUMMARY.md
 started: 2026-06-05T12:53:42Z
-updated: 2026-06-08T13:10:00Z
+updated: 2026-06-08T20:45:00Z
 retest:
+  date: 2026-06-08
+  closed_plans: [13-18, 13-19]
+  resolved_gaps: 2  # [G11] prefix/base-key collision (13-18, live PASS); [G12] translation recommendation-only (13-19, live PASS)
+  new_gaps: 3       # [G13] conflict message misleading+English; [G14] post-process/whole-app i18n deferred-debt audit; [G15] Gemma description should lead on translation
+  remaining_gaps: 3  # [G13], [G14], [G15] — see ## Gaps (status: failed)
+  next: "/gsd:plan-phase 13 --gaps"
+prior_retest_3:
   date: 2026-06-08
   closed_plans: [13-16, 13-17]
   resolved_gaps: 1  # [E9] chip side-distinct modifier parity — verified live PASS (13-16)
   superseded_gaps: 1  # [F10] Gemma provider-switch built+works but UX rejected → recommendation-only [G12]
   new_gaps: 2       # [G11] combo prefix/base-key collision (test 7); [G12] translation engine → recommendation-only (test 11)
-  remaining_gaps: 2  # [G11], [G12] — see ## Gaps (status: failed)
-  next: "/gsd:plan-phase 13 --gaps"
 prior_retest:
   date: 2026-06-08
   closed_plans: [13-13, 13-14, 13-15]
@@ -338,7 +343,8 @@ next: /gsd:plan-phase 13 --gaps  (close [E9] modifier-side parity + [F10] engine
   debug_session: ""
 
 - truth: "Binding a combo whose prefix (base) key is already a shortcut is blocked, never silently unreachable"
-  status: failed
+  status: resolved
+  resolved_by: "13-18 — find_conflicting_binding extended with prefix/base-key overlap rule (commits 1e45a9b RED / e562e37 GREEN); 16 unit tests incl. symmetric_base_collision_blocks; verified live PASS 2026-06-08 (CmdLeft+3 now rejected inline against existing CmdLeft binding). NOTE: live UAT of the fix surfaced [G13] — the conflict ERROR MESSAGE is misleading for the base-key case (same prose as exact-duplicate) and is hardcoded English (not translated). See [G13]."
   reason: "LIVE TEST 2026-06-08 (surfaced while confirming [E9] 13-16 pass): with a base key already bound (e.g. Command Left = a dictation/Smart Mode shortcut), binding a combo that STARTS with that same key (Command Left + 1) produces a binding that never fires the intended mode — the OS triggers the base-key action on the prefix press before the '+1' is registered. User reproduced: CmdLeft alone ran one mode; CmdLeft+1 still ran the CmdLeft mode (the '+1' is unreachable). The combo is accepted with no warning."
   severity: major
   test: 7
@@ -356,7 +362,8 @@ next: /gsd:plan-phase 13 --gaps  (close [E9] modifier-side parity + [F10] engine
   debug_session: ""
 
 - truth: "The translation engine modal does not act as a second model-switcher; it recommends a model and the user selects via the single main model selector"
-  status: failed
+  status: resolved
+  resolved_by: "13-19 — 13-17 provider-switch fully reverted (set_translation_engine_to_embedded / restore_translation_engine_provider / previous_post_process_provider_id removed from Rust + bindings.ts); modal converted to informational recommendation panel with single 'Enable offline translation' CTA (commits 829ce52 / 9ab61fd / c3a2b29); verified live PASS 2026-06-08. NOTE: live UAT surfaced [G15] — the recommended-model copy should LEAD on translation strength (e.g. 'excellent pour la traduction') rather than 'excellent en français'. See [G15]."
   reason: "DESIGN DECISION 2026-06-08 (replaces [F10] provider-switch). 13-17's 'Use Gemma 3 4B' button re-points EVERY Smart Mode at Gemma because the app has a single active post-process model and the button mutates that global state. User decided: the translation engine choice is recommendation-only — show an informational note ('Gemma 3 4B recommended for translation'), keep ONE active model selected via the existing main model selector, and remove the in-modal model-switch buttons. Two-models-in-RAM routing rejected for v1.3 (memory cost; contradicts the established 'translation routes through the active LLM model' decision)."
   severity: major
   test: 11
@@ -376,4 +383,61 @@ next: /gsd:plan-phase 13 --gaps  (close [E9] modifier-side parity + [F10] engine
     - "Convert the translation engine modal/section to recommendation-only: informational copy ('Gemma 3 4B recommended for translation'), no model-switch buttons; reuse/extend i18n keys (no hardcoded strings)."
     - "Ensure translation still runs through whatever single active model the user picked via the main selector (no regression to run_translation / post_process path)."
     - "i18n: add/repurpose keys for the recommendation note across en + 19 locales (English fallback per established precedent), keep check:translations green."
+  debug_session: ""
+
+- truth: "The shortcut conflict error tells the user precisely what kind of collision occurred, in the app's language"
+  status: failed
+  reason: "LIVE TEST 2026-06-08 (surfaced confirming [G11]/13-18 PASS). Two defects in the conflict error shown by the chip: (1) MISLEADING — for the base-key/prefix-overlap case (binding 'Cmd Left + 3' while 'Cmd Left' is already bound) the message reads 'This shortcut is already used by: Translate → Chinese', identical to the exact-duplicate case. It is NOT the same shortcut — the BASE key collides — and the user cannot tell which situation they are in. (2) ENGLISH — the message is hardcoded English in the Rust backend and rendered verbatim, so it stays English even when the app language is French. User: 'tous les messages qui sont à l'écran doivent être traduits.'"
+  severity: minor
+  test: 7
+  tag: G13
+  root_cause: "find_conflicting_binding (src-tauri/src/shortcut/mod.rs ~1197-1228) returns only the conflicting binding id — it does not signal WHICH of its three rules matched (exact-duplicate / candidate-base-is-existing / candidate-is-base-of-existing). set_smart_mode_binding (~1405) then builds a single hardcoded English sentence `format!(\"This shortcut is already used by: {}\", other_name)` regardless of case, and returns it in BindingResponse.error. The chip renders response.error verbatim (SmartModeShortcutChip.tsx ~347). So the backend conflates two distinct UX situations into one English string that bypasses i18n entirely."
+  artifacts:
+    - path: "src-tauri/src/shortcut/mod.rs"
+      issue: "find_conflicting_binding returns Option<String> (id only) — no conflict-kind discriminant. set_smart_mode_binding hardcodes an English error sentence; should return a structured error (code + params: conflicting name, kind) instead of finished prose."
+    - path: "src/components/settings/post-processing/SmartModeShortcutChip.tsx"
+      issue: "Renders backend error string verbatim; should map a backend error code → localized i18n string with interpolation (smartModes.card.shortcutConflict {{name}} already exists; add a distinct key for the base-key/prefix case)."
+    - path: "src/i18n/locales/*/translation.json"
+      issue: "Need (a) a distinct conflict message key for the base-key/prefix case, (b) real translations of both across all 20 locales."
+  missing:
+    - "Have find_conflicting_binding (or set_smart_mode_binding) return the conflict KIND so exact-duplicate vs base-key-overlap can be distinguished."
+    - "Backend returns a structured/codified error (not an English sentence); frontend maps code → t() with {{name}} interpolation. Establishes the pattern for translating backend-originated user-facing errors."
+    - "Add a clear base-key-collision message (e.g. 'The start of this shortcut ({{base}}) is already used by {{name}} — it would fire before the next key') + the exact-duplicate message, translated across all 20 locales."
+    - "Consider a small advisory note near the shortcut UI explaining base-key collisions (user suggestion) — optional, decide during planning."
+  debug_session: ""
+
+- truth: "Every user-facing string in the app is translated into all supported languages (no English leaking under a non-English locale)"
+  status: failed
+  reason: "LIVE TEST 2026-06-08 (French locale, Post-processing screen). Many UI strings render in English under French: the 'Rewrite' / 'Translation' type badges, the 'Add shortcut' button/placeholder, 'New Rewrite' / 'New Translation', edit-form labels 'Name' / 'Prompt' / 'Save mode', the template picker, and the translation modal copy. ROOT CAUSE is i18n DATA, not missing t() — the components call t() correctly, but the `smartModes.*` key VALUES in all 19 non-English locales still hold the ENGLISH FALLBACK strings (a documented deliberate deferral, decisions [Phase 13] 13-02/13-15 'names-only scope, real translations deferred'). The same deferred-debt exists for Phase 11's `library.*` / `embedded.*` keys. check:translations passes because it only verifies key PRESENCE, not that values are actually translated. User requested a COMPLETE audit of all interface text across all supported languages. This REVERSES the earlier 'translations deferred' decision."
+  severity: major
+  test: 3
+  tag: G14
+  root_cause: "Deferred-translation debt: 13-02 and 13-15 inserted English fallback values verbatim into all 19 non-English locales for the new smartModes.* keys and translated only smartModes.defaultModes.* NAMES (Phase 13 'names-only' decision). Phase 11 did the same for library.* / embedded.*. The lint rule (no hardcoded JSX strings) and check:translations (key presence) both pass, so the untranslated VALUES were invisible to CI. Result: full English leakage on the post-processing screen (and likely the model library) under every non-English locale."
+  artifacts:
+    - path: "src/i18n/locales/*/translation.json (19 non-English locales)"
+      issue: "smartModes.* values are English fallback (sections, createRewrite/createTranslation, card.*, picker.*, shortcut.*, kind.*, translation.* + modal.*). library.* / embedded.* likely the same (Phase 11 deferral). Need real translations."
+    - path: "scripts/check-translations (whatever check:translations runs)"
+      issue: "Only checks key presence, not value-vs-English divergence — cannot catch deferred English fallback. Consider an audit pass / heuristic to flag values identical to en for keys that should differ."
+  missing:
+    - "AUDIT: enumerate every i18n key whose non-English value still equals the English source (deferred fallback) across the whole app — at minimum smartModes.*, library.*, embedded.* — and produce the full list to translate."
+    - "Translate all identified keys into all 19 non-English languages (quality translations, not fallback). RTL (ar/he) quote-safety per 13-15 precedent."
+    - "Verify on a live build under FR (and a spot-check of another locale) that the Post-processing screen and model library show no English."
+    - "Optional: strengthen the translation check to flag English-fallback values so this debt cannot silently recur."
+  debug_session: ""
+
+- truth: "The Gemma 3 4B catalogue description leads on its translation strength (it is the recommended translation engine)"
+  status: failed
+  reason: "LIVE TEST 2026-06-08. The Gemma 3 4B model description reads 'Polyvalent et multilingue — excellent en français' (and the i18n description key). Since Gemma 3 4B is the model RECOMMENDED for translation, the copy should foreground translation quality rather than French specifically — user example: 'excellent pour la traduction'."
+  severity: minor
+  test: 11
+  tag: G15
+  root_cause: "Catalogue/description copy written before translation-recommendation framing was finalized; emphasises generic French quality instead of translation strength."
+  artifacts:
+    - path: "src/i18n/locales/*/translation.json"
+      issue: "settings.postProcessing...gemma3_4b.description (line ~462 en / ~463 fr) — reword to lead on translation; propagate across all 20 locales."
+    - path: "src-tauri/src/managers/llm.rs"
+      issue: "If any catalogue description string lives backend-side, align it too."
+  missing:
+    - "Reword Gemma 3 4B description to lead on translation quality (e.g. 'Excellent pour la traduction — polyvalent et multilingue') in en + all 19 locales."
+    - "Keep it consistent with the translation-recommendation note copy ([G12]/13-19)."
   debug_session: ""
