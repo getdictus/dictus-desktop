@@ -1178,8 +1178,24 @@ fn combo_base(combo: &str) -> &str {
     trimmed
 }
 
+/// Signals which of the three overlap rules matched in `find_conflicting_binding`.
+/// Carried alongside the conflicting binding id so the frontend can render two
+/// distinct, localized messages instead of one generic English sentence (G13).
+#[derive(Serialize, Type, Clone, Copy, Debug, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum ConflictKind {
+    /// candidate combo string-equals an existing binding (rule 1)
+    ExactDuplicate,
+    /// candidate's modifier-base IS an existing full binding (rule 2)
+    /// e.g. existing "command_left", candidate "command_left+digit1"
+    CandidateBaseIsExisting,
+    /// candidate (a base key) IS the modifier-base of an existing combo (rule 3)
+    /// e.g. existing "command_left+digit1", candidate "command_left"
+    CandidateIsBaseOfExisting,
+}
+
 /// Find a global binding (other than `binding_id`) that already holds `combo`.
-/// Returns the conflicting binding id, or None when `combo` is free.
+/// Returns `(conflicting_id, ConflictKind)`, or None when `combo` is free.
 ///
 /// Used by `set_smart_mode_binding` to reject a combo already assigned to a
 /// DIFFERENT smart mode or any other global shortcut at commit time, so the
@@ -1198,32 +1214,37 @@ pub fn find_conflicting_binding(
     bindings: &std::collections::HashMap<String, settings::ShortcutBinding>,
     binding_id: &str,
     combo: &str,
-) -> Option<String> {
+) -> Option<(String, ConflictKind)> {
     let target = combo.trim();
     if target.is_empty() {
         return None;
     }
     let candidate_base = combo_base(target);
-    bindings
-        .iter()
-        .find(|(other_id, b)| {
-            if other_id.as_str() == binding_id {
-                return false;
-            }
-            let other = b.current_binding.trim();
-            if other.is_empty() {
-                return false;
-            }
+    bindings.iter().find_map(|(other_id, b)| {
+        if other_id.as_str() == binding_id {
+            return None;
+        }
+        let other = b.current_binding.trim();
+        if other.is_empty() {
+            return None;
+        }
+        // Determine kind in priority order (rule 1 > rule 2 > rule 3).
+        let kind = if other == target {
             // (1) exact duplicate — 13-13 behaviour preserved verbatim
-            other == target
+            ConflictKind::ExactDuplicate
+        } else if other == candidate_base {
             // (2) candidate's base IS this full binding
             //     (existing "command_left", candidate "command_left+digit1")
-                || other == candidate_base
+            ConflictKind::CandidateBaseIsExisting
+        } else if combo_base(other) == target {
             // (3) candidate IS the base of this binding
             //     (existing "command_left+digit1", candidate "command_left")
-                || combo_base(other) == target
-        })
-        .map(|(other_id, _)| other_id.clone())
+            ConflictKind::CandidateIsBaseOfExisting
+        } else {
+            return None;
+        };
+        Some((other_id.clone(), kind))
+    })
 }
 
 /// Resolve the stable id for a created mode. Returns Some(seed_id) when (name, kind)
@@ -1392,17 +1413,31 @@ pub fn set_smart_mode_binding(
     // passes. Without this, two modes could both persist Cmd+2 and only collide
     // at OS re-registration (`resume_all_shortcuts: Hotkey already registered`).
     // UAT test 7 / [B5].
-    if let Some(other_id) = find_conflicting_binding(&settings.bindings, &binding_id, &binding) {
+    // Structured conflict payload `SHORTCUT_CONFLICT|<code>|<name>[|<base>]` — the
+    // frontend maps <code> to a localized t() string; no English prose crosses the
+    // boundary (G13).
+    if let Some((other_id, kind)) =
+        find_conflicting_binding(&settings.bindings, &binding_id, &binding)
+    {
         let other_name = settings
             .bindings
             .get(&other_id)
             .map(|b| b.name.clone())
             .filter(|n| !n.trim().is_empty())
             .unwrap_or(other_id);
+        let payload = match kind {
+            ConflictKind::ExactDuplicate => {
+                format!("SHORTCUT_CONFLICT|exact_duplicate|{}", other_name)
+            }
+            ConflictKind::CandidateBaseIsExisting | ConflictKind::CandidateIsBaseOfExisting => {
+                let base = combo_base(&binding);
+                format!("SHORTCUT_CONFLICT|base_overlap|{}|{}", other_name, base)
+            }
+        };
         return Ok(BindingResponse {
             success: false,
             binding: None,
-            error: Some(format!("This shortcut is already used by: {}", other_name)),
+            error: Some(payload),
         });
     }
 
@@ -1697,8 +1732,8 @@ mod tests {
         let result = find_conflicting_binding(&bindings, "smart_mode_mode_a", "Cmd+2");
         assert_eq!(
             result,
-            Some("transcribe".to_string()),
-            "combo held by a different binding must be detected"
+            Some(("transcribe".to_string(), ConflictKind::ExactDuplicate)),
+            "combo held by a different binding must be detected as ExactDuplicate"
         );
     }
 
@@ -1737,8 +1772,8 @@ mod tests {
         let result = find_conflicting_binding(&bindings, "smart_mode_mode_a", "Cmd+2");
         assert_eq!(
             result,
-            Some("smart_mode_mode_b".to_string()),
-            "conflicting mode binding must return the other mode's id"
+            Some(("smart_mode_mode_b".to_string(), ConflictKind::ExactDuplicate)),
+            "conflicting mode binding must return the other mode's id as ExactDuplicate"
         );
     }
 
@@ -1747,6 +1782,7 @@ mod tests {
     #[test]
     fn base_prefix_collision_blocks() {
         // existing "command_left" → binding "command_left+digit1" must be blocked
+        // kind = CandidateBaseIsExisting (candidate's base IS the existing binding)
         let mut bindings = std::collections::HashMap::new();
         let (k, v) = make_binding("transcribe", "command_left");
         bindings.insert(k, v);
@@ -1754,22 +1790,29 @@ mod tests {
             find_conflicting_binding(&bindings, "smart_mode_mode_a", "command_left+digit1");
         assert_eq!(
             result,
-            Some("transcribe".to_string()),
-            "combo whose base key is already bound must be blocked"
+            Some((
+                "transcribe".to_string(),
+                ConflictKind::CandidateBaseIsExisting
+            )),
+            "combo whose base key is already bound must be blocked as CandidateBaseIsExisting"
         );
     }
 
     #[test]
     fn symmetric_base_collision_blocks() {
         // existing "command_left+digit1" → binding "command_left" must be blocked
+        // kind = CandidateIsBaseOfExisting (candidate IS the base of the existing combo)
         let mut bindings = std::collections::HashMap::new();
         let (k, v) = make_binding("smart_mode_mode_b", "command_left+digit1");
         bindings.insert(k, v);
         let result = find_conflicting_binding(&bindings, "smart_mode_mode_a", "command_left");
         assert_eq!(
             result,
-            Some("smart_mode_mode_b".to_string()),
-            "base key that is a prefix of an existing combo must be blocked"
+            Some((
+                "smart_mode_mode_b".to_string(),
+                ConflictKind::CandidateIsBaseOfExisting
+            )),
+            "base key that is a prefix of an existing combo must be blocked as CandidateIsBaseOfExisting"
         );
     }
 
@@ -1795,7 +1838,8 @@ mod tests {
         let result =
             find_conflicting_binding(&bindings, "smart_mode_mode_a", "command_left+digit1");
         assert_eq!(
-            result, None,
+            result,
+            None,
             "two distinct full combos sharing only a modifier prefix must not block each other"
         );
     }
