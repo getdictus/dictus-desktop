@@ -254,6 +254,10 @@ pub fn suspend_all_shortcuts(app: AppHandle) -> Result<(), String> {
 /// registered only during recording) and re-registers it for the active
 /// keyboard implementation. Non-fatal per-binding errors are logged as
 /// warnings so a single broken binding does not block the others.
+///
+/// Idempotent: each binding is unregistered first (errors ignored — the
+/// shortcut may already be unbound) so `register_shortcut` always starts
+/// from a clean slate and never hits "Hotkey already registered".
 #[tauri::command]
 #[specta::specta]
 pub fn resume_all_shortcuts(app: AppHandle) -> Result<(), String> {
@@ -266,6 +270,10 @@ pub fn resume_all_shortcuts(app: AppHandle) -> Result<(), String> {
         if binding.current_binding.trim().is_empty() {
             continue;
         }
+        // Unregister first so re-registration always starts from a clean
+        // slate. An unbound shortcut returning an error here is expected and
+        // harmless — ignore it.
+        let _ = unregister_shortcut(&app, binding.clone());
         if let Err(e) = register_shortcut(&app, binding.clone()) {
             warn!(
                 "resume_all_shortcuts: failed to re-register '{}': {}",
@@ -1300,9 +1308,7 @@ pub fn set_smart_mode_binding(
     // passes. Without this, two modes could both persist Cmd+2 and only collide
     // at OS re-registration (`resume_all_shortcuts: Hotkey already registered`).
     // UAT test 7 / [B5].
-    if let Some(other_id) =
-        find_conflicting_binding(&settings.bindings, &binding_id, &binding)
-    {
+    if let Some(other_id) = find_conflicting_binding(&settings.bindings, &binding_id, &binding) {
         let other_name = settings
             .bindings
             .get(&other_id)
@@ -1312,10 +1318,7 @@ pub fn set_smart_mode_binding(
         return Ok(BindingResponse {
             success: false,
             binding: None,
-            error: Some(format!(
-                "This shortcut is already used by: {}",
-                other_name
-            )),
+            error: Some(format!("This shortcut is already used by: {}", other_name)),
         });
     }
 
