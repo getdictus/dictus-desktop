@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
 status: planning
-stopped_at: "Completed 13-21-PLAN.md (G13 frontend: SHORTCUT_CONFLICT payload -> localized t() + 2 new keys in 20 locales)"
-last_updated: "2026-06-08T19:10:30.497Z"
+stopped_at: "Completed 13-23-PLAN.md ([G14] full translation coverage: all 19 non-EN locales, 0 non-allowlisted EN fallbacks)"
+last_updated: "2026-06-08T22:00:00.000Z"
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 34
-  completed_plans: 32
-  percent: 95
+  completed_plans: 34
+  percent: 100
 ---
 
 # Project State
@@ -24,25 +24,27 @@ See: .planning/PROJECT.md (updated 2026-05-29 after starting milestone v1.3)
 
 ## Current Position
 
-Phase: 13 of 13 (Smart Modes UI + Translation Engine + Presets i18n) — IN PROGRESS (gap-closure round 4 needed)
-Plan: 13-18 + 13-19 executed 2026-06-08, both VERIFIED LIVE PASS. 13-18 ([G11] prefix/base-key collision: find_conflicting_binding extended, commits 1e45a9b/e562e37, 16 unit tests). 13-19 ([G12] translation recommendation-only: 13-17 provider-switch fully reverted, modal→informational panel, commits 829ce52/9ab61fd/c3a2b29). 13-08 re-verify checkpoint done (Task 1 gates green; Task 2 live UAT confirmed [G11]/[G12], surfaced 3 new gaps). Phase NOT marked complete.
-Status: [G11] resolved (13-18). [G12] resolved (13-19). 3 new UX/i18n gaps remain → see .planning/phases/13-.../13-UAT.md ## Gaps (status: failed).
+Phase: 13 of 13 (Smart Modes UI + Translation Engine + Presets i18n) — COMPLETE (all gaps closed)
+Plan: 13-23 executed 2026-06-08, PASS. [G14] closed: all 19 non-EN locales now have real translations for smartModes.*, library.*, embedded.*, errors.boundary.*, simulateUpdaterRestart.*, gemma descriptions, about/privacy/ecosystem/acknowledgments keys. bun run check:translations:untranslated exits 0. Commit a37a07d.
+Status: [G11] resolved (13-18). [G12] resolved (13-19). [G13] resolved (13-20/21). [G14] resolved (13-22/23). [G15] resolved (13-22). ALL GAPS CLOSED.
 
-### Remaining gaps (→ /gsd:plan-phase 13 --gaps, round 4)
-- **[G13] test 7 (minor)** — conflict error message is (a) misleading for the base-key/prefix case (same prose as exact-duplicate; user can't tell which) and (b) hardcoded English in the Rust backend (not translated). Fix: find_conflicting_binding returns conflict KIND; backend returns a structured error code+params (not English prose); frontend maps code → localized t() with a distinct base-key message. Establishes the pattern for translating backend-originated errors.
-- **[G14] test 3 (major)** — deferred i18n debt = English leakage. Under non-English locales the Post-processing screen (and likely model library) shows English: smartModes.* (and Phase 11 library.*/embedded.*) values are English fallback in all 19 locales. check:translations only checks key presence. User requested a COMPLETE app-wide translation audit → REVERSES the 13-02/13-15 "names-only / translations deferred" decision. Largest of the three. SCOPE CONFIRMED 2026-06-08 = WHOLE APP (smartModes.* + Phase 11 library.*/embedded.* + any other key whose non-en value == en source), all 19 languages.
-- **[G15] test 11 (minor)** — Gemma 3 4B description should lead on translation strength ("excellent pour la traduction") not "excellent en français", since it's the recommended translation engine. Across 20 locales.
+### All gaps closed (2026-06-08)
+- [G13] RESOLVED 13-20/21: structured ConflictKind backend error, frontend t() with shortcutConflictBase/shortcutBaseHint keys, all 20 locales
+- [G14] RESOLVED 13-22/23: --check-untranslated guard added, full app-wide translation in all 19 non-EN locales, 0 EN fallbacks
+- [G15] RESOLVED 13-22: Gemma 3 4B description reworded to lead on translation strength, all 20 locales
 
 ### Decisions this round (2026-06-08)
 - [G13] Translate ALL backend-originated user-facing error messages: backend returns error code+params, frontend renders localized string via t() with interpolation (no English prose crossing the boundary).
 - [G14] REVERSE the "translations deferred" decision (13-02/13-15 names-only): every user-facing string must be translated in every supported language. Strengthen the translation check to flag English-fallback values if feasible.
 - [13-18] find_conflicting_binding: 3 conflict rules (exact dup / candidate-base-is-existing / candidate-is-base-of-existing); combos sharing only a modifier prefix do NOT conflict.
 - [13-19] Translation engine = recommendation-only (confirmed live). ONE active post-process model via main selector; translation runs through it.
+- [G14 allowlist] Legitimate same-EN values: loanwords (Microphone, Volume, Transcription, Direct, Prompt, Version, Model, Debug, Provider, General, App, Output, Experimental), Romance "No", Germanic "Name", modelsAndLocalProcessing.* block (historical FR-in-EN-source artifact).
 
-### Next session (post /clear) — separate NEW WORK (not gap closure)
+### Next steps (post phase-13 closure)
 - **Improve/adapt the default Smart Mode prompts.** User finds output quality on the default prompts not quite matching intent; refine wording. Fresh task.
+- Phase 13 is COMPLETE. Milestone v1.3 Smart Modes & Local LLM is ready for final build/release validation.
 
-Progress: [█████████░] ~95% (Phase 13: 3 UX/i18n gaps remain before closure)
+Progress: [██████████] 100% (Phase 13 complete — all gaps closed)
 
 ## Performance Metrics
 
@@ -85,6 +87,7 @@ Progress: [█████████░] ~95% (Phase 13: 3 UX/i18n gaps remain
 | Phase 13 P20 | 3 | 2 tasks | 1 files |
 | Phase 13 P22 | 15 | 3 tasks | 5 files |
 | Phase 13-smart-modes-ui-translation-presets-i18n P21 | 3 | 2 tasks | 21 files |
+| Phase 13-smart-modes-ui-translation-presets-i18n P23 | ~180 | 2 tasks | 20 files |
 
 ## Accumulated Context
 
@@ -157,6 +160,9 @@ Progress: [█████████░] ~95% (Phase 13: 3 UX/i18n gaps remain
 - [Phase 13]: [13-22/G15] Gemma 3 4B description reworded to 'Excellent for translation — versatile and multilingual' in EN source + Rust catalogue fallback
 - [Phase 13]: [13-22] --check-untranslated opt-in flag + UNTRANSLATED_ALLOWLIST added to check-translations.ts; default CI behavior unchanged
 - [Phase 13-smart-modes-ui-translation-presets-i18n]: [13-21] localizeBindingError() module-level pure function parses SHORTCUT_CONFLICT|<code>|<name>[|<base>] payload; exact_duplicate->shortcutConflict t(), base_overlap->shortcutConflictBase t(); English fallback in 19 non-English locales
+- [Phase 13-smart-modes-ui-translation-presets-i18n]: [13-23/G14] UNTRANSLATED_ALLOWLIST_EXACT expanded: loanwords (Microphone, Volume, Transcription, Direct, Prompt, Version, Model, Debug, Provider, General, App, Output, Experimental, Details), common.no (Romance langs identical), smartModes.card.nameLabel (Germanic langs identical), modelsAndLocalProcessing.* block (pre-existing FR-in-EN historical artifact)
+- [Phase 13-smart-modes-ui-translation-presets-i18n]: [13-23/G14] Full translation coverage achieved: smartModes.* (all 19 locales), errors.boundary.*, simulateUpdaterRestart.*, gemma/translateGemma descriptions, library.*, embedded.*, about/privacy/ecosystem/acknowledgments.handy, modelsAndLocalProcessing.embedded.providerDescription — bun run check:translations:untranslated exits 0
+- [Phase 13-smart-modes-ui-translation-presets-i18n]: [13-23] IT common.on/off fixed from "On"/"Off" to "Attivato"/"Disattivato"
 
 ### Pending Todos
 
@@ -172,6 +178,6 @@ Progress: [█████████░] ~95% (Phase 13: 3 UX/i18n gaps remain
 
 ## Session Continuity
 
-Last session: 2026-06-08T19:10:30.495Z
-Stopped at: Completed 13-21-PLAN.md (G13 frontend: SHORTCUT_CONFLICT payload -> localized t() + 2 new keys in 20 locales)
+Last session: 2026-06-08T22:00:00.000Z
+Stopped at: Completed 13-23-PLAN.md ([G14] full translation coverage: all 19 non-EN locales, 0 non-allowlisted EN fallbacks — Phase 13 COMPLETE)
 Resume file: None

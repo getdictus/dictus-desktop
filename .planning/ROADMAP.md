@@ -133,10 +133,10 @@
 - [x] 13-17-PLAN.md — Gap closure ([F10] test 11): provider-switch built + works mechanically, but UX SUPERSEDED → recommendation-only [G12] (TRANS-02) [Wave 1]
 - [x] 13-18-PLAN.md — Gap closure ([G11] test 7): backend prefix/base-key overlap rule in find_conflicting_binding — block a combo whose leading key is already bound, surfaced via the existing chip conflict UI (MODE-04, MODE-05) [Wave 1]
 - [x] 13-19-PLAN.md — Gap closure ([G12] test 11): revert 13-17 global provider-switch + convert translation engine modal/section to recommendation-only (Gemma recommended; single active model via main selector) + 20-locale i18n (TRANS-01, TRANS-02) [Wave 1]
-- [ ] 13-20-PLAN.md — Gap closure ([G13] test 7): backend structured conflict error — ConflictKind enum + find_conflicting_binding returns the kind + set_smart_mode_binding emits codified SHORTCUT_CONFLICT payload (no English prose) (MODE-04, MODE-05, L10N-01) [Wave 1]
-- [ ] 13-21-PLAN.md — Gap closure ([G13] test 7): chip maps SHORTCUT_CONFLICT code → localized t() with distinct base-key message; 2 new conflict keys across 20 locales (English fallback pending 13-23) (MODE-04, MODE-05, L10N-01) [Wave 2]
-- [ ] 13-22-PLAN.md — Gap closure ([G14]/[G15]): i18n English-fallback audit + check:translations --check-untranslated guardrail + Gemma 3 4B EN-source reword (lead on translation) (L10N-01, TRANS-01, TRANS-02) [Wave 1]
-- [ ] 13-23-PLAN.md — Gap closure ([G14]/[G15]): translate 62 smartModes.* + ~7 debt keys + 2 [G13] keys + reworded Gemma description into all 19 non-English locales (RTL-safe) (L10N-01, TRANS-01, TRANS-02) [Wave 3]
+- [x] 13-20-PLAN.md — Gap closure ([G13] test 7): backend structured conflict error — ConflictKind enum + find_conflicting_binding returns the kind + set_smart_mode_binding emits codified SHORTCUT_CONFLICT payload (no English prose) (MODE-04, MODE-05, L10N-01) [Wave 1]
+- [x] 13-21-PLAN.md — Gap closure ([G13] test 7): chip maps SHORTCUT_CONFLICT code → localized t() with distinct base-key message; 2 new conflict keys across 20 locales (English fallback pending 13-23) (MODE-04, MODE-05, L10N-01) [Wave 2]
+- [x] 13-22-PLAN.md — Gap closure ([G14]/[G15]): i18n English-fallback audit + check:translations --check-untranslated guardrail + Gemma 3 4B EN-source reword (lead on translation) (L10N-01, TRANS-01, TRANS-02) [Wave 1]
+- [x] 13-23-PLAN.md — Gap closure ([G14]/[G15]): translate all smartModes.* + debt keys + about/privacy/ecosystem/acknowledgments into all 19 non-English locales; 0 EN fallbacks; IT common.on/off fixed (L10N-01, TRANS-01, TRANS-02) [Wave 3]
 - [ ] 13-24-PLAN.md — Gap closure ([G13]/[G14]/[G15]): automated gates + human-verify live FR-build checkpoint (no English leakage, distinct localized conflict messages, Gemma description) (L10N-01, MODE-05, TRANS-01) [Wave 4]
 
 ## Progress
