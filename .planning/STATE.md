@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
 status: planning
-stopped_at: "13-16 PASS live; 13-17 superseded by recommendation-only decision. 2 new gaps [G11][G12] → /gsd:plan-phase 13 --gaps"
-last_updated: "2026-06-08T16:35:00.000Z"
+stopped_at: Completed 13-18-PLAN.md (gap [G11] prefix/base-key overlap conflict detection)
+last_updated: "2026-06-08T16:59:22.203Z"
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 27
-  completed_plans: 24
+  total_plans: 29
+  completed_plans: 27
   percent: 95
 ---
 
@@ -77,6 +77,7 @@ Progress: [█████████░] ~95% (Phase 13: 2 gaps remain before 
 | Phase 13-smart-modes-ui-translation-presets-i18n P15 | 2 | 1 tasks | 19 files |
 | Phase 13-smart-modes-ui-translation-presets-i18n P13 | 2 | 2 tasks | 1 files |
 | Phase 13-smart-modes-ui-translation-presets-i18n P12 | 20 | 2 tasks | 3 files |
+| Phase 13 P18 | 3 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -142,6 +143,7 @@ Progress: [█████████░] ~95% (Phase 13: 2 gaps remain before 
 - [Phase 13-smart-modes-ui-translation-presets-i18n]: [13-12] TranslationEngineChoiceModal active badge driven by engineChoice + activeIsRecommended props (not GGUF activeModelId) — covers Apple Intelligence and non-GGUF providers
 - [Phase 13-smart-modes-ui-translation-presets-i18n]: [13-12] SmartModeShortcutChip: module-level resumeAll() helper + suspendAllShortcuts on record start; resumeAll on commitCombo (success+conflict), handleClickOutside, and effect cleanup — every exit path covered
 - [Phase 13-smart-modes-ui-translation-presets-i18n]: [13-17] set_translation_engine_to_embedded saves prior provider in previous_post_process_provider_id only when not already on embedded, preventing double-save on repeated Gemma clicks
+- [Phase 13]: combo_base uses rfind('+') checking modifier-only prefix; is_modifier_token lowercases only for this helper; set_smart_mode_binding unchanged (already maps conflict to BindingResponse error)
 
 ### Pending Todos
 
@@ -157,6 +159,6 @@ Progress: [█████████░] ~95% (Phase 13: 2 gaps remain before 
 
 ## Session Continuity
 
-Last session: 2026-06-08T14:00:08.721Z
-Stopped at: Checkpoint: 13-17 Task 3 human-verify (Gemma engine switch persists + translates under Apple provider awaiting live-build verification)
+Last session: 2026-06-08T16:59:22.200Z
+Stopped at: Completed 13-18-PLAN.md (gap [G11] prefix/base-key overlap conflict detection)
 Resume file: None
