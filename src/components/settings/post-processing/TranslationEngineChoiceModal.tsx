@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Check, X } from "lucide-react";
+import { X } from "lucide-react";
 import { commands } from "@/bindings";
 import { Button } from "@/components/ui/Button";
 import { useLlmModelStore } from "@/stores/llmModelStore";
@@ -14,19 +14,13 @@ interface TranslationEngineChoiceModalProps {
   open: boolean;
   /** Whether translation is currently enabled (engine already chosen). */
   enabled?: boolean;
-  /** Persisted translation engine choice: "not_chosen" | "translate_gemma" | "generic_model" */
-  engineChoice?: string;
-  /** Resolved display name of the currently active engine (GGUF model name or provider label). */
-  activeEngineName?: string | null;
-  /** True only when the active GGUF model is the recommended Gemma 3 4B. */
-  activeIsRecommended?: boolean;
   onClose: () => void;
   onChosen: () => void;
 }
 
 export const TranslationEngineChoiceModal: React.FC<
   TranslationEngineChoiceModalProps
-> = ({ open, enabled = false, engineChoice, activeEngineName, activeIsRecommended = false, onClose, onChosen }) => {
+> = ({ open, enabled = false, onClose, onChosen }) => {
   const { t } = useTranslation();
   // Select only the slices we read (subscribing to the whole store would cause
   // a refresh→re-render loop).
@@ -59,66 +53,36 @@ export const TranslationEngineChoiceModal: React.FC<
     RECOMMENDED_MODEL_ID in downloadProgress;
   const recPct = downloadProgress[RECOMMENDED_MODEL_ID]?.percentage;
 
-  // Drive active-engine badge from persisted engineChoice + activeIsRecommended prop,
-  // not from activeModelId (which is null for non-GGUF providers like Apple Intelligence).
-  const chosen =
-    engineChoice === "generic_model" || engineChoice === "translate_gemma";
-  // "Recommended Gemma" badge: a choice is made AND the active engine IS Gemma 3 4B
-  const recActive = chosen && activeIsRecommended;
-  // "Use current model" badge: a choice is made AND the active engine is NOT the recommended Gemma
-  // (covers Apple Intelligence, cloud providers, custom, and non-Gemma GGUF models)
-  const currentActiveSelected = chosen && !activeIsRecommended;
-
-  // Gemma path: flip provider to embedded + set active model to Gemma 3 4B.
-  const chooseGemma = async () => {
-    setError(null);
-    setBusy(true);
-    try {
-      const res = await commands.setTranslationEngineToEmbedded(RECOMMENDED_MODEL_ID);
-      if (res.status === "ok") {
-        // Refresh the LLM store so activeModelId reflects gemma-3-4b immediately.
-        await useLlmModelStore.getState().refresh();
-        onChosen();
-        onClose();
-      } else {
-        setError(res.error ?? t("smartModes.translation.modal.applyFailed"));
-      }
-    } catch (e) {
-      setError(
-        e instanceof Error
-          ? e.message
-          : t("smartModes.translation.modal.applyFailed"),
-      );
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  // Current-model path: restore the prior real provider (or keep the active one).
-  const chooseCurrent = async () => {
-    setError(null);
-    setBusy(true);
-    try {
-      const res = await commands.restoreTranslationEngineProvider();
-      if (res.status === "ok") {
-        onChosen();
-        onClose();
-      } else {
-        setError(res.error ?? t("smartModes.translation.modal.applyFailed"));
-      }
-    } catch (e) {
-      setError(
-        e instanceof Error
-          ? e.message
-          : t("smartModes.translation.modal.applyFailed"),
-      );
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const handleDownloadRec = () => {
     void useLlmModelStore.getState().downloadModel(RECOMMENDED_MODEL_ID);
+  };
+
+  // Enable translation: persist generic_model choice without mutating the active model/provider.
+  const handleEnable = async () => {
+    if (enabled) {
+      onChosen();
+      onClose();
+      return;
+    }
+    setError(null);
+    setBusy(true);
+    try {
+      const res = await commands.setTranslationEngineChoice("generic_model");
+      if (res.status === "ok") {
+        onChosen();
+        onClose();
+      } else {
+        setError(res.error ?? t("smartModes.translation.modal.applyFailed"));
+      }
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : t("smartModes.translation.modal.applyFailed"),
+      );
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -128,43 +92,18 @@ export const TranslationEngineChoiceModal: React.FC<
           {t("smartModes.translation.modal.title")}
         </p>
 
-        {/* Option A: recommended model (Gemma 3 4B) */}
-        <div
-          className={`flex flex-col gap-3 p-4 rounded-xl border-2 ${recActive ? "border-logo-primary bg-logo-primary/5" : "border-mid-gray/20"}`}
-        >
+        {/* Recommendation block */}
+        <div className="flex flex-col gap-3 p-4 rounded-xl border-2 border-mid-gray/20">
           <div>
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-base font-medium">
-                {t("smartModes.translation.modal.recommendedHeading")}
-              </p>
-              {recActive && (
-                <span className="inline-flex items-center gap-1 shrink-0 text-xs font-medium text-logo-primary">
-                  <Check className="w-3.5 h-3.5" />
-                  {t("smartModes.translation.modal.activeBadge")}
-                </span>
-              )}
-            </div>
+            <p className="text-base font-medium">
+              {t("smartModes.translation.modal.recommendOnlyHeading")}
+            </p>
             <p className="text-sm text-text/60 mt-1">
-              {t("smartModes.translation.modal.recommendedSubtext")}
+              {t("smartModes.translation.modal.recommendOnlyBody")}
             </p>
           </div>
 
-          {recActive ? (
-            <Button variant="primary" size="md" disabled>
-              {t("smartModes.translation.modal.activeButton")}
-            </Button>
-          ) : recDownloaded ? (
-            <Button
-              variant="primary"
-              size="md"
-              disabled={busy}
-              onClick={() => void chooseGemma()}
-            >
-              {busy
-                ? t("smartModes.translation.modal.applying")
-                : t("smartModes.translation.modal.useRecommended")}
-            </Button>
-          ) : recVerifying ? (
+          {recVerifying ? (
             <div className="flex flex-col gap-2">
               <div className="w-full bg-mid-gray/20 rounded-full h-2 overflow-hidden">
                 <div className="bg-logo-primary h-2 rounded-full w-1/3 animate-pulse" />
@@ -190,48 +129,26 @@ export const TranslationEngineChoiceModal: React.FC<
                 {t("smartModes.translation.modal.downloadBackgroundNote")}
               </p>
             </div>
-          ) : (
+          ) : !recDownloaded ? (
             <Button variant="primary" size="md" onClick={handleDownloadRec}>
               {t("smartModes.translation.modal.downloadRecommended")}
             </Button>
-          )}
+          ) : null}
         </div>
 
-        {/* Option B: use the current active model */}
-        <div
-          className={`flex flex-col gap-3 p-4 rounded-xl border-2 ${currentActiveSelected ? "border-logo-primary bg-logo-primary/5" : "border-mid-gray/20"}`}
-        >
-          <div>
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-base font-medium">
-                {t("smartModes.translation.modal.currentHeading")}
-              </p>
-              {currentActiveSelected && (
-                <span className="inline-flex items-center gap-1 shrink-0 text-xs font-medium text-logo-primary">
-                  <Check className="w-3.5 h-3.5" />
-                  {t("smartModes.translation.modal.activeBadge")}
-                </span>
-              )}
-            </div>
-            <p className="text-sm text-text/60 mt-1">
-              {activeEngineName
-                ? t("smartModes.translation.modal.currentSubtext", {
-                    model: activeEngineName,
-                  })
-                : t("smartModes.translation.modal.currentNone")}
-            </p>
-          </div>
+        {/* Enable CTA */}
+        {!enabled && (
           <Button
-            variant="secondary"
+            variant="primary"
             size="md"
-            disabled={busy || currentActiveSelected || activeEngineName == null}
-            onClick={() => void chooseCurrent()}
+            disabled={busy}
+            onClick={() => void handleEnable()}
           >
-            {currentActiveSelected
-              ? t("smartModes.translation.modal.activeButton")
-              : t("smartModes.translation.modal.useCurrent")}
+            {busy
+              ? t("smartModes.translation.modal.applying")
+              : t("smartModes.translation.modal.enableCta")}
           </Button>
-        </div>
+        )}
 
         {error && (
           <p role="alert" className="text-xs text-red-400">

@@ -1,11 +1,10 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Plus } from "lucide-react";
-import type { PostProcessProvider, SmartMode, TargetLanguage } from "@/bindings";
+import type { SmartMode, TargetLanguage } from "@/bindings";
 import { commands } from "@/bindings";
 import { Button } from "@/components/ui/Button";
 import { useSettings } from "@/hooks/useSettings";
-import { useLlmModelStore } from "@/stores/llmModelStore";
 import { SmartModeCard } from "./SmartModeCard";
 import { SmartModeTemplatePicker } from "./SmartModeTemplatePicker";
 import { TranslationEngineChoiceModal } from "./TranslationEngineChoiceModal";
@@ -97,33 +96,6 @@ export const SmartModesSection: React.FC = () => {
   const availableLanguages = GENERIC_LANGUAGES;
   const genericEngineNote = translationEnabled;
 
-  const activeModelId = useLlmModelStore((s) => s.activeModelId);
-  const llmModels = useLlmModelStore((s) => s.models);
-
-  // Resolve the active-engine descriptor for the translation modal.
-  // Uses the GGUF model name when one is active; otherwise falls back to the
-  // active post-process provider's display label (covers Apple Intelligence,
-  // cloud providers, etc.).
-  const providerId = (getSetting("post_process_provider_id") as string | undefined) ?? "";
-  const providers = (getSetting("post_process_providers") as PostProcessProvider[] | undefined) ?? [];
-
-  // The embedded GGUF engine is the ONLY case where the GGUF model name should
-  // describe the active translation engine. activeModelId lingers non-null from
-  // a prior embedded session even after switching to Apple Foundation / cloud, so
-  // it must be gated on the canonical embedded-provider check (decision [Phase 11]).
-  const isEmbeddedActive = providerId === "embedded";
-  const activeModelName =
-    isEmbeddedActive
-      ? (llmModels.find((m) => m.id === activeModelId)?.name ?? null)
-      : null;
-
-  const activeEngineName: string | null =
-    activeModelName ??
-    providers.find((p) => p.id === providerId)?.label ??
-    (providerId ? providerId : null);
-  // Recommended (Gemma) badge only applies when the embedded GGUF engine is
-  // active AND it is the recommended model — never for non-embedded providers.
-  const activeIsRecommended = isEmbeddedActive && activeModelId === "gemma-3-4b";
 
   const refetchModes = useCallback(async () => {
     const r = await commands.listSmartModes();
@@ -195,20 +167,9 @@ export const SmartModesSection: React.FC = () => {
             {t("smartModes.sections.translation")}
           </h2>
           {translationEnabled && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-mid-gray">
-                {t("smartModes.translation.currentEngine", {
-                  engine: activeModelName ?? t("smartModes.translation.engineGeneric"),
-                })}
-              </span>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setModalOpen(true)}
-              >
-                {t("smartModes.translation.changeEngine")}
-              </Button>
-            </div>
+            <span className="text-xs text-mid-gray">
+              {t("smartModes.translation.recommendNote")}
+            </span>
           )}
         </div>
         <div className="flex flex-col gap-2">
@@ -276,9 +237,6 @@ export const SmartModesSection: React.FC = () => {
       <TranslationEngineChoiceModal
         open={modalOpen}
         enabled={translationEnabled}
-        engineChoice={engineChoice as string}
-        activeEngineName={activeEngineName}
-        activeIsRecommended={activeIsRecommended}
         onClose={() => setModalOpen(false)}
         onChosen={() => {
           void refreshSettings?.();
