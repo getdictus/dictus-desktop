@@ -69,15 +69,37 @@ export const TranslationEngineChoiceModal: React.FC<
   // (covers Apple Intelligence, cloud providers, custom, and non-Gemma GGUF models)
   const currentActiveSelected = chosen && !activeIsRecommended;
 
-  // Enable translation, optionally switching the active model first.
-  const enableWith = async (setActiveTo?: string) => {
+  // Gemma path: flip provider to embedded + set active model to Gemma 3 4B.
+  const chooseGemma = async () => {
     setError(null);
     setBusy(true);
     try {
-      if (setActiveTo) {
-        await useLlmModelStore.getState().setActiveModel(setActiveTo);
+      const res = await commands.setTranslationEngineToEmbedded(RECOMMENDED_MODEL_ID);
+      if (res.status === "ok") {
+        // Refresh the LLM store so activeModelId reflects gemma-3-4b immediately.
+        await useLlmModelStore.getState().refresh();
+        onChosen();
+        onClose();
+      } else {
+        setError(res.error ?? t("smartModes.translation.modal.applyFailed"));
       }
-      const res = await commands.setTranslationEngineChoice("generic_model");
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : t("smartModes.translation.modal.applyFailed"),
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Current-model path: restore the prior real provider (or keep the active one).
+  const chooseCurrent = async () => {
+    setError(null);
+    setBusy(true);
+    try {
+      const res = await commands.restoreTranslationEngineProvider();
       if (res.status === "ok") {
         onChosen();
         onClose();
@@ -136,7 +158,7 @@ export const TranslationEngineChoiceModal: React.FC<
               variant="primary"
               size="md"
               disabled={busy}
-              onClick={() => void enableWith(RECOMMENDED_MODEL_ID)}
+              onClick={() => void chooseGemma()}
             >
               {busy
                 ? t("smartModes.translation.modal.applying")
@@ -203,7 +225,7 @@ export const TranslationEngineChoiceModal: React.FC<
             variant="secondary"
             size="md"
             disabled={busy || currentActiveSelected || activeEngineName == null}
-            onClick={() => void enableWith()}
+            onClick={() => void chooseCurrent()}
           >
             {currentActiveSelected
               ? t("smartModes.translation.modal.activeButton")
