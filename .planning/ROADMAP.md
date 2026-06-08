@@ -113,7 +113,7 @@
 
 > **NOTE on MODE-03:** This requirement spans two phases. Phase 12 delivers the backend CRUD commands and type bindings. Phase 13 delivers the UI surface. The requirement is assigned to Phase 13 (the phase that completes the user-observable deliverable), and Phase 12 success criterion 3 documents the backend prerequisite.
 
-**Plans**: 17 plans (4 original + 4 gap-closure from 13-04 UAT + 4 gap-closure from 13-08 re-test + 3 gap-closure from 13-12 re-test + 2 gap-closure from 13-08 round-2 re-test)
+**Plans**: 19 plans (4 original + 4 gap-closure from 13-04 UAT + 4 gap-closure from 13-08 re-test + 3 gap-closure from 13-12 re-test + 2 gap-closure from 13-08 round-2 re-test + 2 gap-closure from 13-16/13-17 round-3 re-test)
 - [x] 13-01-PLAN.md — Backend: TranslateGemma catalogue entry + translation_engine_choice setting/command + Translation execution wiring in actions.rs [Wave 1]
 - [x] 13-02-PLAN.md — i18n: smartModes.* keys in en + propagation to all 19 non-English locales (L10N-01) [Wave 1]
 - [x] 13-03-PLAN.md — React components: SmartModeShortcutChip + SmartModeCard + TranslationEngineChoiceModal + SmartModesSection [Wave 2]
@@ -131,6 +131,8 @@
 - [x] 13-15-PLAN.md — Gap closure (i18n): seeded Smart Mode NAME keys translated across all 20 locales ([D8] test 3) [Wave 1]
 - [x] 13-16-PLAN.md — Gap closure ([E9] test 7): chip captures via backend handy-keys-event stream on handy_keys to preserve left/right-distinct modifiers (CmdRight) + idempotent resume_all_shortcuts (MODE-04, MODE-05) [Wave 1] — VERIFIED LIVE PASS; new gap [G11] surfaced
 - [x] 13-17-PLAN.md — Gap closure ([F10] test 11): provider-switch built + works mechanically, but UX SUPERSEDED → recommendation-only [G12] (TRANS-02) [Wave 1]
+- [ ] 13-18-PLAN.md — Gap closure ([G11] test 7): backend prefix/base-key overlap rule in find_conflicting_binding — block a combo whose leading key is already bound, surfaced via the existing chip conflict UI (MODE-04, MODE-05) [Wave 1]
+- [ ] 13-19-PLAN.md — Gap closure ([G12] test 11): revert 13-17 global provider-switch + convert translation engine modal/section to recommendation-only (Gemma recommended; single active model via main selector) + 20-locale i18n (TRANS-01, TRANS-02) [Wave 1]
 
 ## Progress
 
