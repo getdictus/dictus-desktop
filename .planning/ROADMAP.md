@@ -113,7 +113,7 @@
 
 > **NOTE on MODE-03:** This requirement spans two phases. Phase 12 delivers the backend CRUD commands and type bindings. Phase 13 delivers the UI surface. The requirement is assigned to Phase 13 (the phase that completes the user-observable deliverable), and Phase 12 success criterion 3 documents the backend prerequisite.
 
-**Plans**: 12 plans (4 original + 4 gap-closure from 13-04 UAT + 4 gap-closure from 13-08 re-test UAT)
+**Plans**: 17 plans (4 original + 4 gap-closure from 13-04 UAT + 4 gap-closure from 13-08 re-test + 3 gap-closure from 13-12 re-test + 2 gap-closure from 13-08 round-2 re-test)
 - [x] 13-01-PLAN.md — Backend: TranslateGemma catalogue entry + translation_engine_choice setting/command + Translation execution wiring in actions.rs [Wave 1]
 - [x] 13-02-PLAN.md — i18n: smartModes.* keys in en + propagation to all 19 non-English locales (L10N-01) [Wave 1]
 - [x] 13-03-PLAN.md — React components: SmartModeShortcutChip + SmartModeCard + TranslationEngineChoiceModal + SmartModesSection [Wave 2]
@@ -122,10 +122,15 @@
 - [x] 13-06-PLAN.md — Gap closure (frontend): keydown-commit shortcut capture (fix Cmd+1), clear affordance, compact right-aligned chip [Wave 2]
 - [x] 13-07-PLAN.md — Gap closure (frontend): edit-aware card title, Prompt label, template picker + single '+', changeable translation engine [Wave 2]
 - [x] 13-08-PLAN.md — Gap closure: automated gates + human-verify checkpoint re-running the 8 failed UAT tests [Wave 3]
-- [ ] 13-09-PLAN.md — Gap closure (backend): dedup-aware add_smart_mode (seeded id reuse/overwrite), atomic delete binding cleanup, dangling-binding reconciliation, suspend_all/resume_all commands (tests 4/6/7/9) [Wave 1]
-- [ ] 13-10-PLAN.md — Gap closure (Apple Swift + actions.rs): task-agnostic Apple Intelligence path (drop fixed CleanedTranscript schema, no word-count truncation) — fixes translation-as-rewrite + bullet truncation (tests 10/11) [Wave 1]
-- [ ] 13-11-PLAN.md — Gap closure (frontend): name-based picker dedup + overwrite-warn, Custom-form placeholders + ${output} hint (test 4) [Wave 2]
-- [ ] 13-12-PLAN.md — Gap closure (frontend): chip suspend-all/resume-all capture, engine modal active badge from persisted choice (tests 7/11) [Wave 3]
+- [x] 13-09-PLAN.md — Gap closure (backend): dedup-aware add_smart_mode (seeded id reuse/overwrite), atomic delete binding cleanup, dangling-binding reconciliation, suspend_all/resume_all commands (tests 4/6/7/9) [Wave 1]
+- [x] 13-10-PLAN.md — Gap closure (Apple Swift + actions.rs): task-agnostic Apple Intelligence path (drop fixed CleanedTranscript schema, no word-count truncation) — fixes translation-as-rewrite + bullet truncation (tests 10/11) [Wave 1]
+- [x] 13-11-PLAN.md — Gap closure (frontend): name-based picker dedup + overwrite-warn, Custom-form placeholders + ${output} hint (test 4) [Wave 2]
+- [x] 13-12-PLAN.md — Gap closure (frontend): chip suspend-all/resume-all capture, engine modal active badge from persisted choice (tests 7/11) [Wave 3]
+- [x] 13-13-PLAN.md — Gap closure (backend): cross-mode collision detection in set_smart_mode_binding/find_conflicting_binding ([B5] test 7 block-half) [Wave 1]
+- [x] 13-14-PLAN.md — Gap closure (frontend): engine badge gated on post_process_provider_id==='embedded' ([C7] test 11 display-half) [Wave 1]
+- [x] 13-15-PLAN.md — Gap closure (i18n): seeded Smart Mode NAME keys translated across all 20 locales ([D8] test 3) [Wave 1]
+- [ ] 13-16-PLAN.md — Gap closure ([E9] test 7): chip captures via backend handy-keys-event stream on handy_keys to preserve left/right-distinct modifiers (CmdRight) + idempotent resume_all_shortcuts (MODE-04, MODE-05) [Wave 1]
+- [ ] 13-17-PLAN.md — Gap closure ([F10] test 11): 'Use Gemma 3 4B' flips post_process_provider_id to 'embedded' + reverse provider restore (TRANS-02) [Wave 1]
 
 ## Progress
 
