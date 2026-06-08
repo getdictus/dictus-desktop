@@ -460,7 +460,7 @@
               "description": "Fast, lightweight — runs on any machine"
             },
             "gemma3_4b": {
-              "description": "Versatile and multilingual — strong in many languages"
+              "description": "Excellent for translation — versatile and multilingual"
             },
             "phi4_mini": {
               "description": "Precise instruction-following — formatting and structure"

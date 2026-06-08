@@ -132,7 +132,7 @@ impl LlmManager {
             LlmModelInfo {
                 id: "gemma-3-4b".to_string(),
                 name: "Gemma 3 4B".to_string(),
-                description: "Versatile and multilingual — strong in many languages".to_string(),
+                description: "Excellent for translation — versatile and multilingual".to_string(),
                 filename: "gemma-3-4b-it-Q4_K_M.gguf".to_string(),
                 url: Some("https://huggingface.co/unsloth/gemma-3-4b-it-GGUF/resolve/main/gemma-3-4b-it-Q4_K_M.gguf".to_string()),
                 sha256: Some("04a43a22e8d2003deda5acc262f68ec1005fa76c735a9962a8c77042a74a7d19".to_string()),
