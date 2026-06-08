@@ -1116,6 +1116,70 @@ pub fn smart_mode_binding_id(mode_id: &str) -> String {
     format!("smart_mode_{}", mode_id)
 }
 
+/// True when `token` (a single '+'-split combo segment) names a modifier key.
+/// Accepts both the handy_keys lowercase side-distinct forms and the tauri
+/// capitalized forms (compared case-insensitively here only for this helper).
+fn is_modifier_token(token: &str) -> bool {
+    let t = token.trim().to_ascii_lowercase();
+    matches!(
+        t.as_str(),
+        "ctrl"
+            | "ctrl_left"
+            | "ctrl_right"
+            | "control"
+            | "control_left"
+            | "control_right"
+            | "option"
+            | "option_left"
+            | "option_right"
+            | "alt"
+            | "alt_left"
+            | "alt_right"
+            | "shift"
+            | "shift_left"
+            | "shift_right"
+            | "command"
+            | "command_left"
+            | "command_right"
+            | "cmd"
+            | "super"
+            | "super_left"
+            | "super_right"
+            | "fn"
+            | "meta"
+    )
+}
+
+/// Return the modifier-only "base" of a combo: the part the OS can fire on
+/// its own (every leading modifier token, dropping a trailing main key).
+/// For a modifier-only combo the base IS the whole string.
+///
+/// Examples:
+///   "command_left+digit1" -> "command_left"
+///   "ctrl+option+keya"    -> "ctrl+option"
+///   "command_left"        -> "command_left"
+///   "f13"                 -> "f13"
+fn combo_base(combo: &str) -> &str {
+    let trimmed = combo.trim();
+    // Find the last '+' whose left side consists entirely of modifier tokens.
+    // For combos in our format (modifiers first, at most one trailing main key)
+    // this means: if there is a '+' and everything before the last '+' is
+    // modifier-only, the base is everything up to (not including) that '+'.
+    if let Some(idx) = trimmed.rfind('+') {
+        let prefix = &trimmed[..idx];
+        // All segments in the prefix must be modifiers for this to be the
+        // modifier-base split.  A single leading modifier (e.g. "command_left")
+        // or a chain ("ctrl+option") both qualify.
+        let all_modifier = prefix
+            .split('+')
+            .all(|seg| is_modifier_token(seg));
+        if all_modifier {
+            return prefix;
+        }
+    }
+    trimmed
+}
+
 /// Find a global binding (other than `binding_id`) that already holds `combo`.
 /// Returns the conflicting binding id, or None when `combo` is free.
 ///
@@ -1123,6 +1187,15 @@ pub fn smart_mode_binding_id(mode_id: &str) -> String {
 /// DIFFERENT smart mode or any other global shortcut at commit time, so the
 /// chip's inline conflict UI fires instead of double-persisting two bindings
 /// that collide only at OS re-registration (UAT test 7 / [B5]).
+///
+/// In addition to full-string equality (13-13 behaviour, preserved verbatim)
+/// this also rejects prefix/base-key overlaps ([G11]):
+///   (a) candidate's modifier-base IS another full binding
+///       (e.g. existing "command_left", candidate "command_left+digit1")
+///   (b) candidate (a base key) IS the modifier-base of another full binding
+///       (e.g. existing "command_left+digit1", candidate "command_left")
+/// Two distinct full combos that share only a modifier prefix (e.g.
+/// "command_left+digit1" vs "command_left+digit2") do NOT trigger this rule.
 pub fn find_conflicting_binding(
     bindings: &std::collections::HashMap<String, settings::ShortcutBinding>,
     binding_id: &str,
@@ -1132,12 +1205,25 @@ pub fn find_conflicting_binding(
     if target.is_empty() {
         return None;
     }
+    let candidate_base = combo_base(target);
     bindings
         .iter()
         .find(|(other_id, b)| {
-            other_id.as_str() != binding_id
-                && !b.current_binding.trim().is_empty()
-                && b.current_binding.trim() == target
+            if other_id.as_str() == binding_id {
+                return false;
+            }
+            let other = b.current_binding.trim();
+            if other.is_empty() {
+                return false;
+            }
+            // (1) exact duplicate — 13-13 behaviour preserved verbatim
+            other == target
+            // (2) candidate's base IS this full binding
+            //     (existing "command_left", candidate "command_left+digit1")
+                || other == candidate_base
+            // (3) candidate IS the base of this binding
+            //     (existing "command_left+digit1", candidate "command_left")
+                || combo_base(other) == target
         })
         .map(|(other_id, _)| other_id.clone())
 }
