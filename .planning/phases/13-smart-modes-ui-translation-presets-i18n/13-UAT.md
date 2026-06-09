@@ -1,6 +1,12 @@
 ---
-status: diagnosed
+status: resolved
 phase: 13-smart-modes-ui-translation-presets-i18n
+retest_round_5:
+  date: 2026-06-09
+  closed_plans: [13-25, 13-26]
+  resolved_gaps: 3  # [G16] localized conflict mode name (13-25, live FR PASS); [G17] base-overlap error no-overflow full-width row (13-26, live FR PASS); [G13] now fully closed (frame + interpolated name + layout all correct)
+  remaining_gaps: 0
+  next: "Phase 13 complete — all gaps resolved, all 7 requirements satisfied."
 source:
   - 13-01-SUMMARY.md
   - 13-02-SUMMARY.md
@@ -20,8 +26,8 @@ retest_round_4:
   resolved_gaps: 2  # [G14] full app-wide translation (all 19 non-EN locales, live FR + DE/ES spot-check PASS); [G15] Gemma description leads on translation (live FR PASS)
   partial_gaps: 1   # [G13] message frame now French + distinct (CLOSED), but [G16]+[G17] residual defects surfaced
   new_gaps: 2       # [G16] conflict message interpolates raw English seed mode name; [G17] base-overlap error overflows chip container
-  remaining_gaps: 3  # [G13] (kept failed until [G16][G17] close), [G16], [G17] — see ## Gaps (status: failed)
-  next: "/gsd:plan-phase 13 --gaps  (close [G16] localized name interpolation + [G17] chip overflow)"
+  remaining_gaps: 0  # closed in retest_round_5: [G13]/[G16]/[G17] all resolved (status: resolved)
+  next: "Closed in round 5 (13-25 [G16], 13-26 [G17])."
 retest:
   date: 2026-06-08
   closed_plans: [13-18, 13-19]
@@ -394,7 +400,7 @@ next: /gsd:plan-phase 13 --gaps  (close [E9] modifier-side parity + [F10] engine
   debug_session: ""
 
 - truth: "The shortcut conflict error tells the user precisely what kind of collision occurred, in the app's language"
-  status: failed
+  status: resolved
   partial_close: "13-20 (structured ConflictKind backend codes) + 13-21 (localizeBindingError → t() with shortcutConflict / shortcutConflictBase keys, all 20 locales). LIVE RE-TEST 2026-06-09 (plan 13-24 UAT round 4): the message FRAME is now French AND distinct (exact-duplicate vs base-overlap render different sentences) — the two original [G13] defects (English prose + indistinguishable cases) are CLOSED. BUT two NEW residual defects surfaced: (a) the interpolated {{name}} carries the raw English seed mode name ('Clean Up' not 'Nettoyage') → [G16]; (b) the longer localized base-overlap message overflows the chip container and overwrites adjacent UI → [G17]. [G13] kept failed until [G16]+[G17] close."
   reason: "LIVE TEST 2026-06-08 (surfaced confirming [G11]/13-18 PASS). Two defects in the conflict error shown by the chip: (1) MISLEADING — for the base-key/prefix-overlap case (binding 'Cmd Left + 3' while 'Cmd Left' is already bound) the message reads 'This shortcut is already used by: Translate → Chinese', identical to the exact-duplicate case. It is NOT the same shortcut — the BASE key collides — and the user cannot tell which situation they are in. (2) ENGLISH — the message is hardcoded English in the Rust backend and rendered verbatim, so it stays English even when the app language is French. User: 'tous les messages qui sont à l'écran doivent être traduits.'"
   severity: minor
@@ -452,7 +458,7 @@ next: /gsd:plan-phase 13 --gaps  (close [E9] modifier-side parity + [F10] engine
   debug_session: ""
 
 - truth: "The shortcut conflict message names the conflicting mode in the user's language (localized Smart Mode label, not the stored English seed name)"
-  status: failed
+  status: resolved
   reason: "LIVE TEST 2026-06-09 (plan 13-24 UAT round 4, French locale, confirming [G13]/13-20+13-21). The conflict message frame is now correctly French and distinct per case, BUT the interpolated mode name leaks English: binding a duplicate combo renders 'Déjà utilisé par : Clean Up' instead of the localized 'Déjà utilisé par : Nettoyage'. The message frame is localized via t(); the {{name}} field carried in the backend SHORTCUT_CONFLICT payload is the raw stored English seed mode name. Same defect applies to the base-overlap message. User: all on-screen text — including the interpolated mode name — must be in the app language."
   severity: minor
   test: 7
@@ -472,7 +478,7 @@ next: /gsd:plan-phase 13 --gaps  (close [E9] modifier-side parity + [F10] engine
   debug_session: ""
 
 - truth: "The shortcut conflict error renders fully within its container without overlapping adjacent UI"
-  status: failed
+  status: resolved
   reason: "LIVE TEST 2026-06-09 (plan 13-24 UAT round 4, French locale, confirming [G13]/13-20+13-21 base-overlap case). The localized base-overlap conflict message is correct in content and French, but VISUALLY DEFECTIVE: the longer base-overlap error text overflows the SmartModeShortcutChip container and overwrites adjacent UI — it overlaps the card title ('Nettoyage') and the 'Ajouter un raccourci' placeholder. No wrapping, clipping, or containment. The chip was sized for the shorter English placeholder; the longer localized error has no layout accommodation."
   severity: minor
   test: 7
