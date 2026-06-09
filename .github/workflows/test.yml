@@ -34,6 +34,10 @@ jobs:
           # Swap to mock adapter - avoids compiling whisper/Vulkan
           cp src/managers/transcription_mock.rs src/managers/transcription.rs
           sed -i '/^transcribe-rs/d' Cargo.toml
+          # Drop llama-cpp-2 GPU backends (vulkan/metal) so the embedded LLM
+          # crate builds CPU-only — the test runner has no Vulkan SDK, and the
+          # Rust unit tests don't exercise GPU inference.
+          sed -i 's/^llama-cpp-2 = .*/llama-cpp-2 = { version = "0.1.146" }/' Cargo.toml
 
       - name: Run Rust tests
         working-directory: src-tauri
