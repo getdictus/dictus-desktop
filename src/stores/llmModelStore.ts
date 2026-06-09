@@ -149,13 +149,12 @@ export const useLlmModelStore = create<LlmModelsStore>()((set, get) => ({
                     ? current.speedMbps * 0.8 + validSpeed * 0.2
                     : validSpeed;
 
-                (state.downloadStats[progress.model_id] as LlmDownloadStats) =
-                  {
-                    startTime: current.startTime,
-                    lastUpdate: now,
-                    totalDownloaded: progress.downloaded,
-                    speedMbps: Math.max(0, smoothed),
-                  };
+                (state.downloadStats[progress.model_id] as LlmDownloadStats) = {
+                  startTime: current.startTime,
+                  lastUpdate: now,
+                  totalDownloaded: progress.downloaded,
+                  speedMbps: Math.max(0, smoothed),
+                };
               }
             }
           }),

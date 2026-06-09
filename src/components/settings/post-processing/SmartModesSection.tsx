@@ -87,7 +87,9 @@ export const SmartModesSection: React.FC = () => {
   const [creatingRewrite, setCreatingRewrite] = useState(false);
   const [creatingTranslation, setCreatingTranslation] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-  const [pickerOpen, setPickerOpen] = useState<"rewrite" | "translation" | null>(null);
+  const [pickerOpen, setPickerOpen] = useState<
+    "rewrite" | "translation" | null
+  >(null);
 
   const engineChoice = getSetting("translation_engine_choice") ?? "not_chosen";
   const translationEnabled = engineChoice !== "not_chosen";
@@ -95,7 +97,6 @@ export const SmartModesSection: React.FC = () => {
   // Translation always runs through the active generic LLM model now.
   const availableLanguages = GENERIC_LANGUAGES;
   const genericEngineNote = translationEnabled;
-
 
   const refetchModes = useCallback(async () => {
     const r = await commands.listSmartModes();

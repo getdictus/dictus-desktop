@@ -308,9 +308,7 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
     if (useHandyKeys) {
       // Start backend recording before setting isRecording so the useEffect
       // listener is set up with an already-active backend stream.
-      commands
-        .startHandyKeysRecording(`smart_mode_${modeId}`)
-        .catch(() => {});
+      commands.startHandyKeysRecording(`smart_mode_${modeId}`).catch(() => {});
     }
     setIsRecording(true);
   };

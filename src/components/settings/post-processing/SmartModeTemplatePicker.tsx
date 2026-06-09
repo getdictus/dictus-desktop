@@ -51,7 +51,8 @@ export const SmartModeTemplatePicker: React.FC<
         .map((m) => {
           const i18nKey = SEEDED_MODE_ID_TO_I18N_KEY[m.id];
           const seedDefault = SEEDED_MODE_DEFAULT_NAME[m.id];
-          if (i18nKey && seedDefault && m.name === seedDefault) return t(i18nKey);
+          if (i18nKey && seedDefault && m.name === seedDefault)
+            return t(i18nKey);
           return m.name;
         }),
     );

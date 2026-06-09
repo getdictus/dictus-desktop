@@ -403,9 +403,7 @@ if (CHECK_UNTRANSLATED) {
     );
     process.exit(1);
   } else {
-    console.log(
-      colorize("\n✓ No untranslated keys found!", "green"),
-    );
+    console.log(colorize("\n✓ No untranslated keys found!", "green"));
     process.exit(0);
   }
 } else {

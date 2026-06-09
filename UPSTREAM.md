@@ -311,8 +311,8 @@ As of 2026-05-29, this fork transitions FROM bulk merges TO selective cherry-pic
 
 Commits excluded from Dictus in upstream syncs. Each entry documents the exclusion rationale for auditability.
 
-| SHA | PR | Title | Reason Excluded | Date |
-| --- | -- | ----- | --------------- | ---- |
+| SHA     | PR    | Title                                   | Reason Excluded                                                      | Date       |
+| ------- | ----- | --------------------------------------- | -------------------------------------------------------------------- | ---------- |
 | aee682f | #1288 | feat: add AWS Bedrock (Mantle) provider | Local-first: cloud provider not owned by Dictus; reverted in Sync #2 | 2026-05-29 |
 
 ---

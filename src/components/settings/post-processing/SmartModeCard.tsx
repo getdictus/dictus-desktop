@@ -176,7 +176,8 @@ export const SmartModeCard: React.FC<SmartModeCardProps> = ({
       : "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-logo-primary/10 text-logo-primary border border-logo-primary/30";
 
   // Card frame classes
-  const cardBase = "flex flex-col gap-2 px-4 py-3 rounded-xl border-2 transition-all";
+  const cardBase =
+    "flex flex-col gap-2 px-4 py-3 rounded-xl border-2 transition-all";
   const cardCollapsed = disabled
     ? `${cardBase} border-mid-gray/20 opacity-60 bg-mid-gray/5`
     : isEditing
@@ -253,9 +254,7 @@ export const SmartModeCard: React.FC<SmartModeCardProps> = ({
                   setDraftLang(found ?? null);
                 }}
               >
-                <option value="">
-                  {t("smartModes.card.targetLanguage")}
-                </option>
+                <option value="">{t("smartModes.card.targetLanguage")}</option>
                 {availableLanguages.map((lang) => (
                   <option key={lang.code} value={lang.code}>
                     {lang.label}

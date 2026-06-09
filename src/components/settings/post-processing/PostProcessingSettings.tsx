@@ -3,10 +3,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { RefreshCcw } from "lucide-react";
 
 import { Alert } from "../../ui/Alert";
-import {
-  SettingContainer,
-  SettingsGroup,
-} from "@/components/ui";
+import { SettingContainer, SettingsGroup } from "@/components/ui";
 import { Button } from "../../ui/Button";
 import { ResetButton } from "../../ui/ResetButton";
 

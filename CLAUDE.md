@@ -136,7 +136,7 @@ Dictus Desktop supports command-line parameters on all platforms for integration
 | Flag                     | Description                                                                        |
 | ------------------------ | ---------------------------------------------------------------------------------- |
 | `--toggle-transcription` | Toggle recording on/off on a running instance (via `tauri_plugin_single_instance`) |
-| `--toggle-post-process`  | Toggle recording through the active Smart Mode on/off on a running instance         |
+| `--toggle-post-process`  | Toggle recording through the active Smart Mode on/off on a running instance        |
 | `--cancel`               | Cancel the current operation on a running instance                                 |
 | `--start-hidden`         | Launch without showing the main window (tray icon still visible)                   |
 | `--no-tray`              | Launch without the system tray icon (closing window quits the app)                 |
