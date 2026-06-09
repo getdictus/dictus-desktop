@@ -4,6 +4,7 @@ import type { TFunction } from "i18next";
 import { X } from "lucide-react";
 import { listen } from "@tauri-apps/api/event";
 import { commands } from "@/bindings";
+import { localizeSmartModeName } from "./SmartModeCard";
 import {
   formatKeyCombination,
   getKeyName,
@@ -50,9 +51,14 @@ const resumeAll = () => {
 /**
  * Maps a structured backend binding error payload to a localized string.
  *
- * Backend payloads (from 13-20):
- *   SHORTCUT_CONFLICT|exact_duplicate|{name}
- *   SHORTCUT_CONFLICT|base_overlap|{name}|{base}
+ * Backend payloads (from 13-25):
+ *   SHORTCUT_CONFLICT|exact_duplicate|<id>|<name>
+ *   SHORTCUT_CONFLICT|base_overlap|<id>|<name>|<base>
+ *
+ * <id> is the conflicting binding id. For smart_mode_* ids we resolve the
+ * LOCALIZED mode label (seeded-and-pristine -> t(key), else stored name).
+ * Core ids (transcribe/cancel) fall back to the stored <name> verbatim
+ * (core binding names are not localized — known limitation).
  *
  * Unknown or legacy errors fall back to the generic conflict message.
  */
@@ -61,11 +67,21 @@ function localizeBindingError(
   t: TFunction,
 ): string {
   if (raw && raw.startsWith("SHORTCUT_CONFLICT|")) {
-    const [, code, name = "", base = ""] = raw.split("|");
+    const parts = raw.split("|");
+    const code = parts[1] ?? "";
+    const id = parts[2] ?? "";
+    const name = parts[3] ?? "";
+    const base = parts[4] ?? "";
+    const displayName = id.startsWith("smart_mode_")
+      ? localizeSmartModeName(id.slice("smart_mode_".length), name, t)
+      : name;
     if (code === "base_overlap") {
-      return t("smartModes.card.shortcutConflictBase", { name, base });
+      return t("smartModes.card.shortcutConflictBase", {
+        name: displayName,
+        base,
+      });
     }
-    return t("smartModes.card.shortcutConflict", { name });
+    return t("smartModes.card.shortcutConflict", { name: displayName });
   }
   // Unknown / legacy error → fall back to the generic conflict message
   return raw ?? t("smartModes.card.shortcutConflict", { name: "" });

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { Pencil, Trash2 } from "lucide-react";
 import { ask } from "@tauri-apps/plugin-dialog";
 import type { SmartMode, SmartModeKind, TargetLanguage } from "@/bindings";
@@ -40,6 +41,22 @@ export const SEEDED_MODE_DEFAULT_NAME: Record<string, string> = {
   mode_translate_zh: "Translate → Chinese",
 };
 
+/**
+ * Localized display name for a Smart Mode.
+ * Seeded-and-pristine (stored name still equals the English seed default) -> t(i18nKey).
+ * Renamed seeded mode or user-created mode -> the literal stored name.
+ */
+export function localizeSmartModeName(
+  modeId: string,
+  storedName: string,
+  t: TFunction,
+): string {
+  const i18nKey = SEEDED_MODE_ID_TO_I18N_KEY[modeId];
+  const seedDefault = SEEDED_MODE_DEFAULT_NAME[modeId];
+  if (i18nKey && seedDefault && storedName === seedDefault) return t(i18nKey);
+  return storedName;
+}
+
 interface SmartModeCardProps {
   mode: SmartMode | null;
   kind: SmartModeKind;
@@ -65,16 +82,8 @@ export const SmartModeCard: React.FC<SmartModeCardProps> = ({
   const isNew = mode === null;
   const [isEditing, setIsEditing] = useState(isNew);
 
-  // Derive displayed name from seeded key or raw name.
-  // Only localize when the stored name is still the pristine seed default.
-  // Once the user edits the name, show the literal stored name.
-  const displayName = (() => {
-    if (!mode) return "";
-    const i18nKey = SEEDED_MODE_ID_TO_I18N_KEY[mode.id];
-    const seedDefault = SEEDED_MODE_DEFAULT_NAME[mode.id];
-    if (i18nKey && seedDefault && mode.name === seedDefault) return t(i18nKey);
-    return mode.name;
-  })();
+  // Derive displayed name via shared helper (seeded-and-pristine -> t(key), else stored name).
+  const displayName = mode ? localizeSmartModeName(mode.id, mode.name, t) : "";
 
   // Draft state for the edit form
   const [draftName, setDraftName] = useState(mode?.name ?? "");
