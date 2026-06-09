@@ -84,7 +84,6 @@ pub async fn set_translation_engine_choice(
     Ok(())
 }
 
-
 #[tauri::command]
 #[specta::specta]
 pub async fn import_custom_llm_model(
