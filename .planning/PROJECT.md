@@ -10,46 +10,47 @@ L'application doit être identifiable et utilisable comme **Dictus Desktop** —
 
 ## Current State
 
-**GSD milestones shipped:** v1.0 (2026-04-10), v1.1 (2026-04-14), v1.2 (2026-05-29)
+**GSD milestones shipped:** v1.0 (2026-04-10), v1.1 (2026-04-14), v1.2 (2026-05-29), v1.3 (2026-06-09)
 **App version:** 0.1.0 (first public release, `getdictus/dictus-desktop`)
 **Latest app release tag:** `v0.1.0`
 
-> GSD milestones (`v1.0`, `v1.1`, `v1.2`) are internal planning units — no git tags.
+> GSD milestones (`v1.0`…`v1.3`) are internal planning units — no git tags.
 > App versions (`0.x.y`) are the only tagged entities. See `docs/VERSIONING.md`.
+> v1.3 code is on `feat/v1.3-smart-modes`; an app-version release (e.g. `0.2.0`) is a separate follow-up step, not produced by milestone archival.
 
-**v1.2 highlights:**
-- Brand cleanup complete — `dictus-*.wav` filenames, "Dictus Portable Mode" marker, runtime app-data path in DebugPaths, verify-sync.sh extended (15 assertions) at `.github/scripts/`
-- Platform icons regenerated from 1024×1024 opaque navy-tile source — Linux black-corners artifact impossible, Windows ICO has all 6 required layers, tauri.conf.json bundle.icon enumerates 7 entries
-- macOS clean shutdown — `flush_and_exit` helper releases CGEventTap on main runloop before `app.exit(0)`; multi-day no-crash validation
-- Privacy / local-first UX — platform-aware default (Apple Intelligence on macOS arm64, Custom (local) elsewhere), Local/Cloud tabs replace cloud opt-in toggle, `docs/PRIVACY.md` documents network surface, 25 i18n keys propagated across 19 sibling locales
-- v1.2 audit gap closure — clippy gate green (33 errors resolved across 14 files), retroactive 07-VERIFICATION.md authored, 08-UAT promoted to passed
+**v1.3 highlights (shipped 2026-06-09):**
+- Embedded LLM runtime on all platforms — in-process GGUF via `llama-cpp-2` (no external Ollama), GPU auto-select (Metal embedded / Vulkan / CPU fallback), background-thread inference, idle unload coexisting with the transcription model; ggml duplicate-symbol conflict resolved via linker keep-first-definition; CI green on all 7 platforms
+- Functional local model library — curated 4-model catalogue (Qwen2.5-1.5B, Gemma-3-4B, Phi-4-Mini, Llama-3.2-3B) with size-before-download, in-app download/cancel/resume + SHA256 from HuggingFace CDN, delete-to-reclaim, custom GGUF drag/drop; placeholder card replaced by the real library
+- Smart Modes — lossless v1.2→v1.3 prompt migration, visual card list replacing the single-prompt dropdown, create/edit/delete in-panel, per-mode global shortcut with structured fully-localized conflict detection
+- First-class offline translation — runs through the active embedded LLM; TranslateGemma dropped after A/B benchmark (Gemma-3-4B leads); recommendation-only engine; whatlang output-language directive
+- Full 20-locale localization — reversed the "names-only" deferral; all new strings truly translated; `--check-untranslated` guardrail added
 
-**v1.2 tech debt carried forward:**
-- 4 phase VALIDATION.md files still `status: draft, nyquist_compliant: false` — Nyquist sampling map never finalised; `/gsd:validate-phase 6` (and 7/8/9) to close retroactively
-- **TECH-04** — `llm_client.rs:137 send_chat_completion_with_schema` 8-arg refactor deferred (suppressed via `#[allow(clippy::too_many_arguments)]`)
-- Pre-existing lint failure on `src/components/icons/DictusLogo.tsx` (i18next/no-literal-string on hardcoded `Dictus` SVG `<text>`)
-- macOS quit-unexpectedly crash non-reproducible under clean env post-fix (memory `project_macos_quit_crash_investigation.md`) — fix is defensive
+**v1.3 tech debt carried forward:**
+- Phases 10 & 11 VALIDATION.md `status: draft` — `/gsd:validate-phase 10`/`11` to close (adds to the v1.1/v1.2 Nyquist backlog)
+- Phase 11 Windows/Linux runtime GPU smoke not human-tested (CI build/link green, user-accepted)
+- Doc wording drift recorded in `milestones/v1.3-REQUIREMENTS.md`: MDL-01 catalogue (3 named → 4 shipped), MODE-02 seed count (10 curated, 1 seeded)
+- `drop_non_drop` clippy warning at `managers/llm.rs:1221` (pre-existing); AMD Vulkan driver crash to monitor (llama.cpp #17432) before Windows beta
 
-**Carried from v1.1:**
-- `blob.handy.computer` CDN for onnxruntime still in use (INFR-01)
-- v0.1.0 Windows builds unsigned at OS level (INFR-03, Azure Trusted Signing pending)
-- Phase 5 VALIDATION.md left draft — needs `/gsd:validate-phase 5`
+<details>
+<summary>Earlier milestone highlights & carried debt (v1.0–v1.2)</summary>
 
-## Current Milestone: v1.3 Smart Modes & Local LLM
+**v1.2 highlights:** brand cleanup (`dictus-*.wav`, Portable Mode marker, verify-sync.sh 15 assertions); platform icons regenerated (opaque navy tile, 6-layer Windows ICO); macOS clean shutdown (`flush_and_exit` releases CGEventTap before exit); privacy/local-first UX (Local/Cloud tabs, platform-aware default, `docs/PRIVACY.md`, 25 i18n keys); audit gap closure (clippy gate green, retroactive 07-VERIFICATION).
 
-**Goal:** Faire du traitement local post-transcription un défaut réel et puissant — un runtime LLM embarqué (toutes plateformes, sans Ollama externe) plus des « Smart Modes » (prompts soignés, éditables, créables, chacun associable à un shortcut), dont la traduction multi-cibles devient un mode first-class.
+**v1.2 tech debt:** 4 phase VALIDATION.md `draft`; TECH-04 (resolved in v1.3 PREP-02); `DictusLogo.tsx` i18next lint.
 
-**Target features:**
-- **Runtime LLM local embarqué** — moteur LLM en Rust intégré (llama.cpp/candle/mistral.rs), téléchargeur de modèles intégré (UX calquée sur le picker Whisper/Parakeet), détection GPU par plateforme (Metal + Vulkan, CUDA optionnel), gestion mémoire/cycle de vie (unload timeout, presets de quantization). Devient l'option locale principale ; la carte placeholder « Bibliothèque de modèles locaux » devient réelle.
-- **Smart Modes** — série de prompts post-transcription soignés livrés par défaut, éditables, l'utilisateur peut créer ses propres modes, chacun associable à son propre shortcut (extension du modèle prompt↔shortcut actuel + amélioration UX/UI).
-- **Traduction first-class** — presets multi-cibles (EN/ES/ZH/FR…), chacun un Smart Mode bindable à un shortcut.
+**Carried from v1.1:** `blob.handy.computer` CDN for onnxruntime (INFR-01); v0.1.0 Windows builds unsigned (INFR-03, Azure Trusted Signing pending); Phase 5 VALIDATION.md draft. macOS quit-unexpectedly crash non-reproducible under clean env post-fix (defensive).
 
-**Scope decisions (2026-05-29):**
-- Runtime embarqué livré sur **toutes les plateformes** dès v1.3 (Metal/Vulkan, pas macOS-first).
-- Apple Foundation + Custom→Ollama + providers cloud **restent tous** en option ; l'embarqué s'ajoute comme option locale principale (ne remplace rien).
-- Smart Modes = prompts (pas un nouveau concept opaque) — défauts soignés + édition + création + binding shortcut.
+</details>
 
-**Phases continue from Phase 10** (v1.2 ended at Phase 9).
+## Next Milestone: TBD
+
+v1.3 is shipped and archived. The next milestone is not yet defined — run `/gsd:new-milestone` to gather context, research, and define fresh requirements (it will create a new `.planning/REQUIREMENTS.md`).
+
+**Candidate threads for next milestone** (not committed — surface during `/gsd:new-milestone`):
+- Default Smart Mode prompt quality tuning (user noted output not fully matching intent; tracked in pending todos + memory `smart_mode_prompt_tuning`)
+- Close the Nyquist VALIDATION.md backlog (phases 5–11) and Phase 11 runtime GPU smoke on Windows/Linux
+- An app-version release (`0.2.0`) shipping the v1.3 feature set
+- Model-library polish deferred to Future Requirements (MDL-F1..F6) and Smart Mode extensions (MODE-F1..F5)
 
 ## Requirements
 
@@ -97,27 +98,47 @@ L'application doit être identifiable et utilisable comme **Dictus Desktop** —
 - ✓ `cargo clippy --all-targets -- -D warnings` exits 0 (AUDIT-01) — v1.2
 - ✓ Retroactive 07-VERIFICATION.md with `status: passed` (AUDIT-02) — v1.2
 - ✓ 08-UAT.md frontmatter promoted to `status: passed` (AUDIT-03) — v1.2
+- ✓ `llama-cpp-2` coexists with `transcribe-rs` on all 7 CI platforms — ggml conflict resolved via linker keep-first (PREP-01) — v1.3
+- ✓ TECH-04 resolved — `send_chat_completion_with_schema` 8-arg → request struct, `#[allow]` dropped (PREP-02) — v1.3
+- ✓ Upstream Sync #2 merged, selective cherry-pick fork policy, Bedrock `aee682f` exclusion logged (PREP-03) — v1.3
+- ✓ In-process GGUF runtime on background thread, no external Ollama (LLM-01) — v1.3
+- ✓ Per-platform GPU auto-select (Metal/Vulkan) + CPU fallback (LLM-02) — v1.3 (Win/Linux runtime smoke = carried debt)
+- ✓ LLM idle-timeout unload coexisting with transcription model (LLM-03) — v1.3
+- ✓ "Embedded (local)" selectable post-process provider, cloud stays opt-in (LLM-04) — v1.3
+- ✓ Curated catalogue with size-before-download (MDL-01) — v1.3 (shipped 4 generic-instruct models, not the 3 originally named)
+- ✓ In-app download w/ progress/cancel/resume, SHA256, HuggingFace CDN (MDL-02) — v1.3
+- ✓ Delete downloaded model, reclaim disk (MDL-03) — v1.3
+- ✓ Custom GGUF by drag/drop or file-pick (MDL-04) — v1.3
+- ✓ Placeholder card → real functional model library, top-of-page (MDL-05) — v1.3
+- ✓ Lossless v1.2→v1.3 prompt migration, `settings_schema_version`, fixture-tested (MODE-01) — v1.3
+- ✓ Curated Smart Modes shipped + safe Clean Up default (MODE-02) — v1.3 (10 curated, 1 seeded + 9 via picker)
+- ✓ Create / edit / delete Smart Modes (name + prompt + optional target language) (MODE-03) — v1.3
+- ✓ Distinct global shortcut per Smart Mode, applies that mode's prompt (MODE-04) — v1.3
+- ✓ Shortcut conflicts detected + inline localized warning at bind time (MODE-05) — v1.3
+- ✓ Smart Modes as a visual card list replacing the dropdown (MODE-06) — v1.3
+- ✓ Translation as a first-class bindable Smart Mode, multi-target (TRANS-01) — v1.3
+- ✓ Translation runs fully offline through the embedded LLM (TRANS-02) — v1.3
+- ✓ All new strings localized across 20 locales, `check:translations` 0 errors (L10N-01) — v1.3
 
 ### Active
 
-<!-- v1.3 Smart Modes & Local LLM — detailed REQ-IDs in .planning/REQUIREMENTS.md -->
-
-- [ ] Runtime LLM local embarqué (moteur Rust + téléchargeur intégré + GPU detection + gestion mémoire) — toutes plateformes
-- [ ] Smart Modes : prompts post-transcription soignés, éditables, créables, chacun associable à un shortcut
-- [ ] Traduction first-class : presets multi-cibles bindables à des shortcuts
+_None — next milestone not yet defined. Run `/gsd:new-milestone` to populate. See "Next Milestone: TBD" above for candidate threads._
 
 ### Deferred
 
 - [ ] **TECH-01** — Renommage module `handy_keys` (handy-keys external crate must NOT be renamed)
 - [ ] **TECH-03** — Cargo binary rename `handy`→`dictus` (defers macOS permission/scripts risk)
-- [ ] **TECH-04** — `llm_client.rs:137 send_chat_completion_with_schema` 8-arg → struct refactor (added v1.2)
-- [ ] **INFR-01** — CDN modèles Dictus (replace `blob.handy.computer`)
+- ✓ **TECH-04** — `send_chat_completion_with_schema` 8-arg → request struct — **resolved v1.3 (PREP-02)**
+- [ ] **INFR-01** — CDN modèles Dictus (replace `blob.handy.computer` for onnxruntime; LLM weights already on HuggingFace CDN as of v1.3)
 - [ ] **INFR-03** — Windows Azure Trusted Signing setup
 - [ ] **DATA-01** — On-disk data directory migration (`handy` → `dictus`); requires backup logic
 - [ ] **SETT-01** — Sections settings renommées
-- [ ] **SYNC-A1** — AI-assisted cherry-pick triage on larger upstream deltas
+- ✓ **SYNC-A1** — AI-assisted cherry-pick triage — **exercised v1.3 (PREP-03 Upstream Sync #2)**; policy now selective cherry-pick going forward
 - [ ] v1.1 post-sync gate hardening (add validate.sh to UPSTREAM.md §6)
-- [ ] Nyquist VALIDATION.md closure for phases 5, 6, 7, 8, 9 (5 files in draft state)
+- [ ] Nyquist VALIDATION.md closure for phases 5–11 (draft state: 5, 6, 7, 8, 9, 10, 11)
+- [ ] Phase 11 Windows/Linux runtime GPU smoke (download → load → embedded inference)
+- [ ] Default Smart Mode prompt quality tuning (output not fully matching intent — user feedback v1.3)
+- [ ] App-version release (`0.2.0`) shipping the v1.3 feature set
 
 ### Out of Scope
 
@@ -194,10 +215,23 @@ L'application doit être identifiable et utilisable comme **Dictus Desktop** —
 | Three-pillar marketing block removed | User feedback: felt like marketing not utility | ✓ Good |
 | Library "coming soon" placeholder hoisted to top | Anchors local-first narrative immediately | ✓ Good |
 | `enable_cloud_providers` Rust field kept vestigial | Avoid schema migration; UI no longer reads/writes | ⚠️ Revisit |
-| TECH-04 (`llm_client.rs:137` 8-arg refactor) deferred | Signature change risk exceeds v1.2 window; suppressed via `#[allow]` | ⚠️ Revisit |
+| TECH-04 (`llm_client.rs:137` 8-arg refactor) deferred | Signature change risk exceeds v1.2 window; suppressed via `#[allow]` | ✓ Resolved v1.3 (PREP-02) |
 | `07-VERIFICATION.md` retroactively authored from SUMMARY + Pierre observation | Phase 7 closed without VERIFICATION.md; Phase 9 backfilled to clear audit trail | ✓ Good |
 | Phase 9 scoped to AUDIT-01/02/03 only (not Nyquist closure) | Surgical 60-min phase; Nyquist VALIDATION.md drafts deferred to `/gsd:validate-phase` | ✓ Good |
+| `llama-cpp-2` as the embedded engine (over candle / mistral.rs) | In-process GGUF, mature Metal/Vulkan; fallback not needed | ✓ Good |
+| ggml duplicate-symbol resolved via linker keep-first-definition (`--allow-multiple-definition` / `/FORCE:MULTIPLE`) | macOS ld64 already did this implicitly; whisper's ggml (linked first) wins shared symbols | ⚠️ Revisit (runtime correctness not CI-validated) |
+| Metal shaders embedded (`GGML_METAL_EMBED_LIBRARY=ON`), no `.metallib` bundling | No separate file at runtime; `tauri.conf.json` unchanged | ✓ Good |
+| Windows x64 needs `CMAKE_GENERATOR=Ninja` for `vulkan-shaders-gen` | MSVC MSBuild ExternalProject fails; Ninja pre-installed on GHA | ✓ Good |
+| Catalogue = 4 generic-instruct models (dropped Qwen3-4B reasoning + TranslateGemma) | Generic instruct models suit short post-process; reasoning/specialized do not (runtime-verified) | ✓ Good |
+| TranslateGemma dropped after A/B benchmark | Same-size generic (Gemma-3-4B) matched/beat it, far fewer polluted outputs | ✓ Good |
+| Translation engine = recommendation-only (one active model, no per-mode switcher) | Simpler mental model; per-mode model deferred to MODE-F3 | ✓ Good |
+| Seed only Clean Up on first run; 9 other curated modes via template picker | Safe default, avoids overwhelming the modes list (13-05 UAT) | ✓ Good |
+| Smart Mode shortcut = `smart_mode_{id}` binding prefix wired through coordinator/actions/init | Reuses existing prompt↔shortcut machinery; no new opaque concept | ✓ Good |
+| Structured `SHORTCUT_CONFLICT` payload (code+params) rendered via frontend `t()` | No English prose crosses the boundary; fully localizable conflict errors | ✓ Good |
+| Reversed "names-only" i18n deferral — full 20-locale translation | English fallback values were leaking in non-EN builds (live FR UAT) | ✓ Good |
+| `--toggle-post-process` / SIGUSR1 re-routed to active Smart Mode | Legacy binding fired a frozen pre-v1.3 prompt snapshot post-migration | ✓ Good |
+| whatlang output-language directive placed first in the prompt | Small LLMs answer in the instruction language; trailing placement echoed into output | ✓ Good |
 
 ---
 
-*Last updated: 2026-05-29 after starting milestone v1.3 Smart Modes & Local LLM*
+*Last updated: 2026-06-09 after completing milestone v1.3 Smart Modes & Local LLM*

@@ -2,31 +2,31 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
-status: verifying
-stopped_at: Completed 13-26-PLAN.md
-last_updated: "2026-06-09T12:34:14.723Z"
+status: shipped
+stopped_at: Milestone v1.3 archived 2026-06-09 — awaiting /gsd:new-milestone
+last_updated: "2026-06-09T15:37:34.532Z"
 progress:
   total_phases: 4
   completed_phases: 4
   total_plans: 36
   completed_plans: 36
-  percent: 97
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-29 after starting milestone v1.3)
+See: .planning/PROJECT.md (updated 2026-06-09 after completing milestone v1.3)
 
 **Core value:** Local-first as a visible, powerful default — embedded LLM runtime + Smart Modes + multi-target translation, all in-process, all platforms.
-**Current focus:** v1.3 Smart Modes & Local LLM — Phase 11 closed, Phase 12 (Smart Modes Data Layer) next.
+**Current focus:** v1.3 shipped & archived (2026-06-09). Next milestone not yet defined — run `/gsd:new-milestone`.
 
 ## Current Position
 
-Phase: 13 of 13 (Smart Modes UI + Translation Engine + Presets i18n) — NOT fully verified (UAT round 4: 2 residual [G13] defects [G16][G17] open)
-Plan: 13-24 executed 2026-06-09 (human-verify UAT). Automated gates all green. Live FR build + DE/ES spot-check: [G14] (no English leakage) and [G15] (Gemma description leads on translation) CONFIRMED CLOSED. [G13] original defects (English prose + indistinguishable cases) fixed by 13-20/21, BUT live test surfaced 2 residual defects → [G16][G17]. Phase 13 stays OPEN.
-Status: [G11] resolved (13-18). [G12] resolved (13-19). [G13] PARTIAL (frame fixed; [G16][G17] residual). [G14] RESOLVED + live-verified (13-22/23, UAT 13-24). [G15] RESOLVED + live-verified (13-22, UAT 13-24). [G16][G17] NEW — open.
+Milestone v1.3 Smart Modes & Local LLM — **SHIPPED & ARCHIVED 2026-06-09**. All 36 plans across phases 10–13 complete; [G16]/[G17] closed by plans 13-25/13-26 (commit 44eb8c8) and confirmed live under FR locale. Audit `tech_debt` (21/21 requirements satisfied, 5/5 E2E flows wired, FAIL gate not triggered). Archived to `.planning/milestones/v1.3-{ROADMAP,REQUIREMENTS,MILESTONE-AUDIT}.md`.
+
+No active phase. Awaiting `/gsd:new-milestone`.
 
 ### UAT round 4 (2026-06-09, plan 13-24)
 - [G14] CONFIRMED CLOSED live (FR post-process screen + model library, DE/ES spot-check — no English leakage)
@@ -48,12 +48,13 @@ Status: [G11] resolved (13-18). [G12] resolved (13-19). [G13] PARTIAL (frame fix
 - [13-19] Translation engine = recommendation-only (confirmed live). ONE active post-process model via main selector; translation runs through it.
 - [G14 allowlist] Legitimate same-EN values: loanwords (Microphone, Volume, Transcription, Direct, Prompt, Version, Model, Debug, Provider, General, App, Output, Experimental), Romance "No", Germanic "Name", modelsAndLocalProcessing.* block (historical FR-in-EN-source artifact).
 
-### Next steps
-- **Close [G16] + [G17]** (residual [G13] defects) — run `/gsd:plan-phase 13 --gaps`. Phase 13 is NOT complete until these close and re-verify live.
-- **Improve/adapt the default Smart Mode prompts.** User finds output quality on the default prompts not quite matching intent; refine wording. Fresh task.
-- Milestone v1.3 final build/release validation BLOCKED until Phase 13 fully verified.
+### Next steps (post-v1.3, for next milestone)
+- Run `/gsd:new-milestone` to define the next milestone (context → research → requirements → roadmap).
+- **Improve/adapt the default Smart Mode prompts.** User finds output quality on the default prompts not quite matching intent; refine wording. Fresh task (also in pending todos).
+- Close the Nyquist VALIDATION.md backlog (`/gsd:validate-phase` for phases 5–11) and the Phase 11 Windows/Linux runtime GPU smoke.
+- Cut an app-version release (e.g. `0.2.0`) shipping the v1.3 feature set.
 
-Progress: [█████████░] ~97% (Phase 13 NOT fully verified — [G14]+[G15] closed live, [G16]+[G17] open)
+Progress: [██████████] 100% — v1.3 shipped & archived 2026-06-09.
 
 ## Performance Metrics
 

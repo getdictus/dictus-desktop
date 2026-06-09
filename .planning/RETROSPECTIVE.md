@@ -48,6 +48,51 @@
 
 ---
 
+## Milestone: v1.3 — Smart Modes & Local LLM
+
+**Shipped:** 2026-06-09
+**Phases:** 4 (10, 11, 12, 13) | **Plans:** 36 | **Commits:** 215 | **Timeline:** ~11 days (2026-05-29 → 2026-06-09)
+
+### What Was Built
+- **Embedded LLM runtime, all platforms (LLM-01..04, PREP-01)** — in-process GGUF via `llama-cpp-2`, GPU auto-select (Metal embedded / Vulkan / CPU fallback), background-thread inference, idle unload; ggml duplicate-symbol conflict resolved at link via keep-first-definition; CI green on 7 platforms
+- **Functional model library (MDL-01..05)** — 4-model curated catalogue with size-before-download, in-app download/cancel/resume + SHA256 from HuggingFace CDN, delete-to-reclaim, custom GGUF drag/drop
+- **Smart Modes data layer + UI (MODE-01..06)** — lossless v1.2→v1.3 migration (7 tests), visual card list, create/edit/delete, per-mode shortcut with structured localized conflict detection
+- **First-class offline translation (TRANS-01..02)** — runs through the active embedded LLM; TranslateGemma dropped after A/B benchmark; whatlang output-language directive
+- **Full 20-locale localization (L10N-01)** — reversed the names-only deferral; `--check-untranslated` guardrail added
+- **Prerequisite gate (PREP-01..03)** — Upstream Sync #2 + selective cherry-pick policy, TECH-04 struct refactor (closing v1.2 debt), ggml feasibility
+
+### What Worked
+- **A/B benchmark before committing to a specialized model** — `examples/translation_ab.rs` (14 texts × 4 models) gave hard evidence that the generic Gemma-3-4B beat the dedicated TranslateGemma. Killed a plausible-but-wrong assumption with data, not opinion.
+- **Structured error code across the FE/BE boundary** — making the backend emit a codified `SHORTCUT_CONFLICT` payload (code + params) and rendering it via frontend `t()` solved both "no English prose leaks" and "fully localizable" in one design. Cleaner than translating backend strings.
+- **Migration verified against a real v1.2 settings fixture** — 7 migration tests against an actual JSON fixture caught data-loss edge cases before any user upgrade.
+- **TDD on the LlmManager backend (11-01)** — the runtime's load/infer/unload/idle-watcher core was test-first, which paid off when the ggml link conflict forced rework without breaking behavior.
+
+### What Was Inefficient
+- **Phase 13 ballooned to 26 plans (4 original + 22 gap-closure across 4 UAT rounds).** The Smart Modes shortcut-conflict UX alone churned through ~8 plans ([B5]→[G11]→[G12]→[G13]→[G16]→[G17]) as each live FR-build UAT surfaced a new layer (cross-mode collision → base-overlap → English prose → localized name → chip overflow). Each was real, but the long tail suggests the conflict UX should have had a dedicated design contract up front.
+- **The "names-only / English-fallback" i18n shortcut backfired.** Plans 13-02/13-15 deferred real translation (English values in non-EN locales); live FR UAT [G14] then forced a full re-translation (13-22/23) across 19 locales. The deferral created more work than doing it once.
+- **The Phase-10 ggml spike gave a false-negative.** 10-03 concluded "conflict did not manifest" — but the spike only added the dependency without *calling* llama, so the linker never pulled ggml objects. The real conflict surfaced in 11-01 on 5 platforms. A spike must exercise the actual code path it's de-risking.
+- **Catalogue churned post-UAT.** Shipped 4 models, not the 3 originally specified (Qwen3-4B reasoning + TranslateGemma both dropped after runtime testing). The ROADMAP/REQUIREMENTS wording was never synced, becoming documented drift.
+
+### Patterns Established
+- **Benchmark harness as a decision artifact** — a committed `examples/*.rs` A/B harness produces reproducible evidence for model/engine choices. Reusable for any future model swap.
+- **Codified error payloads over translated backend strings** — backend returns `CODE|param|param`, frontend owns all user-facing text via `t()`. Keeps localization single-sourced in the locale files.
+- **Spikes must execute the risky path** — adding a dependency ≠ de-risking it; the spike has to call the function that triggers the link/runtime behavior in question.
+- **Live localized-build UAT** — testing in an actual FR build (not just EN + a translation check) surfaced English leakage, untranslated conflict names, and layout overflow that automated checks missed.
+
+### Key Lessons
+1. **A spike that doesn't exercise the failure mode is theater.** The ggml "did not manifest" finding cost a Phase-11 scramble. De-risking means running the exact code path, not just compiling the dependency.
+2. **Don't defer i18n as "English fallback for now."** It reads as done (the check passes) but isn't; the rework to do it properly later exceeded doing it once. For a 20-locale app, translate at the point of adding the string.
+3. **A churny UX surface deserves a design contract before plan 1.** The shortcut-conflict feature consumed ~8 gap-closure plans across 4 UAT rounds because each round revealed the next layer. A UI-SPEC enumerating conflict *cases* (exact-dup, base-overlap, localized name, long-string layout) up front would have collapsed the tail.
+4. **Sync docs to runtime reality at close.** Catalogue + seed-count drift (3→4 models, 10→1 seeded) was real and defensible but never written back into ROADMAP/REQUIREMENTS — only caught at audit. Wording sync should be part of the post-UAT refresh, not deferred.
+5. **Validate-on-data beats validate-on-intuition for model choice.** TranslateGemma *should* have won; it didn't. The benchmark was the difference between shipping the right model and the obvious one.
+
+### Cost Observations
+- Model mix: not tracked per-session (no telemetry capture configured)
+- Sessions: ~11 days wall-clock; dominated by Phase 13's 4-round UAT loop
+- Notable: Phase 13 gap-closure plans (22) were 5.5× the original plan count (4) — the inverse of v1.2's Phase 8 (2× rework); the conflict-UX tail is the main driver
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -57,22 +102,28 @@
 | v1.0 | 3 | 8 | First milestone — rebrand baseline established |
 | v1.1 | 2 | 7 | Wave-0 pattern (validate.sh FAIL-first) introduced; triple-backup signing custody |
 | v1.2 | 4 | 16 | Audit-driven gap-closure phase pattern; 3-source requirement cross-reference; UAT pivots motivating UI-SPEC enforcement gap |
+| v1.3 | 4 | 36 | First feature-heavy milestone (embedded LLM + Smart Modes); benchmark-as-decision-artifact; live localized-build UAT; longest gap-closure tail (22 plans in Phase 13) |
 
 ### Cumulative Tech Debt
 
 | Item | Origin | Status |
 |------|--------|--------|
-| Nyquist VALIDATION.md draft state | v1.0 | Carries through v1.0/v1.1/v1.2 (5 phases in draft) |
-| `blob.handy.computer` CDN (INFR-01) | v1.0 | Documented in `docs/PRIVACY.md` v1.2; CDN migration still pending |
+| Nyquist VALIDATION.md draft state | v1.0 | Carries through v1.0–v1.3 (7 phases in draft: 5, 6, 7, 8, 9, 10, 11) |
+| `blob.handy.computer` CDN (INFR-01) | v1.0 | Documented in `docs/PRIVACY.md` v1.2; LLM weights moved to HuggingFace CDN in v1.3; onnxruntime migration still pending |
 | Windows OS-level signing (INFR-03) | v1.1 | Deferred; SmartScreen warning accepted |
 | Cargo binary rename `handy`→`dictus` (TECH-03) | v1.0 | Deferred; macOS permission risk |
 | Module rename `handy_keys` (TECH-01) | v1.0 | Deferred; external crate `handy-keys` must not be touched |
-| `llm_client.rs:137` 8-arg refactor (TECH-04) | v1.2 | Suppressed via `#[allow]`; 15-30 min estimated |
+| `llm_client.rs:137` 8-arg refactor (TECH-04) | v1.2 | ✓ Resolved v1.3 (PREP-02) |
 | `DictusLogo.tsx` i18next lint failure | pre-v1.2 | Pre-existing; out of scope |
+| Phase 11 Win/Linux runtime GPU smoke | v1.3 | CI build/link green; runtime inference not human-tested (user-accepted) |
+| `drop_non_drop` clippy warning (`managers/llm.rs:1221`) | v1.3 | Pre-existing; low priority |
+| Doc wording drift (MDL-01 catalogue, MODE-02 seed count) | v1.3 | Capability satisfied; ROADMAP/REQUIREMENTS wording not synced (noted in archive) |
 
 ### Top Lessons (Verified Across Milestones)
 
 1. **Wave-0 / FAIL-first scripts make downstream plans testable from commit 1.** Used by v1.1 (validate.sh), v1.2 Phase 6 (verify-sync.sh assertions added before source change). Worth promoting as a workflow default.
 2. **Identity integrity needs script-enforced guards through fork-sync merges.** v1.0 established the principle; v1.1 made it a CI gate (verify-sync.sh); v1.2 extended assertions when surfaces grew (BRAND-01a/02a/03a/ICON-02a). Without the script, every upstream sync would silently regress brand surfaces.
-3. **VALIDATION.md without a CI hook is paperwork.** Verified across all 3 milestones: 5 of 9 phase VALIDATION.md files are in draft state. Either wire them as gates or stop authoring them.
-4. **Audit-before-archive surfaces hidden debt cheaply.** v1.1 audit returned `tech_debt`; v1.2 audit caught 31 clippy errors + missing VERIFICATION.md + stale UAT. Cheap insurance against "ship and discover."
+3. **VALIDATION.md without a CI hook is paperwork.** Verified across all 4 milestones: 7 of 13 phase VALIDATION.md files (phases 5–11) are in draft state. The backlog only grows — either wire them as gates or stop authoring them.
+4. **Audit-before-archive surfaces hidden debt cheaply.** v1.1 audit `tech_debt`; v1.2 caught 31 clippy errors + missing VERIFICATION.md; v1.3 caught catalogue/seed drift + the CLI post-process regression (fixed before close). Cheap insurance against "ship and discover."
+5. **Decide model/engine choices on benchmark data, not intuition.** v1.3 dropped the "obvious" specialized translation model after an A/B harness proved a generic model beat it. The harness is a committable decision artifact.
+6. **A de-risking spike must execute the path it de-risks.** v1.3's ggml spike compiled the dependency but never called it, giving a false "no conflict" that surfaced a phase later. Compiling ≠ exercising.
