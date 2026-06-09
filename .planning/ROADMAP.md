@@ -113,7 +113,7 @@
 
 > **NOTE on MODE-03:** This requirement spans two phases. Phase 12 delivers the backend CRUD commands and type bindings. Phase 13 delivers the UI surface. The requirement is assigned to Phase 13 (the phase that completes the user-observable deliverable), and Phase 12 success criterion 3 documents the backend prerequisite.
 
-**Plans**: 24 plans (4 original + 4 gap-closure from 13-04 UAT + 4 gap-closure from 13-08 re-test + 3 gap-closure from 13-12 re-test + 2 gap-closure from 13-08 round-2 re-test + 2 gap-closure from 13-16/13-17 round-3 re-test + 5 gap-closure from 13-08 round-4 re-test [G13]/[G14]/[G15])
+**Plans**: 26 plans (4 original + 4 gap-closure from 13-04 UAT + 4 gap-closure from 13-08 re-test + 3 gap-closure from 13-12 re-test + 2 gap-closure from 13-08 round-2 re-test + 2 gap-closure from 13-16/13-17 round-3 re-test + 5 gap-closure from 13-08 round-4 re-test [G13]/[G14]/[G15] + 2 gap-closure from 13-24 round-4 live UAT [G16]/[G17])
 - [x] 13-01-PLAN.md — Backend: TranslateGemma catalogue entry + translation_engine_choice setting/command + Translation execution wiring in actions.rs [Wave 1]
 - [x] 13-02-PLAN.md — i18n: smartModes.* keys in en + propagation to all 19 non-English locales (L10N-01) [Wave 1]
 - [x] 13-03-PLAN.md — React components: SmartModeShortcutChip + SmartModeCard + TranslationEngineChoiceModal + SmartModesSection [Wave 2]
@@ -138,6 +138,8 @@
 - [x] 13-22-PLAN.md — Gap closure ([G14]/[G15]): i18n English-fallback audit + check:translations --check-untranslated guardrail + Gemma 3 4B EN-source reword (lead on translation) (L10N-01, TRANS-01, TRANS-02) [Wave 1]
 - [x] 13-23-PLAN.md — Gap closure ([G14]/[G15]): translate all smartModes.* + debt keys + about/privacy/ecosystem/acknowledgments into all 19 non-English locales; 0 EN fallbacks; IT common.on/off fixed (L10N-01, TRANS-01, TRANS-02) [Wave 3]
 - [ ] 13-24-PLAN.md — Gap closure ([G13]/[G14]/[G15]): automated gates + human-verify live FR-build checkpoint (no English leakage, distinct localized conflict messages, Gemma description) (L10N-01, MODE-05, TRANS-01) [Wave 4]
+- [ ] 13-25-PLAN.md — Gap closure ([G16] test 7): SHORTCUT_CONFLICT payload carries conflicting binding id + shared localizeSmartModeName helper so the chip renders the conflicting mode's LOCALIZED name (e.g. Nettoyage, not Clean Up) for exact-duplicate + base-overlap (MODE-04, MODE-05, L10N-01) [Wave 1]
+- [ ] 13-26-PLAN.md — Gap closure ([G17] test 7): hoist the conflict error out of the chip's shrink-0 column onto a full-width wrapping card row so the longer localized base-overlap message never overlaps the card title / 'Ajouter un raccourci' placeholder (MODE-05, L10N-01) [Wave 2]
 
 ## Progress
 
@@ -155,4 +157,4 @@
 | 10. Prerequisite Gate | 3/3 | Complete    | 2026-06-01 | 2026-06-01 |
 | 11. LLM Runtime Foundation | 3/4 | In Progress|  | - |
 | 12. Smart Modes Data Layer | 3/3 | Complete    | 2026-06-03 | - |
-| 13. Smart Modes UI + Translation + i18n | 22/24 | In Progress|  | - |
+| 13. Smart Modes UI + Translation + i18n | 24/26 | In Progress|  | - |
