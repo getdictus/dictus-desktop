@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
 status: verifying
-stopped_at: Completed 13-25-PLAN.md
-last_updated: "2026-06-09T10:36:26.986Z"
+stopped_at: Completed 13-26-PLAN.md
+last_updated: "2026-06-09T10:40:10.023Z"
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 36
-  completed_plans: 35
+  completed_plans: 36
   percent: 97
 ---
 
@@ -98,6 +98,7 @@ Progress: [█████████░] ~97% (Phase 13 NOT fully verified —
 | Phase 13-smart-modes-ui-translation-presets-i18n P21 | 3 | 2 tasks | 21 files |
 | Phase 13-smart-modes-ui-translation-presets-i18n P23 | ~180 | 2 tasks | 20 files |
 | Phase 13 P25 | 145 | 2 tasks | 3 files |
+| Phase 13-smart-modes-ui-translation-presets-i18n P26 | 3 | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -175,6 +176,7 @@ Progress: [█████████░] ~97% (Phase 13 NOT fully verified —
 - [Phase 13-smart-modes-ui-translation-presets-i18n]: [13-23] IT common.on/off fixed from "On"/"Off" to "Attivato"/"Disattivato"
 - [Phase 13-25]: SHORTCUT_CONFLICT payload now carries binding id in field[2], stored name in field[3], base in field[4]; field order locked by unit test conflict_payload_carries_binding_id_before_name
 - [Phase 13-25]: localizeSmartModeName is single source of truth for seeded-and-pristine localization; shared between SmartModeCard and SmartModeShortcutChip; core ids (transcribe/cancel) fall back to stored name verbatim (documented limitation)
+- [Phase 13-smart-modes-ui-translation-presets-i18n]: [13-26] Conflict error hoisted OUT of shrink-0 chip column onto own full-width card row via onConflictChange callback; onConflictChange is optional on SmartModeShortcutChipProps; chip return changed to bare <>{renderChip()}</>
 
 ### Pending Todos
 
@@ -190,6 +192,6 @@ Progress: [█████████░] ~97% (Phase 13 NOT fully verified —
 
 ## Session Continuity
 
-Last session: 2026-06-09T10:36:26.984Z
-Stopped at: Completed 13-25-PLAN.md
+Last session: 2026-06-09T10:40:10.020Z
+Stopped at: Completed 13-26-PLAN.md
 Resume file: None
