@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
-status: planning
-stopped_at: "Completed 13-24-PLAN.md (UAT round 4): [G14]+[G15] CONFIRMED CLOSED live; [G13] original defects fixed but 2 residual defects [G16][G17] logged — Phase 13 NOT fully verified"
-last_updated: "2026-06-09T00:00:00.000Z"
+status: verifying
+stopped_at: Completed 13-25-PLAN.md
+last_updated: "2026-06-09T10:36:26.986Z"
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 34
-  completed_plans: 34
-  percent: 100
+  total_plans: 36
+  completed_plans: 35
+  percent: 97
 ---
 
 # Project State
@@ -97,6 +97,7 @@ Progress: [█████████░] ~97% (Phase 13 NOT fully verified —
 | Phase 13 P22 | 15 | 3 tasks | 5 files |
 | Phase 13-smart-modes-ui-translation-presets-i18n P21 | 3 | 2 tasks | 21 files |
 | Phase 13-smart-modes-ui-translation-presets-i18n P23 | ~180 | 2 tasks | 20 files |
+| Phase 13 P25 | 145 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -172,6 +173,8 @@ Progress: [█████████░] ~97% (Phase 13 NOT fully verified —
 - [Phase 13-smart-modes-ui-translation-presets-i18n]: [13-23/G14] UNTRANSLATED_ALLOWLIST_EXACT expanded: loanwords (Microphone, Volume, Transcription, Direct, Prompt, Version, Model, Debug, Provider, General, App, Output, Experimental, Details), common.no (Romance langs identical), smartModes.card.nameLabel (Germanic langs identical), modelsAndLocalProcessing.* block (pre-existing FR-in-EN historical artifact)
 - [Phase 13-smart-modes-ui-translation-presets-i18n]: [13-23/G14] Full translation coverage achieved: smartModes.* (all 19 locales), errors.boundary.*, simulateUpdaterRestart.*, gemma/translateGemma descriptions, library.*, embedded.*, about/privacy/ecosystem/acknowledgments.handy, modelsAndLocalProcessing.embedded.providerDescription — bun run check:translations:untranslated exits 0
 - [Phase 13-smart-modes-ui-translation-presets-i18n]: [13-23] IT common.on/off fixed from "On"/"Off" to "Attivato"/"Disattivato"
+- [Phase 13-25]: SHORTCUT_CONFLICT payload now carries binding id in field[2], stored name in field[3], base in field[4]; field order locked by unit test conflict_payload_carries_binding_id_before_name
+- [Phase 13-25]: localizeSmartModeName is single source of truth for seeded-and-pristine localization; shared between SmartModeCard and SmartModeShortcutChip; core ids (transcribe/cancel) fall back to stored name verbatim (documented limitation)
 
 ### Pending Todos
 
@@ -187,6 +190,6 @@ Progress: [█████████░] ~97% (Phase 13 NOT fully verified —
 
 ## Session Continuity
 
-Last session: 2026-06-09T00:00:00.000Z
-Stopped at: Completed 13-24-PLAN.md (UAT round 4) — [G14]+[G15] CONFIRMED CLOSED live; [G13] frame fixed but 2 residual defects [G16][G17] logged. Phase 13 NOT fully verified. Next: /gsd:plan-phase 13 --gaps.
+Last session: 2026-06-09T10:36:26.984Z
+Stopped at: Completed 13-25-PLAN.md
 Resume file: None
