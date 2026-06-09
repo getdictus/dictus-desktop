@@ -1413,12 +1413,13 @@ pub fn set_smart_mode_binding(
     // passes. Without this, two modes could both persist Cmd+2 and only collide
     // at OS re-registration (`resume_all_shortcuts: Hotkey already registered`).
     // UAT test 7 / [B5].
-    // Structured conflict payload `SHORTCUT_CONFLICT|<code>|<name>[|<base>]` — the
-    // frontend maps <code> to a localized t() string; no English prose crosses the
-    // boundary (G13).
+    // Structured conflict payload `SHORTCUT_CONFLICT|<code>|<id>|<name>[|<base>]` — the
+    // frontend maps <code> to a localized t() string, resolves the localized mode label
+    // from <id>, and interpolates it (G13, G16). No English prose crosses the boundary.
     if let Some((other_id, kind)) =
         find_conflicting_binding(&settings.bindings, &binding_id, &binding)
     {
+        let other_id_for_payload = other_id.clone();
         let other_name = settings
             .bindings
             .get(&other_id)
@@ -1427,11 +1428,17 @@ pub fn set_smart_mode_binding(
             .unwrap_or(other_id);
         let payload = match kind {
             ConflictKind::ExactDuplicate => {
-                format!("SHORTCUT_CONFLICT|exact_duplicate|{}", other_name)
+                format!(
+                    "SHORTCUT_CONFLICT|exact_duplicate|{}|{}",
+                    other_id_for_payload, other_name
+                )
             }
             ConflictKind::CandidateBaseIsExisting | ConflictKind::CandidateIsBaseOfExisting => {
                 let base = combo_base(&binding);
-                format!("SHORTCUT_CONFLICT|base_overlap|{}|{}", other_name, base)
+                format!(
+                    "SHORTCUT_CONFLICT|base_overlap|{}|{}|{}",
+                    other_id_for_payload, other_name, base
+                )
             }
         };
         return Ok(BindingResponse {
@@ -1772,7 +1779,10 @@ mod tests {
         let result = find_conflicting_binding(&bindings, "smart_mode_mode_a", "Cmd+2");
         assert_eq!(
             result,
-            Some(("smart_mode_mode_b".to_string(), ConflictKind::ExactDuplicate)),
+            Some((
+                "smart_mode_mode_b".to_string(),
+                ConflictKind::ExactDuplicate
+            )),
             "conflicting mode binding must return the other mode's id as ExactDuplicate"
         );
     }
@@ -1838,9 +1848,72 @@ mod tests {
         let result =
             find_conflicting_binding(&bindings, "smart_mode_mode_a", "command_left+digit1");
         assert_eq!(
-            result,
-            None,
+            result, None,
             "two distinct full combos sharing only a modifier prefix must not block each other"
+        );
+    }
+
+    // ── SHORTCUT_CONFLICT payload field-order test (13-25 / [G16]) ───────────
+    // Locks the `id-before-name` and `id|name|base` contracts so that a future
+    // refactor that reorders fields breaks the build immediately.
+
+    #[test]
+    fn conflict_payload_carries_binding_id_before_name() {
+        // exact_duplicate: SHORTCUT_CONFLICT|exact_duplicate|<id>|<name>
+        let exact_payload = format!(
+            "SHORTCUT_CONFLICT|exact_duplicate|{}|{}",
+            "smart_mode_mode_clean_up", "Clean Up"
+        );
+        assert_eq!(
+            exact_payload, "SHORTCUT_CONFLICT|exact_duplicate|smart_mode_mode_clean_up|Clean Up",
+            "exact_duplicate payload must be: SHORTCUT_CONFLICT|exact_duplicate|<id>|<name>"
+        );
+        let exact_parts: Vec<&str> = exact_payload.split('|').collect();
+        assert_eq!(
+            exact_parts.len(),
+            4,
+            "exact_duplicate payload must have 4 pipe-separated fields"
+        );
+        assert_eq!(exact_parts[0], "SHORTCUT_CONFLICT");
+        assert_eq!(exact_parts[1], "exact_duplicate");
+        assert_eq!(
+            exact_parts[2], "smart_mode_mode_clean_up",
+            "field[2] must be the binding id"
+        );
+        assert_eq!(
+            exact_parts[3], "Clean Up",
+            "field[3] must be the stored name"
+        );
+
+        // base_overlap: SHORTCUT_CONFLICT|base_overlap|<id>|<name>|<base>
+        let base_payload = format!(
+            "SHORTCUT_CONFLICT|base_overlap|{}|{}|{}",
+            "smart_mode_mode_clean_up", "Clean Up", "command_left"
+        );
+        assert_eq!(
+            base_payload,
+            "SHORTCUT_CONFLICT|base_overlap|smart_mode_mode_clean_up|Clean Up|command_left",
+            "base_overlap payload must be: SHORTCUT_CONFLICT|base_overlap|<id>|<name>|<base>"
+        );
+        let base_parts: Vec<&str> = base_payload.split('|').collect();
+        assert_eq!(
+            base_parts.len(),
+            5,
+            "base_overlap payload must have 5 pipe-separated fields"
+        );
+        assert_eq!(base_parts[0], "SHORTCUT_CONFLICT");
+        assert_eq!(base_parts[1], "base_overlap");
+        assert_eq!(
+            base_parts[2], "smart_mode_mode_clean_up",
+            "field[2] must be the binding id"
+        );
+        assert_eq!(
+            base_parts[3], "Clean Up",
+            "field[3] must be the stored name"
+        );
+        assert_eq!(
+            base_parts[4], "command_left",
+            "field[4] must be the base combo"
         );
     }
 }
