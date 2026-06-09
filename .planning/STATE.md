@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Smart Modes & Local LLM
 status: planning
-stopped_at: "Completed 13-23-PLAN.md ([G14] full translation coverage: all 19 non-EN locales, 0 non-allowlisted EN fallbacks)"
-last_updated: "2026-06-08T22:00:00.000Z"
+stopped_at: "Completed 13-24-PLAN.md (UAT round 4): [G14]+[G15] CONFIRMED CLOSED live; [G13] original defects fixed but 2 residual defects [G16][G17] logged — Phase 13 NOT fully verified"
+last_updated: "2026-06-09T00:00:00.000Z"
 progress:
   total_phases: 4
   completed_phases: 3
@@ -24,14 +24,22 @@ See: .planning/PROJECT.md (updated 2026-05-29 after starting milestone v1.3)
 
 ## Current Position
 
-Phase: 13 of 13 (Smart Modes UI + Translation Engine + Presets i18n) — COMPLETE (all gaps closed)
-Plan: 13-23 executed 2026-06-08, PASS. [G14] closed: all 19 non-EN locales now have real translations for smartModes.*, library.*, embedded.*, errors.boundary.*, simulateUpdaterRestart.*, gemma descriptions, about/privacy/ecosystem/acknowledgments keys. bun run check:translations:untranslated exits 0. Commit a37a07d.
-Status: [G11] resolved (13-18). [G12] resolved (13-19). [G13] resolved (13-20/21). [G14] resolved (13-22/23). [G15] resolved (13-22). ALL GAPS CLOSED.
+Phase: 13 of 13 (Smart Modes UI + Translation Engine + Presets i18n) — NOT fully verified (UAT round 4: 2 residual [G13] defects [G16][G17] open)
+Plan: 13-24 executed 2026-06-09 (human-verify UAT). Automated gates all green. Live FR build + DE/ES spot-check: [G14] (no English leakage) and [G15] (Gemma description leads on translation) CONFIRMED CLOSED. [G13] original defects (English prose + indistinguishable cases) fixed by 13-20/21, BUT live test surfaced 2 residual defects → [G16][G17]. Phase 13 stays OPEN.
+Status: [G11] resolved (13-18). [G12] resolved (13-19). [G13] PARTIAL (frame fixed; [G16][G17] residual). [G14] RESOLVED + live-verified (13-22/23, UAT 13-24). [G15] RESOLVED + live-verified (13-22, UAT 13-24). [G16][G17] NEW — open.
 
-### All gaps closed (2026-06-08)
-- [G13] RESOLVED 13-20/21: structured ConflictKind backend error, frontend t() with shortcutConflictBase/shortcutBaseHint keys, all 20 locales
-- [G14] RESOLVED 13-22/23: --check-untranslated guard added, full app-wide translation in all 19 non-EN locales, 0 EN fallbacks
-- [G15] RESOLVED 13-22: Gemma 3 4B description reworded to lead on translation strength, all 20 locales
+### UAT round 4 (2026-06-09, plan 13-24)
+- [G14] CONFIRMED CLOSED live (FR post-process screen + model library, DE/ES spot-check — no English leakage)
+- [G15] CONFIRMED CLOSED live (Gemma 3 4B description leads on translation in FR)
+- [G13] message frame now French + case-distinct (the two ORIGINAL [G13] defects are fixed), but kept failed pending [G16][G17]
+- [G16] NEW (minor): conflict message interpolates the raw English seed mode name ("Clean Up") instead of the localized label ("Nettoyage"). Root: SHORTCUT_CONFLICT payload (13-20) carries stored English seed name; localizeBindingError (13-21) interpolates verbatim. Fix: carry id / resolve localized label via SEEDED_MODE_ID_TO_I18N_KEY.
+- [G17] NEW (minor): localized base-overlap conflict error overflows SmartModeShortcutChip and overwrites the card title + "Ajouter un raccourci" placeholder. Layout/responsiveness defect — no wrap/containment for the longer translated string.
+- Next: /gsd:plan-phase 13 --gaps (close [G16] localized name + [G17] chip overflow). Phase 13 NOT complete; ROADMAP unchanged.
+
+### Earlier gaps (2026-06-08)
+- [G13] 13-20/21: structured ConflictKind backend error, frontend t() with shortcutConflictBase/shortcutBaseHint keys, all 20 locales (frame fixed; residual [G16][G17] found at UAT 13-24)
+- [G14] 13-22/23: --check-untranslated guard added, full app-wide translation in all 19 non-EN locales, 0 EN fallbacks
+- [G15] 13-22: Gemma 3 4B description reworded to lead on translation strength, all 20 locales
 
 ### Decisions this round (2026-06-08)
 - [G13] Translate ALL backend-originated user-facing error messages: backend returns error code+params, frontend renders localized string via t() with interpolation (no English prose crossing the boundary).
@@ -40,11 +48,12 @@ Status: [G11] resolved (13-18). [G12] resolved (13-19). [G13] resolved (13-20/21
 - [13-19] Translation engine = recommendation-only (confirmed live). ONE active post-process model via main selector; translation runs through it.
 - [G14 allowlist] Legitimate same-EN values: loanwords (Microphone, Volume, Transcription, Direct, Prompt, Version, Model, Debug, Provider, General, App, Output, Experimental), Romance "No", Germanic "Name", modelsAndLocalProcessing.* block (historical FR-in-EN-source artifact).
 
-### Next steps (post phase-13 closure)
+### Next steps
+- **Close [G16] + [G17]** (residual [G13] defects) — run `/gsd:plan-phase 13 --gaps`. Phase 13 is NOT complete until these close and re-verify live.
 - **Improve/adapt the default Smart Mode prompts.** User finds output quality on the default prompts not quite matching intent; refine wording. Fresh task.
-- Phase 13 is COMPLETE. Milestone v1.3 Smart Modes & Local LLM is ready for final build/release validation.
+- Milestone v1.3 final build/release validation BLOCKED until Phase 13 fully verified.
 
-Progress: [██████████] 100% (Phase 13 complete — all gaps closed)
+Progress: [█████████░] ~97% (Phase 13 NOT fully verified — [G14]+[G15] closed live, [G16]+[G17] open)
 
 ## Performance Metrics
 
@@ -178,6 +187,6 @@ Progress: [██████████] 100% (Phase 13 complete — all gaps 
 
 ## Session Continuity
 
-Last session: 2026-06-08T22:00:00.000Z
-Stopped at: Completed 13-23-PLAN.md ([G14] full translation coverage: all 19 non-EN locales, 0 non-allowlisted EN fallbacks — Phase 13 COMPLETE)
+Last session: 2026-06-09T00:00:00.000Z
+Stopped at: Completed 13-24-PLAN.md (UAT round 4) — [G14]+[G15] CONFIRMED CLOSED live; [G13] frame fixed but 2 residual defects [G16][G17] logged. Phase 13 NOT fully verified. Next: /gsd:plan-phase 13 --gaps.
 Resume file: None

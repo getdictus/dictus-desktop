@@ -13,7 +13,15 @@ source:
   - 13-10-SUMMARY.md
   - 13-11-SUMMARY.md
 started: 2026-06-05T12:53:42Z
-updated: 2026-06-08T20:45:00Z
+updated: 2026-06-09T00:00:00Z
+retest_round_4:
+  date: 2026-06-09
+  closed_plans: [13-20, 13-21, 13-22, 13-23, 13-24]
+  resolved_gaps: 2  # [G14] full app-wide translation (all 19 non-EN locales, live FR + DE/ES spot-check PASS); [G15] Gemma description leads on translation (live FR PASS)
+  partial_gaps: 1   # [G13] message frame now French + distinct (CLOSED), but [G16]+[G17] residual defects surfaced
+  new_gaps: 2       # [G16] conflict message interpolates raw English seed mode name; [G17] base-overlap error overflows chip container
+  remaining_gaps: 3  # [G13] (kept failed until [G16][G17] close), [G16], [G17] — see ## Gaps (status: failed)
+  next: "/gsd:plan-phase 13 --gaps  (close [G16] localized name interpolation + [G17] chip overflow)"
 retest:
   date: 2026-06-08
   closed_plans: [13-18, 13-19]
@@ -387,6 +395,7 @@ next: /gsd:plan-phase 13 --gaps  (close [E9] modifier-side parity + [F10] engine
 
 - truth: "The shortcut conflict error tells the user precisely what kind of collision occurred, in the app's language"
   status: failed
+  partial_close: "13-20 (structured ConflictKind backend codes) + 13-21 (localizeBindingError → t() with shortcutConflict / shortcutConflictBase keys, all 20 locales). LIVE RE-TEST 2026-06-09 (plan 13-24 UAT round 4): the message FRAME is now French AND distinct (exact-duplicate vs base-overlap render different sentences) — the two original [G13] defects (English prose + indistinguishable cases) are CLOSED. BUT two NEW residual defects surfaced: (a) the interpolated {{name}} carries the raw English seed mode name ('Clean Up' not 'Nettoyage') → [G16]; (b) the longer localized base-overlap message overflows the chip container and overwrites adjacent UI → [G17]. [G13] kept failed until [G16]+[G17] close."
   reason: "LIVE TEST 2026-06-08 (surfaced confirming [G11]/13-18 PASS). Two defects in the conflict error shown by the chip: (1) MISLEADING — for the base-key/prefix-overlap case (binding 'Cmd Left + 3' while 'Cmd Left' is already bound) the message reads 'This shortcut is already used by: Translate → Chinese', identical to the exact-duplicate case. It is NOT the same shortcut — the BASE key collides — and the user cannot tell which situation they are in. (2) ENGLISH — the message is hardcoded English in the Rust backend and rendered verbatim, so it stays English even when the app language is French. User: 'tous les messages qui sont à l'écran doivent être traduits.'"
   severity: minor
   test: 7
@@ -440,4 +449,42 @@ next: /gsd:plan-phase 13 --gaps  (close [E9] modifier-side parity + [F10] engine
   missing:
     - "Reword Gemma 3 4B description to lead on translation quality (e.g. 'Excellent pour la traduction — polyvalent et multilingue') in en + all 19 locales."
     - "Keep it consistent with the translation-recommendation note copy ([G12]/13-19)."
+  debug_session: ""
+
+- truth: "The shortcut conflict message names the conflicting mode in the user's language (localized Smart Mode label, not the stored English seed name)"
+  status: failed
+  reason: "LIVE TEST 2026-06-09 (plan 13-24 UAT round 4, French locale, confirming [G13]/13-20+13-21). The conflict message frame is now correctly French and distinct per case, BUT the interpolated mode name leaks English: binding a duplicate combo renders 'Déjà utilisé par : Clean Up' instead of the localized 'Déjà utilisé par : Nettoyage'. The message frame is localized via t(); the {{name}} field carried in the backend SHORTCUT_CONFLICT payload is the raw stored English seed mode name. Same defect applies to the base-overlap message. User: all on-screen text — including the interpolated mode name — must be in the app language."
+  severity: minor
+  test: 7
+  tag: G16
+  root_cause: "The backend SHORTCUT_CONFLICT payload introduced in 13-20 (src-tauri/src/shortcut/mod.rs set_smart_mode_binding) carries the conflicting binding's stored mode NAME string verbatim. Seeded Smart Modes persist their English seed name (e.g. 'Clean Up') in settings.smart_modes — the localized label is a frontend-only render via t(SEEDED_MODE_ID_TO_I18N_KEY[mode.id]) in SmartModeCard.tsx (the [D8]/13-15 fix translated the CARD title only, not the stored name). localizeBindingError (13-21, SmartModeShortcutChip.tsx) parses SHORTCUT_CONFLICT|<code>|<name>[|<base>] and interpolates <name> verbatim into the t() string, so the raw English seed name reaches the screen even under FR. The frame is localized; the interpolated value is not."
+  artifacts:
+    - path: "src-tauri/src/shortcut/mod.rs"
+      issue: "set_smart_mode_binding builds the SHORTCUT_CONFLICT payload with the conflicting mode's stored name (English seed name for seeded modes); the payload should carry a stable id (or seed key) so the frontend can localize, OR the backend should not be the source of the display name at all."
+    - path: "src/components/settings/post-processing/SmartModeShortcutChip.tsx"
+      issue: "localizeBindingError interpolates the payload <name> verbatim; it should resolve the conflicting mode's LOCALIZED label (via SEEDED_MODE_ID_TO_I18N_KEY / the modes store) before interpolation, mirroring SmartModeCard's title localization."
+    - path: "src/components/settings/post-processing/SmartModeCard.tsx"
+      issue: "Lines ~14-24,73-75: SEEDED_MODE_ID_TO_I18N_KEY + t() localization map is the reusable primitive the conflict message must share to render the conflicting mode name localized."
+  missing:
+    - "Carry a stable identifier (mode id or seed key), not the display name, in the SHORTCUT_CONFLICT payload — or have the frontend look up the conflicting mode by id and render its localized label via SEEDED_MODE_ID_TO_I18N_KEY (falling back to the user's literal name for renamed/custom modes)."
+    - "Apply the same localized-name interpolation to BOTH the exact-duplicate and the base-overlap conflict messages."
+    - "Verify live under FR that the conflict message names the conflicting mode in French (e.g. 'Nettoyage', not 'Clean Up')."
+  debug_session: ""
+
+- truth: "The shortcut conflict error renders fully within its container without overlapping adjacent UI"
+  status: failed
+  reason: "LIVE TEST 2026-06-09 (plan 13-24 UAT round 4, French locale, confirming [G13]/13-20+13-21 base-overlap case). The localized base-overlap conflict message is correct in content and French, but VISUALLY DEFECTIVE: the longer base-overlap error text overflows the SmartModeShortcutChip container and overwrites adjacent UI — it overlaps the card title ('Nettoyage') and the 'Ajouter un raccourci' placeholder. No wrapping, clipping, or containment. The chip was sized for the shorter English placeholder; the longer localized error has no layout accommodation."
+  severity: minor
+  test: 7
+  tag: G17
+  root_cause: "SmartModeShortcutChip renders the inline conflict error (the localized localizeBindingError result) inside the compact chip layout that was sized for the short 'Add shortcut' placeholder / a bound-combo string. The base-overlap message ('The start of this shortcut … is already used by …') is materially longer, especially once translated (FR/DE expand vs EN), and the chip's error region has no max-width + wrap / clamp / containment, so the overflowing text paints over the sibling card title and the placeholder. This is a layout/responsiveness defect, not an i18n-data defect: the strings are correct but the container does not accommodate them."
+  artifacts:
+    - path: "src/components/settings/post-processing/SmartModeShortcutChip.tsx"
+      issue: "Inline conflict-error render has no width/wrap/containment; the chip is sized for the short placeholder, so a long (localized) error overflows and overlaps the card title + 'Ajouter un raccourci' placeholder."
+    - path: "src/components/settings/post-processing/SmartModeCard.tsx"
+      issue: "Card header layout places the chip adjacent to the title/placeholder with no isolation, so chip overflow paints over them; may need the error to render on its own row / below the chip rather than inline."
+  missing:
+    - "Contain the conflict-error text within the chip/card: wrap or move it to its own line below the chip, with a max-width and proper text wrapping (no overlap with the card title or the 'Ajouter un raccourci' placeholder)."
+    - "Account for locale text expansion (FR/DE/longer scripts) so the longest translated conflict message still fits without overflow."
+    - "Verify live under FR that the base-overlap error renders fully without overwriting adjacent UI."
   debug_session: ""
