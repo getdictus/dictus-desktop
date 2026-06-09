@@ -25,6 +25,7 @@ interface SmartModeShortcutChipProps {
   currentBinding: string | null;
   disabled?: boolean;
   onBound: () => void;
+  onConflictChange?: (message: string | null) => void;
 }
 
 const MODIFIERS = [
@@ -92,6 +93,7 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
   currentBinding,
   disabled = false,
   onBound,
+  onConflictChange,
 }) => {
   const { t } = useTranslation();
   const osType = useOsType();
@@ -128,6 +130,11 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
   useEffect(() => {
     setConflict(null);
   }, [currentBinding]);
+
+  // Report conflict state to parent (hoisted error row)
+  useEffect(() => {
+    onConflictChange?.(conflict);
+  }, [conflict, onConflictChange]);
 
   const commitCombo = useCallback(
     async (combo: string) => {
@@ -379,14 +386,5 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
     );
   };
 
-  return (
-    <div>
-      {renderChip()}
-      {conflict && (
-        <p role="alert" dir="auto" className="text-xs text-red-400 mt-1">
-          {conflict}
-        </p>
-      )}
-    </div>
-  );
+  return <>{renderChip()}</>;
 };

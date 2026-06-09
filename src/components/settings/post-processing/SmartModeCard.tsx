@@ -81,6 +81,7 @@ export const SmartModeCard: React.FC<SmartModeCardProps> = ({
 
   const isNew = mode === null;
   const [isEditing, setIsEditing] = useState(isNew);
+  const [shortcutConflict, setShortcutConflict] = useState<string | null>(null);
 
   // Derive displayed name via shared helper (seeded-and-pristine -> t(key), else stored name).
   const displayName = mode ? localizeSmartModeName(mode.id, mode.name, t) : "";
@@ -332,6 +333,7 @@ export const SmartModeCard: React.FC<SmartModeCardProps> = ({
             currentBinding={currentBinding}
             disabled={disabled}
             onBound={onChanged}
+            onConflictChange={setShortcutConflict}
           />
           {!disabled && (
             <>
@@ -365,6 +367,15 @@ export const SmartModeCard: React.FC<SmartModeCardProps> = ({
           )}
         </div>
       </div>
+      {shortcutConflict && (
+        <p
+          role="alert"
+          dir="auto"
+          className="w-full text-xs text-red-400 whitespace-normal break-words"
+        >
+          {shortcutConflict}
+        </p>
+      )}
     </div>
   );
 };
