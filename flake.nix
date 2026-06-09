@@ -102,6 +102,18 @@
               # updated every time a git dependency changed in Cargo.lock.
               # Safe for standalone flakes (not allowed in nixpkgs, it is needed something like crate2nix).
               allowBuiltinFetchGit = true;
+              # allowBuiltinFetchGit does not produce a usable vendored source for
+              # git crates pulled in via [patch.crates-io] (the cjpais/tauri pin):
+              # cargo then attempts a live `git fetch` and fails inside the offline
+              # build sandbox ("can't checkout ...: offline mode"). Pin those three
+              # crates with explicit outputHashes so they are fetched as a
+              # fixed-output derivation (network is permitted for those). All three
+              # come from the same git rev, so they share one source hash.
+              outputHashes = {
+                "tauri-runtime-2.10.0" = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+                "tauri-runtime-wry-2.10.0" = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+                "tauri-utils-2.8.2" = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+              };
             };
 
             postPatch = ''
