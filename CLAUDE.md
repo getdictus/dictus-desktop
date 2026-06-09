@@ -136,7 +136,7 @@ Dictus Desktop supports command-line parameters on all platforms for integration
 | Flag                     | Description                                                                        |
 | ------------------------ | ---------------------------------------------------------------------------------- |
 | `--toggle-transcription` | Toggle recording on/off on a running instance (via `tauri_plugin_single_instance`) |
-| `--toggle-post-process`  | Toggle recording with post-processing on/off on a running instance                 |
+| `--toggle-post-process`  | Toggle recording through the active Smart Mode on/off on a running instance         |
 | `--cancel`               | Cancel the current operation on a running instance                                 |
 | `--start-hidden`         | Launch without showing the main window (tray icon still visible)                   |
 | `--no-tray`              | Launch without the system tray icon (closing window quits the app)                 |
@@ -146,7 +146,7 @@ Dictus Desktop supports command-line parameters on all platforms for integration
 
 - CLI flags are runtime-only overrides — they do NOT modify persisted settings
 - Remote control flags (`--toggle-transcription`, `--toggle-post-process`, `--cancel`) work by launching a second instance that sends its args to the running instance via `tauri_plugin_single_instance`, then exits
-- `send_transcription_input()` in `signal_handle.rs` is shared between signal handlers and CLI to avoid code duplication
+- `send_transcription_input()` in `signal_handle.rs` is shared between signal handlers and CLI to avoid code duplication; it re-routes the legacy `transcribe_with_post_process` id to the active Smart Mode (`smart_mode_{active_id}`) so CLI/signal post-process triggers run the live Smart Mode pipeline rather than the retired pre-v1.3 prompt snapshot
 - `CliArgs` is stored in Tauri managed state (`.manage()`) so it's accessible in `on_window_event` and other handlers
 
 ## Debug Mode
