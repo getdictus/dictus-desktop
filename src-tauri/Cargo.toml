@@ -35,11 +35,16 @@ once_cell = "1"
 # small LLMs tend to answer in the language of the (English) instructions, so we
 # detect the input language and tell the model to respond in it.
 whatlang = "0.16"
-# Pinned to the 2.10.x range: the [patch.crates-io] block below replaces
+# Hard-pinned to EXACTLY 2.10.2: the [patch.crates-io] block below replaces
 # tauri-runtime/-wry/-utils with cjpais' `handy-2.10.2` fork (overlay
-# off-screen fix #543). That fork tracks tauri 2.10.x — letting tauri float
-# to 2.11+ makes the patch silently unused (and reverts the overlay fix).
-tauri = { version = "~2.10", features = [
+# off-screen fix, cjpais/tauri@ad9ba9448b). That fork provides tauri-runtime
+# 2.10.0 / tauri-utils 2.8.2. tauri 2.10.2 requires `^2.10.0`/`^2.8.2`, so the
+# patch applies; tauri 2.10.3 bumped those requirements to `^2.10.1`/`^2.8.3`,
+# which the fork does NOT satisfy → cargo silently drops the patch and the
+# overlay fix is lost. A bare `~2.10`/`^2.10` lets `cargo update` float to
+# 2.10.3 and re-spring that trap, so we pin exactly. Bumping tauri must be a
+# deliberate manual edit (re-check the fork branch first). See issue #30.
+tauri = { version = "=2.10.2", features = [
   "protocol-asset",
   "macos-private-api",
   "tray-icon",
