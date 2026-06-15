@@ -714,7 +714,9 @@
     "boundary": {
       "title": "משהו השתבש.",
       "reload": "טעינה מחדש"
-    }
+    },
+    "postProcessFailedTitle": "עיבוד שלאחר מכן אינו זמין",
+    "postProcessFailed": "הגדר מודל בהגדרות כדי לאפשר עיבוד שלאחר מכן. התמלול שלך הודבק כפי שהוא."
   },
   "appLanguage": {
     "title": "שפת האפליקציה",
@@ -722,7 +724,8 @@
   },
   "overlay": {
     "transcribing": "מתמלל...",
-    "processing": "מעבד..."
+    "processing": "מעבד...",
+    "postProcessUnavailable": "הגדר מודל לעיבוד שלאחר מכן"
   },
   "smartModes": {
     "sections": {
@@ -766,36 +769,9 @@
       "translation": "תרגום"
     },
     "translation": {
-      "enableHeading": "הפעלת תרגום לא מקוון",
-      "enableBody": "התרגום פועל לחלוטין ללא חיבור לאינטרנט דרך מודל השפה המובנה. בחר מנוע כדי להתחיל.",
-      "chooseCta": "בחירת מנוע תרגום",
       "genericEngineNote": "מאמץ מיטבי — איכות משתנה בהתאם למודל",
-      "changeEngine": "החלפת מנוע",
-      "currentEngine": "בשימוש: {{engine}}",
-      "engineGeneric": "מודל פעיל",
-      "modal": {
-        "footnote": "שתי האפשרויות פועלות לחלוטין ללא חיבור. ניתן לשנות בחירה זו מאוחר יותר בהגדרות.",
-        "applying": "...מיושם",
-        "applyFailed": "לא ניתן לשנות את מנוע התרגום.",
-        "activeBadge": "בשימוש כעת",
-        "activeButton": "בשימוש כעת",
-        "downloadingPercent": "...{{percent}}% מוריד",
-        "downloadBackgroundNote": "ניתן לסגור חלון זה — ההורדה ממשיכה ברקע.",
-        "verifying": "...מאמת הורדה",
-        "title": "הגדרת תרגום לא מקוון",
-        "recommendedHeading": "מומלץ: Gemma 3 4B",
-        "recommendedSubtext": "מודל 4B רב-תכליתי עם תרגום אמין בשפות ובביטויים מגוונים. הורדה של כ-2.5 GB.",
-        "downloadRecommended": "הורדת Gemma 3 4B",
-        "useRecommended": "שימוש ב-Gemma 3 4B",
-        "currentHeading": "שימוש במודל הנוכחי",
-        "currentSubtext": "תרגום עם {{model}} (המודל הפעיל). האיכות משתנה בהתאם למודל.",
-        "currentNone": "אין עדיין מודל מקומי פעיל. הורד אחד מספריית המודלים תחילה.",
-        "useCurrent": "שימוש במודל הנוכחי",
-        "recommendOnlyHeading": "Gemma 3 4B מומלץ לתרגום",
-        "recommendOnlyBody": "לאיכות תרגום מיטבית, בחר Gemma 3 4B בבורר המודלים למעלה. התרגום פועל דרך המודל הפעיל היחיד שלך.",
-        "enableCta": "הפעלת תרגום לא מקוון"
-      },
-      "recommendNote": "Gemma 3 4B מומלץ לתרגום. בחר אותו בבורר המודלים למעלה."
+      "noEngineHeading": "תרגום דורש ספק פעיל",
+      "noEngineBody": "בחר או הגדר ספק עיבוד לאחר העיבוד למעלה כדי להשתמש בתרגום."
     },
     "delete": {
       "title": "מחיקת מצב",

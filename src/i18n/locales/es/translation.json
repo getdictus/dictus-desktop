@@ -714,7 +714,9 @@
     "boundary": {
       "title": "Algo salió mal.",
       "reload": "Recargar"
-    }
+    },
+    "postProcessFailedTitle": "Posprocesamiento no disponible",
+    "postProcessFailed": "Configura un modelo en los ajustes para habilitar el posprocesamiento. Tu transcripción se pegó tal cual."
   },
   "appLanguage": {
     "title": "Idioma de la aplicación",
@@ -722,7 +724,8 @@
   },
   "overlay": {
     "transcribing": "Transcribiendo...",
-    "processing": "Procesando..."
+    "processing": "Procesando...",
+    "postProcessUnavailable": "Configura un modelo para el posprocesamiento"
   },
   "smartModes": {
     "sections": {
@@ -766,36 +769,9 @@
       "translation": "Traducción"
     },
     "translation": {
-      "enableHeading": "Activar traducción sin conexión",
-      "enableBody": "La traducción se ejecuta completamente sin conexión a través del LLM integrado. Elige un motor para comenzar.",
-      "chooseCta": "Elegir motor de traducción",
       "genericEngineNote": "Lo mejor posible — la calidad varía según el modelo",
-      "changeEngine": "Cambiar motor",
-      "currentEngine": "Usando: {{engine}}",
-      "engineGeneric": "Modelo activo",
-      "modal": {
-        "footnote": "Ambas opciones funcionan completamente sin conexión. Puedes cambiar esta elección más tarde en la configuración.",
-        "applying": "Aplicando…",
-        "applyFailed": "No se pudo cambiar el motor de traducción.",
-        "activeBadge": "Actualmente en uso",
-        "activeButton": "Actualmente en uso",
-        "downloadingPercent": "Descargando… {{percent}}%",
-        "downloadBackgroundNote": "Puedes cerrar esta ventana — la descarga continúa en segundo plano.",
-        "verifying": "Verificando descarga…",
-        "title": "Configurar traducción sin conexión",
-        "recommendedHeading": "Recomendado: Gemma 3 4B",
-        "recommendedSubtext": "Un modelo 4B versátil con traducción fiable en varios idiomas e idiomas. ~2,5 GB de descarga.",
-        "downloadRecommended": "Descargar Gemma 3 4B",
-        "useRecommended": "Usar Gemma 3 4B",
-        "currentHeading": "Usar el modelo actual",
-        "currentSubtext": "Traducir con {{model}} (tu modelo activo). La calidad varía según el modelo.",
-        "currentNone": "Aún no hay ningún modelo local activo. Descarga uno primero desde la biblioteca de modelos.",
-        "useCurrent": "Usar modelo actual",
-        "recommendOnlyHeading": "Se recomienda Gemma 3 4B para la traducción",
-        "recommendOnlyBody": "Para la mejor calidad de traducción, selecciona Gemma 3 4B en el selector de modelos arriba. La traducción se ejecuta a través de tu único modelo activo.",
-        "enableCta": "Activar traducción sin conexión"
-      },
-      "recommendNote": "Se recomienda Gemma 3 4B para la traducción. Selecciónalo en el selector de modelos arriba."
+      "noEngineHeading": "La traducción necesita un proveedor activo",
+      "noEngineBody": "Elige o configura un proveedor de posprocesamiento arriba para usar la traducción."
     },
     "delete": {
       "title": "Eliminar modo",

@@ -714,7 +714,9 @@
     "boundary": {
       "title": "Đã xảy ra lỗi.",
       "reload": "Tải lại"
-    }
+    },
+    "postProcessFailedTitle": "Hậu xử lý không khả dụng",
+    "postProcessFailed": "Thiết lập một mô hình trong cài đặt để bật hậu xử lý. Bản chép lời của bạn đã được dán nguyên trạng."
   },
   "appLanguage": {
     "title": "Ngôn ngữ ứng dụng",
@@ -722,7 +724,8 @@
   },
   "overlay": {
     "transcribing": "Đang chuyển đổi...",
-    "processing": "Đang xử lý..."
+    "processing": "Đang xử lý...",
+    "postProcessUnavailable": "Thiết lập một mô hình để hậu xử lý"
   },
   "smartModes": {
     "sections": {
@@ -766,36 +769,9 @@
       "translation": "Dịch thuật"
     },
     "translation": {
-      "enableHeading": "Bật dịch thuật ngoại tuyến",
-      "enableBody": "Dịch thuật chạy hoàn toàn ngoại tuyến qua mô hình ngôn ngữ tích hợp. Chọn một công cụ để bắt đầu.",
-      "chooseCta": "Chọn công cụ dịch thuật",
       "genericEngineNote": "Cố gắng tốt nhất — chất lượng thay đổi tùy theo mô hình",
-      "changeEngine": "Đổi công cụ",
-      "currentEngine": "Đang dùng: {{engine}}",
-      "engineGeneric": "Mô hình đang hoạt động",
-      "modal": {
-        "footnote": "Cả hai tùy chọn đều chạy hoàn toàn ngoại tuyến. Bạn có thể thay đổi lựa chọn này sau trong cài đặt.",
-        "applying": "Đang áp dụng…",
-        "applyFailed": "Không thể thay đổi công cụ dịch thuật.",
-        "activeBadge": "Đang được dùng",
-        "activeButton": "Đang được dùng",
-        "downloadingPercent": "Đang tải… {{percent}}%",
-        "downloadBackgroundNote": "Bạn có thể đóng cửa sổ này — quá trình tải xuống tiếp tục ở nền.",
-        "verifying": "Đang xác minh tải xuống…",
-        "title": "Thiết lập dịch thuật ngoại tuyến",
-        "recommendedHeading": "Khuyến nghị: Gemma 3 4B",
-        "recommendedSubtext": "Mô hình 4B đa năng với khả năng dịch thuật đáng tin cậy trong nhiều ngôn ngữ. ~2,5 GB tải xuống.",
-        "downloadRecommended": "Tải Gemma 3 4B",
-        "useRecommended": "Dùng Gemma 3 4B",
-        "currentHeading": "Dùng mô hình hiện tại",
-        "currentSubtext": "Dịch với {{model}} (mô hình đang hoạt động). Chất lượng thay đổi tùy theo mô hình.",
-        "currentNone": "Chưa có mô hình cục bộ nào đang hoạt động. Tải xuống một mô hình từ thư viện mô hình trước.",
-        "useCurrent": "Dùng mô hình hiện tại",
-        "recommendOnlyHeading": "Gemma 3 4B được khuyến nghị cho dịch thuật",
-        "recommendOnlyBody": "Để có chất lượng dịch thuật tốt nhất, chọn Gemma 3 4B trong bộ chọn mô hình ở trên. Dịch thuật chạy qua mô hình đang hoạt động duy nhất của bạn.",
-        "enableCta": "Bật dịch thuật ngoại tuyến"
-      },
-      "recommendNote": "Gemma 3 4B được khuyến nghị cho dịch thuật. Chọn nó trong bộ chọn mô hình ở trên."
+      "noEngineHeading": "Bản dịch cần một nhà cung cấp đang hoạt động",
+      "noEngineBody": "Chọn hoặc cấu hình một nhà cung cấp hậu xử lý ở trên để sử dụng tính năng dịch."
     },
     "delete": {
       "title": "Xóa chế độ",

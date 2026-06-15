@@ -572,8 +572,8 @@
         "description": "Couper le son du système pendant l'enregistrement"
       },
       "appendTrailingSpace": {
-        "label": "Ajouter une espace final",
-        "description": "Ajouter une espace après la transcription collée"
+        "label": "Ajouter un espace final",
+        "description": "Ajouter un espace après la transcription collée"
       },
       "keyboardImplementation": {
         "title": "Gestion du clavier",
@@ -714,7 +714,9 @@
     "boundary": {
       "title": "Une erreur est survenue.",
       "reload": "Recharger"
-    }
+    },
+    "postProcessFailedTitle": "Post-traitement indisponible",
+    "postProcessFailed": "Configurez un modèle dans les réglages pour activer le post-traitement. Votre transcription a été collée telle quelle."
   },
   "appLanguage": {
     "title": "Langue de l'application",
@@ -722,7 +724,8 @@
   },
   "overlay": {
     "transcribing": "Transcription...",
-    "processing": "Traitement..."
+    "processing": "Traitement...",
+    "postProcessUnavailable": "Configurez un modèle pour le post-traitement"
   },
   "smartModes": {
     "sections": {
@@ -766,36 +769,9 @@
       "translation": "Traduction"
     },
     "translation": {
-      "enableHeading": "Activer la traduction hors ligne",
-      "enableBody": "La traduction s’effectue entièrement hors ligne via le LLM intégré. Choisissez un moteur pour commencer.",
-      "chooseCta": "Choisir le moteur de traduction",
       "genericEngineNote": "Au mieux — la qualité varie selon le modèle",
-      "changeEngine": "Changer de moteur",
-      "currentEngine": "En cours d’utilisation : {{engine}}",
-      "engineGeneric": "Modèle actif",
-      "modal": {
-        "footnote": "Les deux options fonctionnent entièrement hors ligne. Vous pouvez modifier ce choix plus tard dans les paramètres.",
-        "applying": "Application…",
-        "applyFailed": "Impossible de changer le moteur de traduction.",
-        "activeBadge": "Actuellement utilisé",
-        "activeButton": "Actuellement utilisé",
-        "downloadingPercent": "Téléchargement… {{percent}}%",
-        "downloadBackgroundNote": "Vous pouvez fermer cette fenêtre — le téléchargement continue en arrière-plan.",
-        "verifying": "Vérification du téléchargement…",
-        "title": "Configurer la traduction hors ligne",
-        "recommendedHeading": "Recommandé : Gemma 3 4B",
-        "recommendedSubtext": "Un modèle 4B polyvalent avec une traduction fiable et précise dans de nombreuses langues et idiomes. ~2,5 Go à télécharger.",
-        "downloadRecommended": "Télécharger Gemma 3 4B",
-        "useRecommended": "Utiliser Gemma 3 4B",
-        "currentHeading": "Utiliser votre modèle actuel",
-        "currentSubtext": "Traduire avec {{model}} (votre modèle actif). La qualité varie selon le modèle.",
-        "currentNone": "Aucun modèle local n’est encore actif. Téléchargez-en un depuis la bibliothèque de modèles.",
-        "useCurrent": "Utiliser le modèle actuel",
-        "recommendOnlyHeading": "Gemma 3 4B recommandé pour la traduction",
-        "recommendOnlyBody": "Pour une meilleure qualité de traduction, sélectionnez Gemma 3 4B dans le sélecteur de modèle ci-dessus. La traduction s’effectue via votre unique modèle actif.",
-        "enableCta": "Activer la traduction hors ligne"
-      },
-      "recommendNote": "Gemma 3 4B est recommandé pour la traduction. Choisissez-le dans le sélecteur de modèle ci-dessus."
+      "noEngineHeading": "La traduction nécessite un fournisseur actif",
+      "noEngineBody": "Choisissez ou configurez un fournisseur de post-traitement ci-dessus pour utiliser la traduction."
     },
     "delete": {
       "title": "Supprimer le mode",

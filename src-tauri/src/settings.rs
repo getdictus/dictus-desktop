@@ -102,15 +102,6 @@ pub enum SmartModeKind {
     Translation,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Default, Type, PartialEq)]
-#[serde(rename_all = "snake_case")]
-pub enum TranslationEngineChoice {
-    #[default]
-    NotChosen,
-    TranslateGemma,
-    GenericModel,
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone, Type)]
 pub struct TargetLanguage {
     pub code: String,
@@ -411,8 +402,6 @@ pub struct AppSettings {
     pub smart_modes: Vec<SmartMode>,
     #[serde(default)]
     pub smart_mode_active_id: Option<String>,
-    #[serde(default)]
-    pub translation_engine_choice: TranslationEngineChoice,
     #[serde(default)]
     pub mute_while_recording: bool,
     #[serde(default)]
@@ -1017,7 +1006,6 @@ pub fn get_default_settings() -> AppSettings {
         settings_schema_version: 1,
         smart_modes: default_smart_modes(),
         smart_mode_active_id: default_smart_modes().first().map(|m| m.id.clone()),
-        translation_engine_choice: TranslationEngineChoice::NotChosen,
         mute_while_recording: false,
         append_trailing_space: false,
         app_language: default_app_language(),

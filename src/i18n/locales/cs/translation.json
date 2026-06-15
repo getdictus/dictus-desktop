@@ -714,7 +714,9 @@
     "boundary": {
       "title": "Něco se pokazilo.",
       "reload": "Znovu načíst"
-    }
+    },
+    "postProcessFailedTitle": "Následné zpracování není dostupné",
+    "postProcessFailed": "Nastavte model v nastavení pro povolení následného zpracování. Váš přepis byl vložen beze změny."
   },
   "appLanguage": {
     "title": "Jazyk aplikace",
@@ -722,7 +724,8 @@
   },
   "overlay": {
     "transcribing": "Přepisuji...",
-    "processing": "Zpracovávám..."
+    "processing": "Zpracovávám...",
+    "postProcessUnavailable": "Nastavte model pro následné zpracování"
   },
   "smartModes": {
     "sections": {
@@ -766,36 +769,9 @@
       "translation": "Překlad"
     },
     "translation": {
-      "enableHeading": "Zapnout offline překlad",
-      "enableBody": "Překlad probíhá zcela offline přes integrovaný jazykový model. Vyber engine a začni.",
-      "chooseCta": "Zvolit překladatelský engine",
       "genericEngineNote": "Nejlepší snaha — kvalita závisí na modelu",
-      "changeEngine": "Změnit engine",
-      "currentEngine": "Používán: {{engine}}",
-      "engineGeneric": "Aktivní model",
-      "modal": {
-        "footnote": "Obě možnosti fungují zcela offline. Tento výběr lze změnit později v nastavení.",
-        "applying": "Aplikování…",
-        "applyFailed": "Nepodařilo se změnit překladatelský engine.",
-        "activeBadge": "Aktuálně používán",
-        "activeButton": "Aktuálně používán",
-        "downloadingPercent": "Stahování… {{percent}}%",
-        "downloadBackgroundNote": "Okno lze zavřít — stahování pokračuje na pozadí.",
-        "verifying": "Ověřování stahování…",
-        "title": "Nastavit offline překlad",
-        "recommendedHeading": "Doporučeno: Gemma 3 4B",
-        "recommendedSubtext": "Všestranný model 4B se spolehlivým překladem v mnoha jazycích. ~2,5 GB ke stažení.",
-        "downloadRecommended": "Stáhnout Gemma 3 4B",
-        "useRecommended": "Použít Gemma 3 4B",
-        "currentHeading": "Použít aktuální model",
-        "currentSubtext": "Přeložit pomocí {{model}} (aktivní model). Kvalita závisí na modelu.",
-        "currentNone": "Žádný lokální model zatím není aktivní. Nejprve stáhni jeden z knihovny modelů.",
-        "useCurrent": "Použít aktuální model",
-        "recommendOnlyHeading": "Gemma 3 4B doporučen pro překlad",
-        "recommendOnlyBody": "Pro nejlepší kvalitu překladu zvolte Gemma 3 4B v selektoru modelů výše. Překlad probíhá přes váš jediný aktivní model.",
-        "enableCta": "Zapnout offline překlad"
-      },
-      "recommendNote": "Pro překlad se doporučuje Gemma 3 4B. Zvol jej v selektoru modelů výše."
+      "noEngineHeading": "Překlad vyžaduje aktivního poskytovatele",
+      "noEngineBody": "Výše vyberte nebo nakonfigurujte poskytovatele následného zpracování, abyste mohli překlad používat."
     },
     "delete": {
       "title": "Smazat mód",

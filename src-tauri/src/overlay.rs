@@ -357,6 +357,14 @@ pub fn show_processing_overlay(app_handle: &AppHandle) {
     show_overlay_state(app_handle, "processing");
 }
 
+/// Shows the overlay in an error state (e.g. translation could not run because
+/// no engine is available). Visible even when Dictus isn't the focused app, so
+/// the user gets feedback during background dictation. The caller is responsible
+/// for hiding it after a short delay.
+pub fn show_error_overlay(app_handle: &AppHandle) {
+    show_overlay_state(app_handle, "error");
+}
+
 /// Updates the overlay window position based on current settings
 pub fn update_overlay_position(app_handle: &AppHandle) {
     if let Some(overlay_window) = app_handle.get_webview_window("recording_overlay") {

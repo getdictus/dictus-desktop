@@ -74,18 +74,6 @@ pub async fn get_active_llm_model(app_handle: AppHandle) -> Result<Option<String
 
 #[tauri::command]
 #[specta::specta]
-pub async fn set_translation_engine_choice(
-    app_handle: AppHandle,
-    choice: crate::settings::TranslationEngineChoice,
-) -> Result<(), String> {
-    let mut settings = get_settings(&app_handle);
-    settings.translation_engine_choice = choice;
-    write_settings(&app_handle, settings);
-    Ok(())
-}
-
-#[tauri::command]
-#[specta::specta]
 pub async fn import_custom_llm_model(
     _app_handle: AppHandle,
     llm_manager: State<'_, Arc<LlmManager>>,

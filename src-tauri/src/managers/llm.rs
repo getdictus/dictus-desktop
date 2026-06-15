@@ -351,17 +351,6 @@ impl LlmManager {
         self.loaded_model.lock().unwrap().is_some()
     }
 
-    /// Id of the currently loaded model, if any. Lets callers ensure the
-    /// *correct* model is loaded (e.g. translation must not run on a generic
-    /// model left loaded by a prior Rewrite mode).
-    pub fn loaded_model_id(&self) -> Option<String> {
-        self.loaded_model
-            .lock()
-            .unwrap()
-            .as_ref()
-            .map(|m| m.id.clone())
-    }
-
     pub fn get_models(&self) -> Vec<LlmModelInfo> {
         self.available_models
             .lock()

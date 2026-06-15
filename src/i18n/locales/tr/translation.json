@@ -714,7 +714,9 @@
     "boundary": {
       "title": "Bir şeyler ters gitti.",
       "reload": "Yenile"
-    }
+    },
+    "postProcessFailedTitle": "Son işleme kullanılamıyor",
+    "postProcessFailed": "Son işlemeyi etkinleştirmek için ayarlardan bir model yapılandırın. Transkripsiyonunuz olduğu gibi yapıştırıldı."
   },
   "appLanguage": {
     "title": "Uygulama Dili",
@@ -722,7 +724,8 @@
   },
   "overlay": {
     "transcribing": "Transkribe ediliyor...",
-    "processing": "İşleniyor..."
+    "processing": "İşleniyor...",
+    "postProcessUnavailable": "Son işleme için bir model ayarlayın"
   },
   "smartModes": {
     "sections": {
@@ -766,36 +769,9 @@
       "translation": "Çeviri"
     },
     "translation": {
-      "enableHeading": "Çevrimdışı çeviriyi etkinleştir",
-      "enableBody": "Çeviri, yerleşik dil modeli aracılığıyla tamamen çevrimdışı çalışır. Başlamak için bir motor seç.",
-      "chooseCta": "Çeviri motoru seç",
       "genericEngineNote": "En iyi çaba — kalite modele göre değişir",
-      "changeEngine": "Motor değiştir",
-      "currentEngine": "Kullanılıyor: {{engine}}",
-      "engineGeneric": "Etkin model",
-      "modal": {
-        "footnote": "Her iki seçenek de tamamen çevrimdışı çalışır. Bu seçimi daha sonra ayarlardan değiştirebilirsin.",
-        "applying": "Uygulanıyor…",
-        "applyFailed": "Çeviri motoru değiştirilemedi.",
-        "activeBadge": "Şu an kullanılıyor",
-        "activeButton": "Şu an kullanılıyor",
-        "downloadingPercent": "İndiriliyor… {{percent}}%",
-        "downloadBackgroundNote": "Bu pencereyi kapatabilirsin — indirme arka planda devam eder.",
-        "verifying": "İndirme doğrulanıyor…",
-        "title": "Çevrimdışı çeviriyi ayarla",
-        "recommendedHeading": "Önerilen: Gemma 3 4B",
-        "recommendedSubtext": "Birçok dilde güvenilir çeviri sunan çok yönlü bir 4B modeli. ~2,5 GB indirme.",
-        "downloadRecommended": "Gemma 3 4B indir",
-        "useRecommended": "Gemma 3 4B kullan",
-        "currentHeading": "Mevcut modeli kullan",
-        "currentSubtext": "{{model}} ile çevir (etkin modeliniz). Kalite modele göre değişir.",
-        "currentNone": "Henüz etkin bir yerel model yok. Önce model kitaplığından bir tane indir.",
-        "useCurrent": "Mevcut modeli kullan",
-        "recommendOnlyHeading": "Gemma 3 4B çeviri için önerilir",
-        "recommendOnlyBody": "En iyi çeviri kalitesi için yukarıdaki model seçiciden Gemma 3 4B seçin. Çeviri, tek etkin modeliniz aracılığıyla çalışır.",
-        "enableCta": "Çevrimdışı çeviriyi etkinleştir"
-      },
-      "recommendNote": "Gemma 3 4B çeviri için önerilir. Yukarıdaki model seçiciden seçin."
+      "noEngineHeading": "Çeviri için etkin bir sağlayıcı gerekir",
+      "noEngineBody": "Çeviriyi kullanmak için yukarıdan bir son işleme sağlayıcısı seçin veya yapılandırın."
     },
     "delete": {
       "title": "Modu sil",

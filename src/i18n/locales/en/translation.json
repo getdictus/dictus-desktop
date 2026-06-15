@@ -714,7 +714,9 @@
     "boundary": {
       "title": "Something went wrong.",
       "reload": "Reload"
-    }
+    },
+    "postProcessFailedTitle": "Post-processing unavailable",
+    "postProcessFailed": "Set up a model in settings to enable post-processing. Your transcription was pasted as-is."
   },
   "appLanguage": {
     "title": "Application Language",
@@ -722,7 +724,8 @@
   },
   "overlay": {
     "transcribing": "Transcribing...",
-    "processing": "Processing..."
+    "processing": "Processing...",
+    "postProcessUnavailable": "Set up a model for post-processing"
   },
   "smartModes": {
     "sections": {
@@ -766,36 +769,9 @@
       "translation": "Translation"
     },
     "translation": {
-      "enableHeading": "Enable offline translation",
-      "enableBody": "Translation runs fully offline through the embedded LLM. Choose an engine to get started.",
-      "chooseCta": "Choose translation engine",
       "genericEngineNote": "Best-effort — quality varies by model",
-      "changeEngine": "Change engine",
-      "currentEngine": "Using: {{engine}}",
-      "engineGeneric": "Active model",
-      "modal": {
-        "footnote": "Both options run fully offline. You can change this choice later in settings.",
-        "applying": "Applying…",
-        "applyFailed": "Could not change the translation engine.",
-        "activeBadge": "Currently used",
-        "activeButton": "Currently used",
-        "downloadingPercent": "Downloading… {{percent}}%",
-        "downloadBackgroundNote": "You can close this window — the download continues in the background.",
-        "verifying": "Verifying download…",
-        "title": "Set up offline translation",
-        "recommendedHeading": "Recommended: Gemma 3 4B",
-        "recommendedSubtext": "A versatile 4B model with clean, reliable translation across languages and idioms. ~2.5 GB download.",
-        "downloadRecommended": "Download Gemma 3 4B",
-        "useRecommended": "Use Gemma 3 4B",
-        "currentHeading": "Use your current model",
-        "currentSubtext": "Translate with {{model}} (your active model). Quality varies by model.",
-        "currentNone": "No local model is active yet. Download one from the model library first.",
-        "useCurrent": "Use current model",
-        "recommendOnlyHeading": "Gemma 3 4B recommended for translation",
-        "recommendOnlyBody": "For the best translation quality, select Gemma 3 4B in the model selector above. Translation runs through your single active model.",
-        "enableCta": "Enable offline translation"
-      },
-      "recommendNote": "Gemma 3 4B is recommended for translation. Choose it in the model selector above."
+      "noEngineHeading": "Translation needs an active provider",
+      "noEngineBody": "Choose or configure a post-processing provider above to use translation."
     },
     "delete": {
       "title": "Delete mode",

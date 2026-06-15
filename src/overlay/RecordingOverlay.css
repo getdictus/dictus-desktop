@@ -58,6 +58,45 @@
   }
 }
 
+.overlay-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 0 14px;
+  animation: overlay-error-in 260ms ease-out both;
+}
+
+.overlay-error-icon {
+  color: #ffb020;
+  flex-shrink: 0;
+}
+
+.overlay-error-text {
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.25;
+  text-align: left;
+  /* Wrap onto multiple lines so the message fits inside the pill instead of
+     running edge-to-edge. The pill is 84px tall, so 2–3 lines fit comfortably. */
+  white-space: normal;
+  max-width: 210px;
+}
+
+@keyframes overlay-error-in {
+  0% {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .cancel-pill {
   width: 84px;
   height: 84px;

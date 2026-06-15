@@ -9,7 +9,8 @@ use crate::settings::{get_settings, AppSettings, APPLE_INTELLIGENCE_PROVIDER_ID}
 use crate::shortcut;
 use crate::tray::{change_tray_icon, TrayIconState};
 use crate::utils::{
-    self, show_processing_overlay, show_recording_overlay, show_transcribing_overlay,
+    self, show_error_overlay, show_processing_overlay, show_recording_overlay,
+    show_transcribing_overlay,
 };
 use crate::TranscriptionCoordinator;
 use ferrous_opencc::{config::BuiltinConfig, OpenCC};
@@ -480,6 +481,12 @@ pub(crate) struct ProcessedTranscription {
     pub final_text: String,
     pub post_processed_text: Option<String>,
     pub post_process_prompt: Option<String>,
+    /// True when post-processing was requested but produced no output (no usable
+    /// provider / model — e.g. no LLM configured). Applies to both Rewrite and
+    /// Translation smart modes and the standard active-prompt path. The caller
+    /// still pastes the original transcription (so the user doesn't lose what
+    /// they said) and surfaces a hint in the overlay.
+    pub post_process_failed: bool,
 }
 
 pub(crate) async fn process_transcription_output(
@@ -492,6 +499,7 @@ pub(crate) async fn process_transcription_output(
     let mut final_text = transcription.to_string();
     let mut post_processed_text: Option<String> = None;
     let mut post_process_prompt: Option<String> = None;
+    let mut post_process_failed = false;
 
     if let Some(converted_text) = maybe_convert_chinese_variant(&settings, transcription).await {
         final_text = converted_text;
@@ -503,24 +511,49 @@ pub(crate) async fn process_transcription_output(
             match resolve_mode_prompt(&settings, mode_id) {
                 Some((_mode, prompt)) => {
                     // Rewrite kind: run inference with the mode's explicit prompt.
-                    if let Some(processed_text) =
-                        post_process_with_prompt(app, &settings, &final_text, &prompt).await
-                    {
-                        post_processed_text = Some(processed_text.clone());
-                        final_text = processed_text;
-                        post_process_prompt = Some(prompt);
+                    match post_process_with_prompt(app, &settings, &final_text, &prompt).await {
+                        Some(processed_text) => {
+                            post_processed_text = Some(processed_text.clone());
+                            final_text = processed_text;
+                            post_process_prompt = Some(prompt);
+                        }
+                        None => {
+                            // No usable provider / model (e.g. no LLM configured).
+                            // Keep the original transcription and flag the failure so
+                            // the caller shows a hint pill.
+                            log::warn!(
+                                "Rewrite mode '{}' produced no output (no usable provider?)",
+                                mode_id
+                            );
+                            post_process_failed = true;
+                            let _ = app.emit("post-process-error", ());
+                        }
                     }
                 }
                 None => {
-                    // Translation kind: run through the embedded LLM per the global engine choice.
+                    // Translation kind: route through the active post-processing
+                    // provider (Apple Intelligence, cloud, or embedded LLM) via a
+                    // generated "translate to X" prompt.
                     let mode = settings.smart_modes.iter().find(|m| m.id == mode_id);
                     if let Some(mode) = mode {
                         if mode.kind == crate::settings::SmartModeKind::Translation {
-                            if let Some(translated) =
-                                run_translation(app, &settings, &final_text, mode).await
-                            {
-                                post_processed_text = Some(translated.clone());
-                                final_text = translated;
+                            match run_translation(app, &settings, &final_text, mode).await {
+                                Some(translated) => {
+                                    post_processed_text = Some(translated.clone());
+                                    final_text = translated;
+                                }
+                                None => {
+                                    // No usable provider / model: keep the original
+                                    // transcription and flag the failure so the caller
+                                    // surfaces a hint pill (+ in-app toast) rather than
+                                    // silently pasting untranslated text.
+                                    log::warn!(
+                                        "Translation mode '{}' produced no output (no usable provider?)",
+                                        mode.id
+                                    );
+                                    post_process_failed = true;
+                                    let _ = app.emit("post-process-error", ());
+                                }
                             }
                         }
                     }
@@ -529,6 +562,9 @@ pub(crate) async fn process_transcription_output(
             }
         } else {
             // Standard path: use active selected prompt (existing behavior).
+            // Note: a `None` here can also mean "no prompt selected", not just
+            // "no usable model", so we don't flag it as a post-process failure
+            // (that hint is reserved for smart modes, which always carry a prompt).
             if let Some(processed_text) =
                 post_process_transcription(app, &settings, &final_text).await
             {
@@ -554,6 +590,7 @@ pub(crate) async fn process_transcription_output(
         final_text,
         post_processed_text,
         post_process_prompt,
+        post_process_failed,
     }
 }
 
@@ -798,6 +835,10 @@ fn spawn_transcription_task(
                             let ah_clone = ah.clone();
                             let paste_time = Instant::now();
                             let final_text = processed.final_text;
+                            // When post-processing couldn't run (no model), we still
+                            // paste the raw transcription so the user keeps their text,
+                            // then show a hint pill instead of a silent dismiss.
+                            let post_process_failed = processed.post_process_failed;
                             ah.run_on_main_thread(move || {
                                 match utils::paste(final_text, ah_clone.clone()) {
                                     Ok(()) => debug!(
@@ -809,7 +850,18 @@ fn spawn_transcription_task(
                                         let _ = ah_clone.emit("paste-error", ());
                                     }
                                 }
-                                utils::hide_recording_overlay(&ah_clone);
+                                if post_process_failed {
+                                    // Hint pill in the always-on-top overlay (visible
+                                    // even when Dictus isn't focused), then dismiss.
+                                    show_error_overlay(&ah_clone);
+                                    let ah_err = ah_clone.clone();
+                                    std::thread::spawn(move || {
+                                        std::thread::sleep(std::time::Duration::from_millis(2500));
+                                        utils::hide_recording_overlay(&ah_err);
+                                    });
+                                } else {
+                                    utils::hide_recording_overlay(&ah_clone);
+                                }
                                 change_tray_icon(&ah_clone, TrayIconState::Idle);
                             })
                             .unwrap_or_else(|e| {
@@ -903,70 +955,28 @@ impl ShortcutAction for TestAction {
     }
 }
 
-/// Run translation inference for a Translation Smart Mode via the global engine choice.
+/// Run a Translation Smart Mode through the active post-processing provider.
 ///
-/// Returns `Some(translated_text)` on success, `None` if not configured or inference fails.
+/// Translation is just a post-processing run with a generated "translate to X"
+/// instruction, so it routes through whatever provider the user has configured
+/// (Apple Intelligence, a cloud API, or the embedded local LLM) — exactly like
+/// Rewrite modes. The `build_system_prompt` language directive defers to the
+/// explicit "translate" instruction, so the output is in the target language.
+///
+/// Returns `Some(translated_text)` on success, `None` if there is no usable
+/// provider or the provider returns empty output.
 async fn run_translation(
     app: &AppHandle,
     settings: &crate::settings::AppSettings,
     text: &str,
     mode: &crate::settings::SmartMode,
 ) -> Option<String> {
-    use crate::settings::TranslationEngineChoice;
-
     let target = mode.target_language.as_ref()?;
-    let llm_manager = app.state::<Arc<crate::managers::llm::LlmManager>>();
-
-    // Translation always runs through the active generic LLM model. (The legacy
-    // `TranslateGemma` dedicated-model path was removed — benchmarks showed a
-    // same-size generic like Gemma 3 4B matches or beats it while producing
-    // clean, reliable output. The enum variant is kept for settings back-compat
-    // and treated identically to `GenericModel`.)
-    if matches!(
-        settings.translation_engine_choice,
-        TranslationEngineChoice::NotChosen
-    ) {
-        log::warn!(
-            "Translation mode '{}' triggered but translation is not enabled",
-            mode.id
-        );
-        return None;
-    }
-
-    let model_id = match &settings.active_llm_model_id {
-        Some(id) => id.clone(),
-        None => {
-            log::warn!("Translation enabled but no active LLM model is set");
-            return None;
-        }
-    };
-    // Ensure the active model is the one loaded (a prior Rewrite mode may have
-    // left a different model loaded).
-    if llm_manager.loaded_model_id().as_deref() != Some(model_id.as_str()) {
-        if let Err(e) = llm_manager.load_model(&model_id).await {
-            log::error!("Active model failed to load for translation: {}", e);
-            return None;
-        }
-    }
     let prompt = format!(
-        "Translate the following text to {}. Output only the translation, no explanation or commentary.\n\n{}",
-        target.label, text
+        "Translate the following text to {}. Output only the translation, no explanation or commentary.",
+        target.label
     );
-
-    match llm_manager.run_inference(prompt).await {
-        Ok(result) => {
-            let result = strip_invisible_chars(&result);
-            if result.trim().is_empty() {
-                None
-            } else {
-                Some(result)
-            }
-        }
-        Err(e) => {
-            log::error!("Translation inference failed: {}", e);
-            None
-        }
-    }
+    post_process_with_prompt(app, settings, text, &prompt).await
 }
 
 /// Resolve which SmartMode and prompt text to use for a `mode_id_override`.
@@ -1078,14 +1088,14 @@ mod actions_tests {
     }
 
     #[test]
-    fn generic_model_translation_prompt_contains_target_language() {
-        // Test the pure logic: confirm the prompt format for GenericModel contains
-        // the expected strings without needing an AppHandle.
+    fn translation_prompt_contains_target_language() {
+        // Pure-logic check of the translation instruction built in `run_translation`.
+        // The transcription is sent separately as the user message (via
+        // `post_process_with_prompt`), so the instruction itself must not inline it.
         let target_label = "Spanish";
-        let transcription = "Hello, how are you?";
         let prompt = format!(
-            "Translate the following text to {}. Output only the translation, no explanation or commentary.\n\n{}",
-            target_label, transcription
+            "Translate the following text to {}. Output only the translation, no explanation or commentary.",
+            target_label
         );
         assert!(
             prompt.contains("Translate the following text to Spanish"),
@@ -1094,10 +1104,6 @@ mod actions_tests {
         assert!(
             prompt.contains("Output only the translation"),
             "Prompt should contain output instruction"
-        );
-        assert!(
-            prompt.contains(transcription),
-            "Prompt should contain the original transcription"
         );
     }
 }

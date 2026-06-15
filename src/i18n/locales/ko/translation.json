@@ -714,7 +714,9 @@
     "boundary": {
       "title": "오류가 발생했습니다.",
       "reload": "새로 고침"
-    }
+    },
+    "postProcessFailedTitle": "후처리를 사용할 수 없습니다",
+    "postProcessFailed": "설정에서 모델을 구성하여 후처리를 활성화하세요. 전사 내용이 그대로 붙여넣어졌습니다."
   },
   "appLanguage": {
     "title": "애플리케이션 언어",
@@ -722,7 +724,8 @@
   },
   "overlay": {
     "transcribing": "텍스트로 변환 중...",
-    "processing": "처리 중..."
+    "processing": "처리 중...",
+    "postProcessUnavailable": "후처리를 위한 모델을 설정하세요"
   },
   "smartModes": {
     "sections": {
@@ -766,36 +769,9 @@
       "translation": "번역"
     },
     "translation": {
-      "enableHeading": "오프라인 번역 활성화",
-      "enableBody": "번역은 내장 언어 모델을 통해 완전히 오프라인으로 실행됩니다. 시작하려면 엔진을 선택하세요.",
-      "chooseCta": "번역 엔진 선택",
       "genericEngineNote": "최선의 시도 — 품질은 모델에 따라 다릅니다",
-      "changeEngine": "엔진 변경",
-      "currentEngine": "사용 중: {{engine}}",
-      "engineGeneric": "활성 모델",
-      "modal": {
-        "footnote": "두 옵션 모두 완전히 오프라인으로 실행됩니다. 나중에 설정에서 이 선택을 변경할 수 있습니다.",
-        "applying": "적용 중…",
-        "applyFailed": "번역 엔진을 변경할 수 없습니다.",
-        "activeBadge": "현재 사용 중",
-        "activeButton": "현재 사용 중",
-        "downloadingPercent": "다운로드 중… {{percent}}%",
-        "downloadBackgroundNote": "이 창을 닫아도 됩니다 — 다운로드는 백그라운드에서 계속됩니다.",
-        "verifying": "다운로드 확인 중…",
-        "title": "오프라인 번역 설정",
-        "recommendedHeading": "추천: Gemma 3 4B",
-        "recommendedSubtext": "다양한 언어에서 신뢰할 수 있는 번역을 제공하는 다재다능한 4B 모델. ~2.5 GB 다운로드.",
-        "downloadRecommended": "Gemma 3 4B 다운로드",
-        "useRecommended": "Gemma 3 4B 사용",
-        "currentHeading": "현재 모델 사용",
-        "currentSubtext": "{{model}}로 번역(활성 모델). 품질은 모델에 따라 다릅니다.",
-        "currentNone": "아직 활성화된 로컬 모델이 없습니다. 먼저 모델 라이브러리에서 다운로드하세요.",
-        "useCurrent": "현재 모델 사용",
-        "recommendOnlyHeading": "번역에는 Gemma 3 4B 권장",
-        "recommendOnlyBody": "최상의 번역 품질을 위해 위의 모델 선택기에서 Gemma 3 4B를 선택하세요. 번역은 단일 활성 모델을 통해 실행됩니다.",
-        "enableCta": "오프라인 번역 활성화"
-      },
-      "recommendNote": "번역에는 Gemma 3 4B를 권장합니다. 위의 모델 선택기에서 선택하세요."
+      "noEngineHeading": "번역하려면 활성 공급자가 필요합니다",
+      "noEngineBody": "번역을 사용하려면 위에서 후처리 공급자를 선택하거나 구성하세요."
     },
     "delete": {
       "title": "모드 삭제",

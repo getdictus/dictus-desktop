@@ -137,6 +137,21 @@ function App() {
     };
   }, [t]);
 
+  // Listen for post-processing failures (rewrite/translation smart mode could
+  // not run because no model is available) and show a toast. The raw
+  // transcription is still pasted; this just explains why post-processing was
+  // skipped. Also surfaced in the overlay pill for the background case.
+  useEffect(() => {
+    const unlisten = listen("post-process-error", () => {
+      toast.error(t("errors.postProcessFailedTitle"), {
+        description: t("errors.postProcessFailed"),
+      });
+    });
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, [t]);
+
   // Listen for model loading failures and show a toast
   useEffect(() => {
     const unlisten = listen<ModelStateEvent>("model-state-changed", (event) => {

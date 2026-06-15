@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/Button";
 import { useSettings } from "@/hooks/useSettings";
 import { SmartModeCard } from "./SmartModeCard";
 import { SmartModeTemplatePicker } from "./SmartModeTemplatePicker";
-import { TranslationEngineChoiceModal } from "./TranslationEngineChoiceModal";
 
 // Languages supported by TranslateGemma (~40 benchmarked languages)
 const TRANSLATE_GEMMA_LANGUAGES: TargetLanguage[] = [
@@ -86,17 +85,30 @@ export const SmartModesSection: React.FC = () => {
   const [modes, setModes] = useState<SmartMode[]>([]);
   const [creatingRewrite, setCreatingRewrite] = useState(false);
   const [creatingTranslation, setCreatingTranslation] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState<
     "rewrite" | "translation" | null
   >(null);
 
-  const engineChoice = getSetting("translation_engine_choice") ?? "not_chosen";
-  const translationEnabled = engineChoice !== "not_chosen";
+  // Translation runs through the active post-processing provider (Apple
+  // Intelligence, cloud, or the embedded local LLM) — same routing as Rewrite
+  // modes. It's "ready" when post-processing has a usable provider; otherwise we
+  // show a non-blocking info banner (the backend also emits `post-process-error`
+  // at dictation time as a backstop).
+  const postProcessEnabled = getSetting("post_process_enabled") ?? false;
+  const providerId = getSetting("post_process_provider_id") ?? "";
+  const activeLlmModelId = getSetting("active_llm_model_id") ?? null;
+  const postProcessModels = getSetting("post_process_models") ?? {};
+  const providerUsable =
+    providerId === "embedded"
+      ? Boolean(activeLlmModelId)
+      : providerId === "apple_intelligence"
+        ? true // runtime availability is surfaced via the post-process-error toast
+        : (postProcessModels[providerId] ?? "").trim() !== "";
+  const translationReady = postProcessEnabled && providerUsable;
 
-  // Translation always runs through the active generic LLM model now.
+  // Translation always runs through the active provider/model now.
   const availableLanguages = GENERIC_LANGUAGES;
-  const genericEngineNote = translationEnabled;
+  const genericEngineNote = true;
 
   const refetchModes = useCallback(async () => {
     const r = await commands.listSmartModes();
@@ -162,55 +174,35 @@ export const SmartModesSection: React.FC = () => {
       {/* Translation section */}
       <div className="space-y-2">
         <div className="px-4 flex items-center justify-between gap-2">
-          <h2
-            className={`text-xs font-medium uppercase tracking-wide ${translationEnabled ? "text-mid-gray" : "text-amber-500"}`}
-          >
+          <h2 className="text-xs font-medium uppercase tracking-wide text-mid-gray">
             {t("smartModes.sections.translation")}
           </h2>
-          {translationEnabled && (
-            <span className="text-xs text-mid-gray">
-              {t("smartModes.translation.recommendNote")}
-            </span>
-          )}
         </div>
         <div className="flex flex-col gap-2">
+          {/* Non-blocking info banner when no usable provider is configured */}
+          {!translationReady && (
+            <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 flex flex-col gap-1">
+              <p className="text-sm font-medium">
+                {t("smartModes.translation.noEngineHeading")}
+              </p>
+              <p className="text-sm text-text/60">
+                {t("smartModes.translation.noEngineBody")}
+              </p>
+            </div>
+          )}
+
           {translations.map((mode) => (
             <SmartModeCard
               key={mode.id}
               mode={mode}
               kind="translation"
-              disabled={!translationEnabled}
               availableLanguages={availableLanguages}
               genericEngineNote={genericEngineNote}
               onChanged={refetchModes}
             />
           ))}
 
-          {/* Enable CTA box when translation not yet configured */}
-          {!translationEnabled && (
-            <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 flex flex-col gap-3">
-              <div>
-                <p className="text-sm font-medium">
-                  {t("smartModes.translation.enableHeading")}
-                </p>
-                <p className="text-sm text-text/60 mt-1">
-                  {t("smartModes.translation.enableBody")}
-                </p>
-              </div>
-              <div>
-                <Button
-                  variant="primary-soft"
-                  size="md"
-                  onClick={() => setModalOpen(true)}
-                >
-                  {t("smartModes.translation.chooseCta")}
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* New translation card (only when translation is enabled) */}
-          {creatingTranslation && translationEnabled && (
+          {creatingTranslation && (
             <SmartModeCard
               mode={null}
               kind="translation"
@@ -225,7 +217,7 @@ export const SmartModesSection: React.FC = () => {
             <Button
               variant="primary-soft"
               size="sm"
-              disabled={!translationEnabled || creatingTranslation}
+              disabled={creatingTranslation}
               onClick={() => setPickerOpen("translation")}
             >
               <Plus className="w-3 h-3 mr-1 inline" />
@@ -234,16 +226,6 @@ export const SmartModesSection: React.FC = () => {
           </div>
         </div>
       </div>
-
-      <TranslationEngineChoiceModal
-        open={modalOpen}
-        enabled={translationEnabled}
-        onClose={() => setModalOpen(false)}
-        onChosen={() => {
-          void refreshSettings?.();
-          void refetchModes();
-        }}
-      />
 
       <SmartModeTemplatePicker
         open={pickerOpen === "rewrite"}

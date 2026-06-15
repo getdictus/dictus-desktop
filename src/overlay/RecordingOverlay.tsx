@@ -7,7 +7,7 @@ import { commands } from "@/bindings";
 import i18n, { syncLanguageFromSettings } from "@/i18n";
 import { getLanguageDirection } from "@/lib/utils/rtl";
 
-type OverlayState = "recording" | "transcribing" | "processing";
+type OverlayState = "recording" | "transcribing" | "processing" | "error";
 
 const BAR_COUNT = 30;
 
@@ -265,6 +265,8 @@ const RecordingOverlay: React.FC = () => {
 
   useEffect(() => {
     if (!isVisible) return;
+    // The error state is a static text pill — no bar animation to drive.
+    if (state === "error") return;
 
     const animate = (timestamp: number) => {
       const dt = lastTimeRef.current
@@ -372,6 +374,29 @@ const RecordingOverlay: React.FC = () => {
           )}
           {state === "processing" && reducedMotion && (
             <div className="transcribing-text">{t("overlay.processing")}</div>
+          )}
+          {state === "error" && (
+            <div className="overlay-error">
+              <svg
+                className="overlay-error-icon"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <span className="overlay-error-text">
+                {t("overlay.postProcessUnavailable")}
+              </span>
+            </div>
           )}
         </div>
       </div>

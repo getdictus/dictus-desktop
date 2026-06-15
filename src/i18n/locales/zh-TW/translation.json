@@ -714,7 +714,9 @@
     "boundary": {
       "title": "發生錯誤。",
       "reload": "重新載入"
-    }
+    },
+    "postProcessFailedTitle": "後處理無法使用",
+    "postProcessFailed": "請在設定中設定模型以啟用後處理。您的轉錄內容已原樣貼上。"
   },
   "appLanguage": {
     "title": "應用程式語言",
@@ -722,7 +724,8 @@
   },
   "overlay": {
     "transcribing": "正在轉錄...",
-    "processing": "處理中..."
+    "processing": "處理中...",
+    "postProcessUnavailable": "請設定用於後處理的模型"
   },
   "smartModes": {
     "sections": {
@@ -766,36 +769,9 @@
       "translation": "翻譯"
     },
     "translation": {
-      "enableHeading": "啟用離線翻譯",
-      "enableBody": "翻譯透過內建語言模型完全離線運行。選擇引擎即可開始。",
-      "chooseCta": "選擇翻譯引擎",
       "genericEngineNote": "盡力而為——品質因模型而異",
-      "changeEngine": "更換引擎",
-      "currentEngine": "正在使用：{{engine}}",
-      "engineGeneric": "目前模型",
-      "modal": {
-        "footnote": "兩個選項均完全離線運行。您可以稍後在設定中更改此選擇。",
-        "applying": "套用中…",
-        "applyFailed": "無法更改翻譯引擎。",
-        "activeBadge": "目前使用中",
-        "activeButton": "目前使用中",
-        "downloadingPercent": "下載中… {{percent}}%",
-        "downloadBackgroundNote": "您可以關閉此視窗——下載將在背景繼續。",
-        "verifying": "正在驗證下載…",
-        "title": "設定離線翻譯",
-        "recommendedHeading": "建議：Gemma 3 4B",
-        "recommendedSubtext": "一款多功能的 4B 模型，提供多語言可靠翻譯。~2.5 GB 下載。",
-        "downloadRecommended": "下載 Gemma 3 4B",
-        "useRecommended": "使用 Gemma 3 4B",
-        "currentHeading": "使用目前模型",
-        "currentSubtext": "使用 {{model}} 進行翻譯（目前活躍模型）。品質因模型而異。",
-        "currentNone": "尚無活躍的本地模型。請先從模型庫下載一個。",
-        "useCurrent": "使用目前模型",
-        "recommendOnlyHeading": "翻譯建議使用 Gemma 3 4B",
-        "recommendOnlyBody": "為獲得最佳翻譯品質，請在上方的模型選擇器中選擇 Gemma 3 4B。翻譯透過您唯一的活躍模型運行。",
-        "enableCta": "啟用離線翻譯"
-      },
-      "recommendNote": "翻譯建議使用 Gemma 3 4B。請在上方的模型選擇器中選擇。"
+      "noEngineHeading": "翻譯需要一個可用的提供者",
+      "noEngineBody": "請在上方選擇或設定一個後處理提供者以使用翻譯。"
     },
     "delete": {
       "title": "刪除模式",

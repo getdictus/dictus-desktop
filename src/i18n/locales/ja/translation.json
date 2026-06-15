@@ -714,7 +714,9 @@
     "boundary": {
       "title": "エラーが発生しました。",
       "reload": "再読み込み"
-    }
+    },
+    "postProcessFailedTitle": "後処理を利用できません",
+    "postProcessFailed": "設定でモデルを構成して後処理を有効にしてください。文字起こしはそのまま貼り付けられました。"
   },
   "appLanguage": {
     "title": "アプリケーション言語",
@@ -722,7 +724,8 @@
   },
   "overlay": {
     "transcribing": "文字起こし中...",
-    "processing": "処理中..."
+    "processing": "処理中...",
+    "postProcessUnavailable": "後処理用のモデルを設定してください"
   },
   "smartModes": {
     "sections": {
@@ -766,36 +769,9 @@
       "translation": "翻訳"
     },
     "translation": {
-      "enableHeading": "オフライン翻訳を有効化",
-      "enableBody": "翻訳は組み込みの言語モデルを通じて完全オフラインで動作します。エンジンを選択して開始してください。",
-      "chooseCta": "翻訳エンジンを選択",
       "genericEngineNote": "ベストエフォート — 品質はモデルによって異なります",
-      "changeEngine": "エンジンを変更",
-      "currentEngine": "使用中: {{engine}}",
-      "engineGeneric": "アクティブモデル",
-      "modal": {
-        "footnote": "どちらのオプションも完全オフラインで動作します。この選択は設定で後から変更できます。",
-        "applying": "適用中…",
-        "applyFailed": "翻訳エンジンを変更できませんでした。",
-        "activeBadge": "現在使用中",
-        "activeButton": "現在使用中",
-        "downloadingPercent": "ダウンロード中… {{percent}}%",
-        "downloadBackgroundNote": "このウィンドウを閉じても — ダウンロードはバックグラウンドで続きます。",
-        "verifying": "ダウンロードを確認中…",
-        "title": "オフライン翻訳を設定",
-        "recommendedHeading": "おすすめ: Gemma 3 4B",
-        "recommendedSubtext": "多言語で信頼性の高い翻訳を提供する汎用 4B モデル。~2.5 GB のダウンロード。",
-        "downloadRecommended": "Gemma 3 4B をダウンロード",
-        "useRecommended": "Gemma 3 4B を使用",
-        "currentHeading": "現在のモデルを使用",
-        "currentSubtext": "{{model}} で翻訳（アクティブモデル）。品質はモデルによって異なります。",
-        "currentNone": "まだローカルモデルがアクティブになっていません。まずモデルライブラリからダウンロードしてください。",
-        "useCurrent": "現在のモデルを使用",
-        "recommendOnlyHeading": "翻訳には Gemma 3 4B を推奨",
-        "recommendOnlyBody": "最高の翻訳品質のために、上のモデルセレクターで Gemma 3 4B を選択してください。翻訳は単一のアクティブモデルを通じて実行されます。",
-        "enableCta": "オフライン翻訳を有効化"
-      },
-      "recommendNote": "翻訳には Gemma 3 4B をお勧めします。上のモデルセレクターで選択してください。"
+      "noEngineHeading": "翻訳には有効なプロバイダーが必要です",
+      "noEngineBody": "翻訳を使用するには、上で後処理プロバイダーを選択または設定してください。"
     },
     "delete": {
       "title": "モードを削除",

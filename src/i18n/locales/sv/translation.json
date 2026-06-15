@@ -714,7 +714,9 @@
     "boundary": {
       "title": "Något gick fel.",
       "reload": "Ladda om"
-    }
+    },
+    "postProcessFailedTitle": "Efterbearbetning ej tillgänglig",
+    "postProcessFailed": "Konfigurera en modell i inställningarna för att aktivera efterbearbetning. Din transkription klistrades in som den är."
   },
   "appLanguage": {
     "title": "Applikationsspråk",
@@ -722,7 +724,8 @@
   },
   "overlay": {
     "transcribing": "Transkriberar...",
-    "processing": "Bearbetar..."
+    "processing": "Bearbetar...",
+    "postProcessUnavailable": "Konfigurera en modell för efterbearbetning"
   },
   "smartModes": {
     "sections": {
@@ -766,36 +769,9 @@
       "translation": "Översättning"
     },
     "translation": {
-      "enableHeading": "Aktivera offlineöversättning",
-      "enableBody": "Översättning körs helt offline via den inbyggda språkmodellen. Välj en motor för att komma igång.",
-      "chooseCta": "Välj översättningsmotor",
       "genericEngineNote": "Bästa möjliga — kvaliteten varierar beroende på modell",
-      "changeEngine": "Byt motor",
-      "currentEngine": "Används: {{engine}}",
-      "engineGeneric": "Aktiv modell",
-      "modal": {
-        "footnote": "Båda alternativen fungerar helt offline. Du kan ändra detta val senare i inställningarna.",
-        "applying": "Tillämpar…",
-        "applyFailed": "Det gick inte att byta översättningsmotor.",
-        "activeBadge": "Används för närvarande",
-        "activeButton": "Används för närvarande",
-        "downloadingPercent": "Laddar ner… {{percent}}%",
-        "downloadBackgroundNote": "Du kan stänga det här fönstret — nedladdningen fortsätter i bakgrunden.",
-        "verifying": "Verifierar nedladdning…",
-        "title": "Konfigurera offlineöversättning",
-        "recommendedHeading": "Rekommenderat: Gemma 3 4B",
-        "recommendedSubtext": "En mångsidig 4B-modell med tillförlitlig översättning på många språk. ~2,5 GB nedladdning.",
-        "downloadRecommended": "Ladda ner Gemma 3 4B",
-        "useRecommended": "Använd Gemma 3 4B",
-        "currentHeading": "Använd aktuell modell",
-        "currentSubtext": "Översätt med {{model}} (din aktiva modell). Kvaliteten varierar beroende på modell.",
-        "currentNone": "Ingen lokal modell är aktiv ännu. Ladda ner en från modellbiblioteket först.",
-        "useCurrent": "Använd aktuell modell",
-        "recommendOnlyHeading": "Gemma 3 4B rekommenderas för översättning",
-        "recommendOnlyBody": "För bästa översättningskvalitet, välj Gemma 3 4B i modellväljaren ovan. Översättning körs via din enda aktiva modell.",
-        "enableCta": "Aktivera offlineöversättning"
-      },
-      "recommendNote": "Gemma 3 4B rekommenderas för översättning. Välj den i modellväljaren ovan."
+      "noEngineHeading": "Översättning kräver en aktiv leverantör",
+      "noEngineBody": "Välj eller konfigurera en efterbearbetningsleverantör ovan för att använda översättning."
     },
     "delete": {
       "title": "Ta bort läge",
