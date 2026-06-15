@@ -23,11 +23,11 @@ export const Button: React.FC<ButtonProps> = ({
 
   const variantClasses = {
     primary:
-      "text-white bg-background-ui border-background-ui hover:bg-background-ui/80 hover:border-background-ui/80 focus:ring-1 focus:ring-background-ui",
+      "text-white bg-logo-primary border-logo-primary hover:bg-logo-primary/80 hover:border-logo-primary/80 focus:ring-1 focus:ring-logo-primary",
     "primary-soft":
       "text-text bg-logo-primary/20 border-transparent hover:bg-logo-primary/30 focus:ring-1 focus:ring-logo-primary",
     secondary:
-      "bg-mid-gray/10 border-mid-gray/20 hover:bg-background-ui/30 hover:border-logo-primary focus:outline-none",
+      "bg-mid-gray/10 border-mid-gray/20 hover:bg-logo-primary/10 hover:border-logo-primary focus:outline-none",
     danger:
       "text-white bg-red-600 border-mid-gray/20 hover:bg-red-700 hover:border-red-700 focus:ring-1 focus:ring-red-500",
     "danger-ghost":
