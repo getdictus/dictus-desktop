@@ -972,8 +972,13 @@ async fn run_translation(
     mode: &crate::settings::SmartMode,
 ) -> Option<String> {
     let target = mode.target_language.as_ref()?;
+    // The `${output}` placeholder is required: the legacy (non-structured) HTTP
+    // path — e.g. Anthropic, Groq — injects the transcription by replacing it.
+    // The structured/embedded/Apple paths strip it (via `build_system_prompt`)
+    // and send the transcription as a separate user message. Omitting it makes
+    // the legacy path send the instruction with no text to translate.
     let prompt = format!(
-        "Translate the following text to {}. Output only the translation, no explanation or commentary.",
+        "Translate the following text to {}. Output only the translation, no explanation or commentary.\n\n${{output}}",
         target.label
     );
     post_process_with_prompt(app, settings, text, &prompt).await
@@ -1088,13 +1093,14 @@ mod actions_tests {
     }
 
     #[test]
-    fn translation_prompt_contains_target_language() {
+    fn translation_prompt_contains_target_language_and_output_placeholder() {
         // Pure-logic check of the translation instruction built in `run_translation`.
-        // The transcription is sent separately as the user message (via
-        // `post_process_with_prompt`), so the instruction itself must not inline it.
+        // The `${output}` placeholder is required so the legacy (non-structured)
+        // HTTP path can inject the transcription; the structured/embedded paths
+        // strip it and send the text as a separate message.
         let target_label = "Spanish";
         let prompt = format!(
-            "Translate the following text to {}. Output only the translation, no explanation or commentary.",
+            "Translate the following text to {}. Output only the translation, no explanation or commentary.\n\n${{output}}",
             target_label
         );
         assert!(
@@ -1104,6 +1110,10 @@ mod actions_tests {
         assert!(
             prompt.contains("Output only the translation"),
             "Prompt should contain output instruction"
+        );
+        assert!(
+            prompt.contains("${output}"),
+            "Prompt must contain the ${{output}} placeholder for the legacy path"
         );
     }
 }
