@@ -31,6 +31,20 @@ tauri_panel! {
     })
 }
 
+/// Monotonic counter bumped on every overlay show (`show_overlay_state`). A
+/// delayed `hide()` captures the generation current when it was scheduled and
+/// only fires if that generation is still the latest; if a newer show has
+/// occurred since (e.g. the next dictation's recording pill), the stale hide is
+/// skipped so it can't hide the panel mid-recording (issue #31).
+static OVERLAY_GENERATION: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+/// Returns true if a delayed overlay hide scheduled at `scheduled_generation`
+/// should still execute — i.e. no newer overlay show has bumped the generation
+/// since. Pure function so the issue #31 guard rule can be unit-tested.
+fn delayed_hide_is_current(scheduled_generation: u64, current_generation: u64) -> bool {
+    scheduled_generation == current_generation
+}
+
 const OVERLAY_WIDTH: f64 = 400.0;
 const OVERLAY_HEIGHT: f64 = 84.0;
 
@@ -329,6 +343,10 @@ fn show_overlay_state(app_handle: &AppHandle, state: &str) {
         return;
     }
 
+    // Bump the overlay generation so any delayed hide() scheduled by a previous
+    // dictation knows it has been superseded and must not fire (issue #31).
+    OVERLAY_GENERATION.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+
     update_overlay_position(app_handle);
 
     if let Some(overlay_window) = app_handle.get_webview_window("recording_overlay") {
@@ -385,6 +403,9 @@ pub fn hide_recording_overlay(app_handle: &AppHandle) {
     // Always hide the overlay regardless of settings - if setting was changed while recording,
     // we still want to hide it properly
     if let Some(overlay_window) = app_handle.get_webview_window("recording_overlay") {
+        // Capture the overlay generation at schedule time so the delayed hide()
+        // below can tell whether a newer show has superseded it (issue #31).
+        let scheduled_generation = OVERLAY_GENERATION.load(std::sync::atomic::Ordering::SeqCst);
         // Emit event to trigger fade-out animation
         let _ = overlay_window.emit("hide-overlay", ());
         // Sleep long enough for the longest frontend dismiss path: the processing
@@ -394,7 +415,13 @@ pub fn hide_recording_overlay(app_handle: &AppHandle) {
         let window_clone = overlay_window.clone();
         std::thread::spawn(move || {
             std::thread::sleep(std::time::Duration::from_millis(1100));
-            let _ = window_clone.hide();
+            // Skip the native hide if another dictation started in the meantime —
+            // otherwise this stale timer hides the panel mid-recording, the bug
+            // behind issue #31 (recording pill flashes <1s / never appears).
+            let current_generation = OVERLAY_GENERATION.load(std::sync::atomic::Ordering::SeqCst);
+            if delayed_hide_is_current(scheduled_generation, current_generation) {
+                let _ = window_clone.hide();
+            }
         });
     }
 }
@@ -406,5 +433,25 @@ pub fn emit_levels(app_handle: &AppHandle, levels: &Vec<f32>) {
     // also emit to the recording overlay if it's open
     if let Some(overlay_window) = app_handle.get_webview_window("recording_overlay") {
         let _ = overlay_window.emit("mic-level", levels);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Regression test for issue #31: the recording overlay pill intermittently
+    // failed to appear (or flashed <1s) on macOS because a delayed hide() from
+    // the previous dictation fired into the next recording. The fix guards the
+    // delayed hide on the overlay generation.
+    #[test]
+    fn delayed_hide_runs_only_when_no_newer_show_occurred() {
+        // No show happened after the hide was scheduled → it should fire.
+        assert!(delayed_hide_is_current(7, 7));
+
+        // A newer show bumped the generation while the hide was pending → the
+        // stale hide must be skipped (this is the bug being fixed).
+        assert!(!delayed_hide_is_current(7, 8));
+        assert!(!delayed_hide_is_current(0, 1));
     }
 }
