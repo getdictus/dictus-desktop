@@ -170,6 +170,28 @@ FluidVoice has a stronger **marketed** local enhancement feature, but the key lo
 
 This matters because privacy-first users can audit Dictus more completely.
 
+## Runtime clarification
+
+In this report, “runtime” means the executable inference layer that loads a model, keeps it in memory, prepares prompts/audio tensors, runs inference, and returns output to the app. It is not the model file itself and not the UI.
+
+For ASR, examples of runtimes are SwiftWhisper, FluidAudio/CoreML managers, `transcribe-rs`, whisper.cpp, ONNX Runtime, or Apple Speech APIs. For LLM post-processing, examples are OpenAI-compatible HTTP clients, Apple Intelligence, Ollama/LM Studio, llama.cpp, or FluidVoice's private “Fluid Intelligence” backend.
+
+FluidVoice's public code exposes interfaces for `PrivateAIIntegrationService` / `PrivateAIProvider`, but the actual `PrivateAIProviderBridge` is behind the `PRIVATE_AI_PROVIDER` compile-time flag and is not part of the normal open-source implementation. That is the specific reason this report calls Fluid Intelligence a private runtime.
+
+## Streaming transcription behaviour
+
+FluidVoice is not just “record full audio, then transcribe once.” Source inspection confirms a hybrid streaming design:
+
+- `SettingsStore.enableStreamingPreview` defaults to `true`.
+- `ASRService.start()` starts a streaming transcription task when the selected speech model supports streaming.
+- Providers expose `transcribeStreaming(_:)` and `transcribeFinal(_:)` separately.
+- Parakeet Flash and Nemotron streaming providers append only the new audio delta, call `processBufferedAudio()`, and read `getPartialTranscript()` for live text.
+- On stop, FluidVoice still runs a finalization path via `transcribeFinal(_:)`, but for Parakeet TDT with token-timed chunk merge it can reuse a cached live-preview result when coverage is good enough.
+
+Dictus Desktop's current Tauri/Rust path is more batch-oriented: `AudioRecordingManager` records samples, `stop_recording()` returns the full sample buffer, then `TranscriptionManager.transcribe(samples)` runs once on the complete audio before paste/post-processing. Even models named “streaming” in the current `transcribe-rs` path are called through a full-buffer `.transcribe(...)` API rather than a live partial-preview loop.
+
+Implication: FluidVoice gives faster perceived feedback and may avoid some long-buffer failure modes by repeatedly processing shorter increments. This is especially relevant for Parakeet/code-switching issues. It is not guaranteed to fix French + a few English words, but a chunked/streaming path gives us more control: language hints, chunk boundaries, partial confidence, retry/fallback on problematic chunks, and possibly switching to Whisper/Cohere for final repair when Parakeet degrades on long mixed-language audio.
+
 ## UX and feature gaps
 
 FluidVoice features worth learning from:
