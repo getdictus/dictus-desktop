@@ -36,7 +36,7 @@
 
 ## Quick start
 
-1. **Download** the latest build from [Releases](https://github.com/getdictus/dictus-desktop/releases/latest) (macOS `.dmg`, Windows `.msi`, Linux `.AppImage` / `.deb`).
+1. **Download** the latest build from [Releases](https://github.com/getdictus/dictus-desktop/releases/latest) (macOS `.dmg`, Windows `.msi`, Linux `.AppImage` / `.deb`). Windows users: the installer is not yet code-signed — see [Code signing](#code-signing).
 2. **Launch** Dictus Desktop and grant microphone + accessibility permissions.
 3. **Configure** your shortcut in Settings (default works out of the box).
 4. **Press, speak, release** — your words land in any text field.
@@ -170,6 +170,36 @@ handy --help                    # Show all flags
 **Parakeet V3 (CPU-only):**
 
 - Intel Skylake (6th gen) / AMD equivalent or newer
+
+## Code signing
+
+Release binaries are built and signed by GitHub Actions from this repository. Nothing is signed on a maintainer's machine.
+
+| Platform    | Status                                                                                    |
+| ----------- | ----------------------------------------------------------------------------------------- |
+| **macOS**   | Signed with an Apple Developer ID certificate and notarized by Apple. Opens normally.     |
+| **Windows** | **Not signed yet.** See below.                                                            |
+| **Linux**   | Unsigned, as is customary for `.AppImage` / `.deb`. Verify against the release checksums. |
+
+Every release is also signed with a Tauri Ed25519 updater key, so the in-app auto-updater refuses any package that was not produced by our release pipeline. That protects updates, but it is invisible to the operating system at install time.
+
+### Windows: what you will see
+
+Because the Windows installer carries no code-signing certificate, Microsoft SmartScreen shows a blue **"Windows protected your PC"** screen, and the UAC prompt reads **"Unknown publisher"**. Some antivirus products may also flag the installer as suspicious.
+
+To install anyway: click **More info** → **Run anyway**.
+
+If you would rather not do that, [build from source](BUILD.md) — the result is identical to what our CI produces.
+
+### What we are doing about it
+
+We have applied to the [SignPath Foundation](https://signpath.org/) free code-signing programme for open source projects. Once accepted, Windows releases will be signed from CI with a certificate issued by a trusted CA, and the publisher shown in Windows dialogs will be _SignPath Foundation_.
+
+Progress is tracked in [issue #38](https://github.com/getdictus/dictus-desktop/issues/38).
+
+### Privacy statement
+
+Dictus collects no data from its users — no telemetry, no analytics, no accounts. The application performs transcription entirely on-device. See [`docs/PRIVACY.md`](docs/PRIVACY.md) for the complete list of every outbound network endpoint the app can contact and how to disable each one.
 
 ## Known issues
 
