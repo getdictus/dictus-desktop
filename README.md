@@ -175,13 +175,37 @@ handy --help                    # Show all flags
 
 Release binaries are built and signed by GitHub Actions from this repository. Nothing is signed on a maintainer's machine.
 
-| Platform    | Status                                                                                    |
-| ----------- | ----------------------------------------------------------------------------------------- |
-| **macOS**   | Signed with an Apple Developer ID certificate and notarized by Apple. Opens normally.     |
-| **Windows** | **Not signed yet.** See below.                                                            |
-| **Linux**   | Unsigned, as is customary for `.AppImage` / `.deb`. Verify against the release checksums. |
+| Platform    | Status                                                                                                       |
+| ----------- | ------------------------------------------------------------------------------------------------------------ |
+| **macOS**   | Signed with an Apple Developer ID certificate and notarized by Apple. Opens normally.                        |
+| **Windows** | **Not signed yet.** See below.                                                                               |
+| **Linux**   | No OS-level publisher signature — Linux desktops do not gate unsigned packages. Verify with minisign, below. |
 
-Every release is also signed with a Tauri Ed25519 updater key, so the in-app auto-updater refuses any package that was not produced by our release pipeline. That protects updates, but it is invisible to the operating system at install time.
+Every artifact of every release is also signed with a Tauri (minisign / Ed25519) key, which is why you see a `.sig` next to each file on the Releases page. The in-app auto-updater verifies that signature and refuses any package our release pipeline did not produce. This protects updates end to end, but the operating system knows nothing about it at install time — it is not a substitute for an Authenticode or Apple Developer ID signature.
+
+### Verifying a download yourself
+
+You can check any artifact against the same key the updater uses, on any platform:
+
+Download the artifact and its matching `.sig` from the same release, then install [minisign](https://jedisct1.github.io/minisign/) (`brew install minisign`, `apt install minisign`) and run:
+
+```bash
+# Tauri stores the signature base64-wrapped — decode it into a .minisig first
+base64 -d < Dictus_0.2.1_amd64.AppImage.sig > Dictus_0.2.1_amd64.AppImage.minisig
+
+minisign -Vm Dictus_0.2.1_amd64.AppImage \
+  -x Dictus_0.2.1_amd64.AppImage.minisig \
+  -P RWR2WmxAApzMc6chtF8evBFdPl+a+0SsJnL42axGW19mrbLZjCTk3MGE
+```
+
+Expected output — anything else means do not install the file:
+
+```
+Signature and comment signature verified
+Trusted comment: timestamp:...	file:Dictus_0.2.1_amd64.AppImage
+```
+
+The public key above is the one embedded in [`src-tauri/tauri.conf.json`](src-tauri/tauri.conf.json) as `plugins.updater.pubkey` (stored there base64-wrapped).
 
 ### Windows: what you will see
 
