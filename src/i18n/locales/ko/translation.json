@@ -65,6 +65,7 @@
       "unreadableFile": "이 파일을 읽을 수 없습니다.",
       "corruptAudio": "이 파일은 손상되었거나 불완전합니다.",
       "emptyAudio": "이 파일에는 오디오가 없습니다.",
+      "fileTooLong": "이 파일은 한 번에 전사하기에는 너무 깁니다. 더 짧게 나눈 뒤 다시 시도하세요.",
       "noSpeech": "이 파일에서 음성을 찾지 못했습니다.",
       "modelUnavailable": "전사 모델을 불러오지 못했습니다. 모델 설정을 확인하세요.",
       "transcriptionFailed": "전사에 실패했습니다.",

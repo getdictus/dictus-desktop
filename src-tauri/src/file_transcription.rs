@@ -66,6 +66,9 @@ pub enum FileTranscriptionError {
     CorruptAudio(String),
     /// The file decoded to nothing at all.
     EmptyAudio,
+    /// Longer than a single-pass decode will take on. The exact ceiling is in
+    /// the log; the user's move is the same whatever it is — split the file.
+    FileTooLong,
     /// Decoding worked but the engine found no speech.
     NoSpeech,
     /// No transcription model is selected, or the selected one failed to load.
@@ -88,6 +91,7 @@ impl From<DecodeError> for FileTranscriptionError {
             DecodeError::Io(detail) => Self::UnreadableFile(detail),
             DecodeError::Corrupt(detail) => Self::CorruptAudio(detail),
             DecodeError::Empty => Self::EmptyAudio,
+            DecodeError::TooLong => Self::FileTooLong,
             DecodeError::Cancelled => Self::Cancelled,
         }
     }
@@ -138,7 +142,10 @@ impl FileTranscriptionState {
     }
 
     /// Register a job and hand back its cancellation flag.
-    fn begin(&self, id: String) -> Arc<AtomicBool> {
+    ///
+    /// Called before the worker is spawned so that a cancel arriving in the
+    /// first instants of a job always finds it.
+    pub fn begin(&self, id: String) -> Arc<AtomicBool> {
         let cancel = Arc::new(AtomicBool::new(false));
         *self.active.lock().unwrap() = Some(ActiveJob {
             id,
@@ -216,6 +223,12 @@ impl Drop for ActivityGuard {
     }
 }
 
+/// Identifier for one import job, unique enough to tell a late finish from the
+/// job that replaced it.
+pub fn new_job_id() -> String {
+    format!("import-{}", chrono::Utc::now().timestamp_millis())
+}
+
 /// Milliseconds of audio represented by `sample_count` samples at 16 kHz mono.
 pub fn duration_ms_for_samples(sample_count: usize) -> i64 {
     (sample_count as f64 * 1000.0 / crate::audio_toolkit::TARGET_SAMPLE_RATE as f64).round() as i64
@@ -234,6 +247,7 @@ pub fn managed_file_name(timestamp_ms: i64) -> String {
 ///
 /// `activity` must already have been claimed by the caller via
 /// `try_begin_file` — it is released when this function returns.
+#[allow(clippy::too_many_arguments)]
 pub fn run_job(
     app: AppHandle,
     activity: Arc<crate::TranscriptionActivity>,
@@ -241,11 +255,10 @@ pub fn run_job(
     history_manager: Arc<HistoryManager>,
     transcription_manager: Arc<TranscriptionManager>,
     path: String,
+    job_id: String,
+    cancel: Arc<AtomicBool>,
 ) -> Result<FileTranscriptionResult, FileTranscriptionError> {
     let _activity_guard = ActivityGuard { activity };
-
-    let job_id = format!("import-{}", chrono::Utc::now().timestamp_millis());
-    let cancel = state.begin(job_id.clone());
     let _job_slot = JobSlotGuard {
         state: Arc::clone(&state),
         job_id: job_id.clone(),
@@ -519,6 +532,10 @@ mod tests {
         assert!(matches!(
             FileTranscriptionError::from(DecodeError::Empty),
             FileTranscriptionError::EmptyAudio
+        ));
+        assert!(matches!(
+            FileTranscriptionError::from(DecodeError::TooLong),
+            FileTranscriptionError::FileTooLong
         ));
         assert!(matches!(
             FileTranscriptionError::from(DecodeError::Cancelled),

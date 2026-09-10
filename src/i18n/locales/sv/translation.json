@@ -65,6 +65,7 @@
       "unreadableFile": "Filen gick inte att läsa.",
       "corruptAudio": "Filen är skadad eller ofullständig.",
       "emptyAudio": "Filen innehåller inget ljud.",
+      "fileTooLong": "Den här filen är för lång för att transkriberas i ett svep. Dela upp den i kortare delar och försök igen.",
       "noSpeech": "Inget tal hittades i filen.",
       "modelUnavailable": "Transkriberingsmodellen kunde inte laddas. Kontrollera dina modellinställningar.",
       "transcriptionFailed": "Transkriberingen misslyckades.",

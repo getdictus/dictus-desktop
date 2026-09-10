@@ -65,6 +65,7 @@
       "unreadableFile": "Bu dosya okunamadı.",
       "corruptAudio": "Bu dosya bozuk veya eksik.",
       "emptyAudio": "Bu dosyada ses yok.",
+      "fileTooLong": "Bu dosya tek seferde yazıya dökülemeyecek kadar uzun. Daha kısa parçalara böl ve tekrar dene.",
       "noSpeech": "Bu dosyada konuşma bulunamadı.",
       "modelUnavailable": "Yazıya dökme modeli yüklenemedi. Model ayarlarını kontrol et.",
       "transcriptionFailed": "Yazıya dökme başarısız oldu.",

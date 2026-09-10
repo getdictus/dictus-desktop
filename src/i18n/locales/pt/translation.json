@@ -65,6 +65,7 @@
       "unreadableFile": "Não foi possível ler este arquivo.",
       "corruptAudio": "Este arquivo está danificado ou incompleto.",
       "emptyAudio": "Este arquivo não contém áudio.",
+      "fileTooLong": "Este arquivo é longo demais para ser transcrito de uma vez. Divida-o em partes menores e tente novamente.",
       "noSpeech": "Nenhuma fala foi encontrada neste arquivo.",
       "modelUnavailable": "Não foi possível carregar o modelo de transcrição. Verifique as configurações de modelos.",
       "transcriptionFailed": "A transcrição falhou.",

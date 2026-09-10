@@ -1103,6 +1103,11 @@ export type FileTranscriptionError =
  */
 { kind: "empty_audio" } | 
 /**
+ * Longer than a single-pass decode will take on. The exact ceiling is in
+ * the log; the user's move is the same whatever it is — split the file.
+ */
+{ kind: "file_too_long" } | 
+/**
  * Decoding worked but the engine found no speech.
  */
 { kind: "no_speech" } | 

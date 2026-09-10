@@ -65,6 +65,7 @@
       "unreadableFile": "无法读取该文件。",
       "corruptAudio": "该文件已损坏或不完整。",
       "emptyAudio": "该文件不包含音频。",
+      "fileTooLong": "这个文件太长，无法一次性转录。请拆分成较短的片段后重试。",
       "noSpeech": "在该文件中没有找到语音。",
       "modelUnavailable": "无法加载转录模型，请检查模型设置。",
       "transcriptionFailed": "转录失败。",

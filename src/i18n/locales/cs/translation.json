@@ -65,6 +65,7 @@
       "unreadableFile": "Tento soubor se nepodařilo přečíst.",
       "corruptAudio": "Tento soubor je poškozený nebo neúplný.",
       "emptyAudio": "Tento soubor neobsahuje žádný zvuk.",
+      "fileTooLong": "Tento soubor je příliš dlouhý na přepis najednou. Rozdělte ho na kratší části a zkuste to znovu.",
       "noSpeech": "V tomto souboru nebyla nalezena žádná řeč.",
       "modelUnavailable": "Model pro přepis se nepodařilo načíst. Zkontrolujte nastavení modelů.",
       "transcriptionFailed": "Přepis se nezdařil.",

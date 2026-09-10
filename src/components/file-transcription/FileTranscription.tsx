@@ -56,6 +56,7 @@ const ERROR_MESSAGE_KEYS: Record<FileTranscriptionError["kind"], string> = {
   unreadable_file: "fileTranscription.errors.unreadableFile",
   corrupt_audio: "fileTranscription.errors.corruptAudio",
   empty_audio: "fileTranscription.errors.emptyAudio",
+  file_too_long: "fileTranscription.errors.fileTooLong",
   no_speech: "fileTranscription.errors.noSpeech",
   model_unavailable: "fileTranscription.errors.modelUnavailable",
   transcription_failed: "fileTranscription.errors.transcriptionFailed",

@@ -41,6 +41,26 @@ static CODECS: Lazy<CodecRegistry> = Lazy::new(|| {
 /// Chunk size fed to the resampler. Matches the realtime `FrameResampler`.
 const RESAMPLER_CHUNK_SIZE: usize = 1024;
 
+/// Longest file we will decode in one pass.
+///
+/// Decoding holds the whole recording in memory at its source rate before
+/// resampling, so this is a memory ceiling as much as a duration one: two hours
+/// of 48 kHz mono is roughly 1.4 GB at peak. Refusing past that beats being
+/// killed by the allocator halfway through. Genuinely long-form audio wants
+/// chunked inference, which is tracked separately in #6.
+const MAX_DECODED_SECONDS: u64 = 2 * 60 * 60;
+
+/// Upper bound on the buffer reserved up front.
+///
+/// The frame count comes from the container and nothing has verified it yet, so
+/// it decides how much to reserve but never how much to trust: a forged header
+/// claiming billions of frames would otherwise ask the allocator for it before
+/// a single packet had been read.
+const MAX_RESERVED_SECONDS: u64 = 60;
+
+/// Guard against a pathological file that reports a new logical stream forever.
+const MAX_STREAM_RESETS: usize = 64;
+
 /// File extensions the import pipeline advertises. Kept in sync with the
 /// frontend picker filter (`SUPPORTED_AUDIO_EXTENSIONS` in
 /// `src/components/file-transcription/supportedFormats.ts`).
@@ -71,6 +91,8 @@ pub enum DecodeError {
     Corrupt(String),
     /// Decoding succeeded but produced no audio at all.
     Empty,
+    /// The file is longer than a single-pass decode will take on.
+    TooLong,
     /// The caller flipped the cancellation flag.
     Cancelled,
 }
@@ -83,6 +105,7 @@ impl std::fmt::Display for DecodeError {
             Self::Io(detail) => write!(f, "Could not read the file: {}", detail),
             Self::Corrupt(detail) => write!(f, "Damaged or unreadable audio: {}", detail),
             Self::Empty => write!(f, "The file contains no audio"),
+            Self::TooLong => write!(f, "The file is longer than {} seconds", MAX_DECODED_SECONDS),
             Self::Cancelled => write!(f, "Cancelled"),
         }
     }
@@ -199,12 +222,21 @@ pub fn decode_to_mono_16k<P: AsRef<Path>>(
         .make(&codec_params, &DecoderOptions::default())
         .map_err(|_| DecodeError::UnsupportedCodec(codec_name(&codec_params)))?;
 
-    let mut mono: Vec<f32> = Vec::with_capacity(
-        total_frames
-            .map(|f| f as usize)
-            .unwrap_or(declared_rate.unwrap_or(16_000) as usize * 8),
-    );
+    let reserve_rate = declared_rate.unwrap_or(TARGET_SAMPLE_RATE) as u64;
+    let max_source_samples = MAX_DECODED_SECONDS.saturating_mul(reserve_rate);
+    // A declared length past the ceiling is refused here rather than after
+    // spending minutes decoding it.
+    if total_frames.is_some_and(|frames| frames > max_source_samples) {
+        return Err(DecodeError::TooLong);
+    }
+    let reserve = total_frames
+        .unwrap_or(reserve_rate * 8)
+        .min(MAX_RESERVED_SECONDS.saturating_mul(reserve_rate)) as usize;
+    let mut mono: Vec<f32> = Vec::with_capacity(reserve);
     let mut sample_buf: Option<SampleBuffer<f32>> = None;
+    let mut track_id = track_id;
+    let mut total_frames = total_frames;
+    let mut resets = 0usize;
     // Filled in from the first packet we successfully decode. MP4 does not put
     // the channel layout in `codec_params` for AAC, so reading it from the
     // container header rejected every .m4a — which is what phones record.
@@ -222,7 +254,36 @@ pub fn decode_to_mono_16k<P: AsRef<Path>>(
             Err(SymphoniaError::IoError(e)) if e.kind() == std::io::ErrorKind::UnexpectedEof => {
                 break
             }
-            Err(SymphoniaError::ResetRequired) => break,
+            // A chained stream: several logical streams concatenated into one
+            // file, which is what you get from `cat a.ogg b.ogg` or from some
+            // recorders. Breaking here returned the first stream and quietly
+            // dropped the rest, reported as a success. Pick up the new track
+            // instead and keep going.
+            Err(SymphoniaError::ResetRequired) => {
+                resets += 1;
+                if resets > MAX_STREAM_RESETS {
+                    return Err(DecodeError::Corrupt(
+                        "stream restarts endlessly".to_string(),
+                    ));
+                }
+
+                let next = format
+                    .tracks()
+                    .iter()
+                    .find(|t| t.codec_params.codec != CODEC_TYPE_NULL)
+                    .ok_or(DecodeError::UnsupportedFormat)?;
+                let next_params = next.codec_params.clone();
+                track_id = next.id;
+                decoder = CODECS
+                    .make(&next_params, &DecoderOptions::default())
+                    .map_err(|_| DecodeError::UnsupportedCodec(codec_name(&next_params)))?;
+                // The new stream may have a different layout, and its length is
+                // not in the first stream's frame count — so progress drops to
+                // indeterminate rather than sitting pinned at 100%.
+                sample_buf = None;
+                total_frames = None;
+                continue;
+            }
             Err(e) => return Err(DecodeError::Corrupt(e.to_string())),
         };
 
@@ -270,6 +331,10 @@ pub fn decode_to_mono_16k<P: AsRef<Path>>(
                 break
             }
             Err(e) => return Err(DecodeError::Corrupt(e.to_string())),
+        }
+
+        if mono.len() as u64 > max_source_samples {
+            return Err(DecodeError::TooLong);
         }
 
         on_progress(total_frames.map(|total| (mono.len() as f64 / total as f64).clamp(0.0, 1.0)));
@@ -834,6 +899,62 @@ mod tests {
             "expected roughly 8000 samples, got {}",
             samples.len()
         );
+    }
+
+    #[test]
+    fn decodes_every_link_of_a_chained_ogg() {
+        // Two Ogg streams concatenated into one file — what `cat a.ogg b.ogg`
+        // produces, and what some recorders emit. symphonia signals the second
+        // one with ResetRequired; treating that as end-of-stream returned the
+        // first half and reported success, losing the rest without a word.
+        let single = decode(&fixture("opus-mono-48000.ogg")).expect("decode single");
+        let chained = decode(&fixture("chained-opus-mono-48000.ogg")).expect("decode chained");
+
+        assert!(
+            chained.len() >= single.len() * 2 - 64,
+            "both links must be decoded: single={}, chained={}",
+            single.len(),
+            chained.len()
+        );
+    }
+
+    #[test]
+    fn refuses_a_file_whose_header_declares_an_absurd_length() {
+        // The frame count comes from the container and nothing has checked it.
+        // A header claiming hours of audio must be refused outright, not turned
+        // into an allocation request.
+        let dir = tempfile::tempdir().expect("tempdir");
+        let path = dir.path().join("liar.wav");
+        std::fs::write(&path, wav_header_declaring(7_300)).expect("write header");
+
+        assert!(
+            matches!(decode(&path), Err(DecodeError::TooLong)),
+            "a file declaring more than the ceiling must be refused"
+        );
+    }
+
+    /// A 16 kHz mono WAV header whose data chunk claims `seconds` of audio
+    /// while the file carries none. Hand-built because `hound` only ever writes
+    /// headers that tell the truth.
+    fn wav_header_declaring(seconds: u32) -> Vec<u8> {
+        const SAMPLE_RATE: u32 = 16_000;
+        const BLOCK_ALIGN: u32 = 2;
+        let data_size = seconds * SAMPLE_RATE * BLOCK_ALIGN;
+
+        let mut out = Vec::new();
+        out.extend_from_slice(b"RIFF");
+        out.extend_from_slice(&(36 + data_size).to_le_bytes());
+        out.extend_from_slice(b"WAVEfmt ");
+        out.extend_from_slice(&16u32.to_le_bytes());
+        out.extend_from_slice(&1u16.to_le_bytes()); // PCM
+        out.extend_from_slice(&1u16.to_le_bytes()); // mono
+        out.extend_from_slice(&SAMPLE_RATE.to_le_bytes());
+        out.extend_from_slice(&(SAMPLE_RATE * BLOCK_ALIGN).to_le_bytes());
+        out.extend_from_slice(&(BLOCK_ALIGN as u16).to_le_bytes());
+        out.extend_from_slice(&16u16.to_le_bytes());
+        out.extend_from_slice(b"data");
+        out.extend_from_slice(&data_size.to_le_bytes());
+        out
     }
 
     #[test]
