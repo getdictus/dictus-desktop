@@ -6,6 +6,33 @@ files:
   - .github/workflows/build.yml
   - .github/workflows/release.yml
   - docs/RUNBOOK-updater-signing.md
+closed: 2026-08-16T00:00:00.000Z
+status: superseded
+---
+
+> **SUPERSEDED on 2026-08-16 — closed without implementing the Azure route.**
+>
+> Azure Trusted Signing (now "Azure Artifact Signing") was ruled out: organization
+> identity validation requires roughly three years of company history, which Pivi
+> Solutions does not have yet. Revisit only if the company clears that bar and
+> SignPath has not worked out.
+>
+> **The problem is not solved.** It moved to
+> [issue #38 — Windows code signing via SignPath Foundation](https://github.com/getdictus/dictus-desktop/issues/38),
+> which is the single source of truth from now on. SignPath Foundation is the free
+> code-signing programme for open source projects; certificate from a trusted CA,
+> private key on SignPath's HSM, signing integrated into CI, publisher shown as
+> "SignPath Foundation" rather than Dictus.
+>
+> Application submitted 2026-08-16. The `AZURE_*` plumbing still sitting in
+> `.github/workflows/build.yml` (lines 184–194 and 362–364, inherited from the
+> Handy fork) is dead code — it runs with no secrets configured and must be
+> replaced by `signpath/github-action-submit-signing-request` once SignPath
+> accepts us.
+>
+> Everything below is preserved as the original 2026-04-23 analysis. The user-impact
+> section is still accurate; the solution section is not.
+
 ---
 
 ## Problem

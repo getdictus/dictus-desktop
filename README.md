@@ -36,7 +36,7 @@
 
 ## Quick start
 
-1. **Download** the latest build from [Releases](https://github.com/getdictus/dictus-desktop/releases/latest) (macOS `.dmg`, Windows `.msi`, Linux `.AppImage` / `.deb`).
+1. **Download** the latest build from [Releases](https://github.com/getdictus/dictus-desktop/releases/latest) (macOS `.dmg`, Windows `.msi`, Linux `.AppImage` / `.deb`). Windows users: the installer is not yet code-signed — see [Code signing](#code-signing).
 2. **Launch** Dictus Desktop and grant microphone + accessibility permissions.
 3. **Configure** your shortcut in Settings (default works out of the box).
 4. **Press, speak, release** — your words land in any text field.
@@ -170,6 +170,60 @@ handy --help                    # Show all flags
 **Parakeet V3 (CPU-only):**
 
 - Intel Skylake (6th gen) / AMD equivalent or newer
+
+## Code signing
+
+Release binaries are built and signed by GitHub Actions from this repository. Nothing is signed on a maintainer's machine.
+
+| Platform    | Status                                                                                                       |
+| ----------- | ------------------------------------------------------------------------------------------------------------ |
+| **macOS**   | Signed with an Apple Developer ID certificate and notarized by Apple. Opens normally.                        |
+| **Windows** | **Not signed yet.** See below.                                                                               |
+| **Linux**   | No OS-level publisher signature — Linux desktops do not gate unsigned packages. Verify with minisign, below. |
+
+Every artifact of every release is also signed with a Tauri (minisign / Ed25519) key, which is why you see a `.sig` next to each file on the Releases page. The in-app auto-updater verifies that signature and refuses any package our release pipeline did not produce. This protects updates end to end, but the operating system knows nothing about it at install time — it is not a substitute for an Authenticode or Apple Developer ID signature.
+
+### Verifying a download yourself
+
+You can check any artifact against the same key the updater uses, on any platform:
+
+Download the artifact and its matching `.sig` from the same release, then install [minisign](https://jedisct1.github.io/minisign/) (`brew install minisign`, `apt install minisign`) and run:
+
+```bash
+# Tauri stores the signature base64-wrapped — decode it into a .minisig first
+base64 -d < Dictus_0.2.1_amd64.AppImage.sig > Dictus_0.2.1_amd64.AppImage.minisig
+
+minisign -Vm Dictus_0.2.1_amd64.AppImage \
+  -x Dictus_0.2.1_amd64.AppImage.minisig \
+  -P RWR2WmxAApzMc6chtF8evBFdPl+a+0SsJnL42axGW19mrbLZjCTk3MGE
+```
+
+Expected output — anything else means do not install the file:
+
+```
+Signature and comment signature verified
+Trusted comment: timestamp:...	file:Dictus_0.2.1_amd64.AppImage
+```
+
+The public key above is the one embedded in [`src-tauri/tauri.conf.json`](src-tauri/tauri.conf.json) as `plugins.updater.pubkey` (stored there base64-wrapped).
+
+### Windows: what you will see
+
+Because the Windows installer carries no code-signing certificate, Microsoft SmartScreen shows a blue **"Windows protected your PC"** screen, and the UAC prompt reads **"Unknown publisher"**. Some antivirus products may also flag the installer as suspicious.
+
+To install anyway: click **More info** → **Run anyway**.
+
+If you would rather not do that, [build from source](BUILD.md) — the result is identical to what our CI produces.
+
+### What we are doing about it
+
+We have applied to the [SignPath Foundation](https://signpath.org/) free code-signing programme for open source projects. Once accepted, Windows releases will be signed from CI with a certificate issued by a trusted CA, and the publisher shown in Windows dialogs will be _SignPath Foundation_.
+
+Progress is tracked in [issue #38](https://github.com/getdictus/dictus-desktop/issues/38).
+
+### Privacy statement
+
+Dictus collects no data from its users — no telemetry, no analytics, no accounts. The application performs transcription entirely on-device. See [`docs/PRIVACY.md`](docs/PRIVACY.md) for the complete list of every outbound network endpoint the app can contact and how to disable each one.
 
 ## Known issues
 
