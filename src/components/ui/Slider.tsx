@@ -1,13 +1,11 @@
 import React from "react";
 import { SettingContainer } from "./SettingContainer";
+import { GlassSlider } from "./glass/vendor/GlassSlider";
 import {
-  GlassLens,
   behindFor,
-  opticsFor,
+  controlTrackFor,
+  supportsGlassLens,
   usePrefersDark,
-  SLIDER_BASE,
-  SLIDER_LIGHT,
-  SLIDER_DARK,
 } from "./glass";
 
 interface SliderProps {
@@ -25,9 +23,12 @@ interface SliderProps {
   formatValue?: (value: number) => string;
 }
 
+/** Board geometry: track 176 x 8, handle 36 x 18. */
 const TRACK_WIDTH_PX = 176;
+const TRACK_HEIGHT_PX = 8;
 const HANDLE_WIDTH_PX = 36;
 const HANDLE_HEIGHT_PX = 18;
+const ACCENT_FILL = "#3D7EFF";
 
 export const Slider: React.FC<SliderProps> = ({
   value,
@@ -44,14 +45,6 @@ export const Slider: React.FC<SliderProps> = ({
   formatValue = (v) => v.toFixed(2),
 }) => {
   const isDark = usePrefersDark();
-  // At rest the handle is the lens tinted solid white; during a drag the tint
-  // drops away and the refraction shows.
-  const [isDragging, setIsDragging] = React.useState(false);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange(parseFloat(e.target.value));
-  };
-
   const ratio = max === min ? 0 : (value - min) / (max - min);
 
   return (
@@ -63,56 +56,50 @@ export const Slider: React.FC<SliderProps> = ({
       layout="horizontal"
       disabled={disabled}
     >
-      <div className="flex items-center gap-2">
-        <div
-          className={`slider-track relative h-[18px] flex items-center ${
-            disabled ? "opacity-50" : ""
-          }`}
-          style={{ width: TRACK_WIDTH_PX }}
-        >
-          {/* Rail and fill are painted here; the native input stays on top so
-              pointer and keyboard behaviour are untouched. */}
-          <div
-            className="absolute inset-x-0 h-2 rounded"
-            style={{ background: "var(--slider-rail)" }}
+      <div className="flex items-center gap-2" data-testid="volume-track">
+        {supportsGlassLens() ? (
+          <GlassSlider
+            value={value}
+            onValueChange={onChange}
+            min={min}
+            max={max}
+            step={step}
+            disabled={disabled}
+            width={TRACK_WIDTH_PX}
+            height={TRACK_HEIGHT_PX}
+            thumbWidth={HANDLE_WIDTH_PX}
+            thumbHeight={HANDLE_HEIGHT_PX}
+            scheme={isDark ? "dark" : "light"}
+            trackColor={controlTrackFor(isDark)}
+            activeColor={ACCENT_FILL}
+            surface={behindFor("sliderHandle", isDark)}
+            ariaLabel={label}
           />
-          <div
-            className="absolute start-0 h-2 rounded"
-            style={{ background: "#3D7EFF", width: `${ratio * 100}%` }}
-          />
-          <GlassLens
-            className="slider-handle absolute pointer-events-none"
-            style={
-              {
-                "--slider-ratio": ratio,
-              } as React.CSSProperties
-            }
-            behind={behindFor("sliderHandle", isDark)}
-            width={HANDLE_WIDTH_PX}
-            height={HANDLE_HEIGHT_PX}
-            radius={9}
-            optics={opticsFor(SLIDER_BASE, SLIDER_LIGHT, SLIDER_DARK, isDark)}
-            tint={{ color: "white", opacity: isDragging ? 0 : 1 }}
-          />
+        ) : (
+          // No lens: the plain control, same geometry, same behaviour.
           <input
             type="range"
             min={min}
             max={max}
             step={step}
             value={value}
-            onChange={handleChange}
             disabled={disabled}
-            onPointerDown={() => setIsDragging(true)}
-            onPointerUp={() => setIsDragging(false)}
-            onPointerCancel={() => setIsDragging(false)}
-            onKeyDown={() => setIsDragging(true)}
-            onKeyUp={() => setIsDragging(false)}
-            onBlur={() => setIsDragging(false)}
-            className="slider-input focus-ring absolute inset-0 w-full appearance-none bg-transparent rounded disabled:cursor-not-allowed"
+            aria-label={label}
+            onChange={(e) => onChange(parseFloat(e.target.value))}
+            className="slider-fallback focus-ring"
+            style={
+              {
+                width: TRACK_WIDTH_PX,
+                "--slider-ratio": ratio,
+              } as React.CSSProperties
+            }
           />
-        </div>
+        )}
         {showValue && (
-          <span className="text-[13px] font-semibold text-text w-[34px] text-end">
+          <span
+            data-testid="volume-value"
+            className="text-[13px] font-semibold text-text w-[34px] text-end"
+          >
             {formatValue(value)}
           </span>
         )}

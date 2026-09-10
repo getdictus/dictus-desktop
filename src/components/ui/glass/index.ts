@@ -27,4 +27,6 @@ export {
   opticsFor,
   LENS_BEHIND,
   behindFor,
+  CONTROL_TRACK,
+  controlTrackFor,
 } from "./optics";

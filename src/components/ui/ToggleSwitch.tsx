@@ -20,6 +20,8 @@ interface ToggleSwitchProps {
   descriptionMode?: "inline" | "tooltip";
   grouped?: boolean;
   tooltipPosition?: "top" | "bottom";
+  /** Test hook only. */
+  testId?: string;
 }
 
 /** Track 44 x 24, thumb 20 x 20 resting 2 px in, so the travel is 20 px. */
@@ -35,6 +37,7 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
   descriptionMode = "tooltip",
   grouped = false,
   tooltipPosition = "top",
+  testId,
 }) => {
   const isDark = usePrefersDark();
 
@@ -53,6 +56,7 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
         <input
           type="checkbox"
           value=""
+          data-testid={testId}
           className="sr-only peer"
           checked={checked}
           disabled={disabled || isUpdating}

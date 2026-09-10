@@ -167,3 +167,13 @@ export const behindFor = (
   lens: keyof typeof LENS_BEHIND,
   isDark: boolean,
 ): string => LENS_BEHIND[lens][isDark ? "dark" : "light"];
+
+/**
+ * Opaque equivalents of the rail tints. The vendored controls refract their
+ * own track copy, and the library requires that copy to be opaque, so these
+ * are --slider-rail already composited over the card surface.
+ */
+export const CONTROL_TRACK = { light: "#e0e0e0", dark: "#2b303d" } as const;
+
+export const controlTrackFor = (isDark: boolean): string =>
+  CONTROL_TRACK[isDark ? "dark" : "light"];

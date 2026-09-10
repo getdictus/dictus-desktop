@@ -39,6 +39,7 @@ const Specimen: React.FC = () => {
         <SettingsGroup title="Recording" description="Rows, dividers, controls">
           <ToggleSwitch
             grouped
+            testId="toggle-push-to-talk"
             checked={checked}
             onChange={setChecked}
             label="Push to talk"
