@@ -104,8 +104,6 @@
     --surface-sidebar: var(--surface-opaque);
     --surface-control: var(--surface-opaque-raised);
     --surface-floating: var(--surface-opaque-raised);
-    --surface-overlay: var(--surface-opaque-overlay);
-    --surface-overlay-error: rgba(20, 13, 4, 0.92);
   }
 }
 
