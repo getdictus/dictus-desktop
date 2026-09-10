@@ -823,6 +823,9 @@ fn spawn_transcription_task(
                                 post_process,
                                 processed.post_processed_text.clone(),
                                 processed.post_process_prompt.clone(),
+                                Some(crate::file_transcription::duration_ms_for_samples(
+                                    sample_count,
+                                )),
                             ) {
                                 error!("Failed to save history entry: {}", err);
                             }
@@ -875,9 +878,16 @@ fn spawn_transcription_task(
                         debug!("Global Shortcut Transcription error: {}", err);
                         // Save entry with empty text so user can retry
                         if wav_saved {
-                            if let Err(save_err) =
-                                hm.save_entry(file_name, String::new(), post_process, None, None)
-                            {
+                            if let Err(save_err) = hm.save_entry(
+                                file_name,
+                                String::new(),
+                                post_process,
+                                None,
+                                None,
+                                Some(crate::file_transcription::duration_ms_for_samples(
+                                    sample_count,
+                                )),
+                            ) {
                                 error!("Failed to save failed history entry: {}", save_err);
                             }
                         }

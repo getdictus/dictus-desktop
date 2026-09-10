@@ -2,7 +2,7 @@ use crate::actions::ACTION_MAP;
 use crate::managers::audio::AudioRecordingManager;
 use log::{debug, error, warn};
 use std::sync::mpsc::{self, Sender};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 use tauri::{AppHandle, Manager};
@@ -28,6 +28,84 @@ enum Stage {
     Idle,
     Recording(String), // binding_id
     Processing,
+}
+
+/// Which producer currently owns the transcription engine.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Owner {
+    None,
+    /// Live dictation: recording or the async transcribe-paste pipeline.
+    Dictation,
+    /// An imported-file transcription job.
+    File,
+}
+
+/// Mutual exclusion between the two producers of transcription work.
+///
+/// Live dictation and imported-file jobs both end up in
+/// `TranscriptionManager::transcribe`, and the surrounding lifecycle UI (tray
+/// icon, overlay, history) assumes a single job at a time. This is the single
+/// lock both sides check, so neither can start while the other holds the
+/// engine. The dictation side is driven from the coordinator thread alongside
+/// its `Stage`; the file side is claimed and released by the import command.
+pub struct TranscriptionActivity {
+    owner: Mutex<Owner>,
+}
+
+impl TranscriptionActivity {
+    pub fn new() -> Self {
+        Self {
+            owner: Mutex::new(Owner::None),
+        }
+    }
+
+    /// Claim the engine for an imported-file job.
+    /// Returns `false` when live dictation (or another job) already owns it.
+    pub fn try_begin_file(&self) -> bool {
+        let mut owner = self.owner.lock().unwrap();
+        if *owner == Owner::None {
+            *owner = Owner::File;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn end_file(&self) {
+        let mut owner = self.owner.lock().unwrap();
+        if *owner == Owner::File {
+            *owner = Owner::None;
+        }
+    }
+
+    pub fn is_file_active(&self) -> bool {
+        *self.owner.lock().unwrap() == Owner::File
+    }
+
+    /// Claim the engine for live dictation. Returns `false` when a file job
+    /// holds it, in which case the caller must not start recording.
+    fn try_begin_dictation(&self) -> bool {
+        let mut owner = self.owner.lock().unwrap();
+        if *owner == Owner::None {
+            *owner = Owner::Dictation;
+            true
+        } else {
+            false
+        }
+    }
+
+    fn end_dictation(&self) {
+        let mut owner = self.owner.lock().unwrap();
+        if *owner == Owner::Dictation {
+            *owner = Owner::None;
+        }
+    }
+}
+
+impl Default for TranscriptionActivity {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 /// Serialises all transcription lifecycle events through a single thread
@@ -99,10 +177,12 @@ impl TranscriptionCoordinator {
                                 && (recording_was_active || matches!(stage, Stage::Recording(_)))
                             {
                                 stage = Stage::Idle;
+                                release_dictation(&app);
                             }
                         }
                         Command::ProcessingFinished => {
                             stage = Stage::Idle;
+                            release_dictation(&app);
                         }
                     }
                 }
@@ -158,13 +238,30 @@ impl TranscriptionCoordinator {
     }
 }
 
+/// Release the dictation claim on the shared engine, if this app has one.
+fn release_dictation(app: &AppHandle) {
+    if let Some(activity) = app.try_state::<Arc<TranscriptionActivity>>() {
+        activity.end_dictation();
+    }
+}
+
 fn start(app: &AppHandle, stage: &mut Stage, binding_id: &str, hotkey_string: &str) {
+    // An imported-file job owns the engine for its whole run; starting a
+    // dictation on top of it would fight over the same model and overlay.
+    if let Some(activity) = app.try_state::<Arc<TranscriptionActivity>>() {
+        if !activity.try_begin_dictation() {
+            warn!("Ignoring start for '{binding_id}': a file transcription is running");
+            return;
+        }
+    }
+
     let action: Arc<dyn crate::actions::ShortcutAction> = if binding_id.starts_with("smart_mode_") {
         let mode_id = binding_id.strip_prefix("smart_mode_").unwrap().to_string();
         Arc::new(crate::actions::SmartModeAction { mode_id })
     } else {
         let Some(a) = ACTION_MAP.get(binding_id) else {
             warn!("No action in ACTION_MAP for '{binding_id}'");
+            release_dictation(app);
             return;
         };
         Arc::clone(a)
@@ -177,6 +274,7 @@ fn start(app: &AppHandle, stage: &mut Stage, binding_id: &str, hotkey_string: &s
         *stage = Stage::Recording(binding_id.to_string());
     } else {
         debug!("Start for '{binding_id}' did not begin recording; staying idle");
+        release_dictation(app);
     }
 }
 
@@ -197,7 +295,44 @@ fn stop(app: &AppHandle, stage: &mut Stage, binding_id: &str, hotkey_string: &st
 
 #[cfg(test)]
 mod coordinator_tests {
-    use super::is_transcribe_binding;
+    use super::{is_transcribe_binding, TranscriptionActivity};
+
+    #[test]
+    fn file_job_and_dictation_cannot_hold_the_engine_together() {
+        let activity = TranscriptionActivity::new();
+
+        assert!(activity.try_begin_file(), "idle engine must be claimable");
+        assert!(activity.is_file_active());
+        assert!(
+            !activity.try_begin_dictation(),
+            "dictation must not start while a file job owns the engine"
+        );
+
+        activity.end_file();
+        assert!(!activity.is_file_active());
+        assert!(
+            activity.try_begin_dictation(),
+            "engine must be claimable again once the file job releases it"
+        );
+        assert!(
+            !activity.try_begin_file(),
+            "a file job must not start while dictation owns the engine"
+        );
+
+        activity.end_dictation();
+        assert!(activity.try_begin_file());
+    }
+
+    #[test]
+    fn releasing_a_claim_you_do_not_hold_is_a_no_op() {
+        let activity = TranscriptionActivity::new();
+
+        assert!(activity.try_begin_file());
+        // A stray dictation release must not hand the engine away mid-import.
+        activity.end_dictation();
+        assert!(activity.is_file_active());
+        assert!(!activity.try_begin_dictation());
+    }
 
     #[test]
     fn is_transcribe_binding_smart_mode_prefix() {

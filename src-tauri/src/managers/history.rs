@@ -31,6 +31,12 @@ static MIGRATIONS: &[M] = &[
     M::up("ALTER TABLE transcription_history ADD COLUMN post_processed_text TEXT;"),
     M::up("ALTER TABLE transcription_history ADD COLUMN post_process_prompt TEXT;"),
     M::up("ALTER TABLE transcription_history ADD COLUMN post_process_requested BOOLEAN NOT NULL DEFAULT 0;"),
+    // Imported-file support: nullable so every pre-existing row keeps working.
+    // A NULL source_type is read back as HistorySource::Microphone, which is
+    // what every entry written before this migration was.
+    M::up("ALTER TABLE transcription_history ADD COLUMN source_type TEXT;"),
+    M::up("ALTER TABLE transcription_history ADD COLUMN source_name TEXT;"),
+    M::up("ALTER TABLE transcription_history ADD COLUMN duration_ms INTEGER;"),
 ];
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type)]
@@ -63,6 +69,49 @@ pub struct HistoryEntry {
     pub post_processed_text: Option<String>,
     pub post_process_prompt: Option<String>,
     pub post_process_requested: bool,
+    /// `"microphone"` or `"imported_file"`. `None` on entries written before
+    /// the imported-file migration; the UI treats those as microphone.
+    pub source_type: Option<String>,
+    /// Original file name for imported entries, `None` for dictation.
+    pub source_name: Option<String>,
+    pub duration_ms: Option<i64>,
+}
+
+/// Where the audio behind a history entry came from.
+#[derive(Clone, Debug)]
+pub enum HistorySource {
+    Microphone,
+    ImportedFile { original_name: String },
+}
+
+impl HistorySource {
+    fn type_name(&self) -> &'static str {
+        match self {
+            Self::Microphone => "microphone",
+            Self::ImportedFile { .. } => "imported_file",
+        }
+    }
+
+    fn name(&self) -> Option<&str> {
+        match self {
+            Self::Microphone => None,
+            Self::ImportedFile { original_name } => Some(original_name),
+        }
+    }
+}
+
+/// The column values for one new row, bundled so the shared INSERT doesn't need
+/// nine positional parameters.
+struct NewHistoryEntry {
+    file_name: String,
+    timestamp: i64,
+    title: String,
+    transcription_text: String,
+    post_processed_text: Option<String>,
+    post_process_prompt: Option<String>,
+    post_process_requested: bool,
+    source: HistorySource,
+    duration_ms: Option<i64>,
 }
 
 pub struct HistoryManager {
@@ -207,6 +256,9 @@ impl HistoryManager {
             post_processed_text: row.get("post_processed_text")?,
             post_process_prompt: row.get("post_process_prompt")?,
             post_process_requested: row.get("post_process_requested")?,
+            source_type: row.get("source_type")?,
+            source_name: row.get("source_name")?,
+            duration_ms: row.get("duration_ms")?,
         })
     }
 
@@ -214,7 +266,7 @@ impl HistoryManager {
         &self.recordings_dir
     }
 
-    /// Save a new history entry to the database.
+    /// Save a new dictation entry to the database.
     /// The WAV file should already have been written to the recordings directory.
     pub fn save_entry(
         &self,
@@ -223,45 +275,69 @@ impl HistoryManager {
         post_process_requested: bool,
         post_processed_text: Option<String>,
         post_process_prompt: Option<String>,
+        duration_ms: Option<i64>,
+    ) -> Result<HistoryEntry> {
+        self.save_with_source(
+            file_name,
+            transcription_text,
+            post_process_requested,
+            post_processed_text,
+            post_process_prompt,
+            HistorySource::Microphone,
+            duration_ms,
+        )
+    }
+
+    /// Save a new entry produced by importing an audio file.
+    /// `original_name` is the file the user picked; `file_name` is the managed
+    /// normalised copy already written to the recordings directory.
+    pub fn save_imported_entry(
+        &self,
+        file_name: String,
+        transcription_text: String,
+        original_name: String,
+        duration_ms: Option<i64>,
+    ) -> Result<HistoryEntry> {
+        self.save_with_source(
+            file_name,
+            transcription_text,
+            false,
+            None,
+            None,
+            HistorySource::ImportedFile { original_name },
+            duration_ms,
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn save_with_source(
+        &self,
+        file_name: String,
+        transcription_text: String,
+        post_process_requested: bool,
+        post_processed_text: Option<String>,
+        post_process_prompt: Option<String>,
+        source: HistorySource,
+        duration_ms: Option<i64>,
     ) -> Result<HistoryEntry> {
         let timestamp = Utc::now().timestamp();
         let title = self.format_timestamp_title(timestamp);
 
         let conn = self.get_connection()?;
-        conn.execute(
-            "INSERT INTO transcription_history (
+        let entry = Self::insert_entry_with_conn(
+            &conn,
+            NewHistoryEntry {
                 file_name,
                 timestamp,
-                saved,
                 title,
                 transcription_text,
                 post_processed_text,
                 post_process_prompt,
-                post_process_requested
-            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-            params![
-                &file_name,
-                timestamp,
-                false,
-                &title,
-                &transcription_text,
-                &post_processed_text,
-                &post_process_prompt,
                 post_process_requested,
-            ],
+                source,
+                duration_ms,
+            },
         )?;
-
-        let entry = HistoryEntry {
-            id: conn.last_insert_rowid(),
-            file_name,
-            timestamp,
-            saved: false,
-            title,
-            transcription_text,
-            post_processed_text,
-            post_process_prompt,
-            post_process_requested,
-        };
 
         debug!("Saved history entry with id {}", entry.id);
 
@@ -277,6 +353,57 @@ impl HistoryManager {
         }
 
         Ok(entry)
+    }
+
+    /// The INSERT shared by every entry source, kept connection-agnostic so it
+    /// can be exercised against an in-memory database in tests.
+    fn insert_entry_with_conn(conn: &Connection, new: NewHistoryEntry) -> Result<HistoryEntry> {
+        let source_type = new.source.type_name().to_string();
+        let source_name = new.source.name().map(|s| s.to_string());
+
+        conn.execute(
+            "INSERT INTO transcription_history (
+                file_name,
+                timestamp,
+                saved,
+                title,
+                transcription_text,
+                post_processed_text,
+                post_process_prompt,
+                post_process_requested,
+                source_type,
+                source_name,
+                duration_ms
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+            params![
+                &new.file_name,
+                new.timestamp,
+                false,
+                &new.title,
+                &new.transcription_text,
+                &new.post_processed_text,
+                &new.post_process_prompt,
+                new.post_process_requested,
+                &source_type,
+                &source_name,
+                new.duration_ms,
+            ],
+        )?;
+
+        Ok(HistoryEntry {
+            id: conn.last_insert_rowid(),
+            file_name: new.file_name,
+            timestamp: new.timestamp,
+            saved: false,
+            title: new.title,
+            transcription_text: new.transcription_text,
+            post_processed_text: new.post_processed_text,
+            post_process_prompt: new.post_process_prompt,
+            post_process_requested: new.post_process_requested,
+            source_type: Some(source_type),
+            source_name,
+            duration_ms: new.duration_ms,
+        })
     }
 
     /// Update an existing history entry with new transcription results (used by retry).
@@ -308,7 +435,7 @@ impl HistoryManager {
 
         let entry = conn
             .query_row(
-                "SELECT id, file_name, timestamp, saved, title, transcription_text, post_processed_text, post_process_prompt, post_process_requested
+                "SELECT id, file_name, timestamp, saved, title, transcription_text, post_processed_text, post_process_prompt, post_process_requested, source_type, source_name, duration_ms
                  FROM transcription_history WHERE id = ?1",
                 params![id],
                 Self::map_history_entry,
@@ -459,7 +586,7 @@ impl HistoryManager {
             (Some(cursor_id), Some(lim)) => {
                 let fetch_count = (lim + 1) as i64;
                 let mut stmt = conn.prepare(
-                    "SELECT id, file_name, timestamp, saved, title, transcription_text, post_processed_text, post_process_prompt, post_process_requested
+                    "SELECT id, file_name, timestamp, saved, title, transcription_text, post_processed_text, post_process_prompt, post_process_requested, source_type, source_name, duration_ms
                      FROM transcription_history
                      WHERE id < ?1
                      ORDER BY id DESC
@@ -473,7 +600,7 @@ impl HistoryManager {
             (None, Some(lim)) => {
                 let fetch_count = (lim + 1) as i64;
                 let mut stmt = conn.prepare(
-                    "SELECT id, file_name, timestamp, saved, title, transcription_text, post_processed_text, post_process_prompt, post_process_requested
+                    "SELECT id, file_name, timestamp, saved, title, transcription_text, post_processed_text, post_process_prompt, post_process_requested, source_type, source_name, duration_ms
                      FROM transcription_history
                      ORDER BY id DESC
                      LIMIT ?1",
@@ -485,7 +612,7 @@ impl HistoryManager {
             }
             (_, None) => {
                 let mut stmt = conn.prepare(
-                    "SELECT id, file_name, timestamp, saved, title, transcription_text, post_processed_text, post_process_prompt, post_process_requested
+                    "SELECT id, file_name, timestamp, saved, title, transcription_text, post_processed_text, post_process_prompt, post_process_requested, source_type, source_name, duration_ms
                      FROM transcription_history
                      ORDER BY id DESC",
                 )?;
@@ -516,7 +643,10 @@ impl HistoryManager {
                 transcription_text,
                 post_processed_text,
                 post_process_prompt,
-                post_process_requested
+                post_process_requested,
+                source_type,
+                source_name,
+                duration_ms
              FROM transcription_history
              ORDER BY timestamp DESC
              LIMIT 1",
@@ -543,7 +673,10 @@ impl HistoryManager {
                 transcription_text,
                 post_processed_text,
                 post_process_prompt,
-                post_process_requested
+                post_process_requested,
+                source_type,
+                source_name,
+                duration_ms
              FROM transcription_history
              WHERE transcription_text != ''
              ORDER BY timestamp DESC
@@ -597,7 +730,10 @@ impl HistoryManager {
                 transcription_text,
                 post_processed_text,
                 post_process_prompt,
-                post_process_requested
+                post_process_requested,
+                source_type,
+                source_name,
+                duration_ms
              FROM transcription_history
              WHERE id = ?1",
         )?;
@@ -666,10 +802,37 @@ mod tests {
                 transcription_text TEXT NOT NULL,
                 post_processed_text TEXT,
                 post_process_prompt TEXT,
-                post_process_requested BOOLEAN NOT NULL DEFAULT 0
+                post_process_requested BOOLEAN NOT NULL DEFAULT 0,
+                source_type TEXT,
+                source_name TEXT,
+                duration_ms INTEGER
             );",
         )
         .expect("create transcription_history table");
+        conn
+    }
+
+    /// The schema exactly as it stood before the imported-file migrations, used
+    /// to prove that upgrading an existing database keeps its rows intact.
+    fn setup_pre_import_conn() -> Connection {
+        let conn = Connection::open_in_memory().expect("open in-memory db");
+        conn.execute_batch(
+            "CREATE TABLE transcription_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                file_name TEXT NOT NULL,
+                timestamp INTEGER NOT NULL,
+                saved BOOLEAN NOT NULL DEFAULT 0,
+                title TEXT NOT NULL,
+                transcription_text TEXT NOT NULL,
+                post_processed_text TEXT,
+                post_process_prompt TEXT,
+                post_process_requested BOOLEAN NOT NULL DEFAULT 0
+            );",
+        )
+        .expect("create pre-migration transcription_history table");
+        // user_version 4 == the four migrations that existed before this feature.
+        conn.pragma_update(None, "user_version", 4)
+            .expect("set user_version");
         conn
     }
 
@@ -719,6 +882,125 @@ mod tests {
         assert_eq!(entry.timestamp, 200);
         assert_eq!(entry.transcription_text, "second");
         assert_eq!(entry.post_processed_text.as_deref(), Some("processed"));
+    }
+
+    #[test]
+    fn migration_adds_imported_source_columns_and_preserves_existing_rows() {
+        let mut conn = setup_pre_import_conn();
+        conn.execute(
+            "INSERT INTO transcription_history (
+                file_name, timestamp, saved, title, transcription_text,
+                post_processed_text, post_process_prompt, post_process_requested
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            params![
+                "dictus-1.wav",
+                1_i64,
+                false,
+                "Recording 1",
+                "hello from before the migration",
+                Option::<String>::None,
+                Option::<String>::None,
+                false,
+            ],
+        )
+        .expect("insert legacy entry");
+
+        Migrations::new(MIGRATIONS.to_vec())
+            .to_latest(&mut conn)
+            .expect("apply migrations to legacy database");
+
+        let entry = HistoryManager::get_latest_entry_with_conn(&conn)
+            .expect("fetch legacy entry")
+            .expect("legacy entry survives migration");
+
+        assert_eq!(entry.transcription_text, "hello from before the migration");
+        assert_eq!(
+            entry.source_type, None,
+            "rows written before the migration must read back as NULL source"
+        );
+        assert_eq!(entry.source_name, None);
+        assert_eq!(entry.duration_ms, None);
+    }
+
+    #[test]
+    fn migration_is_idempotent_on_an_already_migrated_database() {
+        let mut conn = setup_pre_import_conn();
+        let migrations = Migrations::new(MIGRATIONS.to_vec());
+        migrations
+            .to_latest(&mut conn)
+            .expect("first migration run");
+        migrations
+            .to_latest(&mut conn)
+            .expect("second migration run must be a no-op");
+
+        let version: i32 = conn
+            .pragma_query_value(None, "user_version", |row| row.get(0))
+            .expect("read user_version");
+        assert_eq!(version as usize, MIGRATIONS.len());
+    }
+
+    #[test]
+    fn imported_entries_record_their_original_file_name_and_duration() {
+        let conn = setup_conn();
+
+        let inserted = HistoryManager::insert_entry_with_conn(
+            &conn,
+            NewHistoryEntry {
+                file_name: "dictus-import-42.wav".to_string(),
+                timestamp: 42,
+                title: "Recording 42".to_string(),
+                transcription_text: "imported speech".to_string(),
+                post_processed_text: None,
+                post_process_prompt: None,
+                post_process_requested: false,
+                source: HistorySource::ImportedFile {
+                    original_name: "interview.m4a".to_string(),
+                },
+                duration_ms: Some(93_000),
+            },
+        )
+        .expect("insert imported entry");
+
+        assert_eq!(inserted.source_type.as_deref(), Some("imported_file"));
+        assert_eq!(inserted.source_name.as_deref(), Some("interview.m4a"));
+        assert_eq!(inserted.duration_ms, Some(93_000));
+
+        let read_back = HistoryManager::get_latest_entry_with_conn(&conn)
+            .expect("fetch imported entry")
+            .expect("imported entry exists");
+
+        assert_eq!(read_back.source_type.as_deref(), Some("imported_file"));
+        assert_eq!(read_back.source_name.as_deref(), Some("interview.m4a"));
+        assert_eq!(read_back.duration_ms, Some(93_000));
+        assert!(
+            !read_back.post_process_requested,
+            "imported transcription is raw ASR in this MVP"
+        );
+    }
+
+    #[test]
+    fn microphone_entries_are_tagged_and_carry_no_source_name() {
+        let conn = setup_conn();
+
+        let inserted = HistoryManager::insert_entry_with_conn(
+            &conn,
+            NewHistoryEntry {
+                file_name: "dictus-7.wav".to_string(),
+                timestamp: 7,
+                title: "Recording 7".to_string(),
+                transcription_text: "dictated speech".to_string(),
+                post_processed_text: None,
+                post_process_prompt: None,
+                post_process_requested: false,
+                source: HistorySource::Microphone,
+                duration_ms: Some(1_500),
+            },
+        )
+        .expect("insert microphone entry");
+
+        assert_eq!(inserted.source_type.as_deref(), Some("microphone"));
+        assert_eq!(inserted.source_name, None);
+        assert_eq!(inserted.duration_ms, Some(1_500));
     }
 
     #[test]

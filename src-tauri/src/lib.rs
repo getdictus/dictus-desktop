@@ -6,6 +6,7 @@ pub mod audio_toolkit;
 pub mod cli;
 mod clipboard;
 mod commands;
+mod file_transcription;
 mod helpers;
 mod input;
 mod llm_client;
@@ -38,7 +39,7 @@ use signal_hook::iterator::Signals;
 use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::Arc;
 use tauri::image::Image;
-pub use transcription_coordinator::TranscriptionCoordinator;
+pub use transcription_coordinator::{TranscriptionActivity, TranscriptionCoordinator};
 
 use tauri::tray::TrayIconBuilder;
 use tauri::{AppHandle, Emitter, Listener, Manager};
@@ -534,11 +535,16 @@ pub fn run(cli_args: CliArgs) {
             commands::history::retry_history_entry_transcription,
             commands::history::update_history_limit,
             commands::history::update_recording_retention_period,
+            commands::file_transcription::supported_audio_extensions,
+            commands::file_transcription::inspect_audio_file,
+            commands::file_transcription::transcribe_audio_file,
+            commands::file_transcription::cancel_file_transcription,
             helpers::clamshell::is_laptop,
         ])
         .events(collect_events![
             managers::history::HistoryUpdatePayload,
             managers::llm::LlmDownloadProgress,
+            file_transcription::FileTranscriptionProgress,
         ]);
 
     #[cfg(debug_assertions)] // <- Only export on non-release builds
@@ -651,6 +657,11 @@ pub fn run(cli_args: CliArgs) {
             FILE_LOG_LEVEL.store(file_log_level.to_level_filter() as u8, Ordering::Relaxed);
             let app_handle = app.handle().clone();
             app.manage(TranscriptionCoordinator::new(app_handle.clone()));
+            // Shared-engine arbiter and the imported-file job slot. Registered
+            // before initialize_core_logic so both the dictation pipeline and
+            // the import commands can reach them.
+            app.manage(Arc::new(TranscriptionActivity::new()));
+            app.manage(Arc::new(file_transcription::FileTranscriptionState::new()));
 
             initialize_core_logic(&app_handle);
 
