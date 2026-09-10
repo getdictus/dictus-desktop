@@ -341,7 +341,17 @@ impl HistoryManager {
 
         debug!("Saved history entry with id {}", entry.id);
 
-        self.cleanup_old_entries()?;
+        // Retention is housekeeping, not part of the save contract. The row is
+        // already committed at this point, so returning Err here would tell the
+        // caller the save failed — and the import caller reacts to a storage
+        // failure by deleting the managed WAV, which would leave a history
+        // entry pointing at a recording that no longer exists.
+        if let Err(e) = self.cleanup_old_entries() {
+            error!(
+                "Retention cleanup failed after saving entry {}: {}",
+                entry.id, e
+            );
+        }
 
         // Emit typed event for real-time frontend updates
         if let Err(e) = (HistoryUpdatePayload::Added {
