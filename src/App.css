@@ -1,15 +1,40 @@
 @import "tailwindcss";
 
+/* Design tokens — Dictus Liquid Glass.
+ *
+ * The authoritative values live in `:root` (and are overridden in one place by
+ * the dark-theme block and the no-backdrop-filter fallback below). `@theme`
+ * only aliases the ones that have to generate Tailwind utilities, so a token
+ * never has two sources of truth.
+ *
+ * Canvas and card colours come from `DictusColors.swift` in getdictus/dictus-ios
+ * so the desktop and mobile apps read as one family. */
 @theme {
-  /* Design tokens */
-  --color-text: #0f0f0f;
-  --color-background: #fbfbfb;
-  --color-accent: #3d7eff;
-  --color-accent-gradient-start: #6ba3ff;
-  --color-accent-gradient-end: #2563eb;
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-text-faint: var(--text-faint);
+  --color-background: var(--glass-canvas);
+  --color-accent: var(--accent);
+  --color-card: var(--surface-card);
+  --color-sidebar: var(--surface-sidebar);
+  --color-control: var(--surface-control);
+  --color-floating: var(--surface-floating);
+  --color-hairline: var(--border-hairline);
+  --color-divider: var(--border-divider);
+  --color-control-border: var(--border-control);
+  --color-status-ok: var(--status-ok);
+  --color-warning: var(--warning);
+
+  /* Brand marks. Deliberately not theme-aware: the logo keeps its colour in
+     both themes, which is why it is separate from --color-accent. */
   --color-logo-primary: #6ba3ff;
   --color-logo-stroke: #0a1628;
   --color-text-stroke: #f6f6f6;
+  --color-accent-gradient-start: #6ba3ff;
+  --color-accent-gradient-end: #2563eb;
+
+  /* Retired once nothing references it; the last references go in the final
+     commit of this series. */
   --color-mid-gray: #808080;
 }
 
@@ -26,6 +51,45 @@
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
 
+  /* Light theme */
+  --glass-canvas: #f2f2f7;
+  --surface-card: rgba(255, 255, 255, 0.86);
+  --surface-sidebar: rgba(255, 255, 255, 0.7);
+  --surface-control: rgba(255, 255, 255, 0.85);
+  /* Floating surfaces (dropdowns, tooltips, toasts) are not in the board's
+     token table; they sit above cards so they carry a touch more opacity. */
+  --surface-floating: rgba(255, 255, 255, 0.92);
+  --border-hairline: rgba(0, 0, 0, 0.07);
+  --border-divider: rgba(0, 0, 0, 0.1);
+  --border-control: rgba(0, 0, 0, 0.12);
+  --specular: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --shadow-raised: 0 12px 26px -16px rgba(16, 32, 64, 0.4);
+  --blur-surface: blur(22px) saturate(150%);
+  --blur-floating: blur(28px) saturate(180%);
+  --accent: #3d7eff;
+  --focus-ring: 0 0 0 3px rgba(61, 126, 255, 0.35);
+  --text: #0a0b0d;
+  --text-muted: rgba(0, 0, 0, 0.6);
+  --text-faint: rgba(0, 0, 0, 0.42);
+  --status-ok: #30b350;
+  --warning: #ffb020;
+
+  /* Recording overlay pill. Always dark: it floats over the user's desktop,
+     not over the app canvas, so it does not follow the theme. */
+  --surface-overlay: rgba(8, 12, 22, 0.42);
+  --surface-overlay-error: rgba(20, 13, 4, 0.42);
+  --overlay-rim:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.16), 0 14px 36px rgba(0, 0, 0, 0.35);
+  --overlay-rim-error:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 0 0 1px rgba(255, 176, 32, 0.4), 0 14px 36px rgba(0, 0, 0, 0.35);
+
+  /* Opaque fallbacks, applied by the @supports block further down. */
+  --surface-opaque: #f7f9fc;
+  --surface-opaque-raised: #ffffff;
+  --surface-opaque-overlay: rgba(8, 12, 22, 0.92);
+
   --scrollbar-thumb: color-mix(in srgb, var(--color-text), transparent 85%);
   --scrollbar-thumb-hover: color-mix(
     in srgb,
@@ -38,6 +102,46 @@
   background-color: var(--color-background);
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --glass-canvas: #0a1628;
+    --surface-card: rgba(22, 28, 44, 0.72);
+    --surface-sidebar: rgba(22, 28, 44, 0.55);
+    --surface-control: rgba(255, 255, 255, 0.05);
+    --surface-floating: rgba(22, 28, 44, 0.92);
+    --border-hairline: rgba(255, 255, 255, 0.08);
+    --border-divider: rgba(255, 255, 255, 0.1);
+    --border-control: rgba(255, 255, 255, 0.14);
+    --specular: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    --shadow-raised: 0 16px 34px -20px rgba(0, 0, 0, 0.9);
+    --accent: #6ba3ff;
+    --focus-ring: 0 0 0 3px rgba(107, 163, 255, 0.45);
+    --text: #ffffff;
+    --text-muted: rgba(255, 255, 255, 0.6);
+    --text-faint: rgba(255, 255, 255, 0.42);
+    --status-ok: #32d74b;
+
+    --surface-opaque: #101c30;
+    --surface-opaque-raised: #1a2237;
+
+    --color-logo-stroke: #ffffff;
+  }
+}
+
+/* WebKitGTK and older WebView2 do not guarantee `backdrop-filter`. Without it
+ * every translucent surface would read as a wash of the canvas, so each one
+ * swaps to an opaque value that keeps the same hierarchy. */
+@supports not (backdrop-filter: blur(1px)) {
+  :root {
+    --surface-card: var(--surface-opaque-raised);
+    --surface-sidebar: var(--surface-opaque);
+    --surface-control: var(--surface-opaque-raised);
+    --surface-floating: var(--surface-opaque-raised);
+    --surface-overlay: var(--surface-opaque-overlay);
+    --surface-overlay-error: rgba(20, 13, 4, 0.92);
+  }
+}
+
 .container {
   margin: 0;
   padding-top: 10vh;
@@ -45,16 +149,6 @@
   flex-direction: column;
   justify-content: center;
   text-align: center;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Colors - Dark Theme */
-    --color-text: #fbfbfb;
-    --color-background: #0a1628;
-    --color-logo-primary: #6ba3ff;
-    --color-logo-stroke: #ffffff;
-  }
 }
 
 /* macOS - tint native overlay scrollbar thumb */
@@ -89,6 +183,37 @@
 @layer utilities {
   .text-stroke {
     -webkit-text-stroke: 2px var(--color-text-stroke);
+  }
+
+  /* Material utilities. Kept separate from the surface colours so a component
+     can pick a colour and a blur independently. */
+  .glass-blur {
+    -webkit-backdrop-filter: var(--blur-surface);
+    backdrop-filter: var(--blur-surface);
+  }
+
+  .glass-blur-floating {
+    -webkit-backdrop-filter: var(--blur-floating);
+    backdrop-filter: var(--blur-floating);
+  }
+
+  .glass-specular {
+    box-shadow: var(--specular);
+  }
+
+  .glass-raised {
+    box-shadow: var(--specular), var(--shadow-raised);
+  }
+
+  /* Visible over any surface, including a lens. */
+  .focus-ring:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+
+  .focus-ring-within:focus-within {
+    outline: none;
+    box-shadow: var(--focus-ring);
   }
 }
 

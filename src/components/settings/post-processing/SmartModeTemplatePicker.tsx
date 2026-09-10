@@ -125,7 +125,7 @@ export const SmartModeTemplatePicker: React.FC<
                 <button
                   key={template.id}
                   type="button"
-                  className="w-full text-left px-3 py-2 rounded-md hover:bg-logo-primary/5 border border-transparent hover:border-logo-primary/30"
+                  className="w-full text-left px-3 py-2 rounded-md hover:bg-accent/5 border border-transparent hover:border-accent/30"
                   onClick={() => void handlePickTemplate(template)}
                 >
                   <div className="flex items-center justify-between gap-2">
@@ -149,7 +149,7 @@ export const SmartModeTemplatePicker: React.FC<
             <div className="border-t border-mid-gray/20 mt-1 pt-1">
               <button
                 type="button"
-                className="w-full text-left px-3 py-2 rounded-md hover:bg-logo-primary/5 border border-transparent hover:border-logo-primary/30"
+                className="w-full text-left px-3 py-2 rounded-md hover:bg-accent/5 border border-transparent hover:border-accent/30"
                 onClick={handleCustom}
               >
                 <span className="font-medium text-sm">

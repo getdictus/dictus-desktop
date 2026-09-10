@@ -334,7 +334,7 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
           ref={chipRef}
           dir="ltr"
           aria-label={t("smartModes.shortcut.recording")}
-          className="px-2 py-1 text-sm font-medium border border-logo-primary bg-logo-primary/30 rounded-md"
+          className="px-2 py-1 text-sm font-medium border border-accent bg-accent/30 rounded-md"
         >
           {formatCurrentKeys()}
         </div>
@@ -350,7 +350,7 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
             aria-label={currentBinding}
             aria-disabled={disabled ? "true" : undefined}
             onClick={disabled ? undefined : handleClick}
-            className={`px-2 py-1 text-sm font-medium bg-mid-gray/10 border border-mid-gray/80 rounded-md ${disabled ? "opacity-60" : "cursor-pointer hover:bg-logo-primary/10 hover:border-logo-primary"}`}
+            className={`px-2 py-1 text-sm font-medium bg-mid-gray/10 border border-mid-gray/80 rounded-md ${disabled ? "opacity-60" : "cursor-pointer hover:bg-accent/10 hover:border-accent"}`}
           >
             {formatKeyCombination(currentBinding, osType)}
           </div>

@@ -79,7 +79,7 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
                   <a
                     role="link"
                     tabIndex={0}
-                    className="text-logo-primary underline underline-offset-2 hover:opacity-80 cursor-pointer"
+                    className="text-accent underline underline-offset-2 hover:opacity-80 cursor-pointer"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -193,7 +193,7 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
             ) : null}
           </div>
           {state.selectedProvider?.id === RECOMMENDED_PROVIDER_ID ? (
-            <span className="text-xs font-medium px-2 py-0.5 rounded-full border border-logo-primary text-logo-primary">
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full border border-accent text-accent">
               {t(
                 "settings.postProcessing.modelsAndLocalProcessing.selectedModel.recommendedBadge",
               )}
@@ -378,7 +378,7 @@ export const PostProcessingSettings: React.FC = () => {
             <a
               role="link"
               tabIndex={0}
-              className="text-logo-primary hover:underline cursor-pointer"
+              className="text-accent hover:underline cursor-pointer"
               onClick={(e) => {
                 e.preventDefault();
                 handleLearnMore();
@@ -394,7 +394,7 @@ export const PostProcessingSettings: React.FC = () => {
             </a>
           </p>
         </div>
-        <span className="shrink-0 text-xs font-medium px-2 py-1 rounded-full border border-logo-primary/40 bg-logo-primary/10 text-logo-primary">
+        <span className="shrink-0 text-xs font-medium px-2 py-1 rounded-full border border-accent/40 bg-accent/10 text-accent">
           {readyCount === 1
             ? t(
                 "settings.postProcessing.modelsAndLocalProcessing.statusBadge.ready_one",

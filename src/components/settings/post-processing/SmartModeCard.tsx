@@ -173,7 +173,7 @@ export const SmartModeCard: React.FC<SmartModeCardProps> = ({
   const kindBadgeClass =
     kind === "rewrite"
       ? "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-mid-gray/10 text-mid-gray"
-      : "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-logo-primary/10 text-logo-primary border border-logo-primary/30";
+      : "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-accent/10 text-accent border border-accent/30";
 
   // Card frame classes
   const cardBase =
@@ -181,12 +181,12 @@ export const SmartModeCard: React.FC<SmartModeCardProps> = ({
   const cardCollapsed = disabled
     ? `${cardBase} border-mid-gray/20 opacity-60 bg-mid-gray/5`
     : isEditing
-      ? `${cardBase} border-logo-primary/40 bg-logo-primary/5`
-      : `${cardBase} border-mid-gray/20 hover:border-logo-primary/50 hover:bg-logo-primary/5`;
+      ? `${cardBase} border-accent/40 bg-accent/5`
+      : `${cardBase} border-mid-gray/20 hover:border-accent/50 hover:bg-accent/5`;
 
   if (isEditing || isNew) {
     return (
-      <div className={`${cardBase} border-logo-primary/40 bg-logo-primary/5`}>
+      <div className={`${cardBase} border-accent/40 bg-accent/5`}>
         {/* Header row in edit mode (only for existing cards) */}
         {!isNew && mode && (
           <div className="flex justify-between gap-2 items-start">
@@ -245,7 +245,7 @@ export const SmartModeCard: React.FC<SmartModeCardProps> = ({
                 {t("smartModes.card.targetLanguage")}
               </label>
               <select
-                className="px-2 py-1 text-sm font-medium bg-mid-gray/10 border border-mid-gray/80 rounded-md focus:outline-none focus:border-logo-primary hover:border-logo-primary"
+                className="px-2 py-1 text-sm font-medium bg-mid-gray/10 border border-mid-gray/80 rounded-md focus:outline-none focus:border-accent hover:border-accent"
                 value={draftLang?.code ?? ""}
                 onChange={(e) => {
                   const found = availableLanguages.find(

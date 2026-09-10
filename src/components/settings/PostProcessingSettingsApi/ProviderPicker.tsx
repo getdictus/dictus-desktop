@@ -48,13 +48,13 @@ export const ProviderPicker: React.FC<ProviderPickerProps> = ({
         }}
         className={`flex flex-col gap-1 px-4 py-3 rounded-xl border-2 transition-all ${
           checked
-            ? "border-logo-primary/50 bg-logo-primary/10"
-            : "border-mid-gray/20 hover:border-logo-primary/50 hover:bg-logo-primary/5"
+            ? "border-accent/50 bg-accent/10"
+            : "border-mid-gray/20 hover:border-accent/50 hover:bg-accent/5"
         } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
       >
         <span
           className={`text-base font-semibold text-text ${
-            selectable ? "hover:text-logo-primary" : ""
+            selectable ? "hover:text-accent" : ""
           } transition-colors`}
         >
           {option.label}

@@ -81,9 +81,9 @@ export const CustomGgufDropZone: React.FC = () => {
         )}
         tabIndex={0}
         className={[
-          "border border-dashed min-h-[44px] rounded-lg flex flex-col items-center justify-center p-4 transition-colors focus:outline-none focus:ring-2 focus:ring-logo-primary",
+          "border border-dashed min-h-[44px] rounded-lg flex flex-col items-center justify-center p-4 transition-colors focus:outline-none focus:ring-2 focus:ring-accent",
           isDragActive
-            ? "border-logo-primary/50 bg-logo-primary/5"
+            ? "border-accent/50 bg-accent/5"
             : "border-mid-gray/40",
         ]
           .filter(Boolean)

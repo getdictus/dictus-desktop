@@ -42,9 +42,9 @@ export type SelectProps = BaseProps & (CreatableProps | NonCreatableProps);
 const baseBackground =
   "color-mix(in srgb, var(--color-mid-gray) 10%, transparent)";
 const hoverBackground =
-  "color-mix(in srgb, var(--color-logo-primary) 12%, transparent)";
+  "color-mix(in srgb, var(--color-accent) 12%, transparent)";
 const focusBackground =
-  "color-mix(in srgb, var(--color-logo-primary) 20%, transparent)";
+  "color-mix(in srgb, var(--color-accent) 20%, transparent)";
 const neutralBorder =
   "color-mix(in srgb, var(--color-mid-gray) 80%, transparent)";
 
@@ -53,14 +53,14 @@ const selectStyles: StylesConfig<SelectOption, false> = {
     ...base,
     minHeight: 40,
     borderRadius: 6,
-    borderColor: state.isFocused ? "var(--color-logo-primary)" : neutralBorder,
-    boxShadow: state.isFocused ? "0 0 0 1px var(--color-logo-primary)" : "none",
+    borderColor: state.isFocused ? "var(--color-accent)" : neutralBorder,
+    boxShadow: state.isFocused ? "0 0 0 1px var(--color-accent)" : "none",
     backgroundColor: state.isFocused ? focusBackground : baseBackground,
     fontSize: "0.875rem",
     color: "var(--color-text)",
     transition: "all 150ms ease",
     ":hover": {
-      borderColor: "var(--color-logo-primary)",
+      borderColor: "var(--color-accent)",
       backgroundColor: hoverBackground,
     },
   }),
@@ -80,17 +80,17 @@ const selectStyles: StylesConfig<SelectOption, false> = {
   dropdownIndicator: (base, state) => ({
     ...base,
     color: state.isFocused
-      ? "var(--color-logo-primary)"
+      ? "var(--color-accent)"
       : "color-mix(in srgb, var(--color-mid-gray) 80%, transparent)",
     ":hover": {
-      color: "var(--color-logo-primary)",
+      color: "var(--color-accent)",
     },
   }),
   clearIndicator: (base) => ({
     ...base,
     color: "color-mix(in srgb, var(--color-mid-gray) 80%, transparent)",
     ":hover": {
-      color: "var(--color-logo-primary)",
+      color: "var(--color-accent)",
     },
   }),
   menu: (provided) => ({

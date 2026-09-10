@@ -247,8 +247,8 @@ export const LlmLibrarySection: React.FC<LlmLibrarySectionProps> = ({
         }}
         className={`flex flex-col gap-1 px-4 py-3 rounded-xl border-2 transition-all ${
           p.checked
-            ? "border-logo-primary/50 bg-logo-primary/10"
-            : "border-mid-gray/20 hover:border-logo-primary/50 hover:bg-logo-primary/5"
+            ? "border-accent/50 bg-accent/10"
+            : "border-mid-gray/20 hover:border-accent/50 hover:bg-accent/5"
         } ${p.disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
       >
         <div className="flex items-center gap-3 flex-wrap">
@@ -298,7 +298,7 @@ export const LlmLibrarySection: React.FC<LlmLibrarySectionProps> = ({
       <div id="llm-library-section" className="space-y-3">
         {store.isLoading ? (
           <div className="py-10 flex justify-center">
-            <div className="w-7 h-7 border-2 border-logo-primary border-t-transparent rounded-full animate-spin" />
+            <div className="w-7 h-7 border-2 border-accent border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
           <>
@@ -329,7 +329,7 @@ export const LlmLibrarySection: React.FC<LlmLibrarySectionProps> = ({
 
           {store.isLoading ? (
             <div className="py-16 flex justify-center">
-              <div className="w-8 h-8 border-2 border-logo-primary border-t-transparent rounded-full animate-spin" />
+              <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
             </div>
           ) : (
             <>
