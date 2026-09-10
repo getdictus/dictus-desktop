@@ -47,9 +47,11 @@ export const SettingContainer: React.FC<SettingContainerProps> = ({
     setShowTooltip(!showTooltip);
   };
 
+  // 8 px / 16 px rows with a 44 px floor, per the design board. Ungrouped rows
+  // stand alone, so they carry the card material themselves.
   const containerClasses = grouped
-    ? "px-4 p-2"
-    : "px-4 p-2 rounded-lg border border-mid-gray/20";
+    ? "px-4 py-2 min-h-[44px]"
+    : "px-4 py-2 min-h-[44px] rounded-2xl border border-hairline bg-card glass-blur";
 
   if (layout === "stacked") {
     if (descriptionMode === "tooltip") {
@@ -69,7 +71,7 @@ export const SettingContainer: React.FC<SettingContainerProps> = ({
               onClick={toggleTooltip}
             >
               <svg
-                className="w-4 h-4 text-mid-gray cursor-help hover:text-accent transition-colors duration-200 select-none"
+                className="w-4 h-4 text-text-faint cursor-help hover:text-accent transition-colors duration-200 select-none"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -121,8 +123,8 @@ export const SettingContainer: React.FC<SettingContainerProps> = ({
 
   // Horizontal layout (default)
   const horizontalContainerClasses = grouped
-    ? "flex items-center justify-between px-4 p-2"
-    : "flex items-center justify-between px-4 p-2 rounded-lg border border-mid-gray/20";
+    ? "flex items-center justify-between px-4 py-2 min-h-[44px]"
+    : "flex items-center justify-between px-4 py-2 min-h-[44px] rounded-2xl border border-hairline bg-card glass-blur";
 
   if (descriptionMode === "tooltip") {
     return (
@@ -142,7 +144,7 @@ export const SettingContainer: React.FC<SettingContainerProps> = ({
               onClick={toggleTooltip}
             >
               <svg
-                className="w-4 h-4 text-mid-gray cursor-help hover:text-accent transition-colors duration-200 select-none"
+                className="w-4 h-4 text-text-faint cursor-help hover:text-accent transition-colors duration-200 select-none"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
