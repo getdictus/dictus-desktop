@@ -46,4 +46,27 @@ test.describe("glass controls stay operable", () => {
       expect(Math.abs(capsuleBox.width - itemBox.width)).toBeLessThan(1);
     }
   });
+
+  // French is the reported case: "Post-traitement" was rendering as
+  // "Post-traite…". Czech and Portuguese still ellipsize; see the PR.
+  for (const lang of ["en", "fr", "de", "ru"]) {
+    test(`nav labels are not truncated in ${lang}`, async ({ page }) => {
+      await page.goto(`${SPECIMEN}?lang=${lang}`);
+
+      const labels = page.locator("[data-testid^='nav-item-'] p");
+      const count = await labels.count();
+      expect(count).toBe(7);
+
+      for (let i = 0; i < count; i += 1) {
+        const label = labels.nth(i);
+        const overflow = await label.evaluate(
+          (node) => node.scrollWidth - node.clientWidth,
+        );
+        expect(
+          overflow,
+          `"${await label.innerText()}" overflows by ${overflow}px`,
+        ).toBeLessThanOrEqual(0);
+      }
+    });
+  }
 });

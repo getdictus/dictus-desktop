@@ -87,7 +87,7 @@ export const SECTIONS_CONFIG = {
 
 /* Fallbacks until the first measurement lands. */
 const NAV_ITEM_HEIGHT_PX = 40;
-const NAV_ITEM_WIDTH_PX = 144;
+const NAV_ITEM_WIDTH_PX = 168;
 
 interface SidebarProps {
   activeSection: SidebarSection;
@@ -141,7 +141,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   }, [measure, availableSections.length]);
 
   return (
-    <div className="flex flex-col w-40 h-full shrink-0 bg-sidebar glass-blur border-e border-hairline items-center px-2">
+    <div className="flex flex-col w-[184px] h-full shrink-0 bg-sidebar glass-blur border-e border-hairline items-center px-2">
       <DictusLogo width={120} className="m-4" />
       <div className="relative flex flex-col w-full items-center gap-1 pt-2 border-t border-hairline">
         {activeIndex >= 0 && (
@@ -197,7 +197,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onClick={() => onSectionChange(section.id)}
             >
               <Icon width={24} height={24} className="shrink-0" />
-              <p className="text-sm truncate" title={t(section.labelKey)}>
+              <p className="text-[13px] truncate" title={t(section.labelKey)}>
                 {t(section.labelKey)}
               </p>
             </button>
