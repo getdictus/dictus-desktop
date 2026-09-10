@@ -1,71 +1,51 @@
-## Before Submitting This PR
+<!--
+Thanks for contributing to Dictus Desktop.
+
+Small, focused PRs get reviewed fastest. If you are planning something large,
+open an issue or a discussion first so we can agree on the approach before you
+write the code.
+-->
+
+## What does this change?
 
 <!--
-HANDY IS UNDERGOING A FEATURE FREEZE. IF YOU ARE SUBMITTING A PR WHICH IS A NEW FEATURE THAT THE COMMUNITY HAS NOT ASKED FOR: PREPARE TO BE REJECTED. IF THE COMMUNITY HAS ASKED FOR IT, OR YOU HAVE EXPLICITLY GATHERED SUPPORT IT MAY STILL BE CONSIDERED.
+Describe the problem you hit or the idea you had, and what you did about it.
+Two or three sentences in your own words is plenty.
 
-BUG FIXES ARE THE TOP PRIORITY. THERE ARE 60+ ISSUES TO FIX.
+AI-assisted PRs are welcome — this project is built with AI assistance too. But
+we want to read your reasoning, not a generated summary. If you cannot explain
+why the change is right, it is not ready for review.
 -->
 
-**Please confirm you have done the following:**
+## Related issues
 
-- [ ] I have searched [existing issues](https://github.com/cjpais/Handy/issues) and [pull requests](https://github.com/cjpais/Handy/pulls) (including closed ones) to ensure this isn't a duplicate
-- [ ] I have read [CONTRIBUTING.md](https://github.com/cjpais/Handy/blob/main/CONTRIBUTING.md)
-
-**If this is a feature or change that was previously closed/rejected:**
-
-- [ ] I have explained in the description below why this should be reconsidered
-- [ ] I have gathered community feedback (link to discussion below)
-
-## Human Written Description
-
-<!-- Describe your changes clearly and concisely
-
-Please write 2-3 sentences in your own words explaining:
-- What problem you noticed or idea you had
-- Why you think this change matters
-
-This section should be YOUR thinking, not AI-generated text. Even if AI helped write the code, we want to hear from you directly. Your perspective as a human is what makes contributions meaningful. Your PR may be rejected if you do not
-include a human-written description.
--->
-
-## Related Issues/Discussions
-
-<!-- Link to related issues, discussions, or previous PRs -->
-<!-- If reopening something previously closed, explain why this should be reconsidered -->
+<!-- Use "Fixes #123" to close an issue automatically, or "Related: #123" otherwise. -->
 
 Fixes #
-Discussion:
 
-## Community Feedback
+## How did you test it?
 
-<!--
-PRs with community support are much more likely to be merged.
+<!-- What you actually ran, and what you saw. "It builds" is not testing. -->
 
-For features: Link to a discussion where community members have expressed interest.
-For bug fixes: Link to the issue where others have confirmed the bug.
+**Platforms tested:**
 
-If you haven't gathered feedback yet, consider starting a discussion first:
-https://github.com/cjpais/Handy/discussions
+- [ ] macOS (Apple Silicon)
+- [ ] macOS (Intel)
+- [ ] Windows
+- [ ] Linux
 
-It is not explicitly required to gather feedback, but it certainly helps your PR get merged.
--->
+Dictus behaves differently per platform — audio capture, global shortcuts, and
+paste all use OS-specific paths. Tell us which platforms you could not test so a
+maintainer can cover them.
 
-## Testing
+## Checklist
 
-<!-- Describe how you tested your changes and if you need help getting additional testing -->
+- [ ] I searched [existing issues](https://github.com/getdictus/dictus-desktop/issues) and [pull requests](https://github.com/getdictus/dictus-desktop/pulls), including closed ones
+- [ ] I read [CONTRIBUTING.md](https://github.com/getdictus/dictus-desktop/blob/main/CONTRIBUTING.md)
+- [ ] `bun run lint` and `bun run format:check` pass
+- [ ] `cargo fmt --check` and `cargo clippy` pass for Rust changes
+- [ ] New user-facing strings go through i18next (`src/i18n/locales/en/translation.json`) — no hardcoded text in JSX
 
-## Screenshots/Videos (if applicable)
+## Screenshots or video
 
-<!-- Add screenshots or videos demonstrating the change -->
-
-## AI Assistance
-
-<!-- AI-assisted PRs are welcome! Just let us know so we can review appropriately. -->
-
-- [ ] No AI was used in this PR
-- [ ] AI was used (please describe below)
-
-**If AI was used:**
-
-- Tools used:
-- How extensively:
+<!-- Required for any visible UI change. A short screen recording beats a paragraph. -->
