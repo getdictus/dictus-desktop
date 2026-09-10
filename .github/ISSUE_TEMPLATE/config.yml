@@ -3,9 +3,9 @@ contact_links:
   - name: 💬 Telegram community
     url: https://t.me/getdictus
     about: Quickest way to reach the maintainers and other Dictus users
-  - name: 💡 Feature request or idea
+  - name: 💡 Open-ended idea
     url: https://github.com/getdictus/dictus-desktop/discussions
-    about: Post feature requests and ideas in Discussions so others can weigh in
+    about: Not sure yet what you want? Think it through in Discussions — use the Feature Request template above once it is concrete
   - name: 🗣 General discussion
     url: https://github.com/getdictus/dictus-desktop/discussions
     about: Ask questions and discuss Dictus Desktop with the community
