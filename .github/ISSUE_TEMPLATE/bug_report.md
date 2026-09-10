@@ -1,28 +1,28 @@
 ---
 name: Bug Report
-about: Create a report to help us improve Handy
+about: Report something that does not work in Dictus Desktop
 title: "[BUG] "
 labels: ["bug"]
 assignees: ""
 ---
 
-## Before You Submit
+## Before you submit
 
-**Please search [existing issues](https://github.com/cjpais/Handy/issues) to avoid duplicates.** Your bug may already be reported! Right now it's just me maintaining this project so many issues can be overwhelming! Help me out by checking first.
+Please search [existing issues](https://github.com/getdictus/dictus-desktop/issues) first — your bug may already be reported. Dictus Desktop is maintained by a very small team, so a few seconds of searching saves us real time.
 
-## Bug Description
+## Bug description
 
-A clear and concise description of what the bug is.
+A clear and concise description of what goes wrong, what you expected instead, and the steps to reproduce it.
 
-## System Information
+## System information
 
-**App Version:**
+**App version:**
 
-<!-- You can find this in the app settings or about section -->
+<!-- Settings > About -->
 
-**Operating System:**
+**Operating system:**
 
-<!-- e.g., macOS 14.1, Windows 11, Ubuntu 22.04 -->
+<!-- e.g., macOS 15.2, Windows 11 24H2, Ubuntu 24.04 -->
 
 **CPU:**
 
@@ -32,6 +32,26 @@ A clear and concise description of what the bug is.
 
 <!-- e.g., Apple M2 GPU, NVIDIA RTX 4080, AMD RX 6800 XT, Intel UHD Graphics -->
 
+## Transcription setup
+
+**Transcription model:**
+
+<!-- e.g., Whisper Small / Medium / Turbo / Large, or Parakeet V3 -->
+
+**Smart Mode / post-processing:**
+
+<!-- Which Smart Mode was active, if any, and which model it uses. Write "not used" if the bug happens with plain transcription. -->
+
+**Audio input device:**
+
+<!-- e.g., MacBook built-in microphone, AirPods Pro, Blue Yeti -->
+
 ## Logs
 
-<!-- Please attach relevant logs to help us diagnose the issue. You can find the log directory by going to Settings > About in the app. -->
+<!--
+Attach relevant logs — they are usually what makes a bug fixable.
+
+1. Press Cmd+Shift+D (macOS) or Ctrl+Shift+D (Windows/Linux) to open the Debug panel
+2. Reproduce the bug
+3. Use "Log directory" in that panel to open the folder, and attach dictus.log
+-->
