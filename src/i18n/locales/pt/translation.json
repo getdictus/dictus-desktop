@@ -61,6 +61,7 @@
     },
     "errors": {
       "unsupportedFormat": "Este formato de arquivo não é compatível.",
+      "unsupportedCodec": "O Dictus ainda não consegue ler áudio {{codec}}. Converta o arquivo para WAV, MP3 ou M4A e tente novamente.",
       "unreadableFile": "Não foi possível ler este arquivo.",
       "corruptAudio": "Este arquivo está danificado ou incompleto.",
       "emptyAudio": "Este arquivo não contém áudio.",

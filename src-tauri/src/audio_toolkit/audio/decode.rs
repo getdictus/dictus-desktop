@@ -14,7 +14,7 @@ use std::fs::File;
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
 use symphonia::core::audio::SampleBuffer;
-use symphonia::core::codecs::{DecoderOptions, CODEC_TYPE_NULL};
+use symphonia::core::codecs::{CodecType, DecoderOptions, CODEC_TYPE_NULL};
 use symphonia::core::errors::Error as SymphoniaError;
 use symphonia::core::formats::FormatOptions;
 use symphonia::core::io::MediaSourceStream;
@@ -43,8 +43,13 @@ pub const SUPPORTED_EXTENSIONS: &[&str] = &[
 /// message in the frontend (`fileTranscription.errors.*`).
 #[derive(Debug)]
 pub enum DecodeError {
-    /// The extension isn't one we advertise, or no decoder could be built.
+    /// The extension isn't one we advertise, or the container couldn't be read.
     UnsupportedFormat,
+    /// The container was read fine, but we have no decoder for the codec inside
+    /// it. Carries a human-readable codec name — telling someone their Opus
+    /// `.ogg` is an "unsupported format" sends them hunting for a problem with
+    /// the file instead of the codec.
+    UnsupportedCodec(String),
     /// The file exists but could not be opened or read.
     Io(String),
     /// A decoder was found but the stream is damaged or truncated.
@@ -59,6 +64,7 @@ impl std::fmt::Display for DecodeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::UnsupportedFormat => write!(f, "Unsupported audio format"),
+            Self::UnsupportedCodec(name) => write!(f, "Unsupported audio codec: {}", name),
             Self::Io(detail) => write!(f, "Could not read the file: {}", detail),
             Self::Corrupt(detail) => write!(f, "Damaged or unreadable audio: {}", detail),
             Self::Empty => write!(f, "The file contains no audio"),
@@ -73,8 +79,12 @@ impl std::error::Error for DecodeError {}
 /// user has committed to transcribing it.
 #[derive(Debug, Clone)]
 pub struct AudioFileInfo {
-    pub sample_rate: u32,
-    pub channels: u16,
+    /// `None` when the container doesn't declare it up front.
+    pub sample_rate: Option<u32>,
+    /// `None` when the container doesn't declare a channel layout. MP4 does not
+    /// for AAC — the layout only appears on the first decoded packet — so this
+    /// being absent says nothing about whether the file will decode.
+    pub channels: Option<u16>,
     /// `None` when the container doesn't declare a frame count (some streamed
     /// MP3s and OGGs). The UI then omits the duration instead of guessing.
     pub duration_ms: Option<u64>,
@@ -104,26 +114,20 @@ pub fn probe_audio_file<P: AsRef<Path>>(path: P) -> Result<AudioFileInfo, Decode
         .find(|t| t.id == track_id)
         .ok_or(DecodeError::UnsupportedFormat)?;
 
-    let sample_rate = track
-        .codec_params
-        .sample_rate
-        .ok_or(DecodeError::UnsupportedFormat)?;
+    // Everything here is advisory: containers are free to leave these out, and
+    // MP4 routinely does. Probing is for showing the user what they picked, so
+    // a missing field means "don't display it", never "reject the file".
+    let sample_rate = track.codec_params.sample_rate.filter(|rate| *rate > 0);
     let channels = track
         .codec_params
         .channels
         .map(|c| c.count() as u16)
-        .ok_or(DecodeError::UnsupportedFormat)?;
+        .filter(|count| *count > 0);
 
-    if sample_rate == 0 || channels == 0 {
-        return Err(DecodeError::Corrupt(
-            "stream declares no sample rate or no channels".to_string(),
-        ));
-    }
-
-    let duration_ms = track
-        .codec_params
-        .n_frames
-        .map(|frames| (frames as f64 * 1000.0 / sample_rate as f64).round() as u64);
+    let duration_ms = match (track.codec_params.n_frames, sample_rate) {
+        (Some(frames), Some(rate)) => Some((frames as f64 * 1000.0 / rate as f64).round() as u64),
+        _ => None,
+    };
 
     Ok(AudioFileInfo {
         sample_rate,
@@ -158,32 +162,27 @@ pub fn decode_to_mono_16k<P: AsRef<Path>>(
         .ok_or(DecodeError::UnsupportedFormat)?;
 
     let codec_params = track.codec_params.clone();
-    let source_rate = codec_params
-        .sample_rate
-        .ok_or(DecodeError::UnsupportedFormat)?;
-    let channels = codec_params
-        .channels
-        .map(|c| c.count())
-        .ok_or(DecodeError::UnsupportedFormat)?;
-
-    if source_rate == 0 || channels == 0 {
-        return Err(DecodeError::Corrupt(
-            "stream declares no sample rate or no channels".to_string(),
-        ));
-    }
-
     let total_frames = codec_params.n_frames;
+
+    // Only used to size the buffer and, if the stream itself never says
+    // otherwise, as the resampling rate. The authoritative spec comes off the
+    // first decoded packet — see `source_rate` below.
+    let declared_rate = codec_params.sample_rate.filter(|rate| *rate > 0);
 
     let mut decoder = symphonia::default::get_codecs()
         .make(&codec_params, &DecoderOptions::default())
-        .map_err(|_| DecodeError::UnsupportedFormat)?;
+        .map_err(|_| DecodeError::UnsupportedCodec(codec_name(codec_params.codec)))?;
 
     let mut mono: Vec<f32> = Vec::with_capacity(
         total_frames
             .map(|f| f as usize)
-            .unwrap_or(source_rate as usize * 8),
+            .unwrap_or(declared_rate.unwrap_or(16_000) as usize * 8),
     );
     let mut sample_buf: Option<SampleBuffer<f32>> = None;
+    // Filled in from the first packet we successfully decode. MP4 does not put
+    // the channel layout in `codec_params` for AAC, so reading it from the
+    // container header rejected every .m4a — which is what phones record.
+    let mut source_rate: Option<u32> = None;
 
     loop {
         if cancel.load(Ordering::Relaxed) {
@@ -207,10 +206,33 @@ pub fn decode_to_mono_16k<P: AsRef<Path>>(
 
         match decoder.decode(&packet) {
             Ok(audio_buf) => {
+                let spec = *audio_buf.spec();
+                let channels = spec.channels.count();
+                if channels == 0 {
+                    return Err(DecodeError::Corrupt(
+                        "decoded audio reports no channels".to_string(),
+                    ));
+                }
+
+                match source_rate {
+                    None => source_rate = Some(spec.rate),
+                    // A rate change mid-stream would silently stretch everything
+                    // after it, so refuse rather than transcribe warped audio.
+                    Some(rate) if rate != spec.rate => {
+                        return Err(DecodeError::Corrupt(format!(
+                            "sample rate changed mid-stream from {} to {}",
+                            rate, spec.rate
+                        )));
+                    }
+                    Some(_) => {}
+                }
+
                 let buf = sample_buf.get_or_insert_with(|| {
-                    SampleBuffer::<f32>::new(audio_buf.capacity() as u64, *audio_buf.spec())
+                    SampleBuffer::<f32>::new(audio_buf.capacity() as u64, spec)
                 });
                 buf.copy_interleaved_ref(audio_buf);
+                // Per-buffer channel count: cheap, and correct even if a
+                // container disagrees with what the decoder actually produced.
                 downmix_into(buf.samples(), channels, &mut mono);
             }
             // Decode errors on individual packets are recoverable per the
@@ -231,7 +253,43 @@ pub fn decode_to_mono_16k<P: AsRef<Path>>(
         return Err(DecodeError::Empty);
     }
 
+    // `mono` is non-empty, so at least one packet decoded and set the rate.
+    let source_rate = source_rate
+        .or(declared_rate)
+        .ok_or_else(|| DecodeError::Corrupt("stream declares no sample rate".to_string()))?;
+
     resample_mono(mono, source_rate, TARGET_SAMPLE_RATE, cancel)
+}
+
+/// A name for a codec we have no decoder for.
+///
+/// The registry can't help here — by definition these codecs aren't registered,
+/// and `CodecType`'s own `Display` prints a hex id. So the ones a user can
+/// realistically reach through the extensions we advertise are named by hand,
+/// and anything else falls back to that id for the log.
+fn codec_name(codec: CodecType) -> String {
+    use symphonia::core::codecs::{
+        CODEC_TYPE_AC4, CODEC_TYPE_ALAC, CODEC_TYPE_ATRAC3, CODEC_TYPE_ATRAC9, CODEC_TYPE_DCA,
+        CODEC_TYPE_EAC3, CODEC_TYPE_MONKEYS_AUDIO, CODEC_TYPE_MUSEPACK, CODEC_TYPE_OPUS,
+        CODEC_TYPE_SPEEX, CODEC_TYPE_TTA, CODEC_TYPE_WAVPACK, CODEC_TYPE_WMA,
+    };
+
+    match codec {
+        CODEC_TYPE_OPUS => "Opus".to_string(),
+        CODEC_TYPE_SPEEX => "Speex".to_string(),
+        CODEC_TYPE_ALAC => "Apple Lossless (ALAC)".to_string(),
+        CODEC_TYPE_WMA => "WMA".to_string(),
+        CODEC_TYPE_EAC3 => "Enhanced AC-3".to_string(),
+        CODEC_TYPE_AC4 => "AC-4".to_string(),
+        CODEC_TYPE_DCA => "DTS".to_string(),
+        CODEC_TYPE_ATRAC3 => "ATRAC3".to_string(),
+        CODEC_TYPE_ATRAC9 => "ATRAC9".to_string(),
+        CODEC_TYPE_MUSEPACK => "Musepack".to_string(),
+        CODEC_TYPE_MONKEYS_AUDIO => "Monkey's Audio".to_string(),
+        CODEC_TYPE_WAVPACK => "WavPack".to_string(),
+        CODEC_TYPE_TTA => "TTA".to_string(),
+        other => other.to_string(),
+    }
 }
 
 /// Open a media file and pick its default audio track.
@@ -435,12 +493,30 @@ mod tests {
 
     /// Rough peak-frequency estimate via zero crossings — enough to prove the
     /// resampler preserved pitch rather than up/down-shifting it.
+    ///
+    /// Measured over the voiced region only: lossy encoders pad the head of the
+    /// stream with silence (AAC's encoder delay is ~1000 samples), and counting
+    /// that padding as signal drags the estimate off by tens of hertz.
     fn estimated_freq(samples: &[f32], sample_rate: u32) -> f32 {
-        let crossings = samples
+        let peak = samples.iter().fold(0.0f32, |acc, s| acc.max(s.abs()));
+        assert!(peak > 0.0, "cannot estimate the pitch of silence");
+
+        let threshold = peak * 0.5;
+        let first = samples
+            .iter()
+            .position(|s| s.abs() > threshold)
+            .expect("signal must rise above half its peak");
+        let last = samples
+            .iter()
+            .rposition(|s| s.abs() > threshold)
+            .expect("signal must rise above half its peak");
+        let voiced = &samples[first..=last];
+
+        let crossings = voiced
             .windows(2)
             .filter(|w| w[0] <= 0.0 && w[1] > 0.0)
             .count();
-        crossings as f32 * sample_rate as f32 / samples.len() as f32
+        crossings as f32 * sample_rate as f32 / voiced.len() as f32
     }
 
     #[test]
@@ -516,8 +592,8 @@ mod tests {
 
         let info = probe_audio_file(&path).expect("probe wav");
 
-        assert_eq!(info.sample_rate, 44_100);
-        assert_eq!(info.channels, 2);
+        assert_eq!(info.sample_rate, Some(44_100));
+        assert_eq!(info.channels, Some(2));
         assert_eq!(info.duration_ms, Some(2_000));
     }
 
@@ -593,6 +669,76 @@ mod tests {
             seen.last().and_then(|p| *p).is_some_and(|v| v > 0.99),
             "progress must reach ~1.0 at end of stream"
         );
+    }
+
+    /// Real container/codec samples that a synthetic WAV can never stand in for.
+    /// See `src-tauri/tests/fixtures/audio/README.md`.
+    fn fixture(name: &str) -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures/audio")
+            .join(name)
+    }
+
+    #[test]
+    fn decodes_aac_in_mp4() {
+        // MP4 leaves codec_params.channels empty — the channel layout only shows
+        // up on the first decoded packet. Requiring it up front rejected every
+        // .m4a, which is what phones record. Regression for #45.
+        let samples = decode(&fixture("aac-lc-mono-44100.m4a")).expect("decode AAC in MP4");
+
+        // AAC pads the start of the stream, so the length lands near but not
+        // exactly on half a second of 16 kHz audio.
+        assert!(
+            (7_000..=9_500).contains(&samples.len()),
+            "expected roughly 8000 samples, got {}",
+            samples.len()
+        );
+        assert!(
+            (estimated_freq(&samples, 16_000) - 440.0).abs() < 15.0,
+            "resampled AAC must keep its 440 Hz tone"
+        );
+    }
+
+    #[test]
+    fn probes_aac_in_mp4_without_a_declared_channel_count() {
+        let info = probe_audio_file(fixture("aac-lc-mono-44100.m4a")).expect("probe AAC in MP4");
+
+        assert_eq!(info.sample_rate, Some(44_100));
+        assert!(
+            info.duration_ms.is_some_and(|ms| (400..=700).contains(&ms)),
+            "expected about 500 ms, got {:?}",
+            info.duration_ms
+        );
+    }
+
+    #[test]
+    fn decodes_vorbis_in_ogg() {
+        let samples = decode(&fixture("vorbis-stereo-48000.ogg")).expect("decode Vorbis in Ogg");
+
+        assert!(
+            (7_500..=8_500).contains(&samples.len()),
+            "expected roughly 8000 samples, got {}",
+            samples.len()
+        );
+        assert!((estimated_freq(&samples, 16_000) - 440.0).abs() < 15.0);
+    }
+
+    #[test]
+    fn names_the_codec_when_ogg_carries_opus() {
+        // symphonia 0.5 ships no Opus decoder, and .ogg Opus is what WhatsApp and
+        // many Android recorders produce. Rejecting it as "unsupported format"
+        // sends the user looking for a problem with their file.
+        let err = decode(&fixture("opus-mono-48000.ogg")).expect_err("Opus has no decoder");
+
+        match err {
+            DecodeError::UnsupportedCodec(name) => {
+                assert!(
+                    name.to_lowercase().contains("opus"),
+                    "the message must name the codec, got {name:?}"
+                );
+            }
+            other => panic!("expected UnsupportedCodec, got {other:?}"),
+        }
     }
 
     #[test]

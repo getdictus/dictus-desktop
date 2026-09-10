@@ -61,6 +61,7 @@
     },
     "errors": {
       "unsupportedFormat": "صيغة هذا الملف غير مدعومة.",
+      "unsupportedCodec": "لا يستطيع Dictus قراءة صوت {{codec}} بعد. حوّل الملف إلى WAV أو MP3 أو M4A ثم أعد المحاولة.",
       "unreadableFile": "تعذّرت قراءة هذا الملف.",
       "corruptAudio": "هذا الملف تالف أو غير مكتمل.",
       "emptyAudio": "لا يحتوي هذا الملف على صوت.",

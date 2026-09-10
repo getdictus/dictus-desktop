@@ -1057,7 +1057,16 @@ export type AudioFileDetails = { path: string; file_name: string; size_bytes: nu
 /**
  * `None` when the container declares no frame count.
  */
-duration_ms: number | null; sample_rate: number; channels: number }
+duration_ms: number | null; 
+/**
+ * `None` when the container declares no sample rate.
+ */
+sample_rate: number | null; 
+/**
+ * `None` when the container declares no channel layout, which MP4 does not
+ * for AAC. Absent here says nothing about whether the file will decode.
+ */
+channels: number | null }
 export type AutoSubmitKey = "enter" | "ctrl_enter" | "cmd_enter"
 export type AvailableAccelerators = { whisper: string[]; ort: string[]; gpu_devices: GpuDeviceOption[] }
 export type BindingResponse = { success: boolean; binding: ShortcutBinding | null; error: string | null }
@@ -1073,9 +1082,14 @@ export type EngineType = "Whisper" | "Parakeet" | "Moonshine" | "MoonshineStream
  */
 export type FileTranscriptionError = 
 /**
- * Not a format we advertise, or no decoder exists for the stream.
+ * Not a format we advertise, or the container couldn't be read.
  */
 { kind: "unsupported_format" } | 
+/**
+ * The container was fine but its codec has no decoder — Opus in `.ogg`,
+ * most commonly. `detail` names the codec so the message can too.
+ */
+{ kind: "unsupported_codec"; detail: string } | 
 /**
  * The file could not be opened or read.
  */

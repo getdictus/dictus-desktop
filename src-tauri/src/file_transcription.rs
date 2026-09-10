@@ -55,8 +55,11 @@ pub struct FileTranscriptionProgress {
 #[derive(Clone, Debug, Serialize, Deserialize, Type)]
 #[serde(tag = "kind", content = "detail", rename_all = "snake_case")]
 pub enum FileTranscriptionError {
-    /// Not a format we advertise, or no decoder exists for the stream.
+    /// Not a format we advertise, or the container couldn't be read.
     UnsupportedFormat,
+    /// The container was fine but its codec has no decoder — Opus in `.ogg`,
+    /// most commonly. `detail` names the codec so the message can too.
+    UnsupportedCodec(String),
     /// The file could not be opened or read.
     UnreadableFile(String),
     /// A decoder matched but the stream is damaged.
@@ -81,6 +84,7 @@ impl From<DecodeError> for FileTranscriptionError {
     fn from(error: DecodeError) -> Self {
         match error {
             DecodeError::UnsupportedFormat => Self::UnsupportedFormat,
+            DecodeError::UnsupportedCodec(name) => Self::UnsupportedCodec(name),
             DecodeError::Io(detail) => Self::UnreadableFile(detail),
             DecodeError::Corrupt(detail) => Self::CorruptAudio(detail),
             DecodeError::Empty => Self::EmptyAudio,
@@ -97,8 +101,11 @@ pub struct AudioFileDetails {
     pub size_bytes: u64,
     /// `None` when the container declares no frame count.
     pub duration_ms: Option<u64>,
-    pub sample_rate: u32,
-    pub channels: u16,
+    /// `None` when the container declares no sample rate.
+    pub sample_rate: Option<u32>,
+    /// `None` when the container declares no channel layout, which MP4 does not
+    /// for AAC. Absent here says nothing about whether the file will decode.
+    pub channels: Option<u16>,
 }
 
 /// A finished import.
@@ -497,6 +504,10 @@ mod tests {
             FileTranscriptionError::from(DecodeError::UnsupportedFormat),
             FileTranscriptionError::UnsupportedFormat
         ));
+        match FileTranscriptionError::from(DecodeError::UnsupportedCodec("Opus".into())) {
+            FileTranscriptionError::UnsupportedCodec(name) => assert_eq!(name, "Opus"),
+            other => panic!("expected UnsupportedCodec, got {other:?}"),
+        }
         assert!(matches!(
             FileTranscriptionError::from(DecodeError::Io("nope".into())),
             FileTranscriptionError::UnreadableFile(_)

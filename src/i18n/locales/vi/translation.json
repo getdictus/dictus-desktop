@@ -61,6 +61,7 @@
     },
     "errors": {
       "unsupportedFormat": "Định dạng tệp này không được hỗ trợ.",
+      "unsupportedCodec": "Dictus chưa đọc được âm thanh {{codec}}. Hãy chuyển tệp sang WAV, MP3 hoặc M4A rồi thử lại.",
       "unreadableFile": "Không đọc được tệp này.",
       "corruptAudio": "Tệp này bị hỏng hoặc không đầy đủ.",
       "emptyAudio": "Tệp này không chứa âm thanh.",

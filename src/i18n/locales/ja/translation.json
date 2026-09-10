@@ -61,6 +61,7 @@
     },
     "errors": {
       "unsupportedFormat": "このファイル形式には対応していません。",
+      "unsupportedCodec": "Dictus はまだ {{codec}} の音声を読み取れません。ファイルを WAV、MP3、M4A に変換してからもう一度お試しください。",
       "unreadableFile": "このファイルを読み込めませんでした。",
       "corruptAudio": "このファイルは破損しているか不完全です。",
       "emptyAudio": "このファイルに音声が含まれていません。",

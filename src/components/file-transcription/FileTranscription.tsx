@@ -53,6 +53,7 @@ const STAGE_LABEL_KEYS: Record<FileTranscriptionStage, string> = {
 
 const ERROR_MESSAGE_KEYS: Record<FileTranscriptionError["kind"], string> = {
   unsupported_format: "fileTranscription.errors.unsupportedFormat",
+  unsupported_codec: "fileTranscription.errors.unsupportedCodec",
   unreadable_file: "fileTranscription.errors.unreadableFile",
   corrupt_audio: "fileTranscription.errors.corruptAudio",
   empty_audio: "fileTranscription.errors.emptyAudio",
@@ -276,6 +277,19 @@ export const FileTranscription: React.FC = () => {
   // callback defined inside the render can't rely on narrowing of `phase`.
   const failedFile = phase.status === "failed" ? phase.file : null;
 
+  // Only the unsupported-codec case interpolates anything: its detail is the
+  // codec name, which the message needs so the user knows it is Opus (or
+  // whatever) rather than something wrong with their file.
+  const errorMessage =
+    phase.status === "failed"
+      ? t(
+          ERROR_MESSAGE_KEYS[phase.error.kind],
+          phase.error.kind === "unsupported_codec"
+            ? { codec: phase.error.detail }
+            : undefined,
+        )
+      : null;
+
   return (
     <div className="max-w-3xl w-full mx-auto space-y-6">
       <div className="space-y-2">
@@ -302,9 +316,7 @@ export const FileTranscription: React.FC = () => {
 
           {phase.status === "failed" && (
             <div className="space-y-3">
-              <Alert variant="error">
-                {t(ERROR_MESSAGE_KEYS[phase.error.kind])}
-              </Alert>
+              <Alert variant="error">{errorMessage}</Alert>
               {failedFile !== null && (
                 <div className="flex gap-2">
                   <Button

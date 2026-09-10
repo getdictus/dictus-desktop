@@ -61,6 +61,7 @@
     },
     "errors": {
       "unsupportedFormat": "Tento formát souboru není podporován.",
+      "unsupportedCodec": "Dictus zatím neumí přečíst zvuk {{codec}}. Převeďte soubor do WAV, MP3 nebo M4A a zkuste to znovu.",
       "unreadableFile": "Tento soubor se nepodařilo přečíst.",
       "corruptAudio": "Tento soubor je poškozený nebo neúplný.",
       "emptyAudio": "Tento soubor neobsahuje žádný zvuk.",

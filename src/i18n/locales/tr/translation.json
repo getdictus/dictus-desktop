@@ -61,6 +61,7 @@
     },
     "errors": {
       "unsupportedFormat": "Bu dosya biçimi desteklenmiyor.",
+      "unsupportedCodec": "Dictus {{codec}} sesini henüz okuyamıyor. Dosyayı WAV, MP3 veya M4A biçimine dönüştürüp tekrar dene.",
       "unreadableFile": "Bu dosya okunamadı.",
       "corruptAudio": "Bu dosya bozuk veya eksik.",
       "emptyAudio": "Bu dosyada ses yok.",
