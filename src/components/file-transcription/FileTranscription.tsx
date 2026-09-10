@@ -277,6 +277,14 @@ export const FileTranscription: React.FC = () => {
   // callback defined inside the render can't rely on narrowing of `phase`.
   const failedFile = phase.status === "failed" ? phase.file : null;
 
+  // The empty state — nothing picked yet, or a pick that never produced a file.
+  // The drop zone is the whole point of the page here, so it takes the full
+  // height; every other state is a card whose height follows its content.
+  const showsDropZone =
+    phase.status === "idle" ||
+    phase.status === "inspecting" ||
+    (phase.status === "failed" && phase.file === null);
+
   // Only the unsupported-codec case interpolates anything: its detail is the
   // codec name, which the message needs so the user knows it is Opus (or
   // whatever) rather than something wrong with their file.
@@ -291,162 +299,163 @@ export const FileTranscription: React.FC = () => {
       : null;
 
   return (
-    <div className="max-w-3xl w-full mx-auto space-y-6">
-      <div className="space-y-2">
-        <div className="px-4">
-          <h2 className="text-xs font-medium text-mid-gray uppercase tracking-wide">
-            {t("fileTranscription.title")}
-          </h2>
-          <p className="text-sm text-text/60 mt-1">
-            {t("fileTranscription.subtitle")}
-          </p>
-        </div>
+    // Same max-w-3xl column as every other page — the width already matches the
+    // rest of the app; it is the vertical emptiness underneath that was the
+    // problem, so only the height is claimed here.
+    <div className="max-w-3xl w-full mx-auto flex-1 flex flex-col gap-2">
+      <div className="px-4">
+        <h2 className="text-xs font-medium text-mid-gray uppercase tracking-wide">
+          {t("fileTranscription.title")}
+        </h2>
+        <p className="text-sm text-text/60 mt-1">
+          {t("fileTranscription.subtitle")}
+        </p>
+      </div>
 
-        <div className="bg-background border border-mid-gray/20 rounded-lg p-4 space-y-4">
-          {(phase.status === "idle" ||
-            phase.status === "inspecting" ||
-            (phase.status === "failed" && phase.file === null)) && (
-            <DropZone
-              isDragActive={isDragActive}
-              isBusy={phase.status === "inspecting"}
-              supportedFormats={supportedFormats}
-              onClick={() => void openFilePicker()}
-            />
-          )}
+      <div
+        className={`bg-background border border-mid-gray/20 rounded-lg p-4 space-y-4 flex flex-col ${
+          showsDropZone ? "flex-1" : ""
+        }`}
+      >
+        {showsDropZone && (
+          <DropZone
+            isDragActive={isDragActive}
+            isBusy={phase.status === "inspecting"}
+            supportedFormats={supportedFormats}
+            onClick={() => void openFilePicker()}
+          />
+        )}
 
-          {phase.status === "failed" && (
-            <div className="space-y-3">
-              <Alert variant="error">{errorMessage}</Alert>
-              {failedFile !== null && (
-                <div className="flex gap-2">
-                  <Button
-                    variant="primary"
-                    size="md"
-                    onClick={() => void startTranscription(failedFile)}
-                  >
-                    {t("fileTranscription.actions.retry")}
-                  </Button>
-                  <Button variant="secondary" size="md" onClick={reset}>
-                    {t("fileTranscription.actions.chooseAnother")}
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {phase.status === "ready" && (
-            <div className="space-y-4">
-              <FileSummary
-                file={phase.file}
-                modelName={modelName}
-                languageName={languageName}
-              />
+        {phase.status === "failed" && (
+          <div className="space-y-3">
+            <Alert variant="error">{errorMessage}</Alert>
+            {failedFile !== null && (
               <div className="flex gap-2">
                 <Button
                   variant="primary"
                   size="md"
-                  onClick={() => void startTranscription(phase.file)}
+                  onClick={() => void startTranscription(failedFile)}
                 >
-                  {t("fileTranscription.actions.transcribe")}
+                  {t("fileTranscription.actions.retry")}
                 </Button>
                 <Button variant="secondary" size="md" onClick={reset}>
                   {t("fileTranscription.actions.chooseAnother")}
                 </Button>
               </div>
-              <p className="text-xs text-text/50">
-                {t("fileTranscription.privacyNote")}
-              </p>
-            </div>
-          )}
+            )}
+          </div>
+        )}
 
-          {phase.status === "running" && (
-            <div className="space-y-4">
-              <FileSummary
-                file={phase.file}
-                modelName={modelName}
-                languageName={languageName}
-              />
-              <ProgressPanel
-                stageLabel={t(STAGE_LABEL_KEYS[phase.stage])}
-                progress={phase.progress}
-                cancelling={phase.cancelling}
-              />
+        {phase.status === "ready" && (
+          <div className="space-y-4">
+            <FileSummary
+              file={phase.file}
+              modelName={modelName}
+              languageName={languageName}
+            />
+            <div className="flex gap-2">
               <Button
-                variant="secondary"
+                variant="primary"
                 size="md"
-                disabled={phase.cancelling}
-                onClick={() => void requestCancel()}
-                className="flex items-center gap-2"
+                onClick={() => void startTranscription(phase.file)}
               >
-                <X className="w-4 h-4" />
-                <span>
-                  {phase.cancelling
-                    ? t("fileTranscription.stages.cancelling")
-                    : t("fileTranscription.actions.cancel")}
-                </span>
+                {t("fileTranscription.actions.transcribe")}
               </Button>
-            </div>
-          )}
-
-          {phase.status === "done" && (
-            <div className="space-y-4">
-              <FileSummary
-                file={phase.file}
-                modelName={modelName}
-                languageName={languageName}
-              />
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-medium text-mid-gray uppercase tracking-wide">
-                    {t("fileTranscription.result.title")}
-                  </h3>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => void copyTranscript(phase.result.text)}
-                      className="flex items-center gap-2"
-                    >
-                      {showCopied ? (
-                        <Check className="w-4 h-4" />
-                      ) : (
-                        <Copy className="w-4 h-4" />
-                      )}
-                      <span>
-                        {showCopied
-                          ? t("fileTranscription.actions.copied")
-                          : t("fileTranscription.actions.copy")}
-                      </span>
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setSection("history")}
-                      className="flex items-center gap-2"
-                    >
-                      <History className="w-4 h-4" />
-                      <span>
-                        {t("fileTranscription.actions.openInHistory")}
-                      </span>
-                    </Button>
-                  </div>
-                </div>
-
-                <p className="text-sm text-text/90 select-text cursor-text whitespace-pre-wrap break-words bg-mid-gray/5 border border-mid-gray/20 rounded-lg p-3">
-                  {phase.result.text}
-                </p>
-                <p className="text-xs text-text/50">
-                  {t("fileTranscription.result.savedToHistory")}
-                </p>
-              </div>
-
               <Button variant="secondary" size="md" onClick={reset}>
                 {t("fileTranscription.actions.chooseAnother")}
               </Button>
             </div>
-          )}
-        </div>
+            <p className="text-xs text-text/50">
+              {t("fileTranscription.privacyNote")}
+            </p>
+          </div>
+        )}
+
+        {phase.status === "running" && (
+          <div className="space-y-4">
+            <FileSummary
+              file={phase.file}
+              modelName={modelName}
+              languageName={languageName}
+            />
+            <ProgressPanel
+              stageLabel={t(STAGE_LABEL_KEYS[phase.stage])}
+              progress={phase.progress}
+              cancelling={phase.cancelling}
+            />
+            <Button
+              variant="secondary"
+              size="md"
+              disabled={phase.cancelling}
+              onClick={() => void requestCancel()}
+              className="flex items-center gap-2"
+            >
+              <X className="w-4 h-4" />
+              <span>
+                {phase.cancelling
+                  ? t("fileTranscription.stages.cancelling")
+                  : t("fileTranscription.actions.cancel")}
+              </span>
+            </Button>
+          </div>
+        )}
+
+        {phase.status === "done" && (
+          <div className="space-y-4">
+            <FileSummary
+              file={phase.file}
+              modelName={modelName}
+              languageName={languageName}
+            />
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-medium text-mid-gray uppercase tracking-wide">
+                  {t("fileTranscription.result.title")}
+                </h3>
+                <div className="flex gap-2">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => void copyTranscript(phase.result.text)}
+                    className="flex items-center gap-2"
+                  >
+                    {showCopied ? (
+                      <Check className="w-4 h-4" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                    <span>
+                      {showCopied
+                        ? t("fileTranscription.actions.copied")
+                        : t("fileTranscription.actions.copy")}
+                    </span>
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setSection("history")}
+                    className="flex items-center gap-2"
+                  >
+                    <History className="w-4 h-4" />
+                    <span>{t("fileTranscription.actions.openInHistory")}</span>
+                  </Button>
+                </div>
+              </div>
+
+              <p className="text-sm text-text/90 select-text cursor-text whitespace-pre-wrap break-words bg-mid-gray/5 border border-mid-gray/20 rounded-lg p-3">
+                {phase.result.text}
+              </p>
+              <p className="text-xs text-text/50">
+                {t("fileTranscription.result.savedToHistory")}
+              </p>
+            </div>
+
+            <Button variant="secondary" size="md" onClick={reset}>
+              {t("fileTranscription.actions.chooseAnother")}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -473,16 +482,19 @@ const DropZone: React.FC<DropZoneProps> = ({
       onClick={onClick}
       disabled={isBusy}
       aria-label={t("fileTranscription.dropZone.label")}
-      className={`w-full border border-dashed rounded-lg flex flex-col items-center justify-center gap-2 px-6 py-12 transition-colors cursor-pointer disabled:cursor-wait focus:outline-none focus:ring-2 focus:ring-logo-primary ${
+      // flex-1 fills the panel, which fills the page. min-h-[14rem] keeps the
+      // target usable if the window is short; below that the page scrolls
+      // rather than squashing the label, so there is never a second scrollbar.
+      className={`w-full flex-1 min-h-[14rem] border border-dashed rounded-lg flex flex-col items-center justify-center gap-2 px-6 py-12 transition-colors cursor-pointer disabled:cursor-wait focus:outline-none focus:ring-2 focus:ring-logo-primary ${
         isDragActive
           ? "border-logo-primary/60 bg-logo-primary/5"
           : "border-mid-gray/40 hover:border-logo-primary/60 hover:bg-logo-primary/5"
       }`}
     >
       {isDragActive ? (
-        <Upload className="w-8 h-8 text-logo-primary" />
+        <Upload className="w-10 h-10 text-logo-primary" />
       ) : (
-        <FileAudio className="w-8 h-8 text-mid-gray" />
+        <FileAudio className="w-10 h-10 text-mid-gray" />
       )}
       <span className="text-sm font-medium">
         {isBusy
