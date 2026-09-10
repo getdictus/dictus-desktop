@@ -158,3 +158,17 @@ Access debug features: `Cmd+Shift+D` (macOS) or `Ctrl+Shift+D` (Windows/Linux)
 - **macOS**: Metal acceleration, accessibility permissions required
 - **Windows**: Vulkan acceleration, code signing
 - **Linux**: OpenBLAS + Vulkan, limited Wayland support, overlay disabled by default
+
+## Agent skills
+
+### Issue tracker
+
+Issues live as GitHub issues on `getdictus/dictus-desktop` (the `origin` remote), managed with the `gh` CLI. Never file issues against the `upstream` Handy remote. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical triage roles, each using its default label string: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` and `docs/adr/` at the repo root, both created lazily by `/domain-modeling`. See `docs/agents/domain.md`.
