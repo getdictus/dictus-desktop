@@ -125,10 +125,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const measure = useCallback(() => {
     const item = itemRefs.current[activeIndex];
     if (!item) return;
+    // Whole pixels on purpose: the lens rounds its filter region to integer
+    // px, so a fractional box lands the rim about a pixel off the plate.
+    // offset* is already rounded; Math.round guards a future switch to
+    // getBoundingClientRect.
     setCapsule({
-      top: item.offsetTop,
-      height: item.offsetHeight,
-      width: item.offsetWidth,
+      top: Math.round(item.offsetTop),
+      height: Math.round(item.offsetHeight),
+      width: Math.round(item.offsetWidth),
     });
   }, [activeIndex]);
 
