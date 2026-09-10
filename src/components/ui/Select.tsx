@@ -39,23 +39,22 @@ type NonCreatableProps = {
 
 export type SelectProps = BaseProps & (CreatableProps | NonCreatableProps);
 
-const baseBackground =
-  "color-mix(in srgb, var(--color-mid-gray) 10%, transparent)";
-const hoverBackground =
-  "color-mix(in srgb, var(--color-accent) 12%, transparent)";
-const focusBackground =
-  "color-mix(in srgb, var(--color-accent) 20%, transparent)";
-const neutralBorder =
-  "color-mix(in srgb, var(--color-mid-gray) 80%, transparent)";
+const baseBackground = "var(--surface-control)";
+const hoverBackground = "color-mix(in srgb, var(--accent) 12%, transparent)";
+const focusBackground = "color-mix(in srgb, var(--accent) 20%, transparent)";
+const neutralBorder = "var(--border-control)";
 
 const selectStyles: StylesConfig<SelectOption, false> = {
   control: (base, state) => ({
     ...base,
     minHeight: 40,
-    borderRadius: 6,
+    borderRadius: 8,
     borderColor: state.isFocused ? "var(--color-accent)" : neutralBorder,
-    boxShadow: state.isFocused ? "0 0 0 1px var(--color-accent)" : "none",
+    minWidth: 200,
+    boxShadow: state.isFocused ? "var(--focus-ring)" : "var(--specular)",
     backgroundColor: state.isFocused ? focusBackground : baseBackground,
+    backdropFilter: "var(--blur-surface)",
+    WebkitBackdropFilter: "var(--blur-surface)",
     fontSize: "0.875rem",
     color: "var(--color-text)",
     transition: "all 150ms ease",
@@ -79,16 +78,14 @@ const selectStyles: StylesConfig<SelectOption, false> = {
   }),
   dropdownIndicator: (base, state) => ({
     ...base,
-    color: state.isFocused
-      ? "var(--color-accent)"
-      : "color-mix(in srgb, var(--color-mid-gray) 80%, transparent)",
+    color: state.isFocused ? "var(--color-accent)" : "var(--text-muted)",
     ":hover": {
       color: "var(--color-accent)",
     },
   }),
   clearIndicator: (base) => ({
     ...base,
-    color: "color-mix(in srgb, var(--color-mid-gray) 80%, transparent)",
+    color: "var(--text-muted)",
     ":hover": {
       color: "var(--color-accent)",
     },
@@ -96,11 +93,14 @@ const selectStyles: StylesConfig<SelectOption, false> = {
   menu: (provided) => ({
     ...provided,
     zIndex: 30,
-    backgroundColor: "var(--color-background)",
+    borderRadius: 12,
+    overflow: "hidden",
+    backgroundColor: "var(--surface-floating)",
+    backdropFilter: "var(--blur-floating)",
+    WebkitBackdropFilter: "var(--blur-floating)",
     color: "var(--color-text)",
-    border:
-      "1px solid color-mix(in srgb, var(--color-mid-gray) 30%, transparent)",
-    boxShadow: "0 10px 30px rgba(15, 15, 15, 0.2)",
+    border: "1px solid var(--border-hairline)",
+    boxShadow: "var(--specular), var(--shadow-raised)",
   }),
   option: (base, state) => ({
     ...base,
@@ -115,7 +115,7 @@ const selectStyles: StylesConfig<SelectOption, false> = {
   }),
   placeholder: (base) => ({
     ...base,
-    color: "color-mix(in srgb, var(--color-mid-gray) 65%, transparent)",
+    color: "var(--text-faint)",
   }),
 };
 

@@ -19,21 +19,21 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const baseClasses =
-    "font-medium rounded-lg border focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer";
+    "focus-ring font-medium rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer";
 
   const variantClasses = {
     primary:
-      "text-white bg-accent border-accent hover:bg-accent/80 hover:border-accent/80 focus:ring-1 focus:ring-accent",
+      "text-white bg-accent border-accent hover:bg-accent/80 hover:border-accent/80",
     "primary-soft":
-      "text-text bg-accent/20 border-transparent hover:bg-accent/30 focus:ring-1 focus:ring-accent",
+      "text-text bg-accent/20 border-transparent hover:bg-accent/30",
     secondary:
-      "bg-mid-gray/10 border-mid-gray/20 hover:bg-accent/10 hover:border-accent focus:outline-none",
+      "bg-control border-control-border glass-specular hover:bg-accent/10 hover:border-accent",
     danger:
-      "text-white bg-red-600 border-mid-gray/20 hover:bg-red-700 hover:border-red-700 focus:ring-1 focus:ring-red-500",
+      "text-white bg-red-600 border-red-600 hover:bg-red-700 hover:border-red-700",
     "danger-ghost":
-      "text-red-400 border-transparent hover:text-red-300 hover:bg-red-500/10 focus:bg-red-500/20",
+      "text-red-400 border-transparent hover:text-red-300 hover:bg-red-500/10",
     ghost:
-      "text-current border-transparent hover:bg-mid-gray/10 hover:border-accent focus:bg-mid-gray/20",
+      "text-current border-transparent hover:bg-control hover:border-hairline",
   };
 
   const sizeClasses = {
