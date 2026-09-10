@@ -156,6 +156,34 @@
   }
 }
 
+/* Reduced-effects path. Two triggers, same result as losing backdrop-filter:
+ * the OS accessibility setting, and `<html data-glass="off">`, which is the
+ * escape hatch a tester or a support case can flip without a rebuild. The glass
+ * lens reads the same two signals — see src/components/ui/glass/capabilities.ts. */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --surface-card: var(--surface-opaque-raised);
+    --surface-sidebar: var(--surface-opaque);
+    --surface-control: var(--surface-opaque-raised);
+    --surface-floating: var(--surface-opaque-raised);
+    --surface-overlay: var(--surface-opaque-overlay);
+    --surface-overlay-error: rgba(20, 13, 4, 0.92);
+    --blur-surface: none;
+    --blur-floating: none;
+  }
+}
+
+:root[data-glass="off"] {
+  --surface-card: var(--surface-opaque-raised);
+  --surface-sidebar: var(--surface-opaque);
+  --surface-control: var(--surface-opaque-raised);
+  --surface-floating: var(--surface-opaque-raised);
+  --surface-overlay: var(--surface-opaque-overlay);
+  --surface-overlay-error: rgba(20, 13, 4, 0.92);
+  --blur-surface: none;
+  --blur-floating: none;
+}
+
 .container {
   margin: 0;
   padding-top: 10vh;
