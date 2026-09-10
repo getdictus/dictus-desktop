@@ -334,7 +334,7 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
           ref={chipRef}
           dir="ltr"
           aria-label={t("smartModes.shortcut.recording")}
-          className="px-2 py-1 text-sm font-medium border border-logo-primary bg-logo-primary/30 rounded-md"
+          className="px-3 py-[5px] text-[13px] font-semibold border border-accent bg-accent/30 rounded-lg"
         >
           {formatCurrentKeys()}
         </div>
@@ -350,7 +350,7 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
             aria-label={currentBinding}
             aria-disabled={disabled ? "true" : undefined}
             onClick={disabled ? undefined : handleClick}
-            className={`px-2 py-1 text-sm font-medium bg-mid-gray/10 border border-mid-gray/80 rounded-md ${disabled ? "opacity-60" : "cursor-pointer hover:bg-logo-primary/10 hover:border-logo-primary"}`}
+            className={`px-3 py-[5px] text-[13px] font-semibold bg-control border border-control-border rounded-lg ${disabled ? "opacity-60" : "cursor-pointer hover:bg-accent/10 hover:border-accent"}`}
           >
             {formatKeyCombination(currentBinding, osType)}
           </div>
@@ -363,7 +363,7 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
                 combo: formatKeyCombination(currentBinding, osType),
               })}
             >
-              <X className="w-4 h-4 text-mid-gray/50 hover:text-red-400" />
+              <X className="w-4 h-4 text-text-faint hover:text-red-400" />
             </button>
           )}
         </span>
@@ -377,7 +377,7 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
         aria-label={t("smartModes.card.addShortcut")}
         aria-disabled={disabled ? "true" : undefined}
         onClick={disabled ? undefined : handleClick}
-        className={`px-2 py-1 text-xs font-medium bg-mid-gray/5 border border-mid-gray/30 text-mid-gray/60 rounded-md ${disabled ? "opacity-60" : "cursor-pointer"}`}
+        className={`px-3 py-[5px] text-xs font-medium bg-control border border-hairline text-text-muted rounded-lg ${disabled ? "opacity-60" : "cursor-pointer"}`}
       >
         {t("smartModes.card.addShortcut")}
       </div>

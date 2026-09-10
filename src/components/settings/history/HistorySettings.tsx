@@ -36,8 +36,8 @@ const IconButton: React.FC<{
     disabled={disabled}
     className={`p-1.5 rounded-md flex items-center justify-center transition-colors cursor-pointer disabled:cursor-not-allowed disabled:text-text/20 ${
       active
-        ? "text-logo-primary hover:text-logo-primary/80"
-        : "text-text/50 hover:text-logo-primary"
+        ? "text-accent hover:text-accent/80"
+        : "text-text/50 hover:text-accent"
     }`}
     title={title}
   >
@@ -260,7 +260,7 @@ export const HistorySettings: React.FC = () => {
   } else {
     content = (
       <>
-        <div className="divide-y divide-mid-gray/20">
+        <div className="divide-y divide-divider">
           {entries.map((entry) => (
             <HistoryEntryComponent
               key={entry.id}
@@ -284,7 +284,7 @@ export const HistorySettings: React.FC = () => {
       <div className="space-y-2">
         <div className="px-4 flex items-center justify-between">
           <div>
-            <h2 className="text-xs font-medium text-mid-gray uppercase tracking-wide">
+            <h2 className="text-xs font-medium text-text-muted uppercase tracking-wide">
               {t("settings.history.title")}
             </h2>
           </div>
@@ -293,7 +293,7 @@ export const HistorySettings: React.FC = () => {
             label={t("settings.history.openFolder")}
           />
         </div>
-        <div className="bg-background border border-mid-gray/20 rounded-lg overflow-visible">
+        <div className="bg-card glass-blur border border-hairline rounded-2xl overflow-visible">
           {content}
         </div>
       </div>

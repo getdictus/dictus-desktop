@@ -1,16 +1,32 @@
 @import "tailwindcss";
+@import "./tokens.css";
 
+/* Tailwind aliases for the tokens in tokens.css. They only exist so utilities
+ * like `bg-card` are generated; the values themselves live in one place. */
 @theme {
-  /* Design tokens */
-  --color-text: #0f0f0f;
-  --color-background: #fbfbfb;
-  --color-accent: #3d7eff;
-  --color-accent-gradient-start: #6ba3ff;
-  --color-accent-gradient-end: #2563eb;
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-text-faint: var(--text-faint);
+  --color-background: var(--glass-canvas);
+  --color-accent: var(--accent);
+  --color-card: var(--surface-card);
+  --color-sidebar: var(--surface-sidebar);
+  --color-control: var(--surface-control);
+  --color-floating: var(--surface-floating);
+  --color-hairline: var(--border-hairline);
+  --color-divider: var(--border-divider);
+  --color-control-border: var(--border-control);
+  --color-status-ok: var(--status-ok);
+  --color-track: var(--slider-rail);
+  --color-warning: var(--warning);
+
+  /* Brand marks. Deliberately not theme-aware: the logo keeps its colour in
+     both themes, which is why it is separate from --color-accent. */
   --color-logo-primary: #6ba3ff;
   --color-logo-stroke: #0a1628;
   --color-text-stroke: #f6f6f6;
-  --color-mid-gray: #808080;
+  --color-accent-gradient-start: #6ba3ff;
+  --color-accent-gradient-end: #2563eb;
 }
 
 :root {
@@ -47,16 +63,6 @@
   text-align: center;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Colors - Dark Theme */
-    --color-text: #fbfbfb;
-    --color-background: #0a1628;
-    --color-logo-primary: #6ba3ff;
-    --color-logo-stroke: #ffffff;
-  }
-}
-
 /* macOS - tint native overlay scrollbar thumb */
 :root[data-platform="macos"] {
   scrollbar-color: var(--scrollbar-thumb) transparent;
@@ -89,6 +95,142 @@
 @layer utilities {
   .text-stroke {
     -webkit-text-stroke: 2px var(--color-text-stroke);
+  }
+
+  /* Material utilities. Kept separate from the surface colours so a component
+     can pick a colour and a blur independently. */
+  .glass-blur {
+    -webkit-backdrop-filter: var(--blur-surface);
+    backdrop-filter: var(--blur-surface);
+  }
+
+  .glass-blur-floating {
+    -webkit-backdrop-filter: var(--blur-floating);
+    backdrop-filter: var(--blur-floating);
+  }
+
+  .glass-specular {
+    box-shadow: var(--specular);
+  }
+
+  .glass-raised {
+    box-shadow: var(--specular), var(--shadow-raised);
+  }
+
+  /* Visible over any surface, including a lens. */
+  .focus-ring:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+
+  .focus-ring-within:focus-within {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+}
+
+/* Fallback switch, used only where the lens cannot render. Same 44 x 24 track
+ * so the row does not reflow between the two paths. */
+.switch-fallback {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  background: var(--toggle-track-off);
+  transition: background-color 200ms ease-out;
+}
+
+.switch-fallback::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  inset-inline-start: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.24);
+  transition: transform 200ms cubic-bezier(0.34, 1.36, 0.42, 1);
+}
+
+.peer:checked ~ .switch-fallback {
+  background: #3d7eff;
+}
+
+.peer:checked ~ .switch-fallback::after {
+  transform: translateX(calc(var(--flip-x, 1) * 20px));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .switch-fallback,
+  .switch-fallback::after {
+    transition: none;
+  }
+}
+
+/* Fallback slider, used only where the lens cannot render. Same geometry as
+ * the glass one so the row does not reflow between the two paths. */
+.slider-fallback {
+  appearance: none;
+  -webkit-appearance: none;
+  height: 18px;
+  cursor: pointer;
+  background: transparent;
+}
+
+.slider-fallback::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(
+    to right,
+    #3d7eff 0 calc(var(--slider-ratio, 0) * 100%),
+    var(--slider-rail) calc(var(--slider-ratio, 0) * 100%) 100%
+  );
+}
+
+.slider-fallback::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 36px;
+  height: 18px;
+  margin-top: -5px;
+  border-radius: 9px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.24);
+}
+
+.slider-fallback::-moz-range-thumb {
+  width: 36px;
+  height: 18px;
+  border: none;
+  border-radius: 9px;
+  background: #ffffff;
+}
+
+[dir="rtl"] {
+  --flip-x: -1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toggle-thumb {
+    transition: none;
+  }
+}
+
+/* The sidebar's sliding selection capsule. Geometry lives with the component;
+ * only the material and the spring are here. */
+.nav-capsule-slot {
+  transition: transform 0.42s cubic-bezier(0.34, 1.36, 0.42, 1);
+}
+
+.nav-capsule {
+  background: var(--nav-capsule-plate);
+  box-shadow: var(--nav-capsule-shadow);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-capsule-slot {
+    transition: none;
   }
 }
 

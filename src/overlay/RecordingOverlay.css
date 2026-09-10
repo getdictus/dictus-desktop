@@ -1,3 +1,13 @@
+@import "../tokens.css";
+
+/* The pill is the same material as the app's floating surfaces, not its own
+ * hard-coded black. It stays dark in both themes because it sits over the
+ * user's desktop rather than over the app canvas.
+ *
+ * Deliberately no backdrop-filter here. This window is transparent and floats
+ * over the desktop, which the webview cannot sample: the filter would only
+ * blur the page's own empty backdrop, so it buys nothing, and it is the one
+ * property on this element that forces a compositing layer. */
 .recording-overlay {
   height: 84px;
   width: 300px;
@@ -5,11 +15,21 @@
   align-items: center;
   justify-content: center;
   padding: 10px 12px;
-  background: #000000cc;
+  background: var(--surface-overlay);
+  box-shadow: var(--overlay-rim);
   border-radius: 42px;
   opacity: 0;
-  transition: opacity 300ms ease-out;
+  transition:
+    opacity 300ms ease-out,
+    background-color 200ms ease-out,
+    box-shadow 200ms ease-out;
   box-sizing: border-box;
+}
+
+/* Only the rim and the icon carry the error state; the glass is not recoloured. */
+.recording-overlay.overlay-state-error {
+  background: var(--surface-overlay-error);
+  box-shadow: var(--overlay-rim-error);
 }
 
 .overlay-middle {
@@ -68,7 +88,7 @@
 }
 
 .overlay-error-icon {
-  color: #ffb020;
+  color: var(--warning);
   flex-shrink: 0;
 }
 
@@ -100,8 +120,9 @@
 .cancel-pill {
   width: 84px;
   height: 84px;
-  border-radius: 50%;
-  background: #000000cc;
+  border-radius: 42px;
+  background: var(--surface-overlay);
+  box-shadow: var(--overlay-rim);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -114,7 +135,7 @@
 }
 
 .cancel-pill:hover {
-  background: #000000ee;
+  background: color-mix(in srgb, var(--surface-overlay) 100%, black 22%);
   transform: scale(1.08);
 }
 
