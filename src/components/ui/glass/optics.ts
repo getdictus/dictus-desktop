@@ -177,3 +177,9 @@ export const CONTROL_TRACK = { light: "#e0e0e0", dark: "#2b303d" } as const;
 
 export const controlTrackFor = (isDark: boolean): string =>
   CONTROL_TRACK[isDark ? "dark" : "light"];
+
+/** Same idea for the switch track, which sits at a slightly heavier tint. */
+export const SWITCH_TRACK = { light: "#dbdbdb", dark: "#3a3f4b" } as const;
+
+export const switchTrackFor = (isDark: boolean): string =>
+  SWITCH_TRACK[isDark ? "dark" : "light"];

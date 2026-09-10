@@ -23,6 +23,21 @@ test.describe("glass controls stay operable", () => {
     expect(Number((await value.innerText()).replace("%", ""))).toBeLessThan(15);
   });
 
+  test("the toggle flips on click and on keyboard", async ({ page }) => {
+    await page.goto(SPECIMEN);
+
+    const host = page.getByTestId("toggle-push-to-talk");
+    const control = host.locator("[role='switch']");
+    await expect(control).toBeChecked();
+
+    await host.click();
+    await expect(control).not.toBeChecked();
+
+    await control.focus();
+    await page.keyboard.press("Space");
+    await expect(control).toBeChecked();
+  });
+
   test("the nav capsule tracks the active item exactly", async ({ page }) => {
     await page.goto(SPECIMEN);
 
