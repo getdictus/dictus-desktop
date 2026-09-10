@@ -33,6 +33,15 @@ test.describe("glass lens under React.StrictMode", () => {
 
     expect(await displacementMapCount(page)).toBeGreaterThan(0);
     expect(failures).toEqual([]);
+
+    // The dev shim is what makes the remount survivable: the renderer can no
+    // longer reach loseContext(). Production keeps real GPU cleanup, verified
+    // by grepping the built bundle instead.
+    const loseContextReachable = await page.evaluate(() => {
+      const gl = document.createElement("canvas").getContext("webgl2");
+      return gl ? gl.getExtension("WEBGL_lose_context") !== null : null;
+    });
+    expect(loseContextReachable).toBe(false);
   });
 
   test("the effects-off escape hatch renders the CSS material", async ({

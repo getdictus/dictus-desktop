@@ -1,5 +1,14 @@
 import React from "react";
 import { SettingContainer } from "./SettingContainer";
+import {
+  GlassLens,
+  behindFor,
+  opticsFor,
+  usePrefersDark,
+  SLIDER_BASE,
+  SLIDER_LIGHT,
+  SLIDER_DARK,
+} from "./glass";
 
 interface SliderProps {
   value: number;
@@ -16,6 +25,10 @@ interface SliderProps {
   formatValue?: (value: number) => string;
 }
 
+const TRACK_WIDTH_PX = 176;
+const HANDLE_WIDTH_PX = 36;
+const HANDLE_HEIGHT_PX = 18;
+
 export const Slider: React.FC<SliderProps> = ({
   value,
   onChange,
@@ -30,9 +43,16 @@ export const Slider: React.FC<SliderProps> = ({
   showValue = true,
   formatValue = (v) => v.toFixed(2),
 }) => {
+  const isDark = usePrefersDark();
+  // At rest the handle is the lens tinted solid white; during a drag the tint
+  // drops away and the refraction shows.
+  const [isDragging, setIsDragging] = React.useState(false);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onChange(parseFloat(e.target.value));
   };
+
+  const ratio = max === min ? 0 : (value - min) / (max - min);
 
   return (
     <SettingContainer
@@ -43,8 +63,37 @@ export const Slider: React.FC<SliderProps> = ({
       layout="horizontal"
       disabled={disabled}
     >
-      <div className="w-full">
-        <div className="flex items-center space-x-1 h-6">
+      <div className="flex items-center gap-2">
+        <div
+          className={`slider-track relative h-[18px] flex items-center ${
+            disabled ? "opacity-50" : ""
+          }`}
+          style={{ width: TRACK_WIDTH_PX }}
+        >
+          {/* Rail and fill are painted here; the native input stays on top so
+              pointer and keyboard behaviour are untouched. */}
+          <div
+            className="absolute inset-x-0 h-2 rounded"
+            style={{ background: "var(--slider-rail)" }}
+          />
+          <div
+            className="absolute start-0 h-2 rounded"
+            style={{ background: "#3D7EFF", width: `${ratio * 100}%` }}
+          />
+          <GlassLens
+            className="slider-handle absolute pointer-events-none"
+            style={
+              {
+                "--slider-ratio": ratio,
+              } as React.CSSProperties
+            }
+            behind={behindFor("sliderHandle", isDark)}
+            width={HANDLE_WIDTH_PX}
+            height={HANDLE_HEIGHT_PX}
+            radius={9}
+            optics={opticsFor(SLIDER_BASE, SLIDER_LIGHT, SLIDER_DARK, isDark)}
+            tint={{ color: "white", opacity: isDragging ? 0 : 1 }}
+          />
           <input
             type="range"
             min={min}
@@ -53,21 +102,20 @@ export const Slider: React.FC<SliderProps> = ({
             value={value}
             onChange={handleChange}
             disabled={disabled}
-            className="flex-grow h-2 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{
-              background: `linear-gradient(to right, var(--color-accent) ${
-                ((value - min) / (max - min)) * 100
-              }%, rgba(128, 128, 128, 0.2) ${
-                ((value - min) / (max - min)) * 100
-              }%)`,
-            }}
+            onPointerDown={() => setIsDragging(true)}
+            onPointerUp={() => setIsDragging(false)}
+            onPointerCancel={() => setIsDragging(false)}
+            onKeyDown={() => setIsDragging(true)}
+            onKeyUp={() => setIsDragging(false)}
+            onBlur={() => setIsDragging(false)}
+            className="slider-input focus-ring absolute inset-0 w-full appearance-none bg-transparent rounded disabled:cursor-not-allowed"
           />
-          {showValue && (
-            <span className="text-sm font-medium text-text/90 w-12 text-end">
-              {formatValue(value)}
-            </span>
-          )}
         </div>
+        {showValue && (
+          <span className="text-[13px] font-semibold text-text w-[34px] text-end">
+            {formatValue(value)}
+          </span>
+        )}
       </div>
     </SettingContainer>
   );

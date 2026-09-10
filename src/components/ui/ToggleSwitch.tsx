@@ -1,5 +1,14 @@
 import React from "react";
 import { SettingContainer } from "./SettingContainer";
+import {
+  GlassLens,
+  behindFor,
+  opticsFor,
+  usePrefersDark,
+  SWITCH_BASE,
+  SWITCH_LIGHT,
+  SWITCH_DARK,
+} from "./glass";
 
 interface ToggleSwitchProps {
   checked: boolean;
@@ -13,6 +22,9 @@ interface ToggleSwitchProps {
   tooltipPosition?: "top" | "bottom";
 }
 
+/** Track 44 x 24, thumb 20 x 20 resting 2 px in, so the travel is 20 px. */
+const THUMB_TRAVEL_PX = 20;
+
 export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
   checked,
   onChange,
@@ -24,6 +36,8 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
   grouped = false,
   tooltipPosition = "top",
 }) => {
+  const isDark = usePrefersDark();
+
   return (
     <SettingContainer
       title={label}
@@ -44,7 +58,27 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
           disabled={disabled || isUpdating}
           onChange={(e) => onChange(e.target.checked)}
         />
-        <div className="relative w-11 h-6 bg-mid-gray/20 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent peer-disabled:opacity-50"></div>
+        <div
+          className="toggle-track relative w-11 h-6 rounded-xl transition-colors peer-focus-visible:shadow-[var(--focus-ring)] peer-disabled:opacity-50"
+          style={{
+            background: checked ? "#3D7EFF" : "var(--toggle-track-off)",
+          }}
+        >
+          {/* The thumb is a lens, not a white circle. */}
+          <GlassLens
+            className="toggle-thumb absolute top-[2px] start-[2px]"
+            style={
+              {
+                "--toggle-travel": checked ? `${THUMB_TRAVEL_PX}px` : "0px",
+              } as React.CSSProperties
+            }
+            behind={behindFor("switchThumb", isDark)}
+            width={20}
+            height={20}
+            radius={10}
+            optics={opticsFor(SWITCH_BASE, SWITCH_LIGHT, SWITCH_DARK, isDark)}
+          />
+        </div>
       </label>
       {isUpdating && (
         <div className="absolute inset-0 flex items-center justify-center">

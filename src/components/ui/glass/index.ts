@@ -25,4 +25,6 @@ export {
   NAV_CAPSULE_LIGHT,
   NAV_CAPSULE_DARK,
   opticsFor,
+  LENS_BEHIND,
+  behindFor,
 } from "./optics";

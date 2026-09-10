@@ -5,6 +5,15 @@ import DictusLogo from "./icons/DictusLogo";
 import DictusWaveformIcon from "./icons/DictusWaveformIcon";
 import { useSettings } from "../hooks/useSettings";
 import {
+  GlassLens,
+  behindFor,
+  opticsFor,
+  usePrefersDark,
+  NAV_CAPSULE_LENS,
+  NAV_CAPSULE_LIGHT,
+  NAV_CAPSULE_DARK,
+} from "./ui/glass";
+import {
   GeneralSettings,
   AdvancedSettings,
   HistorySettings,
@@ -79,6 +88,8 @@ export const SECTIONS_CONFIG = {
 /** 40 px item + 4 px gap. The capsule slides one stride per rendered item, so
  *  the two must stay in step with the `h-10` and `gap-1` below. */
 const NAV_STRIDE_PX = 44;
+const NAV_CAPSULE_WIDTH_PX = 144;
+const NAV_CAPSULE_HEIGHT_PX = 40;
 
 interface SidebarProps {
   activeSection: SidebarSection;
@@ -91,6 +102,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { t } = useTranslation();
   const { settings } = useSettings();
+  const isDark = usePrefersDark();
 
   const availableSections = Object.entries(SECTIONS_CONFIG)
     .filter(([_, config]) => config.enabled(settings))
@@ -109,11 +121,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {activeIndex >= 0 && (
           <div
             aria-hidden="true"
-            className="nav-capsule absolute top-2 start-0 w-36 h-10 rounded-[20px] pointer-events-none"
+            className="nav-capsule-slot absolute top-2 start-0 w-36 h-10 pointer-events-none"
             style={{
               transform: `translateY(${activeIndex * NAV_STRIDE_PX}px)`,
             }}
-          />
+          >
+            {/* The plate carries the rim and the drop shadow; the lens sits on
+                top of it and bends what is behind the sidebar. */}
+            <div className="nav-capsule absolute inset-0 rounded-[20px]" />
+            <GlassLens
+              className="absolute inset-0"
+              behind={behindFor("navCapsule", isDark)}
+              width={NAV_CAPSULE_WIDTH_PX}
+              height={NAV_CAPSULE_HEIGHT_PX}
+              radius={20}
+              optics={opticsFor(
+                NAV_CAPSULE_LENS,
+                NAV_CAPSULE_LIGHT,
+                NAV_CAPSULE_DARK,
+                isDark,
+              )}
+              fallbackStyle={{ background: "transparent" }}
+            />
+          </div>
         )}
         {availableSections.map((section) => {
           const Icon = section.icon;

@@ -25,6 +25,11 @@ export interface GlassLensProps
    * every current caller sits on.
    */
   refract?: React.ReactNode;
+  /**
+   * A solid veil that follows the lens — the resting white pill of a switch
+   * thumb or a slider handle. Drop the opacity to let the refraction show.
+   */
+  tint?: { color: string; opacity: number };
   /** Extra CSS for the fallback material only. */
   fallbackStyle?: React.CSSProperties;
   children?: React.ReactNode;
@@ -65,6 +70,7 @@ export const GlassLens: React.FC<GlassLensProps> = ({
   radius,
   optics,
   refract,
+  tint,
   className = "",
   style,
   fallbackStyle,
@@ -84,7 +90,7 @@ export const GlassLens: React.FC<GlassLensProps> = ({
         className={`glass-specular ${className}`.trim()}
         style={{
           ...geometry,
-          background: behind,
+          background: tint?.opacity ? tint.color : behind,
           ...style,
           ...fallbackStyle,
         }}
@@ -106,6 +112,9 @@ export const GlassLens: React.FC<GlassLensProps> = ({
       optics={optics}
       // Chromium-only supersample; the library forces it back to 1 in WebKit.
       filterResolution={2}
+      unstable_lens={
+        tint ? { tintColor: tint.color, tintOpacity: tint.opacity } : undefined
+      }
       refract={
         refract ?? (
           <div style={{ ...geometry, background: behind, borderRadius: 0 }} />

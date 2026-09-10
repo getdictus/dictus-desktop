@@ -149,3 +149,21 @@ export const opticsFor = (
   // The board sets a dark specular in light theme and a bright one in dark.
   sheenDark: !isDark,
 });
+
+/**
+ * The solid colour each lens samples just past its own box. The board could
+ * hard-code these because it knew exactly what sat behind every control; the
+ * app passes them in, so they live here as named pairs rather than as literals
+ * inside a component.
+ */
+export const LENS_BEHIND = {
+  switchThumb: { light: "#f5f6f9", dark: "#0d0d0f" },
+  sliderHandle: { light: "#ffffff", dark: "#161c2c" },
+  navCapsule: { light: "#f7f8fb", dark: "#141d31" },
+  overlayPill: { light: "#0b0f1a", dark: "#0b0f1a" },
+} as const;
+
+export const behindFor = (
+  lens: keyof typeof LENS_BEHIND,
+  isDark: boolean,
+): string => LENS_BEHIND[lens][isDark ? "dark" : "light"];
