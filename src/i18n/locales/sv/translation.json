@@ -26,6 +26,7 @@
     "privacyNote": "Filen avkodas och transkriberas på den här datorn. Ingenting laddas upp.",
     "percent": "{{percent}} %",
     "cancelPending": "Avbryts så snart det pågående steget är klart.",
+    "alreadyRunning": "En transkribering pågår redan. Avbryt den för att starta en annan.",
     "dropZone": {
       "label": "Släpp en ljudfil här, eller klicka för att välja en",
       "sublabel": "En fil i taget",
@@ -40,7 +41,6 @@
       "noModel": "Ingen modell vald"
     },
     "actions": {
-      "transcribe": "Transkribera",
       "cancel": "Avbryt",
       "chooseAnother": "Välj en annan fil",
       "copy": "Kopiera",

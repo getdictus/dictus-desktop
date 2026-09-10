@@ -26,6 +26,7 @@
     "privacyNote": "Le fichier est décodé et transcrit sur cet ordinateur. Rien n'est envoyé en ligne.",
     "percent": "{{percent}} %",
     "cancelPending": "Arrêt dès la fin de l'étape en cours.",
+    "alreadyRunning": "Une transcription est déjà en cours. Annulez-la pour en lancer une autre.",
     "dropZone": {
       "label": "Déposez un fichier audio ici, ou cliquez pour en choisir un",
       "sublabel": "Un fichier à la fois",
@@ -40,7 +41,6 @@
       "noModel": "Aucun modèle sélectionné"
     },
     "actions": {
-      "transcribe": "Transcrire",
       "cancel": "Annuler",
       "chooseAnother": "Choisir un autre fichier",
       "copy": "Copier",

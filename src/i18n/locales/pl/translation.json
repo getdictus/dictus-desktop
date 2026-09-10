@@ -26,6 +26,7 @@
     "privacyNote": "Plik jest dekodowany i transkrybowany na tym komputerze. Nic nie jest wysyłane do sieci.",
     "percent": "{{percent}}%",
     "cancelPending": "Zatrzyma się po zakończeniu bieżącego kroku.",
+    "alreadyRunning": "Transkrypcja już trwa. Anuluj ją, aby rozpocząć kolejną.",
     "dropZone": {
       "label": "Upuść tutaj plik audio lub kliknij, aby go wybrać",
       "sublabel": "Jeden plik naraz",
@@ -40,7 +41,6 @@
       "noModel": "Nie wybrano modelu"
     },
     "actions": {
-      "transcribe": "Transkrybuj",
       "cancel": "Anuluj",
       "chooseAnother": "Wybierz inny plik",
       "copy": "Kopiuj",

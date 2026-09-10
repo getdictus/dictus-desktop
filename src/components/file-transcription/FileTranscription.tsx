@@ -29,7 +29,6 @@ import { useNavigationStore } from "@/stores/navigationStore";
 type Phase =
   | { status: "idle" }
   | { status: "inspecting" }
-  | { status: "ready"; file: AudioFileDetails }
   | {
       status: "running";
       file: AudioFileDetails;
@@ -94,6 +93,7 @@ export const FileTranscription: React.FC = () => {
   const [phase, setPhase] = useState<Phase>({ status: "idle" });
   const [isDragActive, setIsDragActive] = useState(false);
   const [showCopied, setShowCopied] = useState(false);
+  const [dropRejected, setDropRejected] = useState(false);
   const [extensions, setExtensions] = useState<string[]>([]);
 
   // The drag/drop listener and the running job both outlive individual
@@ -107,6 +107,14 @@ export const FileTranscription: React.FC = () => {
     void initializeModels();
   }, [initializeModels]);
 
+  // The "already running" notice is an acknowledgement of a gesture, not a
+  // state, so it clears itself rather than needing to be dismissed.
+  useEffect(() => {
+    if (!dropRejected) return;
+    const timer = setTimeout(() => setDropRejected(false), 4000);
+    return () => clearTimeout(timer);
+  }, [dropRejected]);
+
   useEffect(() => {
     let cancelled = false;
     void commands.supportedAudioExtensions().then((list) => {
@@ -117,27 +125,62 @@ export const FileTranscription: React.FC = () => {
     };
   }, []);
 
-  const selectFile = useCallback(async (path: string) => {
-    setPhase({ status: "inspecting" });
+  const startTranscription = useCallback(async (file: AudioFileDetails) => {
+    setPhase({
+      status: "running",
+      file,
+      stage: "decoding",
+      progress: 0,
+      cancelling: false,
+    });
+
     try {
-      const result = await commands.inspectAudioFile(path);
+      const result = await commands.transcribeAudioFile(file.path);
       if (result.status === "ok") {
-        setPhase({ status: "ready", file: result.data });
+        setPhase({ status: "done", file, result: result.data });
       } else {
         setPhase({
           status: "failed",
-          file: null,
+          file,
           error: toTranscriptionError(result.error),
         });
       }
     } catch (error) {
-      setPhase({
-        status: "failed",
-        file: null,
-        error: toTranscriptionError(error),
-      });
+      setPhase({ status: "failed", file, error: toTranscriptionError(error) });
     }
   }, []);
+
+  // Picking a file is the instruction — on a page called Transcribe File,
+  // dropping an audio file has already said what to do, so there is no second
+  // confirmation. Everything the old confirmation step showed (name, duration,
+  // size, model, language) stays on screen for the whole run instead, next to
+  // Cancel, so a wrong model or language is still caught in the first seconds.
+  const selectFile = useCallback(
+    async (path: string) => {
+      setPhase({ status: "inspecting" });
+      try {
+        const result = await commands.inspectAudioFile(path);
+        if (result.status === "ok") {
+          // Probing already refused anything undecodable, so this cannot start a
+          // job that was never going to finish.
+          await startTranscription(result.data);
+        } else {
+          setPhase({
+            status: "failed",
+            file: null,
+            error: toTranscriptionError(result.error),
+          });
+        }
+      } catch (error) {
+        setPhase({
+          status: "failed",
+          file: null,
+          error: toTranscriptionError(error),
+        });
+      }
+    },
+    [startTranscription],
+  );
 
   // Registered only while this page is mounted, so dropping a file on any
   // other page keeps doing whatever that page does.
@@ -154,8 +197,15 @@ export const FileTranscription: React.FC = () => {
           setIsDragActive(false);
         } else if (event.payload.type === "drop") {
           setIsDragActive(false);
-          // A job in flight owns the page; ignore drops until it finishes.
-          if (phaseRef.current.status === "running") return;
+          // One job owns the engine at a time. A second drop can't queue, and
+          // silently swallowing it would look like the app missed the gesture,
+          // so say why nothing happened. This also closes the double-drop race:
+          // the guard covers `inspecting` too, not just `running`.
+          const status = phaseRef.current.status;
+          if (status === "running" || status === "inspecting") {
+            setDropRejected(true);
+            return;
+          }
           const paths = event.payload.paths;
           if (paths && paths.length > 0) {
             void selectFile(paths[0]);
@@ -204,31 +254,6 @@ export const FileTranscription: React.FC = () => {
     });
     if (selected && typeof selected === "string") {
       await selectFile(selected);
-    }
-  };
-
-  const startTranscription = async (file: AudioFileDetails) => {
-    setPhase({
-      status: "running",
-      file,
-      stage: "decoding",
-      progress: 0,
-      cancelling: false,
-    });
-
-    try {
-      const result = await commands.transcribeAudioFile(file.path);
-      if (result.status === "ok") {
-        setPhase({ status: "done", file, result: result.data });
-      } else {
-        setPhase({
-          status: "failed",
-          file,
-          error: toTranscriptionError(result.error),
-        });
-      }
-    } catch (error) {
-      setPhase({ status: "failed", file, error: toTranscriptionError(error) });
     }
   };
 
@@ -318,12 +343,20 @@ export const FileTranscription: React.FC = () => {
         }`}
       >
         {showsDropZone && (
-          <DropZone
-            isDragActive={isDragActive}
-            isBusy={phase.status === "inspecting"}
-            supportedFormats={supportedFormats}
-            onClick={() => void openFilePicker()}
-          />
+          <>
+            <DropZone
+              isDragActive={isDragActive}
+              isBusy={phase.status === "inspecting"}
+              supportedFormats={supportedFormats}
+              onClick={() => void openFilePicker()}
+            />
+            {/* The privacy line lived on the confirmation card that auto-start
+                removed. It belongs here anyway: it matters while someone is
+                deciding whether to hand over a file, not after they have. */}
+            <p className="text-xs text-text/50 text-center">
+              {t("fileTranscription.privacyNote")}
+            </p>
+          </>
         )}
 
         {phase.status === "failed" && (
@@ -346,31 +379,6 @@ export const FileTranscription: React.FC = () => {
           </div>
         )}
 
-        {phase.status === "ready" && (
-          <div className="space-y-4">
-            <FileSummary
-              file={phase.file}
-              modelName={modelName}
-              languageName={languageName}
-            />
-            <div className="flex gap-2">
-              <Button
-                variant="primary"
-                size="md"
-                onClick={() => void startTranscription(phase.file)}
-              >
-                {t("fileTranscription.actions.transcribe")}
-              </Button>
-              <Button variant="secondary" size="md" onClick={reset}>
-                {t("fileTranscription.actions.chooseAnother")}
-              </Button>
-            </div>
-            <p className="text-xs text-text/50">
-              {t("fileTranscription.privacyNote")}
-            </p>
-          </div>
-        )}
-
         {phase.status === "running" && (
           <div className="space-y-4">
             <FileSummary
@@ -383,20 +391,27 @@ export const FileTranscription: React.FC = () => {
               progress={phase.progress}
               cancelling={phase.cancelling}
             />
-            <Button
-              variant="secondary"
-              size="md"
-              disabled={phase.cancelling}
-              onClick={() => void requestCancel()}
-              className="flex items-center gap-2"
-            >
-              <X className="w-4 h-4" />
-              <span>
-                {phase.cancelling
-                  ? t("fileTranscription.stages.cancelling")
-                  : t("fileTranscription.actions.cancel")}
-              </span>
-            </Button>
+            <div className="flex items-center gap-3 flex-wrap">
+              <Button
+                variant="secondary"
+                size="md"
+                disabled={phase.cancelling}
+                onClick={() => void requestCancel()}
+                className="flex items-center gap-2"
+              >
+                <X className="w-4 h-4" />
+                <span>
+                  {phase.cancelling
+                    ? t("fileTranscription.stages.cancelling")
+                    : t("fileTranscription.actions.cancel")}
+                </span>
+              </Button>
+              {dropRejected && (
+                <p className="text-xs text-text/60">
+                  {t("fileTranscription.alreadyRunning")}
+                </p>
+              )}
+            </div>
           </div>
         )}
 

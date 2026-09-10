@@ -26,6 +26,7 @@
     "privacyNote": "文件在本机解码并转录，不会上传任何内容。",
     "percent": "{{percent}}%",
     "cancelPending": "将在当前步骤结束后停止。",
+    "alreadyRunning": "已有一个转录正在进行。请先取消，再开始新的转录。",
     "dropZone": {
       "label": "把音频文件拖到这里，或点击选择文件",
       "sublabel": "一次一个文件",
@@ -40,7 +41,6 @@
       "noModel": "未选择模型"
     },
     "actions": {
-      "transcribe": "开始转录",
       "cancel": "取消",
       "chooseAnother": "换一个文件",
       "copy": "复制",

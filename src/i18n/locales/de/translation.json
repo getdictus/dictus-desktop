@@ -26,6 +26,7 @@
     "privacyNote": "Die Datei wird auf diesem Computer dekodiert und transkribiert. Nichts wird hochgeladen.",
     "percent": "{{percent}} %",
     "cancelPending": "Wird beendet, sobald der aktuelle Schritt fertig ist.",
+    "alreadyRunning": "Es läuft bereits eine Transkription. Brich sie ab, um eine andere zu starten.",
     "dropZone": {
       "label": "Audiodatei hier ablegen oder klicken, um eine auszuwählen",
       "sublabel": "Eine Datei nach der anderen",
@@ -40,7 +41,6 @@
       "noModel": "Kein Modell ausgewählt"
     },
     "actions": {
-      "transcribe": "Transkribieren",
       "cancel": "Abbrechen",
       "chooseAnother": "Andere Datei wählen",
       "copy": "Kopieren",

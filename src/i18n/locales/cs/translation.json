@@ -26,6 +26,7 @@
     "privacyNote": "Soubor se dekóduje a přepisuje v tomto počítači. Nic se neodesílá na internet.",
     "percent": "{{percent}} %",
     "cancelPending": "Zastaví se, jakmile skončí aktuální krok.",
+    "alreadyRunning": "Přepis už probíhá. Zrušte ho, chcete-li spustit další.",
     "dropZone": {
       "label": "Přetáhněte sem zvukový soubor nebo klikněte a vyberte jej",
       "sublabel": "Vždy jen jeden soubor",
@@ -40,7 +41,6 @@
       "noModel": "Není vybrán žádný model"
     },
     "actions": {
-      "transcribe": "Přepsat",
       "cancel": "Zrušit",
       "chooseAnother": "Vybrat jiný soubor",
       "copy": "Kopírovat",

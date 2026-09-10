@@ -26,6 +26,7 @@
     "privacyNote": "Dosya bu bilgisayarda çözülür ve yazıya dökülür. Hiçbir şey yüklenmez.",
     "percent": "%{{percent}}",
     "cancelPending": "Geçerli adım biter bitmez duracak.",
+    "alreadyRunning": "Zaten bir yazıya dökme işlemi sürüyor. Başka bir tane başlatmak için onu iptal et.",
     "dropZone": {
       "label": "Buraya bir ses dosyası bırak veya seçmek için tıkla",
       "sublabel": "Aynı anda tek dosya",
@@ -40,7 +41,6 @@
       "noModel": "Model seçilmedi"
     },
     "actions": {
-      "transcribe": "Yazıya dök",
       "cancel": "İptal",
       "chooseAnother": "Başka bir dosya seç",
       "copy": "Kopyala",

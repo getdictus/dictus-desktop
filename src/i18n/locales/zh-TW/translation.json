@@ -26,6 +26,7 @@
     "privacyNote": "檔案會在本機解碼並轉錄，不會上傳任何內容。",
     "percent": "{{percent}}%",
     "cancelPending": "會在目前步驟結束後停止。",
+    "alreadyRunning": "已有一個轉錄正在進行。請先取消，再開始新的轉錄。",
     "dropZone": {
       "label": "把音訊檔案拖到這裡，或點擊選擇檔案",
       "sublabel": "一次一個檔案",
@@ -40,7 +41,6 @@
       "noModel": "未選擇模型"
     },
     "actions": {
-      "transcribe": "開始轉錄",
       "cancel": "取消",
       "chooseAnother": "換一個檔案",
       "copy": "複製",

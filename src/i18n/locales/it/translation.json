@@ -26,6 +26,7 @@
     "privacyNote": "Il file viene decodificato e trascritto su questo computer. Non viene caricato nulla.",
     "percent": "{{percent}}%",
     "cancelPending": "Si interromperà al termine del passaggio in corso.",
+    "alreadyRunning": "È già in corso una trascrizione. Annullala per avviarne un'altra.",
     "dropZone": {
       "label": "Trascina qui un file audio, oppure fai clic per sceglierne uno",
       "sublabel": "Un file alla volta",
@@ -40,7 +41,6 @@
       "noModel": "Nessun modello selezionato"
     },
     "actions": {
-      "transcribe": "Trascrivi",
       "cancel": "Annulla",
       "chooseAnother": "Scegli un altro file",
       "copy": "Copia",

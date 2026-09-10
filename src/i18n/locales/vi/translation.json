@@ -26,6 +26,7 @@
     "privacyNote": "Tệp được giải mã và phiên âm ngay trên máy này. Không có gì được tải lên.",
     "percent": "{{percent}}%",
     "cancelPending": "Sẽ dừng ngay khi bước hiện tại hoàn tất.",
+    "alreadyRunning": "Đã có một phiên phiên âm đang chạy. Hãy hủy nó để bắt đầu phiên khác.",
     "dropZone": {
       "label": "Thả tệp âm thanh vào đây, hoặc nhấp để chọn tệp",
       "sublabel": "Mỗi lần một tệp",
@@ -40,7 +41,6 @@
       "noModel": "Chưa chọn mô hình"
     },
     "actions": {
-      "transcribe": "Phiên âm",
       "cancel": "Hủy",
       "chooseAnother": "Chọn tệp khác",
       "copy": "Sao chép",

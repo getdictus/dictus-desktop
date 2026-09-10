@@ -26,6 +26,7 @@
     "privacyNote": "The file is decoded and transcribed on this computer. Nothing is uploaded.",
     "percent": "{{percent}}%",
     "cancelPending": "Stopping once the current step finishes.",
+    "alreadyRunning": "A transcription is already running. Cancel it to start another.",
     "dropZone": {
       "label": "Drop an audio file here, or click to choose one",
       "sublabel": "One file at a time",
@@ -40,7 +41,6 @@
       "noModel": "No model selected"
     },
     "actions": {
-      "transcribe": "Transcribe",
       "cancel": "Cancel",
       "chooseAnother": "Choose another file",
       "copy": "Copy",

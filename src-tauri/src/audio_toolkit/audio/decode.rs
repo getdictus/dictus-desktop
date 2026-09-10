@@ -120,7 +120,14 @@ pub fn has_supported_extension<P: AsRef<Path>>(path: P) -> bool {
         .unwrap_or(false)
 }
 
-/// Read container/codec metadata without decoding any audio.
+/// Read container/codec metadata without decoding any audio, and confirm the
+/// stream is one we can actually decode.
+///
+/// The decoder is built and thrown away: it reads no packets and costs
+/// microseconds, but it means probing answers "can this file be transcribed?"
+/// rather than only "what is in it". Since a file now starts transcribing the
+/// moment it is dropped, that answer has to be right up front — otherwise a
+/// file we were never going to read would still spin up a job before failing.
 pub fn probe_audio_file<P: AsRef<Path>>(path: P) -> Result<AudioFileInfo, DecodeError> {
     let (format, track_id) = open_format(path.as_ref())?;
     let track = format
@@ -128,6 +135,10 @@ pub fn probe_audio_file<P: AsRef<Path>>(path: P) -> Result<AudioFileInfo, Decode
         .iter()
         .find(|t| t.id == track_id)
         .ok_or(DecodeError::UnsupportedFormat)?;
+
+    CODECS
+        .make(&track.codec_params, &DecoderOptions::default())
+        .map_err(|_| DecodeError::UnsupportedCodec(codec_name(&track.codec_params)))?;
 
     // Everything here is advisory: containers are free to leave these out, and
     // MP4 routinely does. Probing is for showing the user what they picked, so
@@ -773,6 +784,19 @@ mod tests {
         assert!(
             first_loud < 160,
             "tone should start almost immediately, first loud sample at {first_loud}"
+        );
+    }
+
+    #[test]
+    fn probing_rejects_a_stream_we_cannot_decode() {
+        // Auto-start means probing is the gate: if this said "fine", a file we
+        // can never read would still kick off a transcription job.
+        let err = probe_audio_file(fixture("alac-mono-44100.m4a"))
+            .expect_err("ALAC must not probe as usable");
+
+        assert!(
+            matches!(err, DecodeError::UnsupportedCodec(name) if name.to_lowercase().contains("alac")),
+            "probe must name the codec it cannot decode"
         );
     }
 
