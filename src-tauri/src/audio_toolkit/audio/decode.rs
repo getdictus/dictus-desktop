@@ -7,14 +7,16 @@
 //! in `utils.rs` stays what it is — a fast path for the app's own managed
 //! recordings, which are always 16-bit mono 16 kHz.
 
+use super::opus_decoder::OpusDecoder;
 use anyhow::Result;
 use log::debug;
+use once_cell::sync::Lazy;
 use rubato::{FftFixedIn, Resampler};
 use std::fs::File;
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
 use symphonia::core::audio::SampleBuffer;
-use symphonia::core::codecs::{CodecType, DecoderOptions, CODEC_TYPE_NULL};
+use symphonia::core::codecs::{CodecParameters, CodecRegistry, DecoderOptions, CODEC_TYPE_NULL};
 use symphonia::core::errors::Error as SymphoniaError;
 use symphonia::core::formats::FormatOptions;
 use symphonia::core::io::MediaSourceStream;
@@ -24,6 +26,18 @@ use symphonia::core::probe::Hint;
 /// Sample rate every transcription engine in Dictus expects.
 pub const TARGET_SAMPLE_RATE: u32 = 16_000;
 
+/// symphonia's built-in codecs plus our libopus-backed Opus decoder.
+///
+/// The default registry has no Opus decoder, so `get_codecs()` would reject
+/// every Telegram and WhatsApp voice note despite the Ogg demuxer reading them
+/// perfectly well.
+static CODECS: Lazy<CodecRegistry> = Lazy::new(|| {
+    let mut registry = CodecRegistry::new();
+    symphonia::default::register_enabled_codecs(&mut registry);
+    registry.register_all::<OpusDecoder>();
+    registry
+});
+
 /// Chunk size fed to the resampler. Matches the realtime `FrameResampler`.
 const RESAMPLER_CHUNK_SIZE: usize = 1024;
 
@@ -31,10 +45,11 @@ const RESAMPLER_CHUNK_SIZE: usize = 1024;
 /// frontend picker filter (`SUPPORTED_AUDIO_EXTENSIONS` in
 /// `src/components/file-transcription/supportedFormats.ts`).
 ///
-/// Deliberately excludes Opus (symphonia 0.5 ships no Opus decoder) and video
-/// containers (video import is out of scope for this workspace).
+/// Deliberately excludes video containers — video import is out of scope for
+/// this workspace. `.opus` is a bare Ogg Opus stream, which the Ogg reader and
+/// our libopus-backed decoder handle like any other `.ogg`.
 pub const SUPPORTED_EXTENSIONS: &[&str] = &[
-    "wav", "wave", "mp3", "m4a", "m4b", "aac", "flac", "ogg", "oga",
+    "wav", "wave", "mp3", "m4a", "m4b", "aac", "flac", "ogg", "oga", "opus",
 ];
 
 /// What went wrong while ingesting an imported file.
@@ -169,9 +184,9 @@ pub fn decode_to_mono_16k<P: AsRef<Path>>(
     // first decoded packet — see `source_rate` below.
     let declared_rate = codec_params.sample_rate.filter(|rate| *rate > 0);
 
-    let mut decoder = symphonia::default::get_codecs()
+    let mut decoder = CODECS
         .make(&codec_params, &DecoderOptions::default())
-        .map_err(|_| DecodeError::UnsupportedCodec(codec_name(codec_params.codec)))?;
+        .map_err(|_| DecodeError::UnsupportedCodec(codec_name(&codec_params)))?;
 
     let mut mono: Vec<f32> = Vec::with_capacity(
         total_frames
@@ -267,15 +282,17 @@ pub fn decode_to_mono_16k<P: AsRef<Path>>(
 /// and `CodecType`'s own `Display` prints a hex id. So the ones a user can
 /// realistically reach through the extensions we advertise are named by hand,
 /// and anything else falls back to that id for the log.
-fn codec_name(codec: CodecType) -> String {
+fn codec_name(params: &CodecParameters) -> String {
     use symphonia::core::codecs::{
         CODEC_TYPE_AC4, CODEC_TYPE_ALAC, CODEC_TYPE_ATRAC3, CODEC_TYPE_ATRAC9, CODEC_TYPE_DCA,
         CODEC_TYPE_EAC3, CODEC_TYPE_MONKEYS_AUDIO, CODEC_TYPE_MUSEPACK, CODEC_TYPE_OPUS,
         CODEC_TYPE_SPEEX, CODEC_TYPE_TTA, CODEC_TYPE_WAVPACK, CODEC_TYPE_WMA,
     };
 
-    match codec {
-        CODEC_TYPE_OPUS => "Opus".to_string(),
+    match params.codec {
+        // Opus itself decodes now, so reaching here means a variant we don't
+        // handle — say which, or the message contradicts the file that worked.
+        CODEC_TYPE_OPUS => "Opus (multichannel)".to_string(),
         CODEC_TYPE_SPEEX => "Speex".to_string(),
         CODEC_TYPE_ALAC => "Apple Lossless (ALAC)".to_string(),
         CODEC_TYPE_WMA => "WMA".to_string(),
@@ -724,21 +741,75 @@ mod tests {
     }
 
     #[test]
-    fn names_the_codec_when_ogg_carries_opus() {
-        // symphonia 0.5 ships no Opus decoder, and .ogg Opus is what WhatsApp and
-        // many Android recorders produce. Rejecting it as "unsupported format"
-        // sends the user looking for a problem with their file.
-        let err = decode(&fixture("opus-mono-48000.ogg")).expect_err("Opus has no decoder");
+    fn decodes_opus_in_ogg() {
+        // Telegram and WhatsApp send every voice note as Opus in Ogg. symphonia
+        // demuxes it but has no decoder, so this only works because of the
+        // libopus-backed decoder registered in CODECS.
+        let samples = decode(&fixture("opus-mono-48000.ogg")).expect("decode Opus in Ogg");
+
+        assert!(
+            (7_500..=8_500).contains(&samples.len()),
+            "expected roughly 8000 samples, got {}",
+            samples.len()
+        );
+        assert!((estimated_freq(&samples, 16_000) - 440.0).abs() < 15.0);
+    }
+
+    #[test]
+    fn opus_pre_skip_is_trimmed_from_the_head_of_the_stream() {
+        // Every Opus stream begins with encoder priming that is not audio. Left
+        // in, it puts a click at the start and shifts everything after it.
+        let samples = decode(&fixture("opus-mono-48000.ogg")).expect("decode Opus in Ogg");
+
+        let peak = samples.iter().fold(0.0f32, |acc, s| acc.max(s.abs()));
+        let first_loud = samples
+            .iter()
+            .position(|s| s.abs() > peak * 0.5)
+            .expect("signal must rise");
+
+        // The fixture is a sine that starts immediately, so with the pre-skip
+        // removed the tone must begin within a few milliseconds. 160 samples at
+        // 16 kHz is 10 ms; an untrimmed pre-skip lands well past that.
+        assert!(
+            first_loud < 160,
+            "tone should start almost immediately, first loud sample at {first_loud}"
+        );
+    }
+
+    #[test]
+    fn names_the_codec_when_a_stream_has_no_decoder() {
+        // ALAC rides in the same MP4 container as the AAC we do support, so the
+        // message has to name the codec — "unsupported format" would send the
+        // user looking for a problem with their file instead.
+        let err = decode(&fixture("alac-mono-44100.m4a")).expect_err("ALAC has no decoder");
 
         match err {
             DecodeError::UnsupportedCodec(name) => {
                 assert!(
-                    name.to_lowercase().contains("opus"),
+                    name.to_lowercase().contains("alac"),
                     "the message must name the codec, got {name:?}"
                 );
             }
             other => panic!("expected UnsupportedCodec, got {other:?}"),
         }
+    }
+
+    #[test]
+    fn decodes_a_bare_opus_extension() {
+        // WhatsApp on Android names its voice notes ".opus" rather than ".ogg".
+        // Same Ogg container either way, but the extension gate has to let it
+        // through, so exercise that path rather than trusting the list.
+        let dir = tempfile::tempdir().expect("tempdir");
+        let path = dir.path().join("voice-note.opus");
+        std::fs::copy(fixture("opus-mono-48000.ogg"), &path).expect("copy fixture");
+
+        let samples = decode(&path).expect("decode a .opus file");
+
+        assert!(
+            (7_500..=8_500).contains(&samples.len()),
+            "expected roughly 8000 samples, got {}",
+            samples.len()
+        );
     }
 
     #[test]

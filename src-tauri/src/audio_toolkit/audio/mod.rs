@@ -1,6 +1,7 @@
 // Re-export all audio components
 mod decode;
 mod device;
+mod opus_decoder;
 mod recorder;
 mod resampler;
 mod utils;

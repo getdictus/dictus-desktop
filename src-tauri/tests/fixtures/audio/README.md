@@ -20,4 +20,6 @@ ffmpeg -f lavfi -i "sine=frequency=440:duration=0.5:sample_rate=48000" \
   -ac 2 -c:a vorbis -strict -2 vorbis-stereo-48000.ogg
 ffmpeg -f lavfi -i "sine=frequency=440:duration=0.5:sample_rate=48000" \
   -ac 1 -c:a libopus -b:a 24k opus-mono-48000.ogg
+ffmpeg -f lavfi -i "sine=frequency=440:duration=0.5:sample_rate=44100" \
+  -ac 1 -c:a alac alac-mono-44100.m4a
 ```
