@@ -1,6 +1,19 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import "../src/i18n";
+import i18n from "../src/i18n";
+import { useSettingsStore } from "../src/stores/settingsStore";
+
+// Render every conditional nav section, and honour ?lang= so the truncation
+// test can load the locale with the longest labels.
+useSettingsStore.setState({
+  settings: {
+    post_process_enabled: true,
+    debug_mode: true,
+  } as never,
+  isLoading: false,
+});
+const forcedLanguage = new URLSearchParams(location.search).get("lang");
+if (forcedLanguage) void i18n.changeLanguage(forcedLanguage);
 import { Button } from "../src/components/ui/Button";
 import { Dropdown } from "../src/components/ui/Dropdown";
 import { Input } from "../src/components/ui/Input";
@@ -9,6 +22,7 @@ import { SettingContainer } from "../src/components/ui/SettingContainer";
 import { Slider } from "../src/components/ui/Slider";
 import { Surface } from "../src/components/ui/Surface";
 import { ToggleSwitch } from "../src/components/ui/ToggleSwitch";
+import { Sidebar, type SidebarSection } from "../src/components/Sidebar";
 import "../src/App.css";
 import "../src/overlay/RecordingOverlay.css";
 
@@ -32,10 +46,14 @@ const Specimen: React.FC = () => {
   const [checked, setChecked] = React.useState(true);
   const [volume, setVolume] = React.useState(0.65);
   const [choice, setChoice] = React.useState<string | null>("balanced");
+  const [section, setSection] = React.useState<SidebarSection>("general");
 
   return (
-    <div className="min-h-screen flex flex-col items-center gap-4 p-4">
-      <div className="w-full max-w-[520px] flex flex-col gap-4">
+    <div className="min-h-screen flex gap-4 p-0">
+      <div className="h-screen sticky top-0" data-testid="sidebar-host">
+        <Sidebar activeSection={section} onSectionChange={setSection} />
+      </div>
+      <div className="w-full max-w-[520px] flex flex-col gap-4 p-4">
         <SettingsGroup title="Recording" description="Rows, dividers, controls">
           <ToggleSwitch
             grouped

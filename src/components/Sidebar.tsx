@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Cog, FlaskConical, History, Info, Sparkles, Cpu } from "lucide-react";
 import DictusLogo from "./icons/DictusLogo";
@@ -85,11 +85,9 @@ export const SECTIONS_CONFIG = {
   },
 } as const satisfies Record<string, SectionConfig>;
 
-/** 40 px item + 4 px gap. The capsule slides one stride per rendered item, so
- *  the two must stay in step with the `h-10` and `gap-1` below. */
-const NAV_STRIDE_PX = 44;
-const NAV_CAPSULE_WIDTH_PX = 144;
-const NAV_CAPSULE_HEIGHT_PX = 40;
+/* Fallbacks until the first measurement lands. */
+const NAV_ITEM_HEIGHT_PX = 40;
+const NAV_ITEM_WIDTH_PX = 144;
 
 interface SidebarProps {
   activeSection: SidebarSection;
@@ -103,6 +101,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { t } = useTranslation();
   const { settings } = useSettings();
   const isDark = usePrefersDark();
+  const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const [capsule, setCapsule] = useState({
+    top: 0,
+    height: NAV_ITEM_HEIGHT_PX,
+    width: NAV_ITEM_WIDTH_PX,
+  });
 
   const availableSections = Object.entries(SECTIONS_CONFIG)
     .filter(([_, config]) => config.enabled(settings))
@@ -114,6 +118,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
     (section) => section.id === activeSection,
   );
 
+  // The board's 44 px stride assumes every item is exactly 40 px tall. A flex
+  // item will not shrink below its content, so one pixel of overflow in any
+  // item makes the error accumulate down the list. Measuring the rendered item
+  // removes the assumption entirely.
+  const measure = useCallback(() => {
+    const item = itemRefs.current[activeIndex];
+    if (!item) return;
+    setCapsule({
+      top: item.offsetTop,
+      height: item.offsetHeight,
+      width: item.offsetWidth,
+    });
+  }, [activeIndex]);
+
+  useLayoutEffect(() => {
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    itemRefs.current.forEach((item) => item && observer.observe(item));
+    return () => observer.disconnect();
+  }, [measure, availableSections.length]);
+
   return (
     <div className="flex flex-col w-40 h-full shrink-0 bg-sidebar glass-blur border-e border-hairline items-center px-2">
       <DictusLogo width={120} className="m-4" />
@@ -121,9 +147,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {activeIndex >= 0 && (
           <div
             aria-hidden="true"
-            className="nav-capsule-slot absolute top-2 start-0 w-36 h-10 pointer-events-none"
+            data-testid="nav-capsule"
+            className="nav-capsule-slot absolute inset-x-0 top-0 pointer-events-none"
             style={{
-              transform: `translateY(${activeIndex * NAV_STRIDE_PX}px)`,
+              height: capsule.height,
+              transform: `translateY(${capsule.top}px)`,
             }}
           >
             {/* The plate carries the rim and the drop shadow; the lens sits on
@@ -132,9 +160,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <GlassLens
               className="absolute inset-0"
               behind={behindFor("navCapsule", isDark)}
-              width={NAV_CAPSULE_WIDTH_PX}
-              height={NAV_CAPSULE_HEIGHT_PX}
-              radius={20}
+              width={capsule.width}
+              height={capsule.height}
+              radius={capsule.height / 2}
               optics={opticsFor(
                 NAV_CAPSULE_LENS,
                 NAV_CAPSULE_LIGHT,
@@ -145,16 +173,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
             />
           </div>
         )}
-        {availableSections.map((section) => {
+        {availableSections.map((section, index) => {
           const Icon = section.icon;
           const isActive = activeSection === section.id;
 
           return (
             <button
               key={section.id}
+              ref={(node) => {
+                itemRefs.current[index] = node;
+              }}
               type="button"
+              data-testid={`nav-item-${section.id}`}
               aria-current={isActive ? "page" : undefined}
-              className={`focus-ring relative flex gap-2 items-center p-2 h-10 w-full rounded-[20px] cursor-pointer text-start transition-colors ${
+              // min-h-0 lets the fixed 40 px win: a flex item will not shrink
+              // below its content otherwise, and one pixel of overflow in a
+              // label makes every item below it sit lower.
+              className={`focus-ring relative flex gap-2 items-center p-2 h-10 min-h-0 w-full rounded-[20px] cursor-pointer text-start transition-colors ${
                 isActive
                   ? "text-accent font-semibold"
                   : "text-[var(--nav-label)] font-medium hover:text-text"
