@@ -77,6 +77,46 @@
             ];
           };
           lib = pkgs.lib;
+
+          # crates.io's /api/v1/crates/<name>/<version>/download endpoint answers
+          # HTTP 403 to requests carrying curl's default user-agent, which is
+          # exactly what Nix's fetchurl sends ("curl/<ver> Nix/<ver>"). Rewrite
+          # those URLs to the CDN, which serves byte-identical tarballs, so the
+          # Cargo.lock checksums still match and no hashes change.
+          #
+          # Recent nixpkgs already defaults to the CDN; we are pinned to a rev
+          # that predates that fix. Once flake.lock moves past it, delete this
+          # whole binding and go back to a plain `cargoLock = { ... }`.
+          #
+          # Why override fetchurl rather than use `cargoLock.extraRegistries`:
+          # that attribute changes the download URL *and* emits an extra
+          # [source."<index url>"] block in .cargo/config.toml. Cargo then sees
+          # crates.io defined twice (once as [source.crates-io]) and refuses to
+          # build. extraRegistries is meant for additional registries, not for
+          # redirecting the built-in one.
+          importCargoLock = import "${nixpkgs}/pkgs/build-support/rust/import-cargo-lock.nix" {
+            inherit (pkgs)
+              fetchgit
+              lib
+              writers
+              python3Packages
+              runCommand
+              cargo
+              jq
+              ;
+            fetchurl =
+              args:
+              pkgs.fetchurl (
+                args
+                // {
+                  url = builtins.replaceStrings
+                    [ "https://crates.io/api/v1/crates/" ]
+                    [ "https://static.crates.io/crates/" ]
+                    args.url;
+                }
+              );
+          };
+
           combinedAlsaPlugins = pkgs.symlinkJoin {
             name = "combined-alsa-plugins";
             paths = [
@@ -95,24 +135,15 @@
             buildAndTestSubdir = "src-tauri";
             tauriBundleType = "deb";
 
-            cargoLock = {
+            # Same as `cargoLock = { ... }`, but routed through the
+            # importCargoLock defined above so crate downloads hit the CDN.
+            cargoDeps = importCargoLock {
               lockFile = ./src-tauri/Cargo.lock;
               # Automatically fetch git dependencies using builtins.fetchGit.
               # This eliminates the need for manual outputHashes that had to be
               # updated every time a git dependency changed in Cargo.lock.
               # Safe for standalone flakes (not allowed in nixpkgs, it is needed something like crate2nix).
               allowBuiltinFetchGit = true;
-
-              # Fetch crates from the CDN instead of crates.io/api/v1. The API
-              # endpoint returns HTTP 403 to requests sent with curl's default
-              # user-agent, which is exactly what Nix's fetchurl sends
-              # ("curl/<ver> Nix/<ver>"), so every crate download failed.
-              # The tarballs are byte-identical, so Cargo.lock checksums still
-              # match. Recent nixpkgs defaults to this URL; this override keeps
-              # the build working on the nixpkgs rev pinned in flake.lock.
-              extraRegistries = {
-                "https://github.com/rust-lang/crates.io-index" = "https://static.crates.io/crates";
-              };
             };
 
             postPatch = ''
