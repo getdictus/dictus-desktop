@@ -134,3 +134,51 @@
   --blur-surface: none;
   --blur-floating: none;
 }
+
+/* macOS only: the window itself is transparent and a native NSVisualEffectView
+ * sits behind it — see apply_main_window_vibrancy in src-tauri/src/lib.rs. The
+ * canvas gets out of the way so that material shows.
+ *
+ * Every surface that carries text stays opaque on this path. The material is a
+ * blurred copy of whatever is behind the window, so text contrast would
+ * otherwise depend on the user's wallpaper: measured, secondary text on the
+ * dark card drops to 3.61:1 over a light backdrop, below AA.
+ *
+ * Windows and Linux never match this selector. Their window is opaque and
+ * nothing here applies. */
+:root[data-platform="macos"] {
+  --glass-canvas: transparent;
+  --surface-card: var(--surface-opaque-raised);
+  --surface-control: var(--surface-opaque-raised);
+  --surface-floating: var(--surface-opaque-raised);
+  /* Nothing in the page sits behind these any more, so a backdrop blur would
+     only add compositing layers for no visible effect. The blur is native. */
+  --blur-surface: none;
+  --blur-floating: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-platform="macos"] {
+    /* The sidebar is the one surface left translucent, because it is where the
+       material actually reads. Its inactive label measures 2.80:1 over a light
+       backdrop at the board's 0.55, and 6.63:1 at 0.86. Light theme keeps 0.70,
+       which already measures 6.08:1. */
+    --surface-sidebar: rgba(22, 28, 44, 0.86);
+  }
+}
+
+/* The macOS "Reduce transparency" setting paints the canvas back in, which
+ * hides the native material entirely. No separate app setting: this is the
+ * system one, and it is the honest place for it. `data-glass="off"` is the
+ * same escape hatch for a support case. */
+@media (prefers-reduced-transparency: reduce) {
+  :root[data-platform="macos"] {
+    --glass-canvas: var(--surface-opaque);
+    --surface-sidebar: var(--surface-opaque);
+  }
+}
+
+:root[data-platform="macos"][data-glass="off"] {
+  --glass-canvas: var(--surface-opaque);
+  --surface-sidebar: var(--surface-opaque);
+}

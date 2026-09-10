@@ -10,6 +10,18 @@
       Dev-only comparison screen. Vite serves it during `vite dev`; it is not in
       `build.rollupOptions.input`, so it never ships.
     -->
+    <script>
+      // The app stamps these from Rust and from platform(); the specimen takes
+      // them from the URL so a test can exercise a platform or the
+      // effects-off hatch. Both have to be set before the module runs.
+      (function () {
+        var q = new URLSearchParams(location.search);
+        var platform = q.get("platform");
+        if (platform) document.documentElement.dataset.platform = platform;
+        if (q.get("glass") === "off")
+          document.documentElement.dataset.glass = "off";
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/tests/specimen.tsx"></script>
   </body>

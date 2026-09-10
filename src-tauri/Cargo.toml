@@ -115,6 +115,7 @@ winreg = "0.55"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 tauri-nspanel = { git = "https://github.com/ahkohd/tauri-nspanel", branch = "v2.1" }
+window-vibrancy = "0.6"
 transcribe-rs = { version = "0.3.3", features = ["whisper-metal"] }
 llama-cpp-2 = { version = "0.1.146", features = ["metal"] }
 
