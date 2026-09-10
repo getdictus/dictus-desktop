@@ -1,7 +1,15 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { readFile } from "@tauri-apps/plugin-fs";
-import { Check, Copy, FolderOpen, RotateCcw, Star, Trash2 } from "lucide-react";
+import {
+  Check,
+  Copy,
+  FileAudio,
+  FolderOpen,
+  RotateCcw,
+  Star,
+  Trash2,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import {
@@ -11,6 +19,7 @@ import {
   type HistoryUpdatePayload,
 } from "@/bindings";
 import { useOsType } from "@/hooks/useOsType";
+import { formatDuration } from "@/lib/utils/format";
 import { formatDateTime } from "@/utils/dateFormat";
 import { AudioPlayer } from "../../ui/AudioPlayer";
 import { Button } from "../../ui/Button";
@@ -352,11 +361,35 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
   };
 
   const formattedDate = formatDateTime(String(entry.timestamp), i18n.language);
+  // Entries written before the imported-file migration have no source_type;
+  // those were all dictation, so only an explicit "imported_file" is labelled.
+  const isImported = entry.source_type === "imported_file";
+  const duration = formatDuration(entry.duration_ms);
 
   return (
     <div className="px-4 py-2 pb-5 flex flex-col gap-3">
       <div className="flex justify-between items-center">
-        <p className="text-sm font-medium">{formattedDate}</p>
+        <div className="min-w-0">
+          <p className="text-sm font-medium">{formattedDate}</p>
+          {isImported && (
+            <p
+              className="flex items-center gap-1.5 text-xs text-text/50 mt-0.5"
+              title={t("settings.history.importedFrom", {
+                name: entry.source_name ?? "",
+              })}
+            >
+              <FileAudio className="w-3 h-3 shrink-0" />
+              <span className="truncate">
+                {entry.source_name ?? t("settings.history.importedFile")}
+              </span>
+              {duration !== null && (
+                <span className="text-text/40 tabular-nums shrink-0">
+                  {duration}
+                </span>
+              )}
+            </p>
+          )}
+        </div>
         <div className="flex items-center">
           <IconButton
             onClick={handleCopyText}

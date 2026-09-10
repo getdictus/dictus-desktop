@@ -14,8 +14,63 @@
     "advanced": "Avancé",
     "postProcessing": "Post-traitement",
     "history": "Historique",
+    "fileTranscription": "Transcrire un fichier",
     "debug": "Débogage",
     "about": "À propos"
+  },
+  "fileTranscription": {
+    "title": "Transcrire un fichier",
+    "subtitle": "Convertissez en texte un fichier audio de cet ordinateur, avec le modèle que vous utilisez déjà pour la dictée.",
+    "pickerFilter": "Fichiers audio",
+    "supportedFormats": "Formats pris en charge : {{formats}}",
+    "privacyNote": "Le fichier est décodé et transcrit sur cet ordinateur. Rien n'est envoyé en ligne.",
+    "percent": "{{percent}} %",
+    "cancelPending": "Arrêt dès la fin de l'étape en cours.",
+    "dropZone": {
+      "label": "Déposez un fichier audio ici, ou cliquez pour en choisir un",
+      "sublabel": "Un fichier à la fois",
+      "reading": "Lecture du fichier..."
+    },
+    "file": {
+      "duration": "Durée",
+      "size": "Taille",
+      "model": "Modèle",
+      "language": "Langue",
+      "unknownDuration": "Inconnue",
+      "noModel": "Aucun modèle sélectionné"
+    },
+    "actions": {
+      "transcribe": "Transcrire",
+      "cancel": "Annuler",
+      "chooseAnother": "Choisir un autre fichier",
+      "copy": "Copier",
+      "copied": "Copié",
+      "openInHistory": "Ouvrir dans l'historique",
+      "retry": "Réessayer"
+    },
+    "stages": {
+      "decoding": "Lecture de l'audio...",
+      "loadingModel": "Chargement du modèle...",
+      "transcribing": "Transcription en cours...",
+      "saving": "Enregistrement...",
+      "cancelling": "Annulation..."
+    },
+    "result": {
+      "title": "Transcription",
+      "savedToHistory": "Enregistré dans l'historique, avec son audio."
+    },
+    "errors": {
+      "unsupportedFormat": "Ce format de fichier n'est pas pris en charge.",
+      "unreadableFile": "Ce fichier n'a pas pu être lu.",
+      "corruptAudio": "Ce fichier est endommagé ou incomplet.",
+      "emptyAudio": "Ce fichier ne contient aucun audio.",
+      "noSpeech": "Aucune parole n'a été détectée dans ce fichier.",
+      "modelUnavailable": "Le modèle de transcription n'a pas pu être chargé. Vérifiez vos réglages de modèle.",
+      "transcriptionFailed": "La transcription a échoué.",
+      "storageFailed": "La transcription n'a pas pu être enregistrée.",
+      "busy": "Une dictée est en cours. Attendez qu'elle se termine, puis réessayez.",
+      "cancelled": "Transcription annulée."
+    }
   },
   "onboarding": {
     "subtitle": "Pour commencer, choisissez un modèle de transcription",
@@ -516,7 +571,9 @@
       "retranscribe": "Re-transcrire",
       "retranscribeError": "Impossible de re-transcrire. Veuillez réessayer.",
       "transcribing": "Transcription en cours...",
-      "transcriptionFailed": "La transcription a échoué. Vous pouvez re-transcrire en utilisant l'icône de réessai."
+      "transcriptionFailed": "La transcription a échoué. Vous pouvez re-transcrire en utilisant l'icône de réessai.",
+      "importedFile": "Fichier importé",
+      "importedFrom": "Importé depuis {{name}}"
     },
     "debug": {
       "title": "Débogage",

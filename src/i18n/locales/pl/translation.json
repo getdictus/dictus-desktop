@@ -14,8 +14,63 @@
     "advanced": "Zaawansowane",
     "postProcessing": "Postproces",
     "history": "Historia",
+    "fileTranscription": "Transkrypcja pliku",
     "debug": "Debugowanie",
     "about": "O programie"
+  },
+  "fileTranscription": {
+    "title": "Transkrypcja pliku",
+    "subtitle": "Zamień plik audio z tego komputera na tekst, korzystając z modelu, którym już dyktujesz.",
+    "pickerFilter": "Pliki audio",
+    "supportedFormats": "Obsługiwane formaty: {{formats}}",
+    "privacyNote": "Plik jest dekodowany i transkrybowany na tym komputerze. Nic nie jest wysyłane do sieci.",
+    "percent": "{{percent}}%",
+    "cancelPending": "Zatrzyma się po zakończeniu bieżącego kroku.",
+    "dropZone": {
+      "label": "Upuść tutaj plik audio lub kliknij, aby go wybrać",
+      "sublabel": "Jeden plik naraz",
+      "reading": "Odczytywanie pliku..."
+    },
+    "file": {
+      "duration": "Czas trwania",
+      "size": "Rozmiar",
+      "model": "Model",
+      "language": "Język",
+      "unknownDuration": "Nieznany",
+      "noModel": "Nie wybrano modelu"
+    },
+    "actions": {
+      "transcribe": "Transkrybuj",
+      "cancel": "Anuluj",
+      "chooseAnother": "Wybierz inny plik",
+      "copy": "Kopiuj",
+      "copied": "Skopiowano",
+      "openInHistory": "Otwórz w historii",
+      "retry": "Spróbuj ponownie"
+    },
+    "stages": {
+      "decoding": "Odczytywanie audio...",
+      "loadingModel": "Ładowanie modelu...",
+      "transcribing": "Transkrybowanie...",
+      "saving": "Zapisywanie...",
+      "cancelling": "Anulowanie..."
+    },
+    "result": {
+      "title": "Transkrypcja",
+      "savedToHistory": "Zapisano w historii wraz z nagraniem."
+    },
+    "errors": {
+      "unsupportedFormat": "Ten format pliku nie jest obsługiwany.",
+      "unreadableFile": "Nie udało się odczytać tego pliku.",
+      "corruptAudio": "Ten plik jest uszkodzony lub niekompletny.",
+      "emptyAudio": "Ten plik nie zawiera dźwięku.",
+      "noSpeech": "W tym pliku nie znaleziono mowy.",
+      "modelUnavailable": "Nie udało się załadować modelu transkrypcji. Sprawdź ustawienia modeli.",
+      "transcriptionFailed": "Transkrypcja nie powiodła się.",
+      "storageFailed": "Nie udało się zapisać transkrypcji.",
+      "busy": "Trwa dyktowanie. Poczekaj, aż się zakończy, i spróbuj ponownie.",
+      "cancelled": "Transkrypcja anulowana."
+    }
   },
   "onboarding": {
     "subtitle": "Aby rozpocząć, wybierz model transkrypcji",
@@ -516,7 +571,9 @@
       "retranscribe": "Transkrybuj ponownie",
       "retranscribeError": "Nie udało się ponownie transkrybować. Spróbuj ponownie.",
       "transcribing": "Transkrybuję...",
-      "transcriptionFailed": "Transkrypcja nie powiodła się. Możesz transkrybować ponownie za pomocą ikony ponowienia."
+      "transcriptionFailed": "Transkrypcja nie powiodła się. Możesz transkrybować ponownie za pomocą ikony ponowienia.",
+      "importedFile": "Zaimportowany plik",
+      "importedFrom": "Zaimportowano z {{name}}"
     },
     "debug": {
       "title": "Debugowanie",

@@ -14,8 +14,63 @@
     "advanced": "Nâng cao",
     "postProcessing": "Xử lý sau",
     "history": "Lịch sử",
+    "fileTranscription": "Phiên âm tệp",
     "debug": "Gỡ lỗi",
     "about": "Giới thiệu"
+  },
+  "fileTranscription": {
+    "title": "Phiên âm tệp",
+    "subtitle": "Chuyển một tệp âm thanh trên máy này thành văn bản, bằng chính mô hình bạn dùng để đọc chính tả.",
+    "pickerFilter": "Tệp âm thanh",
+    "supportedFormats": "Định dạng hỗ trợ: {{formats}}",
+    "privacyNote": "Tệp được giải mã và phiên âm ngay trên máy này. Không có gì được tải lên.",
+    "percent": "{{percent}}%",
+    "cancelPending": "Sẽ dừng ngay khi bước hiện tại hoàn tất.",
+    "dropZone": {
+      "label": "Thả tệp âm thanh vào đây, hoặc nhấp để chọn tệp",
+      "sublabel": "Mỗi lần một tệp",
+      "reading": "Đang đọc tệp..."
+    },
+    "file": {
+      "duration": "Thời lượng",
+      "size": "Kích thước",
+      "model": "Mô hình",
+      "language": "Ngôn ngữ",
+      "unknownDuration": "Không rõ",
+      "noModel": "Chưa chọn mô hình"
+    },
+    "actions": {
+      "transcribe": "Phiên âm",
+      "cancel": "Hủy",
+      "chooseAnother": "Chọn tệp khác",
+      "copy": "Sao chép",
+      "copied": "Đã sao chép",
+      "openInHistory": "Mở trong lịch sử",
+      "retry": "Thử lại"
+    },
+    "stages": {
+      "decoding": "Đang đọc âm thanh...",
+      "loadingModel": "Đang tải mô hình...",
+      "transcribing": "Đang phiên âm...",
+      "saving": "Đang lưu...",
+      "cancelling": "Đang hủy..."
+    },
+    "result": {
+      "title": "Bản phiên âm",
+      "savedToHistory": "Đã lưu vào lịch sử cùng với âm thanh."
+    },
+    "errors": {
+      "unsupportedFormat": "Định dạng tệp này không được hỗ trợ.",
+      "unreadableFile": "Không đọc được tệp này.",
+      "corruptAudio": "Tệp này bị hỏng hoặc không đầy đủ.",
+      "emptyAudio": "Tệp này không chứa âm thanh.",
+      "noSpeech": "Không tìm thấy giọng nói trong tệp này.",
+      "modelUnavailable": "Không tải được mô hình phiên âm. Hãy kiểm tra cài đặt mô hình.",
+      "transcriptionFailed": "Phiên âm thất bại.",
+      "storageFailed": "Không lưu được bản phiên âm.",
+      "busy": "Đang có phiên đọc chính tả. Hãy đợi kết thúc rồi thử lại.",
+      "cancelled": "Đã hủy phiên âm."
+    }
   },
   "onboarding": {
     "subtitle": "Để bắt đầu, hãy chọn một mô hình chuyển đổi giọng nói",
@@ -516,7 +571,9 @@
       "retranscribe": "Phiên âm lại",
       "retranscribeError": "Không thể phiên âm lại. Vui lòng thử lại.",
       "transcribing": "Đang phiên âm...",
-      "transcriptionFailed": "Phiên âm thất bại. Bạn có thể phiên âm lại bằng biểu tượng thử lại."
+      "transcriptionFailed": "Phiên âm thất bại. Bạn có thể phiên âm lại bằng biểu tượng thử lại.",
+      "importedFile": "Tệp đã nhập",
+      "importedFrom": "Nhập từ {{name}}"
     },
     "debug": {
       "title": "Gỡ lỗi",

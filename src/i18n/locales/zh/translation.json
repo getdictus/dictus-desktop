@@ -14,8 +14,63 @@
     "advanced": "高级",
     "postProcessing": "后处理",
     "history": "历史记录",
+    "fileTranscription": "转录文件",
     "debug": "调试",
     "about": "关于"
+  },
+  "fileTranscription": {
+    "title": "转录文件",
+    "subtitle": "使用你平时口述所用的模型，把这台电脑上的音频文件转成文字。",
+    "pickerFilter": "音频文件",
+    "supportedFormats": "支持的格式：{{formats}}",
+    "privacyNote": "文件在本机解码并转录，不会上传任何内容。",
+    "percent": "{{percent}}%",
+    "cancelPending": "将在当前步骤结束后停止。",
+    "dropZone": {
+      "label": "把音频文件拖到这里，或点击选择文件",
+      "sublabel": "一次一个文件",
+      "reading": "正在读取文件..."
+    },
+    "file": {
+      "duration": "时长",
+      "size": "大小",
+      "model": "模型",
+      "language": "语言",
+      "unknownDuration": "未知",
+      "noModel": "未选择模型"
+    },
+    "actions": {
+      "transcribe": "开始转录",
+      "cancel": "取消",
+      "chooseAnother": "换一个文件",
+      "copy": "复制",
+      "copied": "已复制",
+      "openInHistory": "在历史记录中打开",
+      "retry": "重试"
+    },
+    "stages": {
+      "decoding": "正在读取音频...",
+      "loadingModel": "正在加载模型...",
+      "transcribing": "正在转录...",
+      "saving": "正在保存...",
+      "cancelling": "正在取消..."
+    },
+    "result": {
+      "title": "转录文本",
+      "savedToHistory": "已连同音频保存到历史记录。"
+    },
+    "errors": {
+      "unsupportedFormat": "不支持这种文件格式。",
+      "unreadableFile": "无法读取该文件。",
+      "corruptAudio": "该文件已损坏或不完整。",
+      "emptyAudio": "该文件不包含音频。",
+      "noSpeech": "在该文件中没有找到语音。",
+      "modelUnavailable": "无法加载转录模型，请检查模型设置。",
+      "transcriptionFailed": "转录失败。",
+      "storageFailed": "无法保存转录文本。",
+      "busy": "正在进行口述转录，请等待结束后再试。",
+      "cancelled": "已取消转录。"
+    }
   },
   "onboarding": {
     "subtitle": "请选择一个转录模型以开始使用",
@@ -516,7 +571,9 @@
       "retranscribe": "重新转录",
       "retranscribeError": "重新转录失败。请重试。",
       "transcribing": "转录中...",
-      "transcriptionFailed": "转录失败。您可以使用重试图标重新转录。"
+      "transcriptionFailed": "转录失败。您可以使用重试图标重新转录。",
+      "importedFile": "导入的文件",
+      "importedFrom": "导入自 {{name}}"
     },
     "debug": {
       "title": "调试",

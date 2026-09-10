@@ -977,6 +977,43 @@ async updateRecordingRetentionPeriod(period: string) : Promise<Result<null, stri
 }
 },
 /**
+ * The extensions the file picker should offer. Sourced from the decoder so the
+ * two can't drift apart.
+ */
+async supportedAudioExtensions() : Promise<string[]> {
+    return await TAURI_INVOKE("supported_audio_extensions");
+},
+/**
+ * Read a file's headers so the workspace can show what the user picked before
+ * committing to a transcription. No audio is decoded here.
+ */
+async inspectAudioFile(path: string) : Promise<Result<AudioFileDetails, FileTranscriptionError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("inspect_audio_file", { path }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Transcribe an imported audio file with the currently selected model and ASR
+ * settings, then save it to History.
+ */
+async transcribeAudioFile(path: string) : Promise<Result<FileTranscriptionResult, FileTranscriptionError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("transcribe_audio_file", { path }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Ask the running import to stop. Safe to call when nothing is running.
+ */
+async cancelFileTranscription() : Promise<void> {
+    await TAURI_INVOKE("cancel_file_transcription");
+},
+/**
  * Checks if the Mac is a laptop by detecting battery presence
  * 
  * This uses pmset to check for battery information.
@@ -996,9 +1033,11 @@ async isLaptop() : Promise<Result<boolean, string>> {
 
 
 export const events = __makeEvents__<{
+fileTranscriptionProgress: FileTranscriptionProgress,
 historyUpdatePayload: HistoryUpdatePayload,
 llmDownloadProgress: LlmDownloadProgress
 }>({
+fileTranscriptionProgress: "file-transcription-progress",
 historyUpdatePayload: "history-update-payload",
 llmDownloadProgress: "llm-download-progress"
 })
@@ -1011,14 +1050,100 @@ llmDownloadProgress: "llm-download-progress"
 
 export type AppSettings = { bindings: Partial<{ [key in string]: ShortcutBinding }>; push_to_talk: boolean; audio_feedback: boolean; audio_feedback_volume?: number; sound_theme?: SoundTheme; start_hidden?: boolean; autostart_enabled?: boolean; update_checks_enabled?: boolean; selected_model?: string; always_on_microphone?: boolean; selected_microphone?: string | null; clamshell_microphone?: string | null; selected_output_device?: string | null; translate_to_english?: boolean; selected_language?: string; overlay_position?: OverlayPosition; debug_mode?: boolean; log_level?: LogLevel; custom_words?: string[]; model_unload_timeout?: ModelUnloadTimeout; word_correction_threshold?: number; history_limit?: number; recording_retention_period?: RecordingRetentionPeriod; paste_method?: PasteMethod; clipboard_handling?: ClipboardHandling; auto_submit?: boolean; auto_submit_key?: AutoSubmitKey; post_process_enabled?: boolean; post_process_provider_id?: string; post_process_providers?: PostProcessProvider[]; post_process_api_keys?: SecretMap; post_process_models?: Partial<{ [key in string]: string }>; post_process_prompts?: LLMPrompt[]; post_process_selected_prompt_id?: string | null; settings_schema_version?: number; smart_modes?: SmartMode[]; smart_mode_active_id?: string | null; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; experimental_enabled?: boolean; enable_cloud_providers?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; typing_tool?: TypingTool; external_script_path: string | null; custom_filler_words?: string[] | null; whisper_accelerator?: WhisperAcceleratorSetting; ort_accelerator?: OrtAcceleratorSetting; whisper_gpu_device?: number; extra_recording_buffer_ms?: number; active_llm_model_id?: string | null; llm_unload_timeout?: ModelUnloadTimeout }
 export type AudioDevice = { index: string; name: string; is_default: boolean }
+/**
+ * What the UI shows about a file before the user commits to transcribing it.
+ */
+export type AudioFileDetails = { path: string; file_name: string; size_bytes: number; 
+/**
+ * `None` when the container declares no frame count.
+ */
+duration_ms: number | null; sample_rate: number; channels: number }
 export type AutoSubmitKey = "enter" | "ctrl_enter" | "cmd_enter"
 export type AvailableAccelerators = { whisper: string[]; ort: string[]; gpu_devices: GpuDeviceOption[] }
 export type BindingResponse = { success: boolean; binding: ShortcutBinding | null; error: string | null }
 export type ClipboardHandling = "dont_modify" | "copy_to_clipboard"
 export type CustomSounds = { start: boolean; stop: boolean }
 export type EngineType = "Whisper" | "Parakeet" | "Moonshine" | "MoonshineStreaming" | "SenseVoice" | "GigaAM" | "Canary" | "Cohere"
+/**
+ * Everything that can go wrong with an import, as distinct cases.
+ * 
+ * Each variant maps to exactly one localized message in the frontend
+ * (`fileTranscription.errors.*`); `detail` carries the technical text for the
+ * log and is never shown on its own.
+ */
+export type FileTranscriptionError = 
+/**
+ * Not a format we advertise, or no decoder exists for the stream.
+ */
+{ kind: "unsupported_format" } | 
+/**
+ * The file could not be opened or read.
+ */
+{ kind: "unreadable_file"; detail: string } | 
+/**
+ * A decoder matched but the stream is damaged.
+ */
+{ kind: "corrupt_audio"; detail: string } | 
+/**
+ * The file decoded to nothing at all.
+ */
+{ kind: "empty_audio" } | 
+/**
+ * Decoding worked but the engine found no speech.
+ */
+{ kind: "no_speech" } | 
+/**
+ * No transcription model is selected, or the selected one failed to load.
+ */
+{ kind: "model_unavailable"; detail: string } | 
+/**
+ * The engine ran and failed.
+ */
+{ kind: "transcription_failed"; detail: string } | 
+/**
+ * Writing the managed recording or the history row failed.
+ */
+{ kind: "storage_failed"; detail: string } | 
+/**
+ * Live dictation or another import already owns the engine.
+ */
+{ kind: "busy" } | 
+/**
+ * The user cancelled.
+ */
+{ kind: "cancelled" }
+/**
+ * Progress event for the active import job.
+ */
+export type FileTranscriptionProgress = { job_id: string; stage: FileTranscriptionStage; 
+/**
+ * Fraction in `0.0..=1.0`, or `None` when the stage cannot honestly
+ * report one.
+ */
+progress: number | null }
+/**
+ * A finished import.
+ */
+export type FileTranscriptionResult = { job_id: string; history_entry_id: number; text: string; source_name: string; duration_ms: number }
+/**
+ * Which part of the import the job is currently in.
+ * 
+ * Only `Decoding` can report a meaningful fraction — inference is one opaque
+ * call into the engine, so the UI shows an indeterminate state for it rather
+ * than inventing a percentage.
+ */
+export type FileTranscriptionStage = "decoding" | "loading_model" | "transcribing" | "saving"
 export type GpuDeviceOption = { id: number; name: string; total_vram_mb: number }
-export type HistoryEntry = { id: number; file_name: string; timestamp: number; saved: boolean; title: string; transcription_text: string; post_processed_text: string | null; post_process_prompt: string | null; post_process_requested: boolean }
+export type HistoryEntry = { id: number; file_name: string; timestamp: number; saved: boolean; title: string; transcription_text: string; post_processed_text: string | null; post_process_prompt: string | null; post_process_requested: boolean; 
+/**
+ * `"microphone"` or `"imported_file"`. `None` on entries written before
+ * the imported-file migration; the UI treats those as microphone.
+ */
+source_type: string | null; 
+/**
+ * Original file name for imported entries, `None` for dictation.
+ */
+source_name: string | null; duration_ms: number | null }
 export type HistoryUpdatePayload = { action: "added"; entry: HistoryEntry } | { action: "updated"; entry: HistoryEntry } | { action: "deleted"; id: number } | { action: "toggled"; id: number }
 /**
  * Result of changing keyboard implementation

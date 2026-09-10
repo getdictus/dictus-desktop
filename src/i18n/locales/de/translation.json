@@ -14,8 +14,63 @@
     "advanced": "Erweitert",
     "postProcessing": "Nachbearbeitung",
     "history": "Verlauf",
+    "fileTranscription": "Datei transkribieren",
     "debug": "Diagnose",
     "about": "Info"
+  },
+  "fileTranscription": {
+    "title": "Datei transkribieren",
+    "subtitle": "Wandle eine Audiodatei auf diesem Computer in Text um – mit demselben Modell, mit dem du auch diktierst.",
+    "pickerFilter": "Audiodateien",
+    "supportedFormats": "Unterstützte Formate: {{formats}}",
+    "privacyNote": "Die Datei wird auf diesem Computer dekodiert und transkribiert. Nichts wird hochgeladen.",
+    "percent": "{{percent}} %",
+    "cancelPending": "Wird beendet, sobald der aktuelle Schritt fertig ist.",
+    "dropZone": {
+      "label": "Audiodatei hier ablegen oder klicken, um eine auszuwählen",
+      "sublabel": "Eine Datei nach der anderen",
+      "reading": "Datei wird gelesen..."
+    },
+    "file": {
+      "duration": "Dauer",
+      "size": "Größe",
+      "model": "Modell",
+      "language": "Sprache",
+      "unknownDuration": "Unbekannt",
+      "noModel": "Kein Modell ausgewählt"
+    },
+    "actions": {
+      "transcribe": "Transkribieren",
+      "cancel": "Abbrechen",
+      "chooseAnother": "Andere Datei wählen",
+      "copy": "Kopieren",
+      "copied": "Kopiert",
+      "openInHistory": "Im Verlauf öffnen",
+      "retry": "Erneut versuchen"
+    },
+    "stages": {
+      "decoding": "Audio wird gelesen...",
+      "loadingModel": "Modell wird geladen...",
+      "transcribing": "Transkription läuft...",
+      "saving": "Wird gespeichert...",
+      "cancelling": "Wird abgebrochen..."
+    },
+    "result": {
+      "title": "Transkript",
+      "savedToHistory": "Im Verlauf gespeichert, zusammen mit der Audiodatei."
+    },
+    "errors": {
+      "unsupportedFormat": "Dieses Dateiformat wird nicht unterstützt.",
+      "unreadableFile": "Diese Datei konnte nicht gelesen werden.",
+      "corruptAudio": "Diese Datei ist beschädigt oder unvollständig.",
+      "emptyAudio": "Diese Datei enthält kein Audio.",
+      "noSpeech": "In dieser Datei wurde keine Sprache gefunden.",
+      "modelUnavailable": "Das Transkriptionsmodell konnte nicht geladen werden. Prüfe deine Modelleinstellungen.",
+      "transcriptionFailed": "Die Transkription ist fehlgeschlagen.",
+      "storageFailed": "Das Transkript konnte nicht gespeichert werden.",
+      "busy": "Gerade läuft ein Diktat. Warte, bis es fertig ist, und versuche es dann erneut.",
+      "cancelled": "Transkription abgebrochen."
+    }
   },
   "onboarding": {
     "subtitle": "Wähle ein Transkriptionsmodell, um loszulegen",
@@ -516,7 +571,9 @@
       "retranscribe": "Erneut transkribieren",
       "retranscribeError": "Erneute Transkription fehlgeschlagen. Bitte versuche es erneut.",
       "transcribing": "Transkribiere...",
-      "transcriptionFailed": "Transkription fehlgeschlagen. Du kannst über das Wiederholen-Symbol erneut transkribieren."
+      "transcriptionFailed": "Transkription fehlgeschlagen. Du kannst über das Wiederholen-Symbol erneut transkribieren.",
+      "importedFile": "Importierte Datei",
+      "importedFrom": "Importiert aus {{name}}"
     },
     "debug": {
       "title": "Debug",

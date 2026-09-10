@@ -14,8 +14,63 @@
     "advanced": "Advanced",
     "postProcessing": "Post Process",
     "history": "History",
+    "fileTranscription": "Transcribe File",
     "debug": "Debug",
     "about": "About"
+  },
+  "fileTranscription": {
+    "title": "Transcribe File",
+    "subtitle": "Turn an audio file on this computer into text, using the model you already dictate with.",
+    "pickerFilter": "Audio files",
+    "supportedFormats": "Supported: {{formats}}",
+    "privacyNote": "The file is decoded and transcribed on this computer. Nothing is uploaded.",
+    "percent": "{{percent}}%",
+    "cancelPending": "Stopping once the current step finishes.",
+    "dropZone": {
+      "label": "Drop an audio file here, or click to choose one",
+      "sublabel": "One file at a time",
+      "reading": "Reading file..."
+    },
+    "file": {
+      "duration": "Duration",
+      "size": "Size",
+      "model": "Model",
+      "language": "Language",
+      "unknownDuration": "Unknown",
+      "noModel": "No model selected"
+    },
+    "actions": {
+      "transcribe": "Transcribe",
+      "cancel": "Cancel",
+      "chooseAnother": "Choose another file",
+      "copy": "Copy",
+      "copied": "Copied",
+      "openInHistory": "Open in History",
+      "retry": "Try again"
+    },
+    "stages": {
+      "decoding": "Reading audio...",
+      "loadingModel": "Loading model...",
+      "transcribing": "Transcribing...",
+      "saving": "Saving...",
+      "cancelling": "Cancelling..."
+    },
+    "result": {
+      "title": "Transcript",
+      "savedToHistory": "Saved to History, together with its audio."
+    },
+    "errors": {
+      "unsupportedFormat": "This file format is not supported.",
+      "unreadableFile": "This file could not be read.",
+      "corruptAudio": "This file is damaged or incomplete.",
+      "emptyAudio": "This file contains no audio.",
+      "noSpeech": "No speech was found in this file.",
+      "modelUnavailable": "The transcription model could not be loaded. Check your model settings.",
+      "transcriptionFailed": "Transcription failed.",
+      "storageFailed": "The transcript could not be saved.",
+      "busy": "A dictation is running. Wait for it to finish, then try again.",
+      "cancelled": "Transcription cancelled."
+    }
   },
   "onboarding": {
     "subtitle": "To get started, choose a transcription model",
@@ -516,7 +571,9 @@
       "retranscribe": "Re-transcribe",
       "retranscribeError": "Failed to re-transcribe. Please try again.",
       "transcribing": "Transcribing...",
-      "transcriptionFailed": "Transcription failed. You can re-transcribe using the retry icon."
+      "transcriptionFailed": "Transcription failed. You can re-transcribe using the retry icon.",
+      "importedFile": "Imported file",
+      "importedFrom": "Imported from {{name}}"
     },
     "debug": {
       "title": "Debug",

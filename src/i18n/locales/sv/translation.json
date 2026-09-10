@@ -14,8 +14,63 @@
     "advanced": "Avancerat",
     "postProcessing": "Efterbearbetning",
     "history": "Historik",
+    "fileTranscription": "Transkribera fil",
     "debug": "Felsökning",
     "about": "Om"
+  },
+  "fileTranscription": {
+    "title": "Transkribera fil",
+    "subtitle": "Gör om en ljudfil på den här datorn till text, med samma modell som du dikterar med.",
+    "pickerFilter": "Ljudfiler",
+    "supportedFormats": "Format som stöds: {{formats}}",
+    "privacyNote": "Filen avkodas och transkriberas på den här datorn. Ingenting laddas upp.",
+    "percent": "{{percent}} %",
+    "cancelPending": "Avbryts så snart det pågående steget är klart.",
+    "dropZone": {
+      "label": "Släpp en ljudfil här, eller klicka för att välja en",
+      "sublabel": "En fil i taget",
+      "reading": "Läser filen..."
+    },
+    "file": {
+      "duration": "Längd",
+      "size": "Storlek",
+      "model": "Modell",
+      "language": "Språk",
+      "unknownDuration": "Okänd",
+      "noModel": "Ingen modell vald"
+    },
+    "actions": {
+      "transcribe": "Transkribera",
+      "cancel": "Avbryt",
+      "chooseAnother": "Välj en annan fil",
+      "copy": "Kopiera",
+      "copied": "Kopierat",
+      "openInHistory": "Öppna i historiken",
+      "retry": "Försök igen"
+    },
+    "stages": {
+      "decoding": "Läser ljudet...",
+      "loadingModel": "Laddar modellen...",
+      "transcribing": "Transkriberar...",
+      "saving": "Sparar...",
+      "cancelling": "Avbryter..."
+    },
+    "result": {
+      "title": "Transkription",
+      "savedToHistory": "Sparad i historiken, tillsammans med ljudet."
+    },
+    "errors": {
+      "unsupportedFormat": "Det här filformatet stöds inte.",
+      "unreadableFile": "Filen gick inte att läsa.",
+      "corruptAudio": "Filen är skadad eller ofullständig.",
+      "emptyAudio": "Filen innehåller inget ljud.",
+      "noSpeech": "Inget tal hittades i filen.",
+      "modelUnavailable": "Transkriberingsmodellen kunde inte laddas. Kontrollera dina modellinställningar.",
+      "transcriptionFailed": "Transkriberingen misslyckades.",
+      "storageFailed": "Transkriptionen kunde inte sparas.",
+      "busy": "En diktering pågår. Vänta tills den är klar och försök igen.",
+      "cancelled": "Transkriberingen avbröts."
+    }
   },
   "onboarding": {
     "subtitle": "För att komma igång, välj en transkriptionsmodell",
@@ -516,7 +571,9 @@
       "retranscribe": "Transkribera igen",
       "retranscribeError": "Misslyckades med att transkribera igen. Försök igen.",
       "transcribing": "Transkriberar...",
-      "transcriptionFailed": "Transkribering misslyckades. Du kan transkribera igen med hjälp av ikonen för nytt försök."
+      "transcriptionFailed": "Transkribering misslyckades. Du kan transkribera igen med hjälp av ikonen för nytt försök.",
+      "importedFile": "Importerad fil",
+      "importedFrom": "Importerad från {{name}}"
     },
     "debug": {
       "title": "Felsökning",

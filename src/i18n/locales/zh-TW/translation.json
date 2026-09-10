@@ -14,8 +14,63 @@
     "advanced": "進階",
     "postProcessing": "後處理",
     "history": "歷史紀錄",
+    "fileTranscription": "轉錄檔案",
     "debug": "偵錯",
     "about": "關於"
+  },
+  "fileTranscription": {
+    "title": "轉錄檔案",
+    "subtitle": "用你平常口述所使用的模型，把這台電腦上的音訊檔案轉成文字。",
+    "pickerFilter": "音訊檔案",
+    "supportedFormats": "支援的格式：{{formats}}",
+    "privacyNote": "檔案會在本機解碼並轉錄，不會上傳任何內容。",
+    "percent": "{{percent}}%",
+    "cancelPending": "會在目前步驟結束後停止。",
+    "dropZone": {
+      "label": "把音訊檔案拖到這裡，或點擊選擇檔案",
+      "sublabel": "一次一個檔案",
+      "reading": "正在讀取檔案..."
+    },
+    "file": {
+      "duration": "長度",
+      "size": "大小",
+      "model": "模型",
+      "language": "語言",
+      "unknownDuration": "未知",
+      "noModel": "未選擇模型"
+    },
+    "actions": {
+      "transcribe": "開始轉錄",
+      "cancel": "取消",
+      "chooseAnother": "換一個檔案",
+      "copy": "複製",
+      "copied": "已複製",
+      "openInHistory": "在歷史紀錄中開啟",
+      "retry": "重試"
+    },
+    "stages": {
+      "decoding": "正在讀取音訊...",
+      "loadingModel": "正在載入模型...",
+      "transcribing": "正在轉錄...",
+      "saving": "正在儲存...",
+      "cancelling": "正在取消..."
+    },
+    "result": {
+      "title": "轉錄文字",
+      "savedToHistory": "已連同音訊儲存到歷史紀錄。"
+    },
+    "errors": {
+      "unsupportedFormat": "不支援這種檔案格式。",
+      "unreadableFile": "無法讀取這個檔案。",
+      "corruptAudio": "這個檔案已損毀或不完整。",
+      "emptyAudio": "這個檔案不含音訊。",
+      "noSpeech": "在這個檔案中找不到語音。",
+      "modelUnavailable": "無法載入轉錄模型，請檢查模型設定。",
+      "transcriptionFailed": "轉錄失敗。",
+      "storageFailed": "無法儲存轉錄文字。",
+      "busy": "目前正在進行口述轉錄，請等結束後再試。",
+      "cancelled": "已取消轉錄。"
+    }
   },
   "onboarding": {
     "subtitle": "首先，請選擇一種模型",
@@ -516,7 +571,9 @@
       "retranscribe": "重新轉錄",
       "retranscribeError": "重新轉錄失敗，請重試。",
       "transcribing": "轉錄中...",
-      "transcriptionFailed": "轉錄失敗。您可以使用重試圖示重新轉錄。"
+      "transcriptionFailed": "轉錄失敗。您可以使用重試圖示重新轉錄。",
+      "importedFile": "匯入的檔案",
+      "importedFrom": "匯入自 {{name}}"
     },
     "debug": {
       "title": "偵錯",
