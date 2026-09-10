@@ -92,7 +92,7 @@ export const CustomGgufDropZone: React.FC = () => {
             "settings.postProcessing.modelsAndLocalProcessing.library.dropZoneLabel",
           )}
         </span>
-        <span className="text-xs text-text-faint">
+        <span className="text-xs text-text-muted">
           {t(
             "settings.postProcessing.modelsAndLocalProcessing.library.dropZoneSublabel",
           )}

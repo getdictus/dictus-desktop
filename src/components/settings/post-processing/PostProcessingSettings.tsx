@@ -71,7 +71,7 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
             </Alert>
           ) : undefined
         ) : opt.value === "custom" ? (
-          <p className="text-xs text-text-faint">
+          <p className="text-xs text-text-muted">
             <Trans
               i18nKey="settings.postProcessing.api.custom.ollamaTip"
               components={{

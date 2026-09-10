@@ -232,7 +232,7 @@ export const SmartModeCard: React.FC<SmartModeCardProps> = ({
                 placeholder={t("smartModes.card.promptPlaceholder")}
                 className="w-full"
               />
-              <p className="text-xs text-text-faint">
+              <p className="text-xs text-text-muted">
                 {t("smartModes.card.outputHint")}
               </p>
             </div>
@@ -262,7 +262,7 @@ export const SmartModeCard: React.FC<SmartModeCardProps> = ({
                 ))}
               </select>
               {genericEngineNote && (
-                <p className="text-xs text-text-faint">
+                <p className="text-xs text-text-muted">
                   {t("smartModes.translation.genericEngineNote")}
                 </p>
               )}

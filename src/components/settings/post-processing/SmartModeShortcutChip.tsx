@@ -377,7 +377,7 @@ export const SmartModeShortcutChip: React.FC<SmartModeShortcutChipProps> = ({
         aria-label={t("smartModes.card.addShortcut")}
         aria-disabled={disabled ? "true" : undefined}
         onClick={disabled ? undefined : handleClick}
-        className={`px-3 py-[5px] text-xs font-medium bg-control border border-hairline text-text-faint rounded-lg ${disabled ? "opacity-60" : "cursor-pointer"}`}
+        className={`px-3 py-[5px] text-xs font-medium bg-control border border-hairline text-text-muted rounded-lg ${disabled ? "opacity-60" : "cursor-pointer"}`}
       >
         {t("smartModes.card.addShortcut")}
       </div>
