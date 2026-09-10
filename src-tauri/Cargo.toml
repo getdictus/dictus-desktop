@@ -91,6 +91,27 @@ specta = "=2.0.0-rc.22"
 specta-typescript = "0.0.9"
 tauri-specta = { version = "=2.0.0-rc.21", features = ["derive", "typescript"] }
 tauri-plugin-dialog = "2.6"
+# Media decoding for imported audio files (Transcribe File workspace). Pulled in
+# with default-features off so we only compile the container/codec pairs we
+# advertise; every one of these is already in the tree via rodio, so this adds
+# no build cost.
+# Opus decoding for imported files. symphonia reads the Ogg container and its
+# Opus mapping but ships no Opus decoder, so we bring libopus — the reference
+# implementation — and register a symphonia Decoder around it. Telegram and
+# WhatsApp send every voice note as Opus, so this is a main path, not an edge
+# case. libopus is vendored and built by opusic-sys with the same C toolchain
+# whisper.cpp and llama.cpp already require on every target.
+opus = "0.4"
+symphonia = { version = "0.5.5", default-features = false, features = [
+  "wav",
+  "pcm",
+  "flac",
+  "mp3",
+  "isomp4",
+  "aac",
+  "ogg",
+  "vorbis",
+] }
 
 [target.'cfg(unix)'.dependencies]
 signal-hook = "0.3"

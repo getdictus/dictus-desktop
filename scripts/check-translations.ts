@@ -129,6 +129,13 @@ function isAllowlisted(dotKey: string): boolean {
     "settings.advanced.pasteMethod.externalScriptPlaceholder",
     // Speed format string — {{speed}} placeholder keeps unit unchanged
     "modelSelector.downloadSpeed",
+    // Percent format string — several locales write "50%" exactly as English
+    // does; the ones with a different convention (fr, de, ru, tr, ja...) do
+    // carry their own value.
+    "fileTranscription.percent",
+    // "Model" is spelled identically in Czech, Polish and Turkish — same reason
+    // settings.postProcessing.api.model.title is on this list.
+    "fileTranscription.file.model",
     // Technical UI labels — widely kept in EN across all languages
     "settings.postProcessing.tabs.local",
     "settings.postProcessing.tabs.cloud",

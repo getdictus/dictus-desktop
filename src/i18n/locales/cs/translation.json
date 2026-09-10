@@ -14,8 +14,65 @@
     "advanced": "Pokročilé",
     "postProcessing": "Následné zpracování",
     "history": "Historie",
+    "fileTranscription": "Přepis souboru",
     "debug": "Ladění",
     "about": "O aplikaci"
+  },
+  "fileTranscription": {
+    "title": "Přepis souboru",
+    "subtitle": "Převeďte zvukový soubor z tohoto počítače na text pomocí modelu, kterým už diktujete.",
+    "pickerFilter": "Zvukové soubory",
+    "supportedFormats": "Podporované formáty: {{formats}}",
+    "privacyNote": "Soubor se dekóduje a přepisuje v tomto počítači. Nic se neodesílá na internet.",
+    "percent": "{{percent}} %",
+    "cancelPending": "Zastaví se, jakmile skončí aktuální krok.",
+    "alreadyRunning": "Přepis už probíhá. Zrušte ho, chcete-li spustit další.",
+    "dropZone": {
+      "label": "Přetáhněte sem zvukový soubor nebo klikněte a vyberte jej",
+      "sublabel": "Vždy jen jeden soubor",
+      "reading": "Načítání souboru..."
+    },
+    "file": {
+      "duration": "Délka",
+      "size": "Velikost",
+      "model": "Model",
+      "language": "Jazyk",
+      "unknownDuration": "Neznámá",
+      "noModel": "Není vybrán žádný model"
+    },
+    "actions": {
+      "cancel": "Zrušit",
+      "chooseAnother": "Vybrat jiný soubor",
+      "copy": "Kopírovat",
+      "copied": "Zkopírováno",
+      "openInHistory": "Otevřít v historii",
+      "retry": "Zkusit znovu"
+    },
+    "stages": {
+      "decoding": "Načítání zvuku...",
+      "loadingModel": "Načítání modelu...",
+      "transcribing": "Přepisování...",
+      "saving": "Ukládání...",
+      "cancelling": "Rušení..."
+    },
+    "result": {
+      "title": "Přepis",
+      "savedToHistory": "Uloženo do historie spolu se zvukem."
+    },
+    "errors": {
+      "unsupportedFormat": "Tento formát souboru není podporován.",
+      "unsupportedCodec": "Dictus zatím neumí přečíst zvuk {{codec}}. Převeďte soubor do WAV, MP3 nebo M4A a zkuste to znovu.",
+      "unreadableFile": "Tento soubor se nepodařilo přečíst.",
+      "corruptAudio": "Tento soubor je poškozený nebo neúplný.",
+      "emptyAudio": "Tento soubor neobsahuje žádný zvuk.",
+      "fileTooLong": "Tento soubor je příliš dlouhý na přepis najednou. Rozdělte ho na kratší části a zkuste to znovu.",
+      "noSpeech": "V tomto souboru nebyla nalezena žádná řeč.",
+      "modelUnavailable": "Model pro přepis se nepodařilo načíst. Zkontrolujte nastavení modelů.",
+      "transcriptionFailed": "Přepis se nezdařil.",
+      "storageFailed": "Přepis se nepodařilo uložit.",
+      "busy": "Právě probíhá diktování. Počkejte, až skončí, a zkuste to znovu.",
+      "cancelled": "Přepis zrušen."
+    }
   },
   "onboarding": {
     "subtitle": "Pro začátek vyberte model pro přepis",
@@ -516,7 +573,9 @@
       "retranscribe": "Přepsat znovu",
       "retranscribeError": "Opětovný přepis se nezdařil. Zkuste to prosím znovu.",
       "transcribing": "Přepisuji...",
-      "transcriptionFailed": "Přepis selhal. Můžete zkusit přepis znovu pomocí ikony opakování."
+      "transcriptionFailed": "Přepis selhal. Můžete zkusit přepis znovu pomocí ikony opakování.",
+      "importedFile": "Importovaný soubor",
+      "importedFrom": "Importováno z {{name}}"
     },
     "debug": {
       "title": "Ladění",

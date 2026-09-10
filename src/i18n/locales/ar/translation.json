@@ -13,9 +13,66 @@
     "advanced": "متقدم",
     "postProcessing": "معالجة لاحقة",
     "history": "السجل",
+    "fileTranscription": "تفريغ ملف",
     "debug": "تصحيح الأخطاء",
     "about": "حول",
     "models": "النماذج"
+  },
+  "fileTranscription": {
+    "title": "تفريغ ملف",
+    "subtitle": "حوّل ملفًا صوتيًا على هذا الحاسوب إلى نص، بالنموذج نفسه الذي تُملي به.",
+    "pickerFilter": "ملفات صوتية",
+    "supportedFormats": "الصيغ المدعومة: {{formats}}",
+    "privacyNote": "يُفكّ ترميز الملف ويُفرّغ على هذا الحاسوب. لا يُرفع أي شيء.",
+    "percent": "{{percent}}٪",
+    "cancelPending": "سيتوقف بمجرد انتهاء الخطوة الحالية.",
+    "alreadyRunning": "هناك تفريغ قيد التنفيذ بالفعل. ألغِه لبدء تفريغ آخر.",
+    "dropZone": {
+      "label": "أفلت ملفًا صوتيًا هنا، أو انقر لاختيار ملف",
+      "sublabel": "ملف واحد في كل مرة",
+      "reading": "جارٍ قراءة الملف..."
+    },
+    "file": {
+      "duration": "المدة",
+      "size": "الحجم",
+      "model": "النموذج",
+      "language": "اللغة",
+      "unknownDuration": "غير معروفة",
+      "noModel": "لم يتم اختيار نموذج"
+    },
+    "actions": {
+      "cancel": "إلغاء",
+      "chooseAnother": "اختيار ملف آخر",
+      "copy": "نسخ",
+      "copied": "تم النسخ",
+      "openInHistory": "فتح في السجل",
+      "retry": "إعادة المحاولة"
+    },
+    "stages": {
+      "decoding": "جارٍ قراءة الصوت...",
+      "loadingModel": "جارٍ تحميل النموذج...",
+      "transcribing": "جارٍ التفريغ...",
+      "saving": "جارٍ الحفظ...",
+      "cancelling": "جارٍ الإلغاء..."
+    },
+    "result": {
+      "title": "النص المفرّغ",
+      "savedToHistory": "تم الحفظ في السجل مع الصوت."
+    },
+    "errors": {
+      "unsupportedFormat": "صيغة هذا الملف غير مدعومة.",
+      "unsupportedCodec": "لا يستطيع Dictus قراءة صوت {{codec}} بعد. حوّل الملف إلى WAV أو MP3 أو M4A ثم أعد المحاولة.",
+      "unreadableFile": "تعذّرت قراءة هذا الملف.",
+      "corruptAudio": "هذا الملف تالف أو غير مكتمل.",
+      "emptyAudio": "لا يحتوي هذا الملف على صوت.",
+      "fileTooLong": "هذا الملف أطول من أن يُفرَّغ دفعة واحدة. قسّمه إلى أجزاء أقصر ثم أعد المحاولة.",
+      "noSpeech": "لم يُعثر على كلام في هذا الملف.",
+      "modelUnavailable": "تعذّر تحميل نموذج التفريغ. تحقّق من إعدادات النماذج.",
+      "transcriptionFailed": "فشل التفريغ.",
+      "storageFailed": "تعذّر حفظ النص المفرّغ.",
+      "busy": "هناك إملاء جارٍ الآن. انتظر انتهاءه ثم أعد المحاولة.",
+      "cancelled": "تم إلغاء التفريغ."
+    }
   },
   "onboarding": {
     "subtitle": "للبدء، اختر نموذج التفريغ الصوتي",
@@ -494,7 +551,9 @@
       "retranscribe": "إعادة النسخ",
       "retranscribeError": "فشلت إعادة النسخ. يرجى المحاولة مرة أخرى.",
       "transcribing": "جارٍ النسخ...",
-      "transcriptionFailed": "فشل النسخ. يمكنك إعادة النسخ باستخدام أيقونة إعادة المحاولة."
+      "transcriptionFailed": "فشل النسخ. يمكنك إعادة النسخ باستخدام أيقونة إعادة المحاولة.",
+      "importedFile": "ملف مستورد",
+      "importedFrom": "مستورد من {{name}}"
     },
     "debug": {
       "title": "تصحيح الأخطاء",

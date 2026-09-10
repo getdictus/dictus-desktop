@@ -14,8 +14,65 @@
     "advanced": "Avanzate",
     "postProcessing": "Post-Elaborazione",
     "history": "Cronologia",
+    "fileTranscription": "Trascrivi file",
     "debug": "Debug",
     "about": "Informazioni"
+  },
+  "fileTranscription": {
+    "title": "Trascrivi file",
+    "subtitle": "Trasforma in testo un file audio di questo computer, con il modello che usi già per dettare.",
+    "pickerFilter": "File audio",
+    "supportedFormats": "Formati supportati: {{formats}}",
+    "privacyNote": "Il file viene decodificato e trascritto su questo computer. Non viene caricato nulla.",
+    "percent": "{{percent}}%",
+    "cancelPending": "Si interromperà al termine del passaggio in corso.",
+    "alreadyRunning": "È già in corso una trascrizione. Annullala per avviarne un'altra.",
+    "dropZone": {
+      "label": "Trascina qui un file audio, oppure fai clic per sceglierne uno",
+      "sublabel": "Un file alla volta",
+      "reading": "Lettura del file..."
+    },
+    "file": {
+      "duration": "Durata",
+      "size": "Dimensione",
+      "model": "Modello",
+      "language": "Lingua",
+      "unknownDuration": "Sconosciuta",
+      "noModel": "Nessun modello selezionato"
+    },
+    "actions": {
+      "cancel": "Annulla",
+      "chooseAnother": "Scegli un altro file",
+      "copy": "Copia",
+      "copied": "Copiato",
+      "openInHistory": "Apri nella cronologia",
+      "retry": "Riprova"
+    },
+    "stages": {
+      "decoding": "Lettura dell'audio...",
+      "loadingModel": "Caricamento del modello...",
+      "transcribing": "Trascrizione in corso...",
+      "saving": "Salvataggio...",
+      "cancelling": "Annullamento..."
+    },
+    "result": {
+      "title": "Trascrizione",
+      "savedToHistory": "Salvato nella cronologia, insieme al suo audio."
+    },
+    "errors": {
+      "unsupportedFormat": "Questo formato di file non è supportato.",
+      "unsupportedCodec": "Dictus non è ancora in grado di leggere l'audio {{codec}}. Converti il file in WAV, MP3 o M4A e riprova.",
+      "unreadableFile": "Non è stato possibile leggere questo file.",
+      "corruptAudio": "Questo file è danneggiato o incompleto.",
+      "emptyAudio": "Questo file non contiene audio.",
+      "fileTooLong": "Questo file è troppo lungo per essere trascritto in una sola volta. Dividilo in parti più brevi e riprova.",
+      "noSpeech": "In questo file non è stato rilevato parlato.",
+      "modelUnavailable": "Non è stato possibile caricare il modello di trascrizione. Controlla le impostazioni dei modelli.",
+      "transcriptionFailed": "Trascrizione non riuscita.",
+      "storageFailed": "Non è stato possibile salvare la trascrizione.",
+      "busy": "È in corso una dettatura. Attendi che finisca, poi riprova.",
+      "cancelled": "Trascrizione annullata."
+    }
   },
   "onboarding": {
     "subtitle": "Per cominciare, scegli un modello di riconoscimento vocale",
@@ -516,7 +573,9 @@
       "retranscribe": "Ri-trascrivere",
       "retranscribeError": "Impossibile ri-trascrivere. Riprova.",
       "transcribing": "Trascrizione in corso...",
-      "transcriptionFailed": "Trascrizione fallita. Puoi ri-trascrivere usando l'icona di ripetizione."
+      "transcriptionFailed": "Trascrizione fallita. Puoi ri-trascrivere usando l'icona di ripetizione.",
+      "importedFile": "File importato",
+      "importedFrom": "Importato da {{name}}"
     },
     "debug": {
       "title": "Debug",

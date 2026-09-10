@@ -14,8 +14,65 @@
     "advanced": "מתקדם",
     "postProcessing": "עיבוד משלים",
     "history": "היסטוריה",
+    "fileTranscription": "תמלול קובץ",
     "debug": "ניפוי שגיאות",
     "about": "אודות"
+  },
+  "fileTranscription": {
+    "title": "תמלול קובץ",
+    "subtitle": "הפוך קובץ שמע שנמצא במחשב הזה לטקסט, עם אותו מודל שבו אתה מכתיב.",
+    "pickerFilter": "קובצי שמע",
+    "supportedFormats": "פורמטים נתמכים: {{formats}}",
+    "privacyNote": "הקובץ מפוענח ומתומלל במחשב הזה. שום דבר לא נשלח לרשת.",
+    "percent": "{{percent}}%",
+    "cancelPending": "ייעצר ברגע שהשלב הנוכחי יסתיים.",
+    "alreadyRunning": "כבר מתבצע תמלול. בטל אותו כדי להתחיל אחד אחר.",
+    "dropZone": {
+      "label": "גרור לכאן קובץ שמע, או לחץ כדי לבחור אחד",
+      "sublabel": "קובץ אחד בכל פעם",
+      "reading": "קורא את הקובץ..."
+    },
+    "file": {
+      "duration": "משך",
+      "size": "גודל",
+      "model": "מודל",
+      "language": "שפה",
+      "unknownDuration": "לא ידוע",
+      "noModel": "לא נבחר מודל"
+    },
+    "actions": {
+      "cancel": "ביטול",
+      "chooseAnother": "בחר קובץ אחר",
+      "copy": "העתק",
+      "copied": "הועתק",
+      "openInHistory": "פתח בהיסטוריה",
+      "retry": "נסה שוב"
+    },
+    "stages": {
+      "decoding": "קורא את השמע...",
+      "loadingModel": "טוען את המודל...",
+      "transcribing": "מתמלל...",
+      "saving": "שומר...",
+      "cancelling": "מבטל..."
+    },
+    "result": {
+      "title": "תמלול",
+      "savedToHistory": "נשמר בהיסטוריה, יחד עם השמע."
+    },
+    "errors": {
+      "unsupportedFormat": "פורמט הקובץ הזה אינו נתמך.",
+      "unsupportedCodec": "‏Dictus עדיין לא יכול לקרוא אודיו {{codec}}. המר את הקובץ ל-WAV, ל-MP3 או ל-M4A ונסה שוב.",
+      "unreadableFile": "לא ניתן היה לקרוא את הקובץ הזה.",
+      "corruptAudio": "הקובץ הזה פגום או חלקי.",
+      "emptyAudio": "הקובץ הזה אינו מכיל שמע.",
+      "fileTooLong": "הקובץ הזה ארוך מדי לתמלול בבת אחת. פצל אותו לחלקים קצרים יותר ונסה שוב.",
+      "noSpeech": "לא נמצא דיבור בקובץ הזה.",
+      "modelUnavailable": "לא ניתן היה לטעון את מודל התמלול. בדוק את הגדרות המודלים.",
+      "transcriptionFailed": "התמלול נכשל.",
+      "storageFailed": "לא ניתן היה לשמור את התמלול.",
+      "busy": "מתבצעת כעת הכתבה. המתן לסיומה ונסה שוב.",
+      "cancelled": "התמלול בוטל."
+    }
   },
   "onboarding": {
     "subtitle": "כדי להתחיל, בחר מודל תמלול",
@@ -516,7 +573,9 @@
       "retranscribe": "תמלל מחדש",
       "retranscribeError": "תמלול מחדש נכשל. נסה שוב.",
       "transcribing": "מתמלל...",
-      "transcriptionFailed": "התמלול נכשל. אפשר לתמלל מחדש באמצעות אייקון הניסיון החוזר."
+      "transcriptionFailed": "התמלול נכשל. אפשר לתמלל מחדש באמצעות אייקון הניסיון החוזר.",
+      "importedFile": "קובץ מיובא",
+      "importedFrom": "יובא מתוך {{name}}"
     },
     "debug": {
       "title": "ניפוי שגיאות",

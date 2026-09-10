@@ -14,6 +14,7 @@ import Footer from "./components/footer";
 import Onboarding, { AccessibilityOnboarding } from "./components/onboarding";
 import { Sidebar, SidebarSection, SECTIONS_CONFIG } from "./components/Sidebar";
 import { useSettings } from "./hooks/useSettings";
+import { useNavigationStore } from "./stores/navigationStore";
 import { useSettingsStore } from "./stores/settingsStore";
 import { commands } from "@/bindings";
 import { getLanguageDirection, initializeRTL } from "@/lib/utils/rtl";
@@ -34,8 +35,8 @@ function App() {
   // Track if this is a returning user who just needs to grant permissions
   // (vs a new user who needs full onboarding including model selection)
   const [isReturningUser, setIsReturningUser] = useState(false);
-  const [currentSection, setCurrentSection] =
-    useState<SidebarSection>("general");
+  const currentSection = useNavigationStore((state) => state.section);
+  const setCurrentSection = useNavigationStore((state) => state.setSection);
   const { settings, updateSetting } = useSettings();
   const direction = getLanguageDirection(i18n.language);
   const refreshAudioDevices = useSettingsStore(
@@ -288,7 +289,11 @@ function App() {
         {/* Scrollable content area */}
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto">
-            <div className="flex flex-col items-center p-4 gap-4">
+            {/* min-h-full lets a page claim the full viewport height with
+                flex-1 (percentage heights need a definite parent). Pages that
+                don't ask for it keep their natural height and sit at the top,
+                exactly as before. */}
+            <div className="flex flex-col items-center p-4 gap-4 min-h-full">
               <AccessibilityPermissions />
               {renderSettingsContent(currentSection)}
             </div>

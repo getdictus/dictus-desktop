@@ -20,14 +20,14 @@ The most important takeaways:
 
 ## Product positioning
 
-| Area | FluidVoice | Dictus Desktop | Takeaway |
-|---|---|---|---|
-| Platforms | macOS only | macOS, Windows, Linux | Dictus has the broader positioning. Keep this as a core differentiator. |
-| License | GPLv3 from 2026-02-23 onward | MIT | Dictus is easier to embed, fork, reuse, and contribute to commercially. |
-| Primary UX | macOS menu-bar/native dictation app | Cross-platform Tauri desktop app | FluidVoice can move faster on macOS-specific UX; Dictus needs restraint and consistency across platforms. |
-| Distribution | Homebrew cask + manual release | GitHub Releases/packages | Homebrew should be considered for Dictus macOS. |
-| Core promise | Local-first macOS dictation with optional AI enhancement | 100% offline dictation across desktop platforms | Dictus should sharpen: “open, cross-platform, no private runtime.” |
-| Community signal at analysis time | ~4,146 stars, 257 forks, latest `v1.6.1` | Smaller public footprint | FluidVoice has much stronger GitHub traction today. |
+| Area                              | FluidVoice                                               | Dictus Desktop                                  | Takeaway                                                                                                  |
+| --------------------------------- | -------------------------------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Platforms                         | macOS only                                               | macOS, Windows, Linux                           | Dictus has the broader positioning. Keep this as a core differentiator.                                   |
+| License                           | GPLv3 from 2026-02-23 onward                             | MIT                                             | Dictus is easier to embed, fork, reuse, and contribute to commercially.                                   |
+| Primary UX                        | macOS menu-bar/native dictation app                      | Cross-platform Tauri desktop app                | FluidVoice can move faster on macOS-specific UX; Dictus needs restraint and consistency across platforms. |
+| Distribution                      | Homebrew cask + manual release                           | GitHub Releases/packages                        | Homebrew should be considered for Dictus macOS.                                                           |
+| Core promise                      | Local-first macOS dictation with optional AI enhancement | 100% offline dictation across desktop platforms | Dictus should sharpen: “open, cross-platform, no private runtime.”                                        |
+| Community signal at analysis time | ~4,146 stars, 257 forks, latest `v1.6.1`                 | Smaller public footprint                        | FluidVoice has much stronger GitHub traction today.                                                       |
 
 ## Architecture comparison
 
@@ -71,33 +71,33 @@ Key trade-off: Dictus has more platform complexity, but its local LLM path is mo
 
 Based on the README and source inspection (`SettingsStore.SpeechModel`, `ASRService`, provider implementations):
 
-| Model family | Implementation | Language support | Size / constraints | Notes |
-|---|---|---|---|---|
-| Nemotron Speech 3.5 Ultra Fast Low Latency | CoreML via FluidAudio/Nemotron provider | Around 40 languages | ~668 MB, Apple Silicon | Streaming-capable, heavily marketed in 1.6.x. |
-| Nemotron 3.5 Multilingual | CoreML via FluidAudio/Nemotron provider | Around 40 languages | ~531 MB, Apple Silicon | Slower/higher-accuracy path. |
-| Parakeet Flash / realtime EOU | FluidAudio `StreamingEouAsrManager` | English only | ~428 MB, Apple Silicon | Low-latency partial transcript + end-of-utterance flow. |
-| Parakeet TDT v3 | FluidAudio `AsrManager` | 25 European languages | ~461 MB, Apple Silicon | Default-style fast multilingual model; supports vocabulary boosting. |
-| Parakeet TDT v2 | FluidAudio `AsrManager` | English | ~443 MB, Apple Silicon | Optimized English accuracy/speed. |
-| Cohere Transcribe | external CoreML artifacts | 14+ languages | ~1.5 GB, Apple Silicon/macOS 15+ | High-accuracy multilingual option. |
-| Apple Speech legacy | macOS native | System languages | Built in | Zero-download fallback. |
-| Apple Speech Analyzer | macOS 26+ native | EN/ES/FR/DE/IT/JA/KO/PT/ZH | Built in | Modern Apple Speech path. |
-| Whisper Tiny/Base/Small/Medium/Large | SwiftWhisper | 99 languages | ~74 MB to ~2.9 GB | Universal/Intel-compatible fallback. |
-| Qwen3 ASR | FluidAudio, currently disabled in UI | ~30 languages | ~2 GB | Code exists, `qwenPreviewEnabled = false`. |
+| Model family                               | Implementation                          | Language support           | Size / constraints               | Notes                                                                |
+| ------------------------------------------ | --------------------------------------- | -------------------------- | -------------------------------- | -------------------------------------------------------------------- |
+| Nemotron Speech 3.5 Ultra Fast Low Latency | CoreML via FluidAudio/Nemotron provider | Around 40 languages        | ~668 MB, Apple Silicon           | Streaming-capable, heavily marketed in 1.6.x.                        |
+| Nemotron 3.5 Multilingual                  | CoreML via FluidAudio/Nemotron provider | Around 40 languages        | ~531 MB, Apple Silicon           | Slower/higher-accuracy path.                                         |
+| Parakeet Flash / realtime EOU              | FluidAudio `StreamingEouAsrManager`     | English only               | ~428 MB, Apple Silicon           | Low-latency partial transcript + end-of-utterance flow.              |
+| Parakeet TDT v3                            | FluidAudio `AsrManager`                 | 25 European languages      | ~461 MB, Apple Silicon           | Default-style fast multilingual model; supports vocabulary boosting. |
+| Parakeet TDT v2                            | FluidAudio `AsrManager`                 | English                    | ~443 MB, Apple Silicon           | Optimized English accuracy/speed.                                    |
+| Cohere Transcribe                          | external CoreML artifacts               | 14+ languages              | ~1.5 GB, Apple Silicon/macOS 15+ | High-accuracy multilingual option.                                   |
+| Apple Speech legacy                        | macOS native                            | System languages           | Built in                         | Zero-download fallback.                                              |
+| Apple Speech Analyzer                      | macOS 26+ native                        | EN/ES/FR/DE/IT/JA/KO/PT/ZH | Built in                         | Modern Apple Speech path.                                            |
+| Whisper Tiny/Base/Small/Medium/Large       | SwiftWhisper                            | 99 languages               | ~74 MB to ~2.9 GB                | Universal/Intel-compatible fallback.                                 |
+| Qwen3 ASR                                  | FluidAudio, currently disabled in UI    | ~30 languages              | ~2 GB                            | Code exists, `qwenPreviewEnabled = false`.                           |
 
 ### Dictus Desktop supported ASR models
 
 Dictus Desktop's model manager currently exposes more models than the README summary implies:
 
-| Model family | Implementation | Language support | Size / constraints | Notes |
-|---|---|---|---|---|
-| Whisper Small/Medium/Turbo/Large + Breeze ASR | `transcribe-rs` / whisper.cpp | Whisper 99 languages; Breeze optimized for Taiwanese Mandarin | ~465 MB to ~1.5 GB | GPU acceleration via Metal/Vulkan where available. |
-| Parakeet V2/V3 | `transcribe-rs` ONNX | V2 English, V3 25 European languages | ~451-456 MB | Recommended Parakeet V3 path in README. |
-| Moonshine Base / V2 streaming | `transcribe-rs` ONNX | English | ~31-192 MB | Good opportunity to surface as “ultra-light English”. |
-| SenseVoice | `transcribe-rs` ONNX | zh/en/yue/ja/ko | ~152 MB | Strong Asian-language coverage. |
-| GigaAM v3 | `transcribe-rs` ONNX | Russian | ~151 MB | Niche but useful. |
-| Canary 180M / 1B | `transcribe-rs` ONNX | 4 languages / 25 European languages | ~146 MB / ~691 MB | Translation support on these models. |
-| Cohere | `transcribe-rs` ONNX | 16 listed languages | ~1.7 GB | High-accuracy option. |
-| Custom Whisper `.bin` | local discovery | Depends on model | User-provided | Nice power-user feature. |
+| Model family                                  | Implementation                | Language support                                              | Size / constraints | Notes                                                 |
+| --------------------------------------------- | ----------------------------- | ------------------------------------------------------------- | ------------------ | ----------------------------------------------------- |
+| Whisper Small/Medium/Turbo/Large + Breeze ASR | `transcribe-rs` / whisper.cpp | Whisper 99 languages; Breeze optimized for Taiwanese Mandarin | ~465 MB to ~1.5 GB | GPU acceleration via Metal/Vulkan where available.    |
+| Parakeet V2/V3                                | `transcribe-rs` ONNX          | V2 English, V3 25 European languages                          | ~451-456 MB        | Recommended Parakeet V3 path in README.               |
+| Moonshine Base / V2 streaming                 | `transcribe-rs` ONNX          | English                                                       | ~31-192 MB         | Good opportunity to surface as “ultra-light English”. |
+| SenseVoice                                    | `transcribe-rs` ONNX          | zh/en/yue/ja/ko                                               | ~152 MB            | Strong Asian-language coverage.                       |
+| GigaAM v3                                     | `transcribe-rs` ONNX          | Russian                                                       | ~151 MB            | Niche but useful.                                     |
+| Canary 180M / 1B                              | `transcribe-rs` ONNX          | 4 languages / 25 European languages                           | ~146 MB / ~691 MB  | Translation support on these models.                  |
+| Cohere                                        | `transcribe-rs` ONNX          | 16 listed languages                                           | ~1.7 GB            | High-accuracy option.                                 |
+| Custom Whisper `.bin`                         | local discovery               | Depends on model                                              | User-provided      | Nice power-user feature.                              |
 
 ### Model takeaway
 
@@ -196,28 +196,28 @@ Implication: FluidVoice gives faster perceived feedback and may avoid some long-
 
 FluidVoice features worth learning from:
 
-| Feature | FluidVoice | Dictus status / opportunity |
-|---|---|---|
-| Live transcription preview | Strongly marketed; overlay/notch-aware | Dictus should prioritize visible low-latency feedback, especially for Parakeet/Moonshine paths. |
-| Command Mode | Voice actions on Mac | Dictus should consider a cross-platform “Commands” mode later, but only after core dictation is rock-solid. |
-| Write/Edit Mode | Rewrite selected text / dictate inline | Dictus Smart Modes are moving this way. Make the UX obvious. |
-| Per-app prompt routing | Implemented | High-value improvement for Dictus Smart Modes: Mail vs IDE vs browser prompts. |
-| Audio history | Local optional recordings + ZIP export | Dictus has history concepts; consider a clear privacy-first local history panel. |
-| Onboarding | Language-first model setup + AI enhancement setup | Dictus should simplify first-run: choose language/use case → recommended ASR → optional Smart Mode. |
-| macOS polish | DynamicNotchKit, native Swift/AppKit | Dictus cannot match every native flourish cross-platform, but can improve macOS packaging and overlays. |
-| Homebrew install | `brew install --cask fluidvoice` | Add a Dictus Homebrew cask when releases are stable. |
-| Anonymous analytics | Enabled by default, opt-out | Dictus currently has a privacy advantage: no telemetry. Keep it that way. |
+| Feature                    | FluidVoice                                        | Dictus status / opportunity                                                                                 |
+| -------------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Live transcription preview | Strongly marketed; overlay/notch-aware            | Dictus should prioritize visible low-latency feedback, especially for Parakeet/Moonshine paths.             |
+| Command Mode               | Voice actions on Mac                              | Dictus should consider a cross-platform “Commands” mode later, but only after core dictation is rock-solid. |
+| Write/Edit Mode            | Rewrite selected text / dictate inline            | Dictus Smart Modes are moving this way. Make the UX obvious.                                                |
+| Per-app prompt routing     | Implemented                                       | High-value improvement for Dictus Smart Modes: Mail vs IDE vs browser prompts.                              |
+| Audio history              | Local optional recordings + ZIP export            | Dictus has history concepts; consider a clear privacy-first local history panel.                            |
+| Onboarding                 | Language-first model setup + AI enhancement setup | Dictus should simplify first-run: choose language/use case → recommended ASR → optional Smart Mode.         |
+| macOS polish               | DynamicNotchKit, native Swift/AppKit              | Dictus cannot match every native flourish cross-platform, but can improve macOS packaging and overlays.     |
+| Homebrew install           | `brew install --cask fluidvoice`                  | Add a Dictus Homebrew cask when releases are stable.                                                        |
+| Anonymous analytics        | Enabled by default, opt-out                       | Dictus currently has a privacy advantage: no telemetry. Keep it that way.                                   |
 
 ## Privacy and trust comparison
 
-| Area | FluidVoice | Dictus Desktop |
-|---|---|---|
-| Audio transcription | Local by default | Local by default |
-| Cloud AI | Optional | Optional/off by default |
-| Local AI enhancement | Marketed, but private runtime | Embedded GGUF path is open-source |
-| Telemetry | Anonymous analytics default ON, opt-out; PostHog dependency | No telemetry/crash reporter per `docs/PRIVACY.md` |
-| License | GPLv3 | MIT |
-| Model downloads | Hugging Face + app-managed caches | Currently `blob.handy.computer` for ASR; Hugging Face for GGUF LLMs |
+| Area                 | FluidVoice                                                  | Dictus Desktop                                                      |
+| -------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------- |
+| Audio transcription  | Local by default                                            | Local by default                                                    |
+| Cloud AI             | Optional                                                    | Optional/off by default                                             |
+| Local AI enhancement | Marketed, but private runtime                               | Embedded GGUF path is open-source                                   |
+| Telemetry            | Anonymous analytics default ON, opt-out; PostHog dependency | No telemetry/crash reporter per `docs/PRIVACY.md`                   |
+| License              | GPLv3                                                       | MIT                                                                 |
+| Model downloads      | Hugging Face + app-managed caches                           | Currently `blob.handy.computer` for ASR; Hugging Face for GGUF LLMs |
 
 Privacy positioning opportunity:
 

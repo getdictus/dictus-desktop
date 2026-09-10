@@ -14,8 +14,65 @@
     "advanced": "Avanzado",
     "postProcessing": "Post Proceso",
     "history": "Historial",
+    "fileTranscription": "Transcribir archivo",
     "debug": "Depuración",
     "about": "Acerca de"
+  },
+  "fileTranscription": {
+    "title": "Transcribir archivo",
+    "subtitle": "Convierte en texto un archivo de audio de este equipo, con el modelo que ya usas para dictar.",
+    "pickerFilter": "Archivos de audio",
+    "supportedFormats": "Formatos compatibles: {{formats}}",
+    "privacyNote": "El archivo se decodifica y se transcribe en este equipo. No se envía nada a internet.",
+    "percent": "{{percent}} %",
+    "cancelPending": "Se detendrá al terminar el paso actual.",
+    "alreadyRunning": "Ya hay una transcripción en curso. Cancélala para empezar otra.",
+    "dropZone": {
+      "label": "Suelta aquí un archivo de audio, o haz clic para elegir uno",
+      "sublabel": "Un archivo cada vez",
+      "reading": "Leyendo el archivo..."
+    },
+    "file": {
+      "duration": "Duración",
+      "size": "Tamaño",
+      "model": "Modelo",
+      "language": "Idioma",
+      "unknownDuration": "Desconocida",
+      "noModel": "Ningún modelo seleccionado"
+    },
+    "actions": {
+      "cancel": "Cancelar",
+      "chooseAnother": "Elegir otro archivo",
+      "copy": "Copiar",
+      "copied": "Copiado",
+      "openInHistory": "Abrir en el historial",
+      "retry": "Reintentar"
+    },
+    "stages": {
+      "decoding": "Leyendo el audio...",
+      "loadingModel": "Cargando el modelo...",
+      "transcribing": "Transcribiendo...",
+      "saving": "Guardando...",
+      "cancelling": "Cancelando..."
+    },
+    "result": {
+      "title": "Transcripción",
+      "savedToHistory": "Guardado en el historial, junto con su audio."
+    },
+    "errors": {
+      "unsupportedFormat": "Este formato de archivo no es compatible.",
+      "unsupportedCodec": "Dictus todavía no puede leer audio {{codec}}. Convierte el archivo a WAV, MP3 o M4A e inténtalo de nuevo.",
+      "unreadableFile": "No se ha podido leer este archivo.",
+      "corruptAudio": "Este archivo está dañado o incompleto.",
+      "emptyAudio": "Este archivo no contiene audio.",
+      "fileTooLong": "Este archivo es demasiado largo para transcribirlo de una vez. Divídelo en partes más cortas e inténtalo de nuevo.",
+      "noSpeech": "No se ha detectado voz en este archivo.",
+      "modelUnavailable": "No se ha podido cargar el modelo de transcripción. Revisa la configuración de modelos.",
+      "transcriptionFailed": "La transcripción ha fallado.",
+      "storageFailed": "No se ha podido guardar la transcripción.",
+      "busy": "Hay un dictado en curso. Espera a que termine e inténtalo de nuevo.",
+      "cancelled": "Transcripción cancelada."
+    }
   },
   "onboarding": {
     "subtitle": "Para comenzar, elige un modelo de transcripción",
@@ -516,7 +573,9 @@
       "retranscribe": "Re-transcribir",
       "retranscribeError": "No se pudo re-transcribir. Por favor, inténtalo de nuevo.",
       "transcribing": "Transcribiendo...",
-      "transcriptionFailed": "La transcripción falló. Puedes re-transcribir usando el ícono de reintentar."
+      "transcriptionFailed": "La transcripción falló. Puedes re-transcribir usando el ícono de reintentar.",
+      "importedFile": "Archivo importado",
+      "importedFrom": "Importado desde {{name}}"
     },
     "debug": {
       "title": "Depuración",

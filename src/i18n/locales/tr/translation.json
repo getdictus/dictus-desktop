@@ -14,8 +14,65 @@
     "advanced": "Gelişmiş",
     "postProcessing": "Son İşlem",
     "history": "Geçmiş",
+    "fileTranscription": "Dosyayı yazıya dök",
     "debug": "Hata Ayıklama",
     "about": "Hakkında"
+  },
+  "fileTranscription": {
+    "title": "Dosyayı yazıya dök",
+    "subtitle": "Bu bilgisayardaki bir ses dosyasını, dikte için kullandığın modelle metne dönüştür.",
+    "pickerFilter": "Ses dosyaları",
+    "supportedFormats": "Desteklenen biçimler: {{formats}}",
+    "privacyNote": "Dosya bu bilgisayarda çözülür ve yazıya dökülür. Hiçbir şey yüklenmez.",
+    "percent": "%{{percent}}",
+    "cancelPending": "Geçerli adım biter bitmez duracak.",
+    "alreadyRunning": "Zaten bir yazıya dökme işlemi sürüyor. Başka bir tane başlatmak için onu iptal et.",
+    "dropZone": {
+      "label": "Buraya bir ses dosyası bırak veya seçmek için tıkla",
+      "sublabel": "Aynı anda tek dosya",
+      "reading": "Dosya okunuyor..."
+    },
+    "file": {
+      "duration": "Süre",
+      "size": "Boyut",
+      "model": "Model",
+      "language": "Dil",
+      "unknownDuration": "Bilinmiyor",
+      "noModel": "Model seçilmedi"
+    },
+    "actions": {
+      "cancel": "İptal",
+      "chooseAnother": "Başka bir dosya seç",
+      "copy": "Kopyala",
+      "copied": "Kopyalandı",
+      "openInHistory": "Geçmişte aç",
+      "retry": "Tekrar dene"
+    },
+    "stages": {
+      "decoding": "Ses okunuyor...",
+      "loadingModel": "Model yükleniyor...",
+      "transcribing": "Yazıya dökülüyor...",
+      "saving": "Kaydediliyor...",
+      "cancelling": "İptal ediliyor..."
+    },
+    "result": {
+      "title": "Metin",
+      "savedToHistory": "Sesiyle birlikte geçmişe kaydedildi."
+    },
+    "errors": {
+      "unsupportedFormat": "Bu dosya biçimi desteklenmiyor.",
+      "unsupportedCodec": "Dictus {{codec}} sesini henüz okuyamıyor. Dosyayı WAV, MP3 veya M4A biçimine dönüştürüp tekrar dene.",
+      "unreadableFile": "Bu dosya okunamadı.",
+      "corruptAudio": "Bu dosya bozuk veya eksik.",
+      "emptyAudio": "Bu dosyada ses yok.",
+      "fileTooLong": "Bu dosya tek seferde yazıya dökülemeyecek kadar uzun. Daha kısa parçalara böl ve tekrar dene.",
+      "noSpeech": "Bu dosyada konuşma bulunamadı.",
+      "modelUnavailable": "Yazıya dökme modeli yüklenemedi. Model ayarlarını kontrol et.",
+      "transcriptionFailed": "Yazıya dökme başarısız oldu.",
+      "storageFailed": "Metin kaydedilemedi.",
+      "busy": "Şu anda bir dikte sürüyor. Bitmesini bekleyip tekrar dene.",
+      "cancelled": "Yazıya dökme iptal edildi."
+    }
   },
   "onboarding": {
     "subtitle": "Başlamak için bir transkripsiyon modeli seçin",
@@ -516,7 +573,9 @@
       "retranscribe": "Yeniden yazıya dök",
       "retranscribeError": "Yeniden yazıya dökme başarısız oldu. Lütfen tekrar deneyin.",
       "transcribing": "Yazıya döküyor...",
-      "transcriptionFailed": "Transkripsiyon başarısız oldu. Yeniden deneme simgesini kullanarak tekrar yazıya dökebilirsiniz."
+      "transcriptionFailed": "Transkripsiyon başarısız oldu. Yeniden deneme simgesini kullanarak tekrar yazıya dökebilirsiniz.",
+      "importedFile": "İçe aktarılan dosya",
+      "importedFrom": "{{name}} dosyasından içe aktarıldı"
     },
     "debug": {
       "title": "Hata Ayıklama",
