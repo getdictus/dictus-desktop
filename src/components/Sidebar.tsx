@@ -76,6 +76,10 @@ export const SECTIONS_CONFIG = {
   },
 } as const satisfies Record<string, SectionConfig>;
 
+/** 40 px item + 4 px gap. The capsule slides one stride per rendered item, so
+ *  the two must stay in step with the `h-10` and `gap-1` below. */
+const NAV_STRIDE_PX = 44;
+
 interface SidebarProps {
   activeSection: SidebarSection;
   onSectionChange: (section: SidebarSection) => void;
@@ -92,32 +96,46 @@ export const Sidebar: React.FC<SidebarProps> = ({
     .filter(([_, config]) => config.enabled(settings))
     .map(([id, config]) => ({ id: id as SidebarSection, ...config }));
 
+  // Smart Modes and Debug appear conditionally, so the capsule indexes the
+  // rendered list rather than the static section order.
+  const activeIndex = availableSections.findIndex(
+    (section) => section.id === activeSection,
+  );
+
   return (
-    <div className="flex flex-col w-40 h-full border-e border-mid-gray/20 items-center px-2">
+    <div className="flex flex-col w-40 h-full shrink-0 bg-sidebar glass-blur border-e border-hairline items-center px-2">
       <DictusLogo width={120} className="m-4" />
-      <div className="flex flex-col w-full items-center gap-1 pt-2 border-t border-mid-gray/20">
+      <div className="relative flex flex-col w-full items-center gap-1 pt-2 border-t border-hairline">
+        {activeIndex >= 0 && (
+          <div
+            aria-hidden="true"
+            className="nav-capsule absolute top-2 start-0 w-36 h-10 rounded-[20px] pointer-events-none"
+            style={{
+              transform: `translateY(${activeIndex * NAV_STRIDE_PX}px)`,
+            }}
+          />
+        )}
         {availableSections.map((section) => {
           const Icon = section.icon;
           const isActive = activeSection === section.id;
 
           return (
-            <div
+            <button
               key={section.id}
-              className={`flex gap-2 items-center p-2 w-full rounded-lg cursor-pointer transition-colors ${
+              type="button"
+              aria-current={isActive ? "page" : undefined}
+              className={`focus-ring relative flex gap-2 items-center p-2 h-10 w-full rounded-[20px] cursor-pointer text-start transition-colors ${
                 isActive
-                  ? "bg-accent/80"
-                  : "hover:bg-mid-gray/20 hover:opacity-100 opacity-85"
+                  ? "text-accent font-semibold"
+                  : "text-[var(--nav-label)] font-medium hover:text-text"
               }`}
               onClick={() => onSectionChange(section.id)}
             >
               <Icon width={24} height={24} className="shrink-0" />
-              <p
-                className="text-sm font-medium truncate"
-                title={t(section.labelKey)}
-              >
+              <p className="text-sm truncate" title={t(section.labelKey)}>
                 {t(section.labelKey)}
               </p>
-            </div>
+            </button>
           );
         })}
       </div>

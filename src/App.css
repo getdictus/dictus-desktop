@@ -74,6 +74,14 @@
   --status-ok: #30b350;
   --warning: #ffb020;
 
+  /* Sidebar selection capsule. One plate slides between items, so the items
+     themselves carry no background. */
+  --nav-capsule-plate: rgba(255, 255, 255, 0.92);
+  --nav-capsule-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(16, 32, 64, 0.14);
+  --nav-label: rgba(0, 0, 0, 0.72);
+
   /* Recording overlay pill. Always dark: it floats over the user's desktop,
      not over the app canvas, so it does not follow the theme. */
   --surface-overlay: rgba(8, 12, 22, 0.42);
@@ -120,6 +128,12 @@
     --text-muted: rgba(255, 255, 255, 0.6);
     --text-faint: rgba(255, 255, 255, 0.42);
     --status-ok: #32d74b;
+
+    --nav-capsule-plate: rgba(255, 255, 255, 0.1);
+    --nav-capsule-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.22),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.1), 0 6px 16px rgba(0, 0, 0, 0.45);
+    --nav-label: rgba(255, 255, 255, 0.72);
 
     --surface-opaque: #101c30;
     --surface-opaque-raised: #1a2237;
@@ -214,6 +228,20 @@
   .focus-ring-within:focus-within {
     outline: none;
     box-shadow: var(--focus-ring);
+  }
+}
+
+/* The sidebar's sliding selection capsule. Geometry lives with the component;
+ * only the material and the spring are here. */
+.nav-capsule {
+  background: var(--nav-capsule-plate);
+  box-shadow: var(--nav-capsule-shadow);
+  transition: transform 0.42s cubic-bezier(0.34, 1.36, 0.42, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-capsule {
+    transition: none;
   }
 }
 
