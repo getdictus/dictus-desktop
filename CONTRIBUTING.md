@@ -96,7 +96,12 @@ Use the [Bug Report template](.github/ISSUE_TEMPLATE/bug_report.md) when creatin
 
 ## 💡 Suggesting Features
 
-Use [GitHub Discussions](https://github.com/getdictus/dictus-desktop/discussions) for feature ideas and larger changes before opening a PR. Describe the problem you want to solve, your proposed solution, alternatives you considered, and why the change would benefit Dictus Desktop users.
+Two routes, depending on how formed the idea is:
+
+- **Concrete request** — open an issue with the [Feature Request template](.github/ISSUE_TEMPLATE/feature_request.md). Describe the problem you are trying to solve, your proposed solution, and the alternatives you considered.
+- **Still vague, or you want feedback first** — start a [Discussion](https://github.com/getdictus/dictus-desktop/discussions). Ideas that arrive with community support are far easier to prioritize.
+
+Either way, lead with the problem rather than the solution, and mention whether the feature would need a network connection. Dictus processes speech on-device by design, so anything requiring a remote service faces a higher bar and stays opt-in when we do support it.
 
 ## 🔧 Making Code Contributions
 
