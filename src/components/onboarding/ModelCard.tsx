@@ -89,7 +89,7 @@ const ModelCard: React.FC<ModelCardProps> = ({
     if (isFeatured) {
       return "border-2 border-accent/25 bg-accent/5";
     }
-    return "border-2 border-mid-gray/20";
+    return "border-2 border-hairline";
   };
 
   const getInteractiveClasses = () => {
@@ -168,7 +168,7 @@ const ModelCard: React.FC<ModelCardProps> = ({
                 <p className="text-xs text-text/60 w-24 text-end">
                   {t("onboarding.modelCard.accuracy")}
                 </p>
-                <div className="w-16 h-1.5 bg-mid-gray/20 rounded-full overflow-hidden">
+                <div className="w-16 h-1.5 bg-track rounded-full overflow-hidden">
                   <div
                     className="h-full bg-accent rounded-full"
                     style={{ width: `${model.accuracy_score * 100}%` }}
@@ -179,7 +179,7 @@ const ModelCard: React.FC<ModelCardProps> = ({
                 <p className="text-xs text-text/60 w-24 text-end">
                   {t("onboarding.modelCard.speed")}
                 </p>
-                <div className="w-16 h-1.5 bg-mid-gray/20 rounded-full overflow-hidden">
+                <div className="w-16 h-1.5 bg-track rounded-full overflow-hidden">
                   <div
                     className="h-full bg-accent rounded-full"
                     style={{ width: `${model.speed_score * 100}%` }}
@@ -191,7 +191,7 @@ const ModelCard: React.FC<ModelCardProps> = ({
         )}
       </div>
 
-      <hr className="w-full border-mid-gray/20" />
+      <hr className="w-full border-hairline" />
 
       {/* Bottom row: tags + action buttons (full width) */}
       <div className="flex items-center gap-3 w-full -mb-0.5 mt-0.5 h-5">
@@ -240,7 +240,7 @@ const ModelCard: React.FC<ModelCardProps> = ({
       {/* Download/extract progress */}
       {status === "downloading" && downloadProgress !== undefined && (
         <div className="w-full mt-3">
-          <div className="w-full h-1.5 bg-mid-gray/20 rounded-full overflow-hidden">
+          <div className="w-full h-1.5 bg-track rounded-full overflow-hidden">
             <div
               className="h-full bg-accent rounded-full transition-all duration-300"
               style={{ width: `${downloadProgress}%` }}
@@ -280,7 +280,7 @@ const ModelCard: React.FC<ModelCardProps> = ({
       )}
       {status === "verifying" && (
         <div className="w-full mt-3">
-          <div className="w-full h-1.5 bg-mid-gray/20 rounded-full overflow-hidden">
+          <div className="w-full h-1.5 bg-track rounded-full overflow-hidden">
             <div className="h-full bg-accent rounded-full animate-pulse w-full" />
           </div>
           <p className="text-xs text-text/50 mt-1">
@@ -290,7 +290,7 @@ const ModelCard: React.FC<ModelCardProps> = ({
       )}
       {status === "extracting" && (
         <div className="w-full mt-3">
-          <div className="w-full h-1.5 bg-mid-gray/20 rounded-full overflow-hidden">
+          <div className="w-full h-1.5 bg-track rounded-full overflow-hidden">
             <div className="h-full bg-accent rounded-full animate-pulse w-full" />
           </div>
           <p className="text-xs text-text/50 mt-1">

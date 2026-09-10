@@ -231,7 +231,7 @@ export const ModelsSettings: React.FC = () => {
                   className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
                     languageFilter !== "all"
                       ? "bg-accent/20 text-accent"
-                      : "bg-mid-gray/10 text-text/60 hover:bg-mid-gray/20"
+                      : "bg-control text-text-muted hover:bg-accent/10"
                   }`}
                 >
                   <Globe className="w-3.5 h-3.5" />
@@ -246,8 +246,8 @@ export const ModelsSettings: React.FC = () => {
                 </button>
 
                 {languageDropdownOpen && (
-                  <div className="absolute top-full right-0 mt-1 w-56 bg-background border border-mid-gray/80 rounded-lg shadow-lg z-50 overflow-hidden">
-                    <div className="p-2 border-b border-mid-gray/40">
+                  <div className="absolute top-full right-0 mt-1 w-56 bg-floating glass-blur-floating glass-raised border border-hairline rounded-xl z-50 overflow-hidden">
+                    <div className="p-2 border-b border-hairline">
                       <input
                         ref={languageSearchInputRef}
                         type="text"
@@ -269,7 +269,7 @@ export const ModelsSettings: React.FC = () => {
                         placeholder={t(
                           "settings.general.language.searchPlaceholder",
                         )}
-                        className="w-full px-2 py-1 text-sm bg-mid-gray/10 border border-mid-gray/40 rounded-md focus:outline-none focus:ring-1 focus:ring-accent"
+                        className="w-full px-2 py-1 text-sm bg-control border border-hairline rounded-md focus:outline-none focus:ring-1 focus:ring-accent"
                       />
                     </div>
                     <div className="max-h-48 overflow-y-auto">
@@ -283,7 +283,7 @@ export const ModelsSettings: React.FC = () => {
                         className={`w-full px-3 py-1.5 text-sm text-left transition-colors ${
                           languageFilter === "all"
                             ? "bg-accent/20 text-accent font-semibold"
-                            : "hover:bg-mid-gray/10"
+                            : "hover:bg-control"
                         }`}
                       >
                         {t("settings.models.filters.allLanguages")}
@@ -300,7 +300,7 @@ export const ModelsSettings: React.FC = () => {
                           className={`w-full px-3 py-1.5 text-sm text-left transition-colors ${
                             languageFilter === lang.value
                               ? "bg-accent/20 text-accent font-semibold"
-                              : "hover:bg-mid-gray/10"
+                              : "hover:bg-control"
                           }`}
                         >
                           {lang.label}

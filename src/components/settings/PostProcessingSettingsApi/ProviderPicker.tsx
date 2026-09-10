@@ -49,7 +49,7 @@ export const ProviderPicker: React.FC<ProviderPickerProps> = ({
         className={`flex flex-col gap-1 px-4 py-3 rounded-xl border-2 transition-all ${
           checked
             ? "border-accent/50 bg-accent/10"
-            : "border-mid-gray/20 hover:border-accent/50 hover:bg-accent/5"
+            : "border-hairline hover:border-accent/50 hover:bg-accent/5"
         } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
       >
         <span
@@ -68,7 +68,7 @@ export const ProviderPicker: React.FC<ProviderPickerProps> = ({
 
   const renderSection = (title: string, options: GroupedProviderOption[]) => (
     <fieldset className="space-y-3 border-0 p-0 m-0">
-      <legend className="text-xs font-medium text-mid-gray uppercase tracking-wide mb-2">
+      <legend className="text-xs font-medium text-text-muted uppercase tracking-wide mb-2">
         {title}
       </legend>
       {options.map((option) => renderRow(option))}
@@ -81,7 +81,7 @@ export const ProviderPicker: React.FC<ProviderPickerProps> = ({
       <div
         role="tablist"
         aria-label={t("settings.postProcessing.api.provider.title")}
-        className="inline-flex rounded-md border border-mid-gray/20 p-0.5 bg-mid-gray/5"
+        className="inline-flex rounded-md border border-hairline p-0.5 bg-control"
       >
         <button
           type="button"
@@ -90,8 +90,8 @@ export const ProviderPicker: React.FC<ProviderPickerProps> = ({
           onClick={() => onTabChange("local")}
           className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
             activeTab === "local"
-              ? "bg-background text-text shadow-sm"
-              : "text-mid-gray hover:text-text"
+              ? "bg-control glass-specular text-text"
+              : "text-text-muted hover:text-text"
           }`}
         >
           {t("settings.postProcessing.tabs.local")}
@@ -103,8 +103,8 @@ export const ProviderPicker: React.FC<ProviderPickerProps> = ({
           onClick={() => onTabChange("cloud")}
           className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
             activeTab === "cloud"
-              ? "bg-background text-text shadow-sm"
-              : "text-mid-gray hover:text-text"
+              ? "bg-control glass-specular text-text"
+              : "text-text-muted hover:text-text"
           }`}
         >
           {t("settings.postProcessing.tabs.cloud")}
@@ -114,7 +114,7 @@ export const ProviderPicker: React.FC<ProviderPickerProps> = ({
       {/* Active section */}
       {activeTab === "local" ? (
         <fieldset className="space-y-3 border-0 p-0 m-0">
-          <legend className="text-xs font-medium text-mid-gray uppercase tracking-wide mb-2">
+          <legend className="text-xs font-medium text-text-muted uppercase tracking-wide mb-2">
             {t("settings.postProcessing.api.providers.sectionLocal")}
           </legend>
           {localContent}

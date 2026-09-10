@@ -17,6 +17,7 @@
   --color-divider: var(--border-divider);
   --color-control-border: var(--border-control);
   --color-status-ok: var(--status-ok);
+  --color-track: var(--slider-rail);
   --color-warning: var(--warning);
 
   /* Brand marks. Deliberately not theme-aware: the logo keeps its colour in
@@ -26,10 +27,6 @@
   --color-text-stroke: #f6f6f6;
   --color-accent-gradient-start: #6ba3ff;
   --color-accent-gradient-end: #2563eb;
-
-  /* Retired once nothing references it; the last references go in the final
-     commit of this series. */
-  --color-mid-gray: #808080;
 }
 
 :root {

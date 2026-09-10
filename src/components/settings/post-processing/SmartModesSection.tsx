@@ -132,7 +132,7 @@ export const SmartModesSection: React.FC = () => {
       {/* Rewrite section */}
       <div className="space-y-2">
         <div className="px-4">
-          <h2 className="text-xs font-medium text-mid-gray uppercase tracking-wide">
+          <h2 className="text-xs font-medium text-text-muted uppercase tracking-wide">
             {t("smartModes.sections.rewrite")}
           </h2>
         </div>
@@ -174,7 +174,7 @@ export const SmartModesSection: React.FC = () => {
       {/* Translation section */}
       <div className="space-y-2">
         <div className="px-4 flex items-center justify-between gap-2">
-          <h2 className="text-xs font-medium uppercase tracking-wide text-mid-gray">
+          <h2 className="text-xs font-medium uppercase tracking-wide text-text-muted">
             {t("smartModes.sections.translation")}
           </h2>
         </div>

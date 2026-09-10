@@ -248,7 +248,7 @@ export const LlmLibrarySection: React.FC<LlmLibrarySectionProps> = ({
         className={`flex flex-col gap-1 px-4 py-3 rounded-xl border-2 transition-all ${
           p.checked
             ? "border-accent/50 bg-accent/10"
-            : "border-mid-gray/20 hover:border-accent/50 hover:bg-accent/5"
+            : "border-hairline hover:border-accent/50 hover:bg-accent/5"
         } ${p.disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
       >
         <div className="flex items-center gap-3 flex-wrap">
@@ -321,7 +321,7 @@ export const LlmLibrarySection: React.FC<LlmLibrarySectionProps> = ({
         )}
       >
         <div className="p-4 space-y-6">
-          <p className="text-sm text-mid-gray leading-relaxed">
+          <p className="text-sm text-text-muted leading-relaxed">
             {t(
               "settings.postProcessing.modelsAndLocalProcessing.library.description",
             )}
