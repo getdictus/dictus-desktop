@@ -36,7 +36,21 @@
 
 ## Quick start
 
-1. **Download** the latest build from [Releases](https://github.com/getdictus/dictus-desktop/releases/latest) (macOS `.dmg`, Windows `.msi`, Linux `.AppImage` / `.deb`). Windows users: the installer is not yet code-signed — see [Code signing](#code-signing).
+1. **Install.** On macOS, via [Homebrew](https://brew.sh):
+
+   ```sh
+   brew tap getdictus/tap
+   brew install --cask dictus
+   ```
+
+   Dictus updates itself, so `brew upgrade` deliberately skips it. To let Homebrew drive updates instead:
+
+   ```sh
+   brew upgrade --cask --greedy dictus
+   ```
+
+   Otherwise, download the latest build from [Releases](https://github.com/getdictus/dictus-desktop/releases/latest) (macOS `.dmg`, Windows `.msi`, Linux `.AppImage` / `.deb`). Windows users: the installer is not yet code-signed — see [Code signing](#code-signing).
+
 2. **Launch** Dictus Desktop and grant microphone + accessibility permissions.
 3. **Configure** your shortcut in Settings (default works out of the box).
 4. **Press, speak, release** — your words land in any text field.
