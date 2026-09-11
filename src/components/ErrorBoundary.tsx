@@ -49,7 +49,7 @@ export class ErrorBoundary extends React.Component<
           <button
             type="button"
             onClick={this.handleReload}
-            className="px-4 py-2 text-sm font-medium rounded-md bg-logo-primary text-white hover:bg-logo-primary/90 focus:outline-none"
+            className="px-4 py-2 text-sm font-medium rounded-md bg-accent text-white hover:bg-accent/90 focus:outline-none"
           >
             {i18n.t("errors.boundary.reload")}
           </button>

@@ -110,13 +110,13 @@ export const SmartModeTemplatePicker: React.FC<
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-background border border-mid-gray/20 rounded-lg p-4 max-w-md w-full max-h-[80vh] overflow-y-auto mx-4 shadow-xl">
+      <div className="bg-floating glass-blur-floating glass-raised border border-hairline rounded-2xl p-4 max-w-md w-full max-h-[80vh] overflow-y-auto mx-4">
         {/* Title */}
         <p className="text-lg font-semibold mb-3">{title}</p>
 
         {/* Template list */}
         {loading ? (
-          <p className="text-sm text-mid-gray py-4 text-center">…</p>
+          <p className="text-sm text-text-muted py-4 text-center">…</p>
         ) : (
           <div className="flex flex-col gap-1">
             {templates.map((template) => {
@@ -125,7 +125,7 @@ export const SmartModeTemplatePicker: React.FC<
                 <button
                   key={template.id}
                   type="button"
-                  className="w-full text-left px-3 py-2 rounded-md hover:bg-logo-primary/5 border border-transparent hover:border-logo-primary/30"
+                  className="w-full text-left px-3 py-2 rounded-md hover:bg-accent/5 border border-transparent hover:border-accent/30"
                   onClick={() => void handlePickTemplate(template)}
                 >
                   <div className="flex items-center justify-between gap-2">
@@ -133,12 +133,12 @@ export const SmartModeTemplatePicker: React.FC<
                       {getTemplateName(template)}
                     </span>
                     {alreadyAdded && (
-                      <span className="text-xs text-mid-gray shrink-0">
+                      <span className="text-xs text-text-muted shrink-0">
                         {t("smartModes.picker.added")}
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-mid-gray mt-0.5 line-clamp-1">
+                  <p className="text-xs text-text-muted mt-0.5 line-clamp-1">
                     {getTemplatePreview(template)}
                   </p>
                 </button>
@@ -146,16 +146,16 @@ export const SmartModeTemplatePicker: React.FC<
             })}
 
             {/* Custom entry */}
-            <div className="border-t border-mid-gray/20 mt-1 pt-1">
+            <div className="border-t border-hairline mt-1 pt-1">
               <button
                 type="button"
-                className="w-full text-left px-3 py-2 rounded-md hover:bg-logo-primary/5 border border-transparent hover:border-logo-primary/30"
+                className="w-full text-left px-3 py-2 rounded-md hover:bg-accent/5 border border-transparent hover:border-accent/30"
                 onClick={handleCustom}
               >
                 <span className="font-medium text-sm">
                   {t("smartModes.picker.custom")}
                 </span>
-                <p className="text-xs text-mid-gray mt-0.5">
+                <p className="text-xs text-text-muted mt-0.5">
                   {t("smartModes.picker.customSubtext")}
                 </p>
               </button>
@@ -167,7 +167,7 @@ export const SmartModeTemplatePicker: React.FC<
         <div className="mt-3 flex justify-end">
           <button
             type="button"
-            className="text-sm text-mid-gray hover:text-text focus:outline-none"
+            className="text-sm text-text-muted hover:text-text focus:outline-none"
             onClick={onClose}
           >
             {t("common.cancel")}

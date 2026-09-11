@@ -354,7 +354,11 @@ const RecordingOverlay: React.FC = () => {
 
   return (
     <div dir={direction} style={{ display: "flex", alignItems: "center" }}>
-      <div className={`recording-overlay ${isVisible ? "fade-in" : ""}`}>
+      <div
+        className={`recording-overlay ${isVisible ? "fade-in" : ""} ${
+          state === "error" ? "overlay-state-error" : ""
+        }`}
+      >
         <div className="overlay-middle">
           {(state === "recording" ||
             state === "transcribing" ||
@@ -379,8 +383,8 @@ const RecordingOverlay: React.FC = () => {
             <div className="overlay-error">
               <svg
                 className="overlay-error-icon"
-                width="18"
-                height="18"
+                width="20"
+                height="20"
                 viewBox="0 0 24 24"
                 fill="none"
                 aria-hidden="true"

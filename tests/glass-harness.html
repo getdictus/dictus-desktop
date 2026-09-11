@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Glass lens harness</title>
+  </head>
+  <body>
+    <!--
+      Dev-only Playwright harness. Vite serves it from the project root during
+      `vite dev`; it is not in `build.rollupOptions.input`, so it never ships.
+    -->
+    <script>
+      // `?glass=off` exercises the reduced-effects escape hatch. It has to be
+      // set before the module runs, because the capability probe is cached.
+      if (new URLSearchParams(location.search).get("glass") === "off") {
+        document.documentElement.dataset.glass = "off";
+      }
+    </script>
+    <div id="root"></div>
+    <script type="module" src="/tests/glass-harness.tsx"></script>
+  </body>
+</html>

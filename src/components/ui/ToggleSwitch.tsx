@@ -1,5 +1,12 @@
 import React from "react";
 import { SettingContainer } from "./SettingContainer";
+import { GlassSwitch } from "./glass/vendor/GlassSwitch";
+import {
+  behindFor,
+  switchTrackFor,
+  supportsGlassLens,
+  usePrefersDark,
+} from "./glass";
 
 interface ToggleSwitchProps {
   checked: boolean;
@@ -11,7 +18,15 @@ interface ToggleSwitchProps {
   descriptionMode?: "inline" | "tooltip";
   grouped?: boolean;
   tooltipPosition?: "top" | "bottom";
+  /** Test hook only. */
+  testId?: string;
 }
+
+/** Board geometry: track 44 x 24. The thumb proportions are the library
+ *  example's own, which is the reference for how this control should read. */
+const TRACK_WIDTH_PX = 44;
+const TRACK_HEIGHT_PX = 24;
+const ACCENT_FILL = "#3D7EFF";
 
 export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
   checked,
@@ -23,7 +38,11 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
   descriptionMode = "tooltip",
   grouped = false,
   tooltipPosition = "top",
+  testId,
 }) => {
+  const isDark = usePrefersDark();
+  const locked = disabled || isUpdating;
+
   return (
     <SettingContainer
       title={label}
@@ -33,22 +52,41 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
       disabled={disabled}
       tooltipPosition={tooltipPosition}
     >
-      <label
-        className={`inline-flex items-center ${disabled || isUpdating ? "cursor-not-allowed" : "cursor-pointer"}`}
-      >
-        <input
-          type="checkbox"
-          value=""
-          className="sr-only peer"
-          checked={checked}
-          disabled={disabled || isUpdating}
-          onChange={(e) => onChange(e.target.checked)}
-        />
-        <div className="relative w-11 h-6 bg-mid-gray/20 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-logo-primary rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-logo-primary peer-disabled:opacity-50"></div>
-      </label>
+      <div data-testid={testId}>
+        {supportsGlassLens() ? (
+          <GlassSwitch
+            checked={checked}
+            onCheckedChange={onChange}
+            disabled={locked}
+            width={TRACK_WIDTH_PX}
+            height={TRACK_HEIGHT_PX}
+            scheme={isDark ? "dark" : "light"}
+            trackColor={switchTrackFor(isDark)}
+            activeColor={ACCENT_FILL}
+            surface={behindFor("switchThumb", isDark)}
+            ariaLabel={label}
+          />
+        ) : (
+          // No lens: the plain switch, same track geometry.
+          <label
+            className={`inline-flex items-center ${locked ? "cursor-not-allowed" : "cursor-pointer"}`}
+          >
+            <input
+              type="checkbox"
+              role="switch"
+              className="sr-only peer"
+              checked={checked}
+              disabled={locked}
+              aria-label={label}
+              onChange={(e) => onChange(e.target.checked)}
+            />
+            <div className="switch-fallback peer-focus-visible:shadow-[var(--focus-ring)] peer-disabled:opacity-50" />
+          </label>
+        )}
+      </div>
       {isUpdating && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-4 h-4 border-2 border-logo-primary border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
         </div>
       )}
     </SettingContainer>

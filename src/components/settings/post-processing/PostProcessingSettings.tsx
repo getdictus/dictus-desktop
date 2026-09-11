@@ -71,7 +71,7 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
             </Alert>
           ) : undefined
         ) : opt.value === "custom" ? (
-          <p className="text-xs text-mid-gray/80">
+          <p className="text-xs text-text-muted">
             <Trans
               i18nKey="settings.postProcessing.api.custom.ollamaTip"
               components={{
@@ -79,7 +79,7 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
                   <a
                     role="link"
                     tabIndex={0}
-                    className="text-logo-primary underline underline-offset-2 hover:opacity-80 cursor-pointer"
+                    className="text-accent underline underline-offset-2 hover:opacity-80 cursor-pointer"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -95,7 +95,7 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
                   />
                 ),
                 code: (
-                  <code className="font-mono text-xs bg-mid-gray/10 px-1 rounded" />
+                  <code className="font-mono text-xs bg-control px-1 rounded" />
                 ),
               }}
             />
@@ -176,7 +176,7 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
   return (
     <>
       {/* Selected model card */}
-      <div className="rounded-md border border-mid-gray/20 bg-background p-4 space-y-3">
+      <div className="rounded-2xl border border-hairline bg-card glass-blur p-4 space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div>
             <h3 className="text-sm font-medium">
@@ -193,7 +193,7 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
             ) : null}
           </div>
           {state.selectedProvider?.id === RECOMMENDED_PROVIDER_ID ? (
-            <span className="text-xs font-medium px-2 py-0.5 rounded-full border border-logo-primary text-logo-primary">
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full border border-accent text-accent">
               {t(
                 "settings.postProcessing.modelsAndLocalProcessing.selectedModel.recommendedBadge",
               )}
@@ -202,22 +202,22 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
         </div>
         {!selectedIsCloud ? (
           <div className="flex flex-wrap gap-1.5">
-            <span className="text-xs px-2 py-0.5 rounded-full bg-mid-gray/10 text-mid-gray">
+            <span className="text-xs px-2 py-0.5 rounded-full bg-control text-text-muted">
               {t(
                 "settings.postProcessing.modelsAndLocalProcessing.selectedModel.tags.local",
               )}
             </span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-mid-gray/10 text-mid-gray">
+            <span className="text-xs px-2 py-0.5 rounded-full bg-control text-text-muted">
               {t(
                 "settings.postProcessing.modelsAndLocalProcessing.selectedModel.tags.private",
               )}
             </span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-mid-gray/10 text-mid-gray">
+            <span className="text-xs px-2 py-0.5 rounded-full bg-control text-text-muted">
               {t(
                 "settings.postProcessing.modelsAndLocalProcessing.selectedModel.tags.noDataSent",
               )}
             </span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-mid-gray/10 text-mid-gray">
+            <span className="text-xs px-2 py-0.5 rounded-full bg-control text-text-muted">
               {t(
                 "settings.postProcessing.modelsAndLocalProcessing.selectedModel.tags.offlineCapable",
               )}
@@ -373,12 +373,12 @@ export const PostProcessingSettings: React.FC = () => {
           <h1 className="text-xl font-medium">
             {t("settings.postProcessing.modelsAndLocalProcessing.title")}
           </h1>
-          <p className="text-sm text-mid-gray mt-1">
+          <p className="text-sm text-text-muted mt-1">
             {t("settings.postProcessing.modelsAndLocalProcessing.subtitle")}{" "}
             <a
               role="link"
               tabIndex={0}
-              className="text-logo-primary hover:underline cursor-pointer"
+              className="text-accent hover:underline cursor-pointer"
               onClick={(e) => {
                 e.preventDefault();
                 handleLearnMore();
@@ -394,7 +394,7 @@ export const PostProcessingSettings: React.FC = () => {
             </a>
           </p>
         </div>
-        <span className="shrink-0 text-xs font-medium px-2 py-1 rounded-full border border-logo-primary/40 bg-logo-primary/10 text-logo-primary">
+        <span className="shrink-0 text-xs font-medium px-2 py-1 rounded-full border border-accent/40 bg-accent/10 text-accent">
           {readyCount === 1
             ? t(
                 "settings.postProcessing.modelsAndLocalProcessing.statusBadge.ready_one",
