@@ -120,6 +120,41 @@ Use conventional commits:
 - `refactor:` code refactoring
 - `chore:` maintenance
 
+## Releases and git tags
+
+**Run this once per clone, before anything else:**
+
+```bash
+git config remote.upstream.tagOpt --no-tags
+```
+
+This clone has two remotes: `origin` (`getdictus/dictus-desktop`) and `upstream` (`cjpais/Handy`), the project Dictus forked from. Git stores tags in a single global namespace, not per remote, so a plain `git fetch upstream` drops all of Handy's release tags into the same bucket as ours. Where a name already exists git keeps the existing one, so whichever was fetched first wins.
+
+The version numbering overlaps: Handy shipped its own `v0.1.x` and `v0.2.x`. Without the config above, `v0.2.1` in a fresh clone resolves to Handy's July 2025 commit rather than the Dictus release — and `git log v0.2.1..HEAD` reports ~715 commits instead of ~36.
+
+**Consequences for release work:**
+
+- `origin` is the only source of truth for release tags. Check it before trusting a local tag:
+  ```bash
+  git ls-remote --tags origin
+  ```
+- Never build a changelog or a release delta from a local tag that has not been checked against that list.
+- A local tag that is not in that list came from Handy and is not ours.
+
+**Repairing a polluted clone** — deletes local tags only, touches no remote:
+
+```bash
+git tag -l | xargs git tag -d
+git config remote.upstream.tagOpt --no-tags
+git fetch origin --tags
+```
+
+**Fetching a Handy tag on purpose**, namespaced so it cannot shadow ours:
+
+```bash
+git fetch upstream refs/tags/v0.8.3:refs/tags/handy/v0.8.3
+```
+
 ## CLI Parameters
 
 Dictus Desktop supports command-line parameters on all platforms for integration with scripts, window managers, and autostart configurations.
