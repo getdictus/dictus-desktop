@@ -16,6 +16,7 @@ import { Sidebar, SidebarSection, SECTIONS_CONFIG } from "./components/Sidebar";
 import { useSettings } from "./hooks/useSettings";
 import { useNavigationStore } from "./stores/navigationStore";
 import { useSettingsStore } from "./stores/settingsStore";
+import { surfaceClasses } from "./components/ui/Surface";
 import { commands } from "@/bindings";
 import { getLanguageDirection, initializeRTL } from "@/lib/utils/rtl";
 
@@ -273,10 +274,12 @@ function App() {
         toastOptions={{
           unstyled: true,
           classNames: {
-            toast:
-              "bg-background border border-mid-gray/20 rounded-lg shadow-lg px-4 py-3 flex items-center gap-3 text-sm",
+            toast: surfaceClasses(
+              "popover",
+              "px-4 py-3 flex items-center gap-3 text-sm text-text",
+            ),
             title: "font-medium",
-            description: "text-mid-gray",
+            description: "text-text-muted",
           },
         }}
       />

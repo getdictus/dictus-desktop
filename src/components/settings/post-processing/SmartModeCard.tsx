@@ -172,21 +172,21 @@ export const SmartModeCard: React.FC<SmartModeCardProps> = ({
   // Kind badge classes
   const kindBadgeClass =
     kind === "rewrite"
-      ? "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-mid-gray/10 text-mid-gray"
-      : "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-logo-primary/10 text-logo-primary border border-logo-primary/30";
+      ? "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-control text-text-muted"
+      : "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-accent/10 text-accent border border-accent/30";
 
   // Card frame classes
   const cardBase =
     "flex flex-col gap-2 px-4 py-3 rounded-xl border-2 transition-all";
   const cardCollapsed = disabled
-    ? `${cardBase} border-mid-gray/20 opacity-60 bg-mid-gray/5`
+    ? `${cardBase} border-hairline opacity-60 bg-control`
     : isEditing
-      ? `${cardBase} border-logo-primary/40 bg-logo-primary/5`
-      : `${cardBase} border-mid-gray/20 hover:border-logo-primary/50 hover:bg-logo-primary/5`;
+      ? `${cardBase} border-accent/40 bg-accent/5`
+      : `${cardBase} border-hairline hover:border-accent/50 hover:bg-accent/5`;
 
   if (isEditing || isNew) {
     return (
-      <div className={`${cardBase} border-logo-primary/40 bg-logo-primary/5`}>
+      <div className={`${cardBase} border-accent/40 bg-accent/5`}>
         {/* Header row in edit mode (only for existing cards) */}
         {!isNew && mode && (
           <div className="flex justify-between gap-2 items-start">
@@ -232,7 +232,7 @@ export const SmartModeCard: React.FC<SmartModeCardProps> = ({
                 placeholder={t("smartModes.card.promptPlaceholder")}
                 className="w-full"
               />
-              <p className="text-xs text-mid-gray/70">
+              <p className="text-xs text-text-muted">
                 {t("smartModes.card.outputHint")}
               </p>
             </div>
@@ -245,7 +245,7 @@ export const SmartModeCard: React.FC<SmartModeCardProps> = ({
                 {t("smartModes.card.targetLanguage")}
               </label>
               <select
-                className="px-2 py-1 text-sm font-medium bg-mid-gray/10 border border-mid-gray/80 rounded-md focus:outline-none focus:border-logo-primary hover:border-logo-primary"
+                className="px-2 py-1 text-sm font-medium bg-control border border-control-border rounded-md focus:outline-none focus:border-accent hover:border-accent"
                 value={draftLang?.code ?? ""}
                 onChange={(e) => {
                   const found = availableLanguages.find(
@@ -262,7 +262,7 @@ export const SmartModeCard: React.FC<SmartModeCardProps> = ({
                 ))}
               </select>
               {genericEngineNote && (
-                <p className="text-xs text-mid-gray/60">
+                <p className="text-xs text-text-muted">
                   {t("smartModes.translation.genericEngineNote")}
                 </p>
               )}
@@ -347,7 +347,7 @@ export const SmartModeCard: React.FC<SmartModeCardProps> = ({
                 }}
                 className="p-0.5 rounded focus:outline-none"
               >
-                <Pencil className="w-4 h-4 text-mid-gray/50 hover:text-text" />
+                <Pencil className="w-4 h-4 text-text-faint hover:text-text" />
               </button>
               <button
                 type="button"
@@ -360,7 +360,7 @@ export const SmartModeCard: React.FC<SmartModeCardProps> = ({
                 }}
                 className="p-0.5 rounded focus:outline-none"
               >
-                <Trash2 className="w-4 h-4 text-mid-gray/50 hover:text-red-400" />
+                <Trash2 className="w-4 h-4 text-text-faint hover:text-red-400" />
               </button>
             </>
           )}

@@ -3,6 +3,8 @@ export { Slider } from "./Slider";
 export { ToggleSwitch } from "./ToggleSwitch";
 export { SettingContainer } from "./SettingContainer";
 export { SettingsGroup } from "./SettingsGroup";
+export { Surface, surfaceClasses } from "./Surface";
+export type { SurfaceProps, SurfaceVariant } from "./Surface";
 export { TextDisplay } from "./TextDisplay";
 export { Textarea } from "./Textarea";
 export { Tooltip } from "./Tooltip";

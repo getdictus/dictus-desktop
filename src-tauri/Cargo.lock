@@ -1449,6 +1449,7 @@ dependencies = [
  "transcribe-rs",
  "vad-rs",
  "whatlang",
+ "window-vibrancy",
  "windows 0.61.3",
  "winreg 0.55.0",
 ]

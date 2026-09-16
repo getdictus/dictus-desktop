@@ -1,5 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
 
+// Overridable so a test run can coexist with a dev server already holding the
+// default port — e.g. another worktree of this repo.
+const PORT = Number(process.env.DICTUS_TEST_PORT ?? 1420);
+
 export default defineConfig({
   testDir: "./tests",
   fullyParallel: true,
@@ -8,7 +12,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: "html",
   use: {
-    baseURL: "http://localhost:1420",
+    baseURL: `http://localhost:${PORT}`,
     trace: "on-first-retry",
   },
   projects: [
@@ -18,8 +22,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "bunx vite dev",
-    url: "http://localhost:1420",
+    command: `bunx vite dev --port ${PORT}`,
+    url: `http://localhost:${PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 30000,
   },

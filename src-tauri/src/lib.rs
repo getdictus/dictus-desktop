@@ -132,6 +132,42 @@ fn build_console_filter() -> env_filter::Filter {
     builder.build()
 }
 
+/// Puts the native macOS window material behind the app canvas.
+///
+/// `UnderWindowBackground` is the material Apple uses for content sitting under
+/// a whole window: it blurs hardest and desaturates most of the whole-window
+/// materials, and it follows the system appearance. That matters here because
+/// the window is a settings window full of body text — the more translucent
+/// materials (`Sidebar`, `HudWindow`) let too much of the desktop through
+/// behind it.
+///
+/// How much of the material shows is decided in CSS, not here: the canvas is
+/// transparent, every surface that carries text stays opaque, and the macOS
+/// "Reduce transparency" setting paints the canvas back in, which hides the
+/// material entirely. See the `[data-platform="macos"]` block in
+/// src/tokens.css.
+///
+/// macOS only. The window is opaque on Windows and Linux, which have no
+/// equivalent material, and neither is built with this code.
+#[cfg(target_os = "macos")]
+fn apply_main_window_vibrancy(window: &tauri::WebviewWindow) {
+    use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial};
+
+    // State is left at the default so the material desaturates when the window
+    // loses focus, the way a native window does, instead of animating on in
+    // the background.
+    if let Err(e) = apply_vibrancy(
+        window,
+        NSVisualEffectMaterial::UnderWindowBackground,
+        None,
+        None,
+    ) {
+        // A window with no material is still perfectly usable: the canvas
+        // simply shows whatever is behind it until the user moves the window.
+        log::error!("Failed to apply macOS window vibrancy: {}", e);
+    }
+}
+
 fn try_show_main_window(app: &AppHandle) -> bool {
     if let Some(main_window) = app.get_webview_window("main") {
         if let Err(e) = main_window.unminimize() {
@@ -641,7 +677,19 @@ pub fn run(cli_args: CliArgs) {
                 win_builder = win_builder.data_directory(data_dir.join("webview"));
             }
 
-            win_builder.build()?;
+            // macOS only: a transparent window so the native material applied
+            // below shows through the app canvas. Windows and Linux keep the
+            // opaque window they have always had.
+            #[cfg(target_os = "macos")]
+            {
+                win_builder = win_builder.transparent(true);
+            }
+
+            #[allow(unused_variables)]
+            let main_window = win_builder.build()?;
+
+            #[cfg(target_os = "macos")]
+            apply_main_window_vibrancy(&main_window);
 
             let mut settings = get_settings(app.handle());
 
