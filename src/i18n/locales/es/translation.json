@@ -304,11 +304,7 @@
         "output": "Salida",
         "transcription": "Transcripción",
         "history": "Historial",
-        "experimental": "Experimental"
-      },
-      "experimentalToggle": {
-        "label": "Funciones Experimentales",
-        "description": "Habilitar funciones experimentales que aún están en desarrollo."
+        "performance": "Rendimiento y sistema"
       },
       "lazyStreamClose": {
         "label": "Mantener micrófono abierto entre transcripciones",

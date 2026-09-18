@@ -304,11 +304,7 @@
         "output": "Saída",
         "transcription": "Transcrição",
         "history": "Histórico",
-        "experimental": "Experimental"
-      },
-      "experimentalToggle": {
-        "label": "Recursos Experimentais",
-        "description": "Ativar recursos experimentais que ainda estão em desenvolvimento."
+        "performance": "Desempenho e sistema"
       },
       "lazyStreamClose": {
         "label": "Manter microfone aberto entre transcrições",

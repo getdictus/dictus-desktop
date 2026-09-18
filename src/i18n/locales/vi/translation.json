@@ -304,11 +304,7 @@
         "output": "Đầu ra",
         "transcription": "Chuyển đổi",
         "history": "Lịch sử",
-        "experimental": "Thử nghiệm"
-      },
-      "experimentalToggle": {
-        "label": "Tính năng thử nghiệm",
-        "description": "Bật các tính năng thử nghiệm đang trong quá trình phát triển."
+        "performance": "Hiệu suất & Hệ thống"
       },
       "lazyStreamClose": {
         "label": "Giữ micro mở giữa các lần phiên âm",

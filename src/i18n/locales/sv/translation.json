@@ -304,11 +304,7 @@
         "output": "Utmatning",
         "transcription": "Transkription",
         "history": "Historik",
-        "experimental": "Experimentellt"
-      },
-      "experimentalToggle": {
-        "label": "Experimentella funktioner",
-        "description": "Aktivera experimentella funktioner som fortfarande är under utveckling."
+        "performance": "Prestanda och system"
       },
       "lazyStreamClose": {
         "label": "Håll mikrofonen öppen mellan transkriptioner",

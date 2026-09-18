@@ -304,11 +304,7 @@
         "output": "Výstup",
         "transcription": "Přepis",
         "history": "Historie",
-        "experimental": "Experimentální"
-      },
-      "experimentalToggle": {
-        "label": "Experimentální funkce",
-        "description": "Povolit experimentální funkce, které jsou stále ve vývoji."
+        "performance": "Výkon a systém"
       },
       "lazyStreamClose": {
         "label": "Ponechat mikrofon zapnutý mezi přepisy",

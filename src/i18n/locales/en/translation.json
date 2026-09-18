@@ -304,11 +304,7 @@
         "output": "Output",
         "transcription": "Transcription",
         "history": "History",
-        "experimental": "Experimental"
-      },
-      "experimentalToggle": {
-        "label": "Experimental Features",
-        "description": "Enable experimental features that are still in development."
+        "performance": "Performance & System"
       },
       "lazyStreamClose": {
         "label": "Keep Mic Open Between Transcriptions",

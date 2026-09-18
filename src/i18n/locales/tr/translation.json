@@ -304,11 +304,7 @@
         "output": "Çıktı",
         "transcription": "Transkripsiyon",
         "history": "Geçmiş",
-        "experimental": "Deneysel"
-      },
-      "experimentalToggle": {
-        "label": "Deneysel Özellikler",
-        "description": "Hala geliştirme aşamasında olan deneysel özellikleri etkinleştir."
+        "performance": "Performans ve Sistem"
       },
       "lazyStreamClose": {
         "label": "Transkripsiyonlar arasında mikrofonu açık tut",

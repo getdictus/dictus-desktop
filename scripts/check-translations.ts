@@ -158,7 +158,6 @@ function isAllowlisted(dotKey: string): boolean {
     "settings.debug.title",
     "sidebar.general",
     "sidebar.debug",
-    "settings.advanced.groups.experimental",
     "settings.advanced.groups.app",
     "settings.advanced.groups.output",
     "settings.general.title",

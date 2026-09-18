@@ -282,11 +282,7 @@
         "output": "الإخراج",
         "transcription": "التفريغ الصوتي",
         "history": "السجل",
-        "experimental": "تجريبي"
-      },
-      "experimentalToggle": {
-        "label": "الميزات التجريبية",
-        "description": ".تمكين الميزات التجريبية التي لا تزال قيد التطوير"
+        "performance": "الأداء والنظام"
       },
       "lazyStreamClose": {
         "label": "إبقاء الميكروفون مفتوحًا بين عمليات النسخ",

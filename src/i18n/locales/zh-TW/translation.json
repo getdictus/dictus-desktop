@@ -304,11 +304,7 @@
         "output": "輸出",
         "transcription": "轉錄",
         "history": "歷史",
-        "experimental": "實驗性"
-      },
-      "experimentalToggle": {
-        "label": "實驗性功能",
-        "description": "啟用仍在開發中的實驗性功能"
+        "performance": "效能與系統"
       },
       "lazyStreamClose": {
         "label": "在轉錄之間保持麥克風開啟",

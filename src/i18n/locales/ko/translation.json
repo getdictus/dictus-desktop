@@ -304,11 +304,7 @@
         "output": "출력",
         "transcription": "전사",
         "history": "히스토리",
-        "experimental": "실험적"
-      },
-      "experimentalToggle": {
-        "label": "실험적 기능",
-        "description": "개발 중인 실험적 기능을 활성화합니다."
+        "performance": "성능 및 시스템"
       },
       "lazyStreamClose": {
         "label": "전사 사이에 마이크 열어 두기",

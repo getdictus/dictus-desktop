@@ -304,11 +304,7 @@
         "output": "פלט",
         "transcription": "תמלול",
         "history": "היסטוריה",
-        "experimental": "ניסיוני"
-      },
-      "experimentalToggle": {
-        "label": "תכונות ניסיוניות",
-        "description": "הפעל תכונות ניסיוניות שעדיין נמצאות בפיתוח."
+        "performance": "ביצועים ומערכת"
       },
       "lazyStreamClose": {
         "label": "השאר את המיקרופון פתוח בין תמלולים",

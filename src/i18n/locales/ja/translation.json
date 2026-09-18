@@ -304,11 +304,7 @@
         "output": "出力",
         "transcription": "文字起こし",
         "history": "履歴",
-        "experimental": "実験的"
-      },
-      "experimentalToggle": {
-        "label": "実験的機能",
-        "description": "まだ開発中の実験的機能を有効にします。"
+        "performance": "パフォーマンスとシステム"
       },
       "lazyStreamClose": {
         "label": "文字起こし間でマイクを開いたままにする",
