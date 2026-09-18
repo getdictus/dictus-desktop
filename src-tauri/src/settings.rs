@@ -382,8 +382,6 @@ pub struct AppSettings {
     pub auto_submit: bool,
     #[serde(default)]
     pub auto_submit_key: AutoSubmitKey,
-    #[serde(default = "default_post_process_enabled")]
-    pub post_process_enabled: bool,
     #[serde(default = "default_post_process_provider_id")]
     pub post_process_provider_id: String,
     #[serde(default = "default_post_process_providers")]
@@ -408,8 +406,6 @@ pub struct AppSettings {
     pub append_trailing_space: bool,
     #[serde(default = "default_app_language")]
     pub app_language: String,
-    #[serde(default)]
-    pub experimental_enabled: bool,
     #[serde(default = "default_enable_cloud_providers")]
     pub enable_cloud_providers: bool,
     #[serde(default)]
@@ -508,10 +504,6 @@ fn default_audio_feedback_volume() -> f32 {
 
 fn default_sound_theme() -> SoundTheme {
     SoundTheme::Marimba
-}
-
-fn default_post_process_enabled() -> bool {
-    false
 }
 
 fn default_enable_cloud_providers() -> bool {
@@ -996,7 +988,6 @@ pub fn get_default_settings() -> AppSettings {
         clipboard_handling: ClipboardHandling::default(),
         auto_submit: default_auto_submit(),
         auto_submit_key: AutoSubmitKey::default(),
-        post_process_enabled: default_post_process_enabled(),
         post_process_provider_id: default_post_process_provider_id(),
         post_process_providers: default_post_process_providers(),
         post_process_api_keys: default_post_process_api_keys(),
@@ -1009,7 +1000,6 @@ pub fn get_default_settings() -> AppSettings {
         mute_while_recording: false,
         append_trailing_space: false,
         app_language: default_app_language(),
-        experimental_enabled: false,
         enable_cloud_providers: default_enable_cloud_providers(),
         lazy_stream_close: false,
         keyboard_implementation: KeyboardImplementation::default(),
@@ -1335,6 +1325,33 @@ mod tests {
         assert!(settings.smart_mode_active_id.is_none());
         // smart_modes gets the default via serde default — now only Clean Up
         assert_eq!(settings.smart_modes.len(), 1);
+    }
+
+    #[test]
+    fn settings_with_removed_flags_still_deserialize() {
+        // post_process_enabled and experimental_enabled were removed (#63). Settings
+        // files written before that must still load as-is, not fall back to defaults.
+        let legacy_json = serde_json::json!({
+            "bindings": {},
+            "push_to_talk": false,
+            "audio_feedback": true,
+            "selected_language": "fr",
+            "post_process_enabled": true,
+            "experimental_enabled": true,
+            "lazy_stream_close": true,
+            "external_script_path": null
+        });
+        let settings: AppSettings = serde_json::from_value(legacy_json)
+            .expect("settings with removed flags must deserialize");
+        assert!(!settings.push_to_talk);
+        assert!(settings.audio_feedback);
+        assert_eq!(settings.selected_language, "fr");
+        assert!(settings.lazy_stream_close);
+
+        // The removed keys are dropped on the next write.
+        let rewritten = serde_json::to_value(&settings).unwrap();
+        assert!(rewritten.get("post_process_enabled").is_none());
+        assert!(rewritten.get("experimental_enabled").is_none());
     }
 
     // ── Migration tests ───────────────────────────────────────────────────────
