@@ -303,13 +303,8 @@
         "app": "App",
         "output": "Utmatning",
         "transcription": "Transkription",
-        "postProcessing": "Efterbehandling",
         "history": "Historik",
-        "experimental": "Experimentellt"
-      },
-      "experimentalToggle": {
-        "label": "Experimentella funktioner",
-        "description": "Aktivera experimentella funktioner som fortfarande är under utveckling."
+        "performance": "Prestanda och system"
       },
       "lazyStreamClose": {
         "label": "Håll mikrofonen öppen mellan transkriptioner",
@@ -621,10 +616,6 @@
       "clamshellMicrophone": {
         "title": "Clamshell-mikrofon",
         "description": "Mikrofon som ska användas när bärbara datorns lock är stängt"
-      },
-      "postProcessingToggle": {
-        "label": "Efterbearbetning",
-        "description": "Aktivera AI-driven textförfining efter transkription"
       },
       "muteWhileRecording": {
         "label": "Ljudlös under inspelning",

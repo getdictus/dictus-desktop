@@ -303,13 +303,8 @@
         "app": "App",
         "output": "Output",
         "transcription": "Transcription",
-        "postProcessing": "Post Processing",
         "history": "History",
-        "experimental": "Experimental"
-      },
-      "experimentalToggle": {
-        "label": "Experimental Features",
-        "description": "Enable experimental features that are still in development."
+        "performance": "Performance & System"
       },
       "lazyStreamClose": {
         "label": "Keep Mic Open Between Transcriptions",
@@ -621,10 +616,6 @@
       "clamshellMicrophone": {
         "title": "Clamshell Microphone",
         "description": "Microphone to use when laptop lid is closed"
-      },
-      "postProcessingToggle": {
-        "label": "Post Processing",
-        "description": "Enable AI-powered text refinement after transcription"
       },
       "muteWhileRecording": {
         "label": "Mute While Recording",

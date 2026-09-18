@@ -303,13 +303,8 @@
         "app": "אפליקציה",
         "output": "פלט",
         "transcription": "תמלול",
-        "postProcessing": "עיבוד בדיעבד",
         "history": "היסטוריה",
-        "experimental": "ניסיוני"
-      },
-      "experimentalToggle": {
-        "label": "תכונות ניסיוניות",
-        "description": "הפעל תכונות ניסיוניות שעדיין נמצאות בפיתוח."
+        "performance": "ביצועים ומערכת"
       },
       "lazyStreamClose": {
         "label": "השאר את המיקרופון פתוח בין תמלולים",
@@ -621,10 +616,6 @@
       "clamshellMicrophone": {
         "title": "מיקרופון במצב clamshell",
         "description": "המיקרופון שישמש כשהמחשב הנייד סגור"
-      },
-      "postProcessingToggle": {
-        "label": "עיבוד משלים",
-        "description": "הפעל שיפור טקסט מבוסס AI אחרי התמלול"
       },
       "muteWhileRecording": {
         "label": "השתק בזמן הקלטה",

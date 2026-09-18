@@ -303,13 +303,8 @@
         "app": "Ứng dụng",
         "output": "Đầu ra",
         "transcription": "Chuyển đổi",
-        "postProcessing": "Hậu xử lý",
         "history": "Lịch sử",
-        "experimental": "Thử nghiệm"
-      },
-      "experimentalToggle": {
-        "label": "Tính năng thử nghiệm",
-        "description": "Bật các tính năng thử nghiệm đang trong quá trình phát triển."
+        "performance": "Hiệu suất & Hệ thống"
       },
       "lazyStreamClose": {
         "label": "Giữ micro mở giữa các lần phiên âm",
@@ -621,10 +616,6 @@
       "clamshellMicrophone": {
         "title": "Micrô chế độ gập",
         "description": "Micrô sử dụng khi nắp laptop được đóng"
-      },
-      "postProcessingToggle": {
-        "label": "Xử lý sau",
-        "description": "Bật tinh chỉnh văn bản bằng AI sau khi chuyển đổi"
       },
       "muteWhileRecording": {
         "label": "Tắt tiếng khi ghi âm",

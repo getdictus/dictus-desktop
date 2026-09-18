@@ -303,13 +303,8 @@
         "app": "Aplikace",
         "output": "Výstup",
         "transcription": "Přepis",
-        "postProcessing": "Následné zpracování",
         "history": "Historie",
-        "experimental": "Experimentální"
-      },
-      "experimentalToggle": {
-        "label": "Experimentální funkce",
-        "description": "Povolit experimentální funkce, které jsou stále ve vývoji."
+        "performance": "Výkon a systém"
       },
       "lazyStreamClose": {
         "label": "Ponechat mikrofon zapnutý mezi přepisy",
@@ -621,10 +616,6 @@
       "clamshellMicrophone": {
         "title": "Mikrofon při zavřeném víku",
         "description": "Mikrofon, který se použije při zavřeném víku notebooku"
-      },
-      "postProcessingToggle": {
-        "label": "Následné zpracování",
-        "description": "Povolit AI vylepšení textu po přepisu"
       },
       "muteWhileRecording": {
         "label": "Ztlumit při nahrávání",

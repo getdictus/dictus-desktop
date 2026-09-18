@@ -303,13 +303,8 @@
         "app": "Applicazione",
         "output": "Output",
         "transcription": "Trascrizione",
-        "postProcessing": "Post-elaborazione",
         "history": "Cronologia",
-        "experimental": "Sperimentale"
-      },
-      "experimentalToggle": {
-        "label": "Funzionalità Sperimentali",
-        "description": "Abilita le funzionalità sperimentali ancora in fase di sviluppo."
+        "performance": "Prestazioni e sistema"
       },
       "lazyStreamClose": {
         "label": "Mantieni il microfono aperto tra le trascrizioni",
@@ -621,10 +616,6 @@
       "clamshellMicrophone": {
         "title": "Microfono a portatile chiuso",
         "description": "Microfono da usare quando il portatile è chiuso"
-      },
-      "postProcessingToggle": {
-        "label": "Post-Elaborazione",
-        "description": "Abilita il miglioramento della trascrizione con IA"
       },
       "muteWhileRecording": {
         "label": "Silenzia durante la registrazione",
