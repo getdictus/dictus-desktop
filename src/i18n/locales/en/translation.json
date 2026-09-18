@@ -303,7 +303,6 @@
         "app": "App",
         "output": "Output",
         "transcription": "Transcription",
-        "postProcessing": "Post Processing",
         "history": "History",
         "experimental": "Experimental"
       },
@@ -621,10 +620,6 @@
       "clamshellMicrophone": {
         "title": "Clamshell Microphone",
         "description": "Microphone to use when laptop lid is closed"
-      },
-      "postProcessingToggle": {
-        "label": "Post Processing",
-        "description": "Enable AI-powered text refinement after transcription"
       },
       "muteWhileRecording": {
         "label": "Mute While Recording",

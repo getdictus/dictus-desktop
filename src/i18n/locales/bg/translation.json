@@ -303,7 +303,6 @@
         "app": "Приложение",
         "output": "Изход",
         "transcription": "Транскрипция",
-        "postProcessing": "Последваща обработка",
         "history": "История",
         "experimental": "Експериментални"
       },
@@ -621,10 +620,6 @@
       "clamshellMicrophone": {
         "title": "Микрофон при затворен капак",
         "description": "Микрофон за използване, когато капакът на лаптопа е затворен"
-      },
-      "postProcessingToggle": {
-        "label": "Постобработка",
-        "description": "Включване на подобряване на текста с ИИ след транскрипция"
       },
       "muteWhileRecording": {
         "label": "Заглушаване при запис",

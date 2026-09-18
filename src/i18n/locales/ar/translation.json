@@ -281,7 +281,6 @@
         "app": "التطبيق",
         "output": "الإخراج",
         "transcription": "التفريغ الصوتي",
-        "postProcessing": "المعالجة اللاحقة",
         "history": "السجل",
         "experimental": "تجريبي"
       },
@@ -599,10 +598,6 @@
       "clamshellMicrophone": {
         "title": "ميكروفون وضع الإغلاق",
         "description": "الميكروفون المراد استخدامه عندما يكون غطاء المحمول مغلقاً"
-      },
-      "postProcessingToggle": {
-        "label": "معالجة لاحقة",
-        "description": "تمكين تحسين النص المدعوم بالذكاء الاصطناعي بعد التفريغ الصوتي"
       },
       "muteWhileRecording": {
         "label": "كتم الصوت أثناء التسجيل",

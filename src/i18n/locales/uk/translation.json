@@ -303,7 +303,6 @@
         "app": "Додаток",
         "output": "Вивід",
         "transcription": "Транскрипція",
-        "postProcessing": "Постобробка",
         "history": "Історія",
         "experimental": "Експериментальне"
       },
@@ -621,10 +620,6 @@
       "clamshellMicrophone": {
         "title": "Мікрофон у закритому режимі",
         "description": "Мікрофон для використання при закритій кришці ноутбука"
-      },
-      "postProcessingToggle": {
-        "label": "Постобробка",
-        "description": "Увімкнути покращення тексту за допомогою AI після транскрипції"
       },
       "muteWhileRecording": {
         "label": "Вимкнути звук під час запису",

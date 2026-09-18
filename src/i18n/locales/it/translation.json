@@ -303,7 +303,6 @@
         "app": "Applicazione",
         "output": "Output",
         "transcription": "Trascrizione",
-        "postProcessing": "Post-elaborazione",
         "history": "Cronologia",
         "experimental": "Sperimentale"
       },
@@ -621,10 +620,6 @@
       "clamshellMicrophone": {
         "title": "Microfono a portatile chiuso",
         "description": "Microfono da usare quando il portatile è chiuso"
-      },
-      "postProcessingToggle": {
-        "label": "Post-Elaborazione",
-        "description": "Abilita il miglioramento della trascrizione con IA"
       },
       "muteWhileRecording": {
         "label": "Silenzia durante la registrazione",

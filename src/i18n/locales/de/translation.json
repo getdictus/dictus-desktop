@@ -303,7 +303,6 @@
         "app": "Anwendung",
         "output": "Ausgabe",
         "transcription": "Transkription",
-        "postProcessing": "Nachbearbeitung",
         "history": "Verlauf",
         "experimental": "Experimentell"
       },
@@ -621,10 +620,6 @@
       "clamshellMicrophone": {
         "title": "Clamshell-Mikrofon",
         "description": "Mikrofon bei geschlossenem Laptop-Deckel"
-      },
-      "postProcessingToggle": {
-        "label": "Nachbearbeitung",
-        "description": "KI-gestützte Textverfeinerung nach der Transkription aktivieren"
       },
       "muteWhileRecording": {
         "label": "Während Aufnahme stummschalten",

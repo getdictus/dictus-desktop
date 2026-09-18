@@ -303,7 +303,6 @@
         "app": "アプリ",
         "output": "出力",
         "transcription": "文字起こし",
-        "postProcessing": "後処理",
         "history": "履歴",
         "experimental": "実験的"
       },
@@ -621,10 +620,6 @@
       "clamshellMicrophone": {
         "title": "クラムシェルマイク",
         "description": "ノートパソコンの蓋を閉じたときに使用するマイク"
-      },
-      "postProcessingToggle": {
-        "label": "後処理",
-        "description": "文字起こし後のAIによるテキスト改善を有効化"
       },
       "muteWhileRecording": {
         "label": "録音中にミュート",
