@@ -28,7 +28,7 @@
 
 ## Why Dictus Desktop?
 
-- 🔒 **100% offline** — no network calls, no cloud, no telemetry. Your voice never leaves your machine.
+- 🔒 **Offline by default**: transcription runs on your machine, no telemetry. Cloud post-processing is off unless you turn it on.
 - 🆓 **Free & open source** — MIT licensed, no subscription, no account required.
 - ⚡ **Fast & accurate** — Whisper (GPU-accelerated) or Parakeet V3 (CPU, ~5× realtime).
 - 🖥 **Cross-platform** — macOS (Apple Silicon & Intel), Windows, Linux.
@@ -101,7 +101,7 @@ Dictus Desktop is a Tauri app: a React + TypeScript settings UI on top of a Rust
 - [x] macOS (Apple Silicon + Intel), Windows x64, Linux x64
 - [x] Whisper + Parakeet V3 engines
 - [x] CLI flags & signal-based control
-- [ ] Smart Mode Pro — local LLM reformulation
+- [ ] Smart Modes: local LLM reformulation
 - [ ] Custom vocabulary (technical terms, names)
 - [ ] Audio-file transcription
 - [ ] Searchable local history
@@ -257,7 +257,7 @@ Contributions are very welcome. Please:
 
 ## Support the project
 
-Dictus is free and will stay free. If it saves you time, consider [supporting development](https://getdictus.com/donate) — it directly funds new features and platform support.
+Dictus Desktop is free and will stay free. If it saves you time, consider [supporting development](https://getdictus.com/donate).
 
 ## Community
 
