@@ -91,6 +91,7 @@ This compiles a release binary and generates platform-specific bundles (deb, rpm
 | Single instance                                   | its own lock                    | its own lock: runs next to the installed app |
 | Autostart entry                                   | `Dictus`                        | `Dictus Dev`                                 |
 | Updater                                           | checks GitHub releases          | disabled                                     |
+| Focus at startup / relaunch                       | shows and focuses the window    | never takes focus (see below)                |
 
 `<app data>` is `~/Library/Application Support` on macOS, `~/.local/share` on Linux and `%APPDATA%` on Windows.
 
@@ -99,6 +100,18 @@ The dev identity starts with empty data: download a model on first run. Copy fil
 On macOS, Accessibility and Microphone permissions are keyed on the bundle id, so Dictus Dev asks for them separately from Dictus. A bare `tauri dev` binary inherits the permissions of the terminal that launched it.
 
 Pass `--config <file>` yourself to override the merge.
+
+### No focus stealing
+
+Dictus Dev never takes focus on its own, so a dev build can run while you keep working in another app:
+
+- the main window is created unfocused (`focused: false`);
+- when it would normally appear by itself (startup, the permission onboarding, or a relaunch that hands off to the running instance), it is ordered in **behind** other windows on macOS (`orderBack:`). It is not activated, not made key and not raised. On Linux and Windows it is shown unfocused;
+- explicit actions still raise it as usual: the tray "Settings" item and clicking the Dock icon.
+
+Set `DICTUS_DEV_NO_FOCUS=0` to get the release behaviour back in a dev build. Release builds (`com.dictus.desktop`) ignore the variable and are unchanged.
+
+On macOS the window can stay invisible when the current Space is a full-screen app. Open it from the tray when you need it.
 
 ## Linux Install (from source)
 

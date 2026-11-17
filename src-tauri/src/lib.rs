@@ -161,6 +161,59 @@ fn try_show_main_window(app: &AppHandle) -> bool {
     false
 }
 
+/// No-focus mode for the dev identity, see `app_identity::no_focus_mode`.
+fn dev_no_focus(app: &AppHandle) -> bool {
+    app_identity::no_focus_mode(
+        &app.config().identifier,
+        std::env::var(app_identity::DEV_NO_FOCUS_ENV)
+            .ok()
+            .as_deref(),
+    )
+}
+
+/// Show the main window for a reason the user did not trigger directly
+/// (startup, permission onboarding, single-instance handoff). In dev no-focus
+/// mode the window is ordered in behind other windows without activating the
+/// app or taking key focus; otherwise this is `show_main_window`.
+fn reveal_main_window(app: &AppHandle) {
+    if !dev_no_focus(app) {
+        show_main_window(app);
+        return;
+    }
+    let Some(window) = app.get_webview_window("main") else {
+        log::warn!("Main window not found; not revealing it (dev no-focus mode)");
+        return;
+    };
+    log::info!("Dev no-focus mode: ordering main window in without activating the app");
+    #[cfg(target_os = "macos")]
+    {
+        let _ = app.run_on_main_thread(move || order_back_without_activation(&window));
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        // Created with `focused(false)`, so showing it does not take focus.
+        if let Err(e) = window.show() {
+            log::error!("Failed to show webview window: {}", e);
+        }
+    }
+}
+
+/// `orderBack:` makes the window visible behind every other window. Unlike
+/// `show()` (`makeKeyAndOrderFront:`) it neither makes it key nor brings it
+/// forward, and it never activates the app.
+#[cfg(target_os = "macos")]
+fn order_back_without_activation(window: &tauri::WebviewWindow) {
+    use objc2::{msg_send, runtime::AnyObject};
+    match window.ns_window() {
+        Ok(ptr) if !ptr.is_null() => unsafe {
+            let ns_window = &*(ptr as *mut AnyObject);
+            let _: () = msg_send![ns_window, orderBack: std::ptr::null_mut::<AnyObject>()];
+        },
+        Ok(_) => log::error!("Main window has no NSWindow"),
+        Err(e) => log::error!("Failed to get NSWindow: {}", e),
+    }
+}
+
 fn show_main_window(app: &AppHandle) {
     if try_show_main_window(app) {
         return;
@@ -383,7 +436,7 @@ fn trigger_update_check(app: AppHandle) -> Result<(), String> {
 #[tauri::command]
 #[specta::specta]
 fn show_main_window_command(app: AppHandle) -> Result<(), String> {
-    show_main_window(&app);
+    reveal_main_window(&app);
     Ok(())
 }
 
@@ -600,7 +653,9 @@ pub fn run(cli_args: CliArgs) {
             } else if args.iter().any(|a| a == "--cancel") {
                 crate::utils::cancel_current_operation(app);
             } else {
-                show_main_window(app);
+                // A relaunch (script, `tauri dev` restart, Finder) is not an
+                // explicit "raise the window": no focus grab in dev no-focus mode.
+                reveal_main_window(app);
             }
         }))
         .plugin(tauri_plugin_fs::init())
@@ -629,7 +684,8 @@ pub fn run(cli_args: CliArgs) {
                     .min_inner_size(680.0, 570.0)
                     .resizable(true)
                     .maximizable(false)
-                    .visible(false);
+                    .visible(false)
+                    .focused(!dev_no_focus(app.handle()));
 
             if let Some(data_dir) = portable::data_dir() {
                 win_builder = win_builder.data_directory(data_dir.join("webview"));
@@ -685,7 +741,7 @@ pub fn run(cli_args: CliArgs) {
             // anyway. Without a tray icon, the dock is the only way back in.
             let tray_available = settings.show_tray_icon && !cli_args.no_tray;
             if should_force_show || !should_hide || !tray_available {
-                show_main_window(&app_handle);
+                reveal_main_window(&app_handle);
             }
 
             Ok(())

@@ -20,6 +20,19 @@ pub fn is_dev_identity(identifier: &str) -> bool {
     identifier.ends_with(DEV_IDENTIFIER_SUFFIX)
 }
 
+/// Env var that turns the dev identity's no-focus mode off (`=0`).
+pub const DEV_NO_FOCUS_ENV: &str = "DICTUS_DEV_NO_FOCUS";
+
+/// `true` when the app must never take focus on its own: the dev identity,
+/// unless `DICTUS_DEV_NO_FOCUS=0`. Release builds always return `false`, so
+/// their behaviour is unchanged. In this mode the main window is created
+/// unfocused, and the shows nobody asked for (startup, permission reveal,
+/// single-instance handoff) put it behind other windows without activating
+/// the app. Explicit user actions (tray "Settings", Dock click) still raise it.
+pub fn no_focus_mode(identifier: &str, env_value: Option<&str>) -> bool {
+    is_dev_identity(identifier) && env_value.map(str::trim) != Some("0")
+}
+
 /// Unix socket used by `tauri-plugin-single-instance` on macOS for this
 /// identifier. Mirrors the plugin's own derivation (2.x, without the `semver`
 /// feature): dots and dashes become underscores, under `/tmp`.
@@ -58,6 +71,26 @@ mod tests {
     #[test]
     fn dev_identity_is_dev() {
         assert!(is_dev_identity(DEV));
+    }
+
+    #[test]
+    fn release_never_uses_no_focus_mode() {
+        assert!(!no_focus_mode(RELEASE, None));
+        assert!(!no_focus_mode(RELEASE, Some("1")));
+        assert!(!no_focus_mode(RELEASE, Some("0")));
+    }
+
+    #[test]
+    fn dev_uses_no_focus_mode_by_default() {
+        assert!(no_focus_mode(DEV, None));
+        assert!(no_focus_mode(DEV, Some("1")));
+        assert!(no_focus_mode(DEV, Some("")));
+    }
+
+    #[test]
+    fn dev_no_focus_mode_can_be_turned_off() {
+        assert!(!no_focus_mode(DEV, Some("0")));
+        assert!(!no_focus_mode(DEV, Some(" 0 ")));
     }
 
     #[test]
