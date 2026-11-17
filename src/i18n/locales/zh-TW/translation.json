@@ -303,13 +303,8 @@
         "app": "應用程式",
         "output": "輸出",
         "transcription": "轉錄",
-        "postProcessing": "後處理",
         "history": "歷史",
-        "experimental": "實驗性"
-      },
-      "experimentalToggle": {
-        "label": "實驗性功能",
-        "description": "啟用仍在開發中的實驗性功能"
+        "performance": "效能與系統"
       },
       "lazyStreamClose": {
         "label": "在轉錄之間保持麥克風開啟",
@@ -621,10 +616,6 @@
       "clamshellMicrophone": {
         "title": "闔蓋麥克風",
         "description": "筆記型電腦闔蓋時使用的麥克風"
-      },
-      "postProcessingToggle": {
-        "label": "後處理",
-        "description": "啟用轉錄後的 AI 文字最佳化"
       },
       "muteWhileRecording": {
         "label": "錄製時靜音",

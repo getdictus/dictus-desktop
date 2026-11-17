@@ -129,8 +129,6 @@ const settingUpdaters: {
   auto_submit_key: (value) =>
     commands.changeAutoSubmitKeySetting(value as string),
   history_limit: (value) => commands.updateHistoryLimit(value as number),
-  post_process_enabled: (value) =>
-    commands.changePostProcessEnabledSetting(value as boolean),
   post_process_selected_prompt_id: (value) =>
     commands.setPostProcessSelectedPrompt(value as string),
   mute_while_recording: (value) =>
@@ -139,8 +137,6 @@ const settingUpdaters: {
     commands.changeAppendTrailingSpaceSetting(value as boolean),
   log_level: (value) => commands.setLogLevel(value as any),
   app_language: (value) => commands.changeAppLanguageSetting(value as string),
-  experimental_enabled: (value) =>
-    commands.changeExperimentalEnabledSetting(value as boolean),
   enable_cloud_providers: (value) =>
     commands.changeEnableCloudProvidersSetting(value as boolean),
   lazy_stream_close: (value) =>

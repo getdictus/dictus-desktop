@@ -94,7 +94,6 @@ export const SmartModesSection: React.FC = () => {
   // modes. It's "ready" when post-processing has a usable provider; otherwise we
   // show a non-blocking info banner (the backend also emits `post-process-error`
   // at dictation time as a backstop).
-  const postProcessEnabled = getSetting("post_process_enabled") ?? false;
   const providerId = getSetting("post_process_provider_id") ?? "";
   const activeLlmModelId = getSetting("active_llm_model_id") ?? null;
   const postProcessModels = getSetting("post_process_models") ?? {};
@@ -104,7 +103,7 @@ export const SmartModesSection: React.FC = () => {
       : providerId === "apple_intelligence"
         ? true // runtime availability is surfaced via the post-process-error toast
         : (postProcessModels[providerId] ?? "").trim() !== "";
-  const translationReady = postProcessEnabled && providerUsable;
+  const translationReady = providerUsable;
 
   // Translation always runs through the active provider/model now.
   const availableLanguages = GENERIC_LANGUAGES;
