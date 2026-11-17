@@ -15,7 +15,9 @@ concurrency:
 
 jobs:
   playwright:
-    runs-on: ubuntu-latest
+    # ubuntu-latest is now 26.04, which the repo's Playwright version does not
+    # support for chromium (#76). Move back to ubuntu-latest after upgrading it.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 

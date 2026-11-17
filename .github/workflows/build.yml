@@ -91,8 +91,13 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
 
-      - name: install Rust stable
-        uses: dtolnay/rust-toolchain@stable
+      # Pinned to the last green toolchain (#76). From Rust 1.100 the Cargo
+      # build-dir layout nests build script out dirs one level deeper, which
+      # breaks ort-sys 2.0.0-rc.12's dylib copy on Windows
+      # (`out_dir.ancestors().nth(3)`, build/dynamic_link.rs). Lift this pin
+      # once `ort` is upgraded.
+      - name: install Rust 1.98.1
+        uses: dtolnay/rust-toolchain@1.98.1
         with:
           # Those targets are only used on macos runners so it's in an `if` to slightly speed up windows and linux builds.
           targets: ${{ contains(inputs.platform, 'macos') && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
