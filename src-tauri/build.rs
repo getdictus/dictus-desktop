@@ -4,6 +4,10 @@ fn main() {
 
     generate_tray_translations();
 
+    // Must run before tauri_build, which resolves the bundle resources that
+    // point at the staged DLLs.
+    stage_vc_runtime();
+
     tauri_build::build()
 }
 
@@ -251,4 +255,171 @@ fn build_apple_intelligence_bridge() {
     }
 
     println!("cargo:rustc-link-arg=-Wl,-rpath,/usr/lib/swift");
+}
+
+/// Directory the Visual C++ runtime DLLs are staged in, relative to `src-tauri/`.
+/// `tauri.windows.conf.json` installs its contents next to `dictus.exe`.
+const VC_RUNTIME_STAGE_DIR: &str = "vc-runtime";
+
+/// Stage the Microsoft Visual C++ runtime DLLs for app-local deployment on Windows.
+///
+/// whisper.cpp, llama.cpp and the prebuilt onnxruntime are compiled against the
+/// dynamic CRT (`/MD`), so `dictus.exe` imports `MSVCP140.dll` and `MSVCP140_1.dll`,
+/// which in turn need `VCRUNTIME140.dll` / `VCRUNTIME140_1.dll`. Windows does not
+/// ship them, so without the VC++ redistributable the app fails to start with
+/// 0xC0000135 (#72). The whole `Microsoft.VC*.CRT` folder for the target
+/// architecture is copied from the Visual Studio redist directory; the installers
+/// then place it next to `dictus.exe`, where the loader finds it first.
+///
+/// The lookup mirrors Tauri's `bundle.windows.bundleVCRuntime` (tauri-cli >= 2.12),
+/// including the `VCTOOLS_REDIST_DIR` override, so this can be replaced by that
+/// option once Tauri is upgraded.
+fn stage_vc_runtime() {
+    use std::env;
+    use std::fs;
+    use std::path::Path;
+
+    let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap_or_default();
+    let target_env = env::var("CARGO_CFG_TARGET_ENV").unwrap_or_default();
+    if target_os != "windows" || target_env != "msvc" {
+        return;
+    }
+
+    let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap_or_default();
+    let arch = match target_arch.as_str() {
+        "x86_64" => "x64",
+        "aarch64" => "arm64",
+        "x86" => "x86",
+        other => panic!("no Visual C++ runtime redist for target arch `{other}`"),
+    };
+
+    println!("cargo:rerun-if-env-changed=VCTOOLS_REDIST_DIR");
+
+    let redist_dir = vc_redist_dir();
+    let crt_dir = vc_crt_dir(&redist_dir, arch);
+
+    // Start clean so DLLs from a previous build for another arch never leak in.
+    let stage_dir = Path::new(VC_RUNTIME_STAGE_DIR);
+    if stage_dir.exists() {
+        fs::remove_dir_all(stage_dir).expect("failed to clear the vc-runtime stage dir");
+    }
+    fs::create_dir_all(stage_dir).expect("failed to create the vc-runtime stage dir");
+
+    let mut staged = Vec::new();
+    for entry in fs::read_dir(&crt_dir)
+        .unwrap_or_else(|e| panic!("failed to read {}: {e}", crt_dir.display()))
+        .flatten()
+    {
+        let path = entry.path();
+        let is_dll = path
+            .extension()
+            .is_some_and(|ext| ext.eq_ignore_ascii_case("dll"));
+        if !is_dll {
+            continue;
+        }
+        let file_name = entry.file_name();
+        // fs::copy keeps the source mtime on Windows, so the rerun-if-changed
+        // that tauri_build emits for these files does not loop.
+        fs::copy(&path, stage_dir.join(&file_name))
+            .unwrap_or_else(|e| panic!("failed to copy {}: {e}", path.display()));
+        staged.push(file_name.to_string_lossy().to_lowercase());
+    }
+
+    if !staged.iter().any(|name| name == "msvcp140.dll") {
+        panic!(
+            "msvcp140.dll not found in {}; the Visual C++ runtime would be missing from the installers",
+            crt_dir.display()
+        );
+    }
+}
+
+/// Locate `VC\Redist\MSVC` (the parent of the versioned redist folders), from
+/// `VCTOOLS_REDIST_DIR` or the newest Visual Studio install that has the
+/// VC++ redistributable component.
+fn vc_redist_dir() -> std::path::PathBuf {
+    use std::env;
+    use std::path::PathBuf;
+    use std::process::Command;
+
+    if let Ok(dir) = env::var("VCTOOLS_REDIST_DIR") {
+        return PathBuf::from(dir);
+    }
+
+    let program_files =
+        env::var("ProgramFiles(x86)").unwrap_or_else(|_| r"C:\Program Files (x86)".to_string());
+    let vswhere = PathBuf::from(program_files)
+        .join("Microsoft Visual Studio")
+        .join("Installer")
+        .join("vswhere.exe");
+
+    let output = Command::new(&vswhere)
+        .args([
+            "-latest",
+            "-prerelease",
+            "-products",
+            "*",
+            "-requires",
+            "Microsoft.VisualStudio.Component.VC.Redist.14.Latest",
+            "-property",
+            "installationPath",
+            "-format",
+            "value",
+            "-utf8",
+        ])
+        .output()
+        .unwrap_or_else(|e| {
+            panic!(
+                "failed to run {} to locate the Visual C++ runtime ({e}); set VCTOOLS_REDIST_DIR to the VC\\Redist\\MSVC directory",
+                vswhere.display()
+            )
+        });
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    match stdout.lines().map(str::trim).find(|l| !l.is_empty()) {
+        Some(vs_dir) if output.status.success() => {
+            PathBuf::from(vs_dir).join("VC").join("Redist").join("MSVC")
+        }
+        _ => panic!(
+            "no Visual Studio install with the VC++ redistributable component found; set VCTOOLS_REDIST_DIR to the VC\\Redist\\MSVC directory"
+        ),
+    }
+}
+
+/// Pick `<redist_dir>\<newest version>\<arch>\Microsoft.VC*.CRT`.
+fn vc_crt_dir(redist_dir: &std::path::Path, arch: &str) -> std::path::PathBuf {
+    use std::fs;
+
+    let parse_version = |name: &str| -> Option<Vec<u32>> {
+        name.split('.').map(|part| part.parse().ok()).collect()
+    };
+
+    let newest = fs::read_dir(redist_dir)
+        .unwrap_or_else(|e| panic!("failed to read {}: {e}", redist_dir.display()))
+        .flatten()
+        .filter_map(|entry| {
+            let version = parse_version(&entry.file_name().to_string_lossy())?;
+            let arch_dir = entry.path().join(arch);
+            arch_dir.is_dir().then_some((version, arch_dir))
+        })
+        .max_by(|a, b| a.0.cmp(&b.0))
+        .map(|(_, arch_dir)| arch_dir)
+        .unwrap_or_else(|| {
+            panic!(
+                "no Visual C++ redist version with an `{arch}` folder in {}",
+                redist_dir.display()
+            )
+        });
+
+    fs::read_dir(&newest)
+        .unwrap_or_else(|e| panic!("failed to read {}: {e}", newest.display()))
+        .flatten()
+        .map(|entry| entry.path())
+        .find(|path| {
+            let name = path
+                .file_name()
+                .map(|n| n.to_string_lossy().to_string())
+                .unwrap_or_default();
+            path.is_dir() && name.starts_with("Microsoft.VC") && name.ends_with(".CRT")
+        })
+        .unwrap_or_else(|| panic!("no Microsoft.VC*.CRT folder in {}", newest.display()))
 }
