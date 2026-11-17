@@ -1,5 +1,12 @@
 [build]
 
+[env]
+# llama-cpp-sys-2 forwards every CMAKE_* env var to CMake. Disabling FindOpenSSL
+# builds llama.cpp's vendored cpp-httplib without TLS, which otherwise fails to
+# compile against OpenSSL 4 on the macOS runners (#76). Dictus does not use
+# llama.cpp's HTTP features (LLAMA_CURL and the server are OFF).
+CMAKE_DISABLE_FIND_PACKAGE_OpenSSL = "TRUE"
+
 # ── ggml duplicate-symbol coexistence (whisper-rs-sys + llama-cpp-sys-2) ──────
 # transcribe-rs (whisper.cpp) and llama-cpp-2 each statically link their own
 # copy of ggml (ggml 0.9.5 vs 0.9.11). Their `ggml_*` / `gguf_*` symbols collide
