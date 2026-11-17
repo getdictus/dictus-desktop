@@ -303,13 +303,8 @@
         "app": "앱",
         "output": "출력",
         "transcription": "전사",
-        "postProcessing": "후처리",
         "history": "히스토리",
-        "experimental": "실험적"
-      },
-      "experimentalToggle": {
-        "label": "실험적 기능",
-        "description": "개발 중인 실험적 기능을 활성화합니다."
+        "performance": "성능 및 시스템"
       },
       "lazyStreamClose": {
         "label": "전사 사이에 마이크 열어 두기",
@@ -621,10 +616,6 @@
       "clamshellMicrophone": {
         "title": "클램셸 마이크",
         "description": "노트북 덮개가 닫혀 있을 때 사용할 마이크"
-      },
-      "postProcessingToggle": {
-        "label": "후처리",
-        "description": "텍스트 변환 후 AI 기반 텍스트 개선 활성화"
       },
       "muteWhileRecording": {
         "label": "녹음 중 음소거",

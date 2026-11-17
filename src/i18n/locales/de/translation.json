@@ -303,13 +303,8 @@
         "app": "Anwendung",
         "output": "Ausgabe",
         "transcription": "Transkription",
-        "postProcessing": "Nachbearbeitung",
         "history": "Verlauf",
-        "experimental": "Experimentell"
-      },
-      "experimentalToggle": {
-        "label": "Experimentelle Funktionen",
-        "description": "Experimentelle Funktionen aktivieren, die sich noch in Entwicklung befinden."
+        "performance": "Leistung & System"
       },
       "lazyStreamClose": {
         "label": "Mikrofon zwischen Transkriptionen offen halten",
@@ -621,10 +616,6 @@
       "clamshellMicrophone": {
         "title": "Clamshell-Mikrofon",
         "description": "Mikrofon bei geschlossenem Laptop-Deckel"
-      },
-      "postProcessingToggle": {
-        "label": "Nachbearbeitung",
-        "description": "KI-gestützte Textverfeinerung nach der Transkription aktivieren"
       },
       "muteWhileRecording": {
         "label": "Während Aufnahme stummschalten",

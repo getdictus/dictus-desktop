@@ -303,13 +303,8 @@
         "app": "应用",
         "output": "输出",
         "transcription": "转录",
-        "postProcessing": "后处理",
         "history": "历史",
-        "experimental": "实验性"
-      },
-      "experimentalToggle": {
-        "label": "实验性功能",
-        "description": "启用仍在开发中的实验性功能。"
+        "performance": "性能与系统"
       },
       "lazyStreamClose": {
         "label": "在转录之间保持麦克风开启",
@@ -621,10 +616,6 @@
       "clamshellMicrophone": {
         "title": "合盖麦克风",
         "description": "笔记本电脑盖子关闭时使用的麦克风"
-      },
-      "postProcessingToggle": {
-        "label": "后处理",
-        "description": "启用转录后的 AI 文本优化"
       },
       "muteWhileRecording": {
         "label": "录制时静音",
