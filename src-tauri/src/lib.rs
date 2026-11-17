@@ -1,5 +1,6 @@
 mod actions;
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+mod app_identity;
 mod apple_intelligence;
 mod audio_feedback;
 pub mod audio_toolkit;
@@ -268,7 +269,7 @@ fn initialize_core_logic(app_handle: &AppHandle) {
             )
             .unwrap(),
         )
-        .tooltip(tray::tray_tooltip())
+        .tooltip(tray::tray_tooltip(app_handle))
         .show_menu_on_left_click(true)
         .icon_as_template(true)
         .on_menu_event(|app, event| match event.id.as_ref() {
@@ -277,7 +278,9 @@ fn initialize_core_logic(app_handle: &AppHandle) {
             }
             "check_updates" => {
                 let settings = settings::get_settings(app);
-                if settings.update_checks_enabled {
+                if settings.update_checks_enabled
+                    && !app_identity::is_dev_identity(&app.config().identifier)
+                {
                     show_main_window(app);
                     let _ = app.emit("check-for-updates", ());
                 }
@@ -369,7 +372,7 @@ fn initialize_core_logic(app_handle: &AppHandle) {
 #[specta::specta]
 fn trigger_update_check(app: AppHandle) -> Result<(), String> {
     let settings = settings::get_settings(&app);
-    if !settings.update_checks_enabled {
+    if !settings.update_checks_enabled || app_identity::is_dev_identity(&app.config().identifier) {
         return Ok(());
     }
     app.emit("check-for-updates", ())
@@ -393,25 +396,16 @@ pub fn run(cli_args: CliArgs) {
     // when the variable is unset
     let console_filter = build_console_filter();
 
-    // Clean up stale single-instance socket from a previous crash.
-    // The socket path mirrors the derivation in tauri-plugin-single-instance.
+    // Generated once: the identity it carries (release `tauri.conf.json`, or
+    // merged with `tauri.dev.conf.json` for dev/debug builds) drives every
+    // per-identity path, including the single-instance socket below.
+    let context = tauri::generate_context!();
+
+    // Clean up stale single-instance socket from a previous crash of this
+    // identity. Never touches another identity's socket (e.g. the installed
+    // release app while a dev build starts).
     #[cfg(unix)]
-    {
-        let socket_path = format!(
-            "/tmp/{}_si.sock",
-            "com.dictus.desktop".replace(['.', '-'], "_")
-        );
-        let socket = std::path::Path::new(&socket_path);
-        if socket.exists() {
-            match std::os::unix::net::UnixStream::connect(socket) {
-                Ok(_) => {} // Another instance is actually running; plugin will handle it
-                Err(_) => {
-                    eprintln!("Removing stale single-instance socket: {}", socket_path);
-                    let _ = std::fs::remove_file(socket);
-                }
-            }
-        }
-    }
+    app_identity::remove_stale_single_instance_socket(&context.config().identifier);
 
     let specta_builder = Builder::<tauri::Wry>::new()
         .commands(collect_commands![
@@ -630,7 +624,7 @@ pub fn run(cli_args: CliArgs) {
             // for portable mode (redirects WebView2 cache to portable Data dir)
             let mut win_builder =
                 tauri::WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App("/".into()))
-                    .title("Dictus")
+                    .title(&app.package_info().name)
                     .inner_size(680.0, 570.0)
                     .min_inner_size(680.0, 570.0)
                     .resizable(true)
@@ -733,7 +727,7 @@ pub fn run(cli_args: CliArgs) {
             _ => {}
         })
         .invoke_handler(invoke_handler)
-        .build(tauri::generate_context!())
+        .build(context)
         .expect("error while building tauri application")
         .run(|app, event| {
             #[cfg(target_os = "macos")]

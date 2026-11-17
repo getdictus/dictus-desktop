@@ -68,6 +68,8 @@ bun install
 bun tauri dev
 ```
 
+Dev builds (`bun tauri dev`, `bun tauri build --debug`) run as **Dictus Dev** (`com.dictus.desktop.dev`), separate from an installed Dictus. See [Dev identity](#dev-identity).
+
 ### 4. Build for Production
 
 ```bash
@@ -75,6 +77,28 @@ bun run tauri build
 ```
 
 This compiles a release binary and generates platform-specific bundles (deb, rpm, AppImage on Linux; dmg on macOS; msi on Windows).
+
+## Dev identity
+
+`bun tauri …` goes through `scripts/tauri.ts`, which merges `src-tauri/tauri.dev.conf.json` into the config for `tauri dev` and `tauri build --debug`. A release `bun tauri build` is unchanged.
+
+|                                                   | Release                         | Dev / debug                                  |
+| ------------------------------------------------- | ------------------------------- | -------------------------------------------- |
+| Name                                              | Dictus                          | Dictus Dev                                   |
+| Identifier                                        | `com.dictus.desktop`            | `com.dictus.desktop.dev`                     |
+| Data (settings, `history.db`, models, recordings) | `<app data>/com.dictus.desktop` | `<app data>/com.dictus.desktop.dev`          |
+| Logs                                              | `<log dir>/com.dictus.desktop`  | `<log dir>/com.dictus.desktop.dev`           |
+| Single instance                                   | its own lock                    | its own lock: runs next to the installed app |
+| Autostart entry                                   | `Dictus`                        | `Dictus Dev`                                 |
+| Updater                                           | checks GitHub releases          | disabled                                     |
+
+`<app data>` is `~/Library/Application Support` on macOS, `~/.local/share` on Linux and `%APPDATA%` on Windows.
+
+The dev identity starts with empty data: download a model on first run. Copy files from the release folder if you need real data, never point the dev build at it.
+
+On macOS, Accessibility and Microphone permissions are keyed on the bundle id, so Dictus Dev asks for them separately from Dictus. A bare `tauri dev` binary inherits the permissions of the terminal that launched it.
+
+Pass `--config <file>` yourself to override the merge.
 
 ## Linux Install (from source)
 
