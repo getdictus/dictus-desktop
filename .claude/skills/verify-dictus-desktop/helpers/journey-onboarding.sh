@@ -8,7 +8,7 @@ source "$(dirname "$0")/env.sh"
 run="$(resolve_run "${1:-}")" || die "no run of this session"
 export DICTUS_VERIFY_RUN="$run" DISPLAY="$(ledger_get "$run" DISPLAY)"
 H="$DICTUS_HELPERS"
-data="$(ledger_get "$run" SCRATCH)/home/.local/share/$DICTUS_IDENTIFIER"
+data="$(run_data "$run")"
 fail() { report "$run" "JOURNEY onboarding FAIL: $1"; echo "JOURNEY onboarding FAIL: $1"; exit 1; }
 setting() { python3 -I -c 'import json,sys;print(json.load(open(sys.argv[1]))["settings"].get(sys.argv[2],""))' "$data/settings_store.json" "$1" 2>/dev/null; }
 

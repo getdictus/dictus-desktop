@@ -12,6 +12,11 @@ fail() { echo "FAIL $*"; fails=$((fails + 1)); }
 for t in bun cargo Xvfb dbus-daemon ffmpeg xwininfo dpkg-deb lslocks flock python3 virsh gh; do
   command -v "$t" > /dev/null && ok "tool $t" || { case "$t" in virsh|gh) warn "tool $t missing (tier 2 only)" ;; *) fail "tool $t missing" ;; esac; }
 done
+for t in pipewire pw-cli pw-link pw-dump; do
+  command -v "$t" > /dev/null && ok "tool $t (virtual mic)" || warn "tool $t missing (journey-dictation.sh only)"
+done
+corpora="$(find /tmp -maxdepth 1 -name 'verify-dictus-corpus.*' -user "$(id -u)" 2>/dev/null | paste -sd' ')"
+[ -z "$corpora" ] && ok "no test-voices corpus clone in /tmp" || warn "corpus clone(s) present: $corpora (cleanup.sh removes them once older than the TTL)"
 [ -e /usr/lib/x86_64-linux-gnu/libXtst.so.6 ] && ok "libXtst.so.6 (x.py)" || fail "libXtst.so.6 missing (x.py cannot click)"
 
 run="$(resolve_run "${1:-}" 2>/dev/null)" || run=""
@@ -62,6 +67,10 @@ if [ -n "$run" ]; then
     w="$(DISPLAY="$(ledger_get "$run" DISPLAY)" "$DICTUS_HELPERS/x.py" window 2>/dev/null)" && ok "window $w" || fail "no mapped Dictus window"
     home="$(sed -n 's/^HOME=//p' "$run/app.env")"
     case "$home" in /tmp/verify-dictus-desktop.*/home) ok "app HOME is isolated: $home" ;; *) fail "app HOME is not isolated: $home" ;; esac
+    if [ -n "$(ledger_get "$run" PIPEWIRE)" ]; then
+      ref_alive "$(ledger_get "$run" PIPEWIRE)" && ok "private pipewire is this run's" || fail "private pipewire of this run is gone: see $run/pipewire.log"
+      m="$(python3 -I "$DICTUS_HELPERS/mic.py" "$(ledger_get "$run" SCRATCH)" check 2>&1)" && ok "virtual mic: $m" || fail "virtual mic: $m"
+    fi
   fi
   diff -q "$run/fingerprint-before.txt" <(fingerprint) > /dev/null && ok "real data unchanged since the run began" || fail "real data changed since the run began"
 else

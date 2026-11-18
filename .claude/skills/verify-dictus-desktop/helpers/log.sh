@@ -6,7 +6,7 @@
 set -uo pipefail
 source "$(dirname "$0")/env.sh"
 run="$(resolve_run "${DICTUS_VERIFY_RUN:-}")" || die "no run of this session"
-logs() { cat "$(ledger_get "$run" SCRATCH)/home/.local/share/$DICTUS_IDENTIFIER/logs/"*.log 2>/dev/null; }
+logs() { cat "$(run_data "$run")/logs/"*.log 2>/dev/null; }
 case "${1:?mark|wait|since}" in
   mark) logs | wc -l ;;
   since) logs | tail -n +"$((${2:-0} + 1))" ;;
