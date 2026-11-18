@@ -15,7 +15,7 @@ Dictus Desktop uses the **Tauri v2 auto-updater** (`tauri-plugin-updater 2.10.0`
 4. The updater plugin verifies the signature of every downloaded artifact against the public key stored in `src-tauri/tauri.conf.json` (`plugins.updater.pubkey`). Verification uses **Minisign/Ed25519** — not OpenPGP, not RSA.
 5. If verification passes, the installer is launched in-place and the app restarts at the new version.
 
-Each installer artifact (`.dmg`, `.msi`, `.exe`, `.deb`, `.rpm`, `.AppImage`) is accompanied by a `.sig` file. These `.sig` files are produced during the build by `tauri-action` using the private key in the `TAURI_SIGNING_PRIVATE_KEY` GitHub Secret.
+Each updater artifact (`.msi`, `-setup.exe`, `.deb`, `.rpm`, `.AppImage`, and `.app.tar.gz` on macOS) is accompanied by a `.sig` file. The `.dmg` has none: the macOS updater installs the `.app.tar.gz`. These `.sig` files are produced during the build by `tauri-action` using the private key in the `TAURI_SIGNING_PRIVATE_KEY` GitHub Secret.
 
 ### Why YubiKey is NOT used as the signing backend
 
@@ -151,68 +151,404 @@ Rotation is needed if: the private key is suspected compromised, or as a proacti
 
 > **This is the canonical entry point for shipping any Dictus Desktop release.** Execute every step in order.
 
-### 6.1 Pre-flight
+**The release gate.** Dictus Desktop is in production: every installed copy reads `latest.json` from the latest **published** release at each launch. A published release reaches every user within a day. So nothing is published without tests on the exact artifacts users will receive:
+
+1. `release.yml` creates a **draft** release. A draft is invisible to the updater (§6.4).
+2. **Automated tests run on the draft's artifacts**, never on a dev build: Linux tier 1, Windows tier 2, macOS tier 3 (static checks), plus the `latest.json` signature checks (§6.6, §6.7).
+3. **The maintainer installs the exact draft installer on his Mac** and runs a short checklist (§6.8).
+4. **The release is published only after the maintainer's written OK** (§6.8). No OK, no publish, even if everything is green.
+
+Every command below runs from a clone of `getdictus/dictus-desktop`, with these variables set:
 
 ```bash
-# Clean up stale local tags from old test runs
-# (Old test runs created these tags; release.yml will fail at tag creation if they exist locally)
-git tag -d 0.1.0 v0.1.0-dictus 2>/dev/null || true
-
-# Verify no conflicting remote tags exist
-git ls-remote --tags origin | grep 'v0.1.0' && echo "REMOTE TAG CONFLICT — abort and investigate" || echo "ok — no remote tag conflict"
+R=getdictus/dictus-desktop
+V=<X.Y.Z>          # the version being released, without the leading v
+PREV=<X.Y.Z>       # the version currently published (the one installs will update from)
 ```
 
-### 6.2 Version consistency
+### 6.1 Preconditions
 
-Starting from the SECOND release (after v0.1.0 ships), **any version bump MUST update all three version files in the same commit**:
+1. **The version bump is merged on `main`.** Record its merge commit: this is the release commit, the one the binaries are built from and the tag will point at.
 
-```bash
-# Assert version consistency before triggering release
-grep '"version"' src-tauri/tauri.conf.json package.json
-grep '^version' src-tauri/Cargo.toml
-# All three version strings MUST match before proceeding
-```
+   ```bash
+   gh pr view <bump PR> -R $R --json state,mergeCommit -q '.state+" "+.mergeCommit.oid'
+   # expected: MERGED <sha>
+   RELEASE_SHA=<sha>
+   ```
 
-**Note for v0.1.0 initial release:** `package.json` currently shows `"version": "0.8.2"` (the upstream Handy value). Do NOT change it in this phase — the upstream package.json cleanup (TECH-03-adjacent) is deferred. The authoritative source for the release workflow is `src-tauri/tauri.conf.json`, which is what `release.yml:21` reads to determine the release tag.
+2. **`main` is frozen until publication.** No merge between triggering `release.yml` (§6.3) and publishing (§6.8). The tag is created at publication, not when the draft is created (pitfall A7).
+
+3. **The version is consistent on the release commit**, in four files:
+
+   ```bash
+   git fetch origin && git checkout --detach $RELEASE_SHA
+   grep '"version"' src-tauri/tauri.conf.json package.json
+   grep '^version' src-tauri/Cargo.toml
+   grep -A1 '^name = "dictus"' src-tauri/Cargo.lock
+   # all four must show $V
+   ```
+
+   `release.yml` reads the version from `src-tauri/tauri.conf.json` to name the release and its tag.
+
+4. **Neither the tag `v$V` nor a release `v$V` exists yet.** Only `origin` is authoritative: local tags can be Handy's, which share our version numbers (see CLAUDE.md, "Releases and git tags").
+
+   ```bash
+   git config remote.upstream.tagOpt --no-tags   # once per clone
+   git ls-remote --tags origin "v$V*"             # expected: nothing
+   gh release list -R $R -L 5                     # expected: no v$V line, Draft included
+   ```
+
+   If a `v$V` draft is left over from an earlier attempt, delete it first (`gh release delete v$V -R $R --yes`): otherwise `release.yml` creates a second draft with the same name. Never delete a published release or its tag (§6.10).
+
+5. **`Main Branch Build` is green on the release commit.** It runs the same seven signed builds as the release, without uploading.
+
+   ```bash
+   gh run list -R $R --workflow main-build.yml --commit $RELEASE_SHA \
+     --json databaseId,status,conclusion -q '.[]|"\(.databaseId) \(.status) \(.conclusion)"'
+   # expected: <id> completed success
+   gh run view <id> -R $R   # all seven jobs ✓, Windows ARM64 included
+   ```
+
+   The workflow has `cancel-in-progress`: a `cancelled` run means a later push replaced it, not a failure. You still need a green run **on `$RELEASE_SHA`**.
+
+6. **The signing secrets exist** (names only; values are never shown):
+
+   ```bash
+   gh secret list -R $R
+   ```
+
+   | Purpose                                      | Secrets read by `build.yml`                                                    |
+   | -------------------------------------------- | ------------------------------------------------------------------------------ |
+   | Updater signature (`.sig`, `latest.json`)    | `TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`              |
+   | Apple code signing (certificate import)      | `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `KEYCHAIN_PASSWORD`         |
+   | Apple notarization (tauri-action)            | `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_ID_PASSWORD`, `APPLE_TEAM_ID`             |
+   | Windows code signing (Azure Trusted Signing) | `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_TENANT_ID` (not set yet, #38) |
+
+   Windows builds are not code-signed until the `AZURE_*` secrets exist: SmartScreen warns at install. This does not block a release. The updater signature is independent of it.
+
+### 6.2 What `release.yml` produces
+
+- A **`create-release`** job reads `$V` from `tauri.conf.json` and creates a **draft** release `v$V` (`draft: true`, `prerelease: false`, `tag_name: v$V`, notes auto-generated by GitHub). **The git tag does not exist yet**: GitHub creates it when the draft is published.
+- Seven **`publish-tauri`** jobs (`build.yml`, `sign-binaries: true`, `asset-prefix: dictus`, `fail-fast: false`), one per runner:
+
+  | Runner             | Target                      | Bundles                     |
+  | ------------------ | --------------------------- | --------------------------- |
+  | `macos-26`         | `aarch64-apple-darwin`      | `.dmg`, `.app.tar.gz`       |
+  | `macos-latest`     | `x86_64-apple-darwin`       | `.dmg`, `.app.tar.gz`       |
+  | `ubuntu-22.04`     | `x86_64-unknown-linux-gnu`  | `.deb`                      |
+  | `ubuntu-24.04`     | `x86_64-unknown-linux-gnu`  | `.AppImage`, `.rpm`         |
+  | `ubuntu-24.04-arm` | `aarch64-unknown-linux-gnu` | `.AppImage`, `.deb`, `.rpm` |
+  | `windows-latest`   | `x86_64-pc-windows-msvc`    | `.msi`, NSIS `-setup.exe`   |
+  | `windows-11-arm`   | `aarch64-pc-windows-msvc`   | `.msi`, NSIS `-setup.exe`   |
+
+  `build.yml` passes the draft's id to `tauri-action` (`releaseId`, `includeUpdaterJson: true`): each job uploads its artifacts, their `.sig` files and its part of `latest.json` **into the draft**. tauri-action merges `latest.json` across jobs.
 
 ### 6.3 Trigger the release
 
-1. Navigate to: https://github.com/getdictus/dictus-desktop/actions/workflows/release.yml
-2. Click **"Run workflow"** → select branch `main` → click **"Run workflow"**.
-3. Wait for the **7-platform build matrix** to complete:
-   - `macos-26` (Apple Silicon)
-   - `macos-latest` (Apple Silicon / x86_64)
-   - `ubuntu-22.04` (x86_64)
-   - `ubuntu-24.04` (x86_64)
-   - `ubuntu-24.04-arm` (aarch64)
-   - `windows-latest` (x86_64)
-   - `windows-11-arm` (aarch64)
-4. A **draft release** named `v<version>` is automatically created with all platform artifacts attached.
-
-### 6.4 Verify draft before publishing
-
-Before publishing the draft release, verify all of the following at https://github.com/getdictus/dictus-desktop/releases:
-
-- Artifacts are named with `dictus_*` prefix (e.g., `dictus_0.1.0_aarch64.dmg`). If you see `handy_*`, the asset-prefix CI fixes from Plan 02 were not applied — do NOT publish, investigate.
-- `latest.json` is attached to the release.
-- `.sig` files exist alongside each installer (`.dmg`, `.msi`, `.exe`, `.deb`, `.rpm`, `.AppImage`). Missing `.sig` files mean `bundle.createUpdaterArtifacts` is not `true` in `tauri.conf.json` — do NOT publish, investigate.
-
-### 6.5 Publish
-
-1. Click **"Edit"** on the draft release.
-2. If "This is a pre-release" is checked and this is a real release, uncheck it.
-3. Review the auto-generated release notes.
-4. Click **"Publish release"**.
-
-### 6.6 Post-release assertion (UPDT-10)
-
-After publishing, run the verification script to confirm `latest.json` is live and structurally valid:
-
 ```bash
-bash scripts/verify-updater-release.sh
+gh workflow run release.yml -R $R --ref main
+sleep 10
+gh run list -R $R --workflow release.yml -L 1 --json databaseId,headSha,status \
+  -q '.[]|"\(.databaseId) \(.headSha) \(.status)"'
+RUN_ID=<id>
+# headSha must equal $RELEASE_SHA. If not, main moved: gh run cancel $RUN_ID -R $R, then back to §6.1.
+gh run watch $RUN_ID -R $R --exit-status
 ```
 
-Must exit 0. A non-zero exit (404, empty JSON, malformed response, missing platforms) means the release is broken — **unpublish the release immediately**, diagnose the issue, fix it, and re-release. Do NOT leave a broken `latest.json` endpoint live — existing installs will start failing their update checks at every launch.
+Expect 30 to 60 minutes; the Windows and macOS builds are the longest.
+
+If a job fails (usually a flaky runner), rerun only the failed jobs: `gh run rerun $RUN_ID -R $R --failed`. The rerun reuses the `release-id` of the first `create-release` job and uploads into the same draft. **Never re-trigger `release.yml` as a whole**: it creates a second draft.
+
+### 6.4 Check the draft is invisible to the updater
+
+The updater endpoint is `https://github.com/getdictus/dictus-desktop/releases/latest/download/latest.json` (`plugins.updater.endpoints` in `tauri.conf.json`). `releases/latest` resolves to the latest **published** release and ignores drafts and pre-releases. Draft assets can only be downloaded by an account with write access to the repository.
+
+Right after `release.yml` finishes:
+
+```bash
+curl -sL https://github.com/getdictus/dictus-desktop/releases/latest/download/latest.json | jq -r .version
+# expected: $PREV (still the previous version)
+gh api repos/$R/releases/latest --jq '"\(.tag_name) draft=\(.draft) prerelease=\(.prerelease)"'
+# expected: v$PREV draft=false prerelease=false
+gh api repos/$R/releases --jq ".[]|select(.name==\"v$V\")|\"\(.id) draft=\(.draft)\""
+# expected: exactly one line, <id> draft=true
+DRAFT_ID=<id>
+```
+
+If `latest.json` already reports `$V`, the release is public: stop and go to §6.10.
+
+**Downloading draft assets.** `gh release download` looks a release up by its tag, and the tag does not exist yet. Download by asset id through the API instead. Every test below uses this function, in a fresh empty directory outside the repository:
+
+```bash
+dl() { gh api "repos/$R/releases/$DRAFT_ID/assets" --jq ".[]|select(.name==\"$1\")|.id" |
+       xargs -I{} gh api -H 'Accept: application/octet-stream' "repos/$R/releases/assets/{}" > "$1"; }
+D=$(mktemp -d) && cd "$D"
+dl "Dictus_${V}_amd64.deb"   # example
+```
+
+### 6.5 Asset list
+
+```bash
+gh api repos/$R/releases/$DRAFT_ID --jq '.draft, (.assets|length), (.assets[].name)'
+```
+
+Expected: `true`, `27`, then exactly:
+
+```
+Dictus-<X.Y.Z>-1.aarch64.rpm            + .sig
+Dictus-<X.Y.Z>-1.x86_64.rpm             + .sig
+Dictus_<X.Y.Z>_aarch64.AppImage         + .sig
+Dictus_<X.Y.Z>_amd64.AppImage           + .sig
+Dictus_<X.Y.Z>_amd64.deb                + .sig
+Dictus_<X.Y.Z>_arm64.deb                + .sig
+Dictus_<X.Y.Z>_x64_en-US.msi            + .sig
+Dictus_<X.Y.Z>_x64-setup.exe            + .sig
+Dictus_<X.Y.Z>_arm64_en-US.msi          + .sig
+Dictus_<X.Y.Z>_arm64-setup.exe          + .sig
+Dictus_aarch64.app.tar.gz               + .sig
+Dictus_x64.app.tar.gz                   + .sig
+Dictus_<X.Y.Z>_aarch64.dmg              (no .sig: expected)
+Dictus_<X.Y.Z>_x64.dmg                  (no .sig: expected)
+latest.json
+```
+
+- Asset names start with `Dictus`, capitalised. A `handy_*` or `Handy_*` asset means the asset prefix regressed (pitfall A2): do not publish.
+- The `.dmg` files have no `.sig`: the macOS updater uses `Dictus_<arch>.app.tar.gz` and its `.sig`. Any other installer without a `.sig` means `bundle.createUpdaterArtifacts` is not `true` (pitfall A3): do not publish.
+- Keep the two `.dmg` names exact: the Homebrew cask (`getdictus/homebrew-tap`) rebuilds them from the version.
+
+### 6.6 `latest.json` and signatures
+
+```bash
+cd "$D"
+for f in $(gh api "repos/$R/releases/$DRAFT_ID/assets" --jq '.[].name' | grep -E '^latest\.json$|\.sig$'); do dl "$f"; done
+
+jq '.version, (.platforms|keys|length)' latest.json
+# expected: "$V", 18
+
+jq -r '.platforms|to_entries[]|"\(.key)\t\(.value.url)"' latest.json
+# expected: 18 keys
+#   darwin-aarch64(-app), darwin-x86_64(-app),
+#   linux-x86_64(-appimage,-deb,-rpm), linux-aarch64(-appimage,-deb,-rpm),
+#   windows-x86_64(-msi,-nsis), windows-aarch64(-msi,-nsis)
+# every URL under .../releases/download/v$V/ (none in v$PREV, none in untagged-...)
+
+# Each signature in latest.json must equal the uploaded .sig:
+jq -r '.platforms|to_entries[]|"\(.key) \(.value.url|split("/")|last) \(.value.signature)"' latest.json |
+while read -r key file sig; do
+  if [ "$sig" = "$(cat "$file.sig")" ]; then echo "ok   $key"; else echo "FAIL $key ($file)"; fi
+done
+# expected: 18 × ok
+```
+
+A URL containing `untagged-…` is the temporary name GitHub gives a draft: do not publish, investigate.
+
+**Cryptographic check of an artifact** against the public key the updater ships with (`plugins.updater.pubkey`, base64 of a minisign public key file). Do it at least for one installer per OS:
+
+```bash
+PUBKEY=$(jq -r .plugins.updater.pubkey <repo>/src-tauri/tauri.conf.json | base64 -d | tail -1)
+f="Dictus_${V}_x64_en-US.msi"
+dl "$f"
+base64 -d < "$f.sig" > "$f.minisig"
+minisign -Vm "$f" -x "$f.minisig" -P "$PUBKEY"
+# expected: Signature and comment signature verified
+```
+
+### 6.7 Automated tests on the draft artifacts
+
+Run with the `verify-dictus-desktop` skill (`.claude/skills/verify-dictus-desktop/`, helpers in `helpers/`), from a checkout of `main`, **on files downloaded from the draft** with `dl`, never on a local build. Each tier writes its evidence under the skill's evidence root, outside the repository, and ends with a short report. The machine is shared: the helpers take and release `/tmp/dictus-gradle.lock`, and every run ends with `cleanup.sh`.
+
+The target journey on each platform is: install → start → onboarding → one dictation of a reference audio file → the right version shown. Dictation is not automated on any tier yet (§6.11); it stays on the maintainer's checklist.
+
+```bash
+H=<repo>/.claude/skills/verify-dictus-desktop/helpers
+```
+
+**Linux, tier 1 (Xvfb, isolated data):**
+
+```bash
+dl "Dictus_${V}_amd64.deb"
+dpkg-deb -f "Dictus_${V}_amd64.deb" Version          # expected: $V
+$H/run.sh onboarding --deb "$PWD/Dictus_${V}_amd64.deb"
+# expected: READY …, DOCTOR OK, JOURNEY onboarding PASS, CLEANUP OK
+```
+
+Then, in a session started with `$H/launch.sh --deb "$PWD/Dictus_${V}_amd64.deb" about`: `$H/nav.sh about` and `$H/shot.sh 01-about` (the About page must show `v$V`), plus any screen the release notes mention, then `$H/cleanup.sh`.
+
+- **Covers:** the signed x86_64 `.deb` from the draft extracts and starts, its window renders, onboarding downloads a model (SHA256 verified) and reaches the main window, the version shown is right, and the machine's real Dictus data is unchanged (fingerprint before and after).
+- **Does not cover:** installation through `dpkg -i`/`apt` (system dependencies, postinst), the AppImage (`launch.sh` only runs a `.deb`; the AppImage is the format the Linux updater replaces), the `.rpm` and ARM64 packages, Wayland, real dictation (no audio device), the global shortcut, pasting into another app.
+
+**Windows, tier 2 (VM `dictus-win`, snapshot `clean-no-vcredist`):**
+
+`vm.sh fetch` only knows PR artifacts (`pr-test-build.yml`), not a draft. Until `vm.sh fetch-release` exists (§6.11), hand the draft installer to `vm.sh` through the run ledger:
+
+```bash
+dl "Dictus_${V}_x64-setup.exe"; dl "Dictus_${V}_x64_en-US.msi"
+$H/vm.sh start                       # revert to clean-no-vcredist, lock, guest-ping. Ends: VM READY run=<run-dir> …
+RUN=<run-dir from VM READY>
+I="$(sed -n 's/^SCRATCH=//p' "$RUN/run.env" | tail -1)/installers"
+mkdir -p "$I" && cp "Dictus_${V}_x64-setup.exe" "Dictus_${V}_x64_en-US.msi" "$I/"
+echo "INSTALLER=$I/Dictus_${V}_x64-setup.exe" >> "$RUN/run.env"
+$H/vm.sh ps 'Test-Path C:\Windows\System32\msvcp140.dll'   # expected: False (no VC++ runtime)
+$H/vm.sh serve                       # serves $I to the guest only
+$H/vm.sh install                     # NSIS, per user, silent, as user dictus
+$H/vm.sh launch                      # expected: RUNNING pid=…
+$H/vm.sh ps '(Get-Item C:\Users\dictus\AppData\Local\Dictus\dictus.exe).VersionInfo.ProductVersion'   # expected: $V
+$H/vm.sh ps '(Get-Process dictus).Modules | ? ModuleName -match "^(vcruntime|msvcp)140" | % FileName'
+# expected: the runtime DLLs load from the Dictus install folder
+$H/shot.sh 01-vm-nsis                # the whole VM screen: check it shows nothing private
+$H/cleanup.sh                        # revert the snapshot, stop HTTP, delete installers, release the lock
+```
+
+Then the MSI (per machine), in a new run from `vm.sh start`, with the same ledger step pointing at the `.msi`, `vm.sh serve`, and:
+
+```bash
+$H/vm.sh ps "Invoke-WebRequest -UseBasicParsing 'http://192.168.122.1:8765/Dictus_${V}_x64_en-US.msi' -OutFile C:\Users\Public\dictus.msi; (Start-Process msiexec -ArgumentList '/i C:\Users\Public\dictus.msi /qn /norestart' -Wait -PassThru).ExitCode"
+# expected: 0
+$H/vm.sh ps '(Get-Item "C:\Program Files\Dictus\dictus.exe").VersionInfo.ProductVersion'   # expected: $V
+$H/cleanup.sh
+```
+
+- **Covers:** on a clean Windows 11 without the VC++ runtime, the draft's NSIS and MSI installers install, the NSIS build starts (onboarding visible on the capture), the runtime loads from the install folder, the binary version is right.
+- **Does not cover:** onboarding to the end (VM clicks are not scripted), starting the MSI build (`vm.sh launch` knows only the per-user NSIS path), dictation, SmartScreen (#38), Windows on ARM (no ARM VM: list the ARM installers with `7z l` for the bundled runtime instead), Windows 10, a real GPU. `vm.sh` is young: if a step fails, fix the helper rather than working around it by hand.
+
+**macOS, tier 3 (static checks only):**
+
+The release `.dmg` has the bundle id `com.dictus.desktop`, the same as the maintainer's installed Dictus. Launching it would quit his app or hand the launch to it (single instance) and touch his data, and it would steal focus. Tier 3 is therefore limited to static checks, from a T3 thread on the Mac, in the background:
+
+```bash
+dl "Dictus_${V}_aarch64.dmg"
+hdiutil attach -nobrowse -readonly -mountpoint /tmp/dictus-dmg "Dictus_${V}_aarch64.dmg"
+/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' /tmp/dictus-dmg/Dictus.app/Contents/Info.plist          # com.dictus.desktop
+/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' /tmp/dictus-dmg/Dictus.app/Contents/Info.plist  # $V
+codesign --verify --deep --strict --verbose=2 /tmp/dictus-dmg/Dictus.app     # valid on disk
+spctl -a -t exec -vv /tmp/dictus-dmg/Dictus.app                               # accepted, Notarized Developer ID
+xcrun stapler validate /tmp/dictus-dmg/Dictus.app                             # The validate action worked!
+hdiutil detach /tmp/dictus-dmg
+```
+
+Same for `Dictus_${V}_x64.dmg`. Check `Dictus_aarch64.app.tar.gz` and `Dictus_x64.app.tar.gz` with `minisign` as in §6.6.
+
+- **Covers:** the `.dmg` mounts, the app has the release bundle id and version, is signed Developer ID, notarized and stapled, and the updater archives are signed.
+- **Does not cover:** starting the app, onboarding, permissions (microphone, accessibility), dictation, Gatekeeper on the `.dmg` container itself (not notarized, #61), an Intel Mac. These go to the maintainer (§6.8).
+
+**Update from `$PREV`: not testable before publication.** The updater endpoint is fixed in the shipped binaries (`releases/latest/download/latest.json`), it does not see the draft, and draft URLs require authentication. The update test runs right after publication (§6.9), with the rollback of §6.10 ready.
+
+### 6.8 Maintainer test and the publish gate
+
+Send the maintainer the draft asset link of `Dictus_${V}_aarch64.dmg` (visible to him when signed in to GitHub) and its sha256 (`shasum -a 256`). His checklist, about 10 minutes:
+
+1. Quit the installed Dictus (menu bar → Quit).
+2. Download the `.dmg` from the draft, check the sha256, open it, drag **Dictus** to **Applications** and accept the replacement. A Gatekeeper warning on opening the `.dmg` is expected (#61).
+3. Start Dictus. Expected: it starts without asking for permissions again.
+4. **Settings → About** shows `$V`.
+5. Settings, model and history are still there.
+6. **One real dictation** with his shortcut into a text app: the text is inserted correctly.
+7. Each fix or feature listed in the release notes behaves as described.
+8. Reply in writing: `OK <X.Y.Z>`, or `KO: <what is wrong>`.
+
+On KO: reinstall `$PREV` from its release page the same way (his data does not move), fix on `main`, delete the draft (§6.10) and start again from §6.1.
+
+**Publish gate.** All of these are required:
+
+- §6.4 to §6.6 green (draft invisible, assets, signatures).
+- §6.7 tiers 1 to 3 green, each with its report.
+- The maintainer's written `OK <X.Y.Z>`, with an explicit instruction to publish.
+
+Without that written OK, do not publish, even when everything is green. An agent never publishes on its own initiative.
+
+**Publish**, in one command that also sets the notes and **pins the tag to the commit that was built**:
+
+```bash
+gh release edit v$V -R $R \
+  --notes-file <user-facing notes.md> \
+  --target $RELEASE_SHA \
+  --draft=false --latest
+```
+
+`--target $RELEASE_SHA` is required: without it GitHub creates the tag on the head of `main` at publication time, and if `main` moved, `v$V` names a commit that was never built. If `gh release edit v$V` cannot find the draft, use the API: `gh api -X PATCH repos/$R/releases/$DRAFT_ID -F draft=false -f make_latest=true -f target_commitish=$RELEASE_SHA -F body=@<notes.md>`.
+
+Web UI equivalent: _Releases → v$V (Draft) → Edit_, choose the tag `v$V` and the target commit, paste the notes, leave "Set as a pre-release" unchecked, check "Set as the latest release", _Publish release_.
+
+### 6.9 Post-publish checks
+
+1. **The tag points at the release commit:**
+
+   ```bash
+   git ls-remote --tags origin "v$V"    # expected: $RELEASE_SHA
+   ```
+
+2. **The updater endpoint serves the new version (UPDT-10):**
+
+   ```bash
+   curl -sL https://github.com/getdictus/dictus-desktop/releases/latest/download/latest.json | jq '.version, (.platforms|keys|length)'
+   # expected: "$V", 18
+   bash scripts/verify-updater-release.sh   # must exit 0 with version=$V
+   ```
+
+   On failure (404, empty JSON, missing platforms): **unpublish immediately** (§6.10). A broken `latest.json` makes every install fail its update check at every launch.
+
+3. **Update from `$PREV`, on each OS:** an installed `$PREV`, started, must offer `$V`, install it and restart on `$V` (check _About_). Settings, model and history must be intact.
+   - **Mac:** the maintainer's own install updates on its next launch; an Intel Mac if available.
+   - **Windows VM:** a build that needs the VC++ runtime does not start on `clean-no-vcredist`. Use the snapshot with `$PREV` installed and the runtime present (`$H/vm.sh start <snapshot>`, today `dictus-0.3.0-ready`; add a snapshot per release), start Dictus and let it update.
+   - **Linux:** the AppImage (x86_64), the format the Linux updater replaces in place; the `.deb` if possible.
+
+4. **Homebrew** (`getdictus/homebrew-tap`, cask `dictus`): the tap's `bump-cask.yml` runs daily at 07:17 UTC, reads the latest release, downloads both `.dmg`, recomputes the sha256 and commits `dictus $PREV -> $V`. To run it now:
+
+   ```bash
+   gh workflow run bump-cask.yml -R getdictus/homebrew-tap
+   gh api repos/getdictus/homebrew-tap/commits -q '.[0].commit.message'   # expected: dictus $PREV -> $V
+   ```
+
+   The cask has `auto_updates true`, so a plain `brew upgrade` skips Dictus by design (`brew upgrade --cask --greedy dictus`).
+
+5. **Website:** publication triggers `website-deploy-on-release.yml` (Vercel rebuild).
+
+   ```bash
+   gh run list -R $R --workflow website-deploy-on-release.yml -L 1   # expected: success
+   ```
+
+   Click one Windows and one macOS download link on getdictus.com and check they fetch `$V`.
+
+### 6.10 Rollback
+
+**Never delete a published tag.** Installs may already have updated and the cask may already point at it. A problem after publication is fixed forward with a new patch version.
+
+**Before publication** (failed or doubtful draft): no tag exists, the draft can be discarded.
+
+```bash
+gh run cancel $RUN_ID -R $R          # if the run is still going
+gh release delete v$V -R $R --yes
+git ls-remote --tags origin "v$V"    # expected: nothing (if a tag exists, do not delete it before understanding where it came from)
+```
+
+Fix, merge on `main`, start again from §6.1. The version stays `$V`: nothing was published.
+
+**After publication, broken `latest.json` or artifacts:** unpublish, which turns the release back into a draft. The tag stays; do not touch it.
+
+```bash
+gh release edit v$V -R $R --draft=true
+curl -sL https://github.com/getdictus/dictus-desktop/releases/latest/download/latest.json | jq -r .version
+# expected: $PREV → the updater no longer offers anything broken
+```
+
+- **Homebrew:** if the cask was already bumped, revert the `dictus $PREV -> $V` commit in `getdictus/homebrew-tap` and disable `bump-cask.yml` (`gh workflow disable bump-cask.yml -R getdictus/homebrew-tap`) until the release is fixed; otherwise the next daily run bumps it again.
+- **Website:** trigger a rebuild by hand (Vercel deploy hook or redeploy); the workflow only runs on publication.
+- Then either replace the broken assets in the draft (`gh release upload v$V <file> --clobber -R $R`, keeping `latest.json` consistent with the `.sig` files), rerun §6.5 to §6.8 and publish again, or ship a new patch version.
+
+**After publication, a functional bug reported by users** (the updater already delivered `$V`): do not unpublish, it undoes nothing for those who updated. Ship a new patch version.
+
+### 6.11 Not automated yet
+
+| Missing                                                         | Unlocks                                                   |
+| --------------------------------------------------------------- | --------------------------------------------------------- |
+| A reference audio file and its expected text in the skill       | Dictation checks on every tier                            |
+| A virtual microphone in the tier 1 session                      | Real dictation on Linux (mic → transcription → history)   |
+| `vm.sh fetch-release <draft-id>` and MSI support in `vm.sh`     | Tier 2 on draft artifacts without the manual ledger step  |
+| `launch.sh --appimage`                                          | The AppImage, the format the Linux updater replaces       |
+| Scripted clicks in the Windows VM                               | Full onboarding on tier 2                                 |
+| A virtual microphone in the VM                                  | Dictation on tier 2                                       |
+| An updater endpoint override for tests (product decision)       | The update test from `$PREV` **before** publication       |
+| An isolated macOS instance (macOS VM on the Mac, or second Mac) | Starting the release-identity app and dictation on tier 3 |
 
 ---
 
@@ -220,11 +556,13 @@ Must exit 0. A non-zero exit (404, empty JSON, malformed response, missing platf
 
 Cross-reference: `.planning/research/PITFALLS.md` §"Critical Pitfalls — Auto-Updater (v1.1)"
 
-| Code | Summary                                                                                                                                                                                                                                |
-| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A1   | **Key loss post-release** — private key lost after first signed release ships → all installs permanently stranded. See §4.                                                                                                             |
-| A2   | **Wrong asset-prefix** — release still produces `handy_*` artifacts if `release.yml:77` or `build.yml:22` is not updated to `dictus`. Both files must be changed.                                                                      |
-| A3   | **Wrong config section for `createUpdaterArtifacts`** — must be in `bundle`, NOT in `plugins.updater`. Setting it in the wrong section silently has no effect; `.sig` files will not be generated.                                     |
-| A4   | **PEM-wrapped pubkey** — `plugins.updater.pubkey` must be the raw base64 string from `.key.pub`, NOT a PEM-wrapped string. Paste the contents of the `.key.pub` file as-is. PEM-wrapped pubkey causes `UnexpectedKeyId` runtime error. |
-| A5   | **Endpoint 404 before first publish** — once `endpoints` is populated in `tauri.conf.json`, the app starts checking. The URL 404s until the first release is published. This is expected during development.                           |
-| A6   | **Stale local tags** — `git tag -d 0.1.0 v0.1.0-dictus` pre-flight in §6.1 prevents `release.yml` tag-creation failures.                                                                                                               |
+| Code | Summary                                                                                                                                                                                                                                    |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| A1   | **Key loss post-release** — private key lost after first signed release ships → all installs permanently stranded. See §4.                                                                                                                 |
+| A2   | **Wrong asset-prefix** — assets must be named `Dictus_*` / `Dictus-*` (`asset-prefix: dictus` in `release.yml`, `build.yml`). Any `handy_*` / `Handy_*` asset means the prefix regressed: do not publish.                                  |
+| A3   | **Wrong config section for `createUpdaterArtifacts`** — must be in `bundle`, NOT in `plugins.updater`. Setting it in the wrong section silently has no effect; `.sig` files will not be generated.                                         |
+| A4   | **PEM-wrapped pubkey** — `plugins.updater.pubkey` must be the raw base64 string from `.key.pub`, NOT a PEM-wrapped string. Paste the contents of the `.key.pub` file as-is. PEM-wrapped pubkey causes `UnexpectedKeyId` runtime error.     |
+| A5   | **Endpoint 404 before first publish** — once `endpoints` is populated in `tauri.conf.json`, the app starts checking. The URL 404s until the first release is published. This is expected during development.                               |
+| A6   | **Handy tags** — a local `v0.x.y` tag can be Handy's (same version numbers). Only `git ls-remote --tags origin` is authoritative; see CLAUDE.md, "Releases and git tags". The old `git tag -d 0.1.0 v0.1.0-dictus` pre-flight is obsolete. |
+| A7   | **Tag created at publication** — the draft has no git tag. Publishing without `--target $RELEASE_SHA` tags the head of `main` at that moment, which may not be the commit that was built. Freeze `main` from §6.3 to §6.8.                 |
+| A8   | **Re-triggering `release.yml`** — creates a second draft with the same name. Rerun failed jobs only (`gh run rerun <id> --failed`).                                                                                                        |

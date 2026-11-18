@@ -224,6 +224,8 @@ Four test tiers, detailed in the skill's `SKILL.md` → Test tiers:
 
 The machine is shared: hold the lock only while a build or the app runs, never leave anything running, and never put destructive commands (`rm`, `kill`, `virsh destroy`) inside `bash -c` strings or loops; use the skill's helpers.
 
+**Release gate:** `release.yml` only creates a draft. Nothing is published before the tiers run on the draft's own artifacts and Pierre gives a written OK; see `docs/RUNBOOK-updater-signing.md` §6.
+
 ### pstack
 
 pstack (<https://github.com/cursor/plugins/tree/main/pstack>) is the reference toolbox for agent workflows. It provides `create-verification-skill` and `maintain-verification-skill` (both user-invoked only), `unslop` for prose, `tdd`, `poteto-mode` and a set of engineering principle skills. It is enabled for this repo through `.claude/settings.json`; Claude Code asks you to trust the `cursor-plugins` marketplace on first use.
