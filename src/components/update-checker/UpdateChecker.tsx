@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { check } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { listen } from "@tauri-apps/api/event";
+import { getIdentifier } from "@tauri-apps/api/app";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { ProgressBar } from "../shared";
 import { useSettings } from "../../hooks/useSettings";
@@ -24,8 +25,18 @@ const UpdateChecker: React.FC<UpdateCheckerProps> = ({ className = "" }) => {
     useState(false);
 
   const { settings, isLoading } = useSettings();
-  const settingsLoaded = !isLoading && settings !== null;
-  const updateChecksEnabled = settings?.update_checks_enabled ?? false;
+  // Dev builds ("Dictus Dev", com.dictus.desktop.dev) never check for or
+  // install release updates. Same rule as `app_identity::is_dev_identity`.
+  const [isDevIdentity, setIsDevIdentity] = useState<boolean | null>(null);
+  useEffect(() => {
+    getIdentifier()
+      .then((id) => setIsDevIdentity(id.endsWith(".dev")))
+      .catch(() => setIsDevIdentity(true));
+  }, []);
+  const settingsLoaded =
+    !isLoading && settings !== null && isDevIdentity !== null;
+  const updateChecksEnabled =
+    (settings?.update_checks_enabled ?? false) && isDevIdentity === false;
 
   const upToDateTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const isManualCheckRef = useRef(false);

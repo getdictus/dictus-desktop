@@ -10,7 +10,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Install dependencies
 bun install
 
-# Run in development mode
+# Run in development mode (runs as "Dictus Dev", com.dictus.desktop.dev —
+# its own data folder, next to an installed Dictus; see BUILD.md "Dev identity")
 bun run tauri dev
 # If cmake error on macOS:
 CMAKE_POLICY_VERSION_MINIMUM=3.5 bun run tauri dev
