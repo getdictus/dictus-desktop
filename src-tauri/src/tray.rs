@@ -73,15 +73,20 @@ pub fn change_tray_icon(app: &AppHandle, icon: TrayIconState) {
     update_tray_menu(app, &icon, None);
 }
 
-pub fn tray_tooltip() -> String {
-    version_label()
+pub fn tray_tooltip(app: &AppHandle) -> String {
+    version_label(app)
 }
 
-fn version_label() -> String {
-    if cfg!(debug_assertions) {
-        format!("Dictus v{} (Dev)", env!("CARGO_PKG_VERSION"))
+/// "Dictus v0.3.0" for release, "Dictus Dev v0.3.0" for the dev identity.
+/// A debug binary still running under the release identity keeps a "(Dev)"
+/// marker so it can't be mistaken for the installed app.
+fn version_label(app: &AppHandle) -> String {
+    let name = &app.package_info().name;
+    let version = env!("CARGO_PKG_VERSION");
+    if cfg!(debug_assertions) && !crate::app_identity::is_dev_identity(&app.config().identifier) {
+        format!("{name} v{version} (Dev)")
     } else {
-        format!("Dictus v{}", env!("CARGO_PKG_VERSION"))
+        format!("{name} v{version}")
     }
 }
 
@@ -98,7 +103,7 @@ pub fn update_tray_menu(app: &AppHandle, state: &TrayIconState, locale: Option<&
     let (settings_accelerator, quit_accelerator) = (Some("Ctrl+,"), Some("Ctrl+Q"));
 
     // Create common menu items
-    let version_label = version_label();
+    let version_label = version_label(app);
     let version_i = MenuItem::with_id(app, "version", &version_label, false, None::<&str>)
         .expect("failed to create version item");
     let settings_i = MenuItem::with_id(
@@ -113,7 +118,8 @@ pub fn update_tray_menu(app: &AppHandle, state: &TrayIconState, locale: Option<&
         app,
         "check_updates",
         &strings.check_updates,
-        settings.update_checks_enabled,
+        settings.update_checks_enabled
+            && !crate::app_identity::is_dev_identity(&app.config().identifier),
         None::<&str>,
     )
     .expect("failed to create check updates item");

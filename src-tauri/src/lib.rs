@@ -1,4 +1,5 @@
 mod actions;
+mod app_identity;
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
 mod apple_intelligence;
 mod audio_feedback;
@@ -160,6 +161,59 @@ fn try_show_main_window(app: &AppHandle) -> bool {
     false
 }
 
+/// No-focus mode for the dev identity, see `app_identity::no_focus_mode`.
+fn dev_no_focus(app: &AppHandle) -> bool {
+    app_identity::no_focus_mode(
+        &app.config().identifier,
+        std::env::var(app_identity::DEV_NO_FOCUS_ENV)
+            .ok()
+            .as_deref(),
+    )
+}
+
+/// Show the main window for a reason the user did not trigger directly
+/// (startup, permission onboarding, single-instance handoff). In dev no-focus
+/// mode the window is ordered in behind other windows without activating the
+/// app or taking key focus; otherwise this is `show_main_window`.
+fn reveal_main_window(app: &AppHandle) {
+    if !dev_no_focus(app) {
+        show_main_window(app);
+        return;
+    }
+    let Some(window) = app.get_webview_window("main") else {
+        log::warn!("Main window not found; not revealing it (dev no-focus mode)");
+        return;
+    };
+    log::info!("Dev no-focus mode: ordering main window in without activating the app");
+    #[cfg(target_os = "macos")]
+    {
+        let _ = app.run_on_main_thread(move || order_back_without_activation(&window));
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        // Created with `focused(false)`, so showing it does not take focus.
+        if let Err(e) = window.show() {
+            log::error!("Failed to show webview window: {}", e);
+        }
+    }
+}
+
+/// `orderBack:` makes the window visible behind every other window. Unlike
+/// `show()` (`makeKeyAndOrderFront:`) it neither makes it key nor brings it
+/// forward, and it never activates the app.
+#[cfg(target_os = "macos")]
+fn order_back_without_activation(window: &tauri::WebviewWindow) {
+    use objc2::{msg_send, runtime::AnyObject};
+    match window.ns_window() {
+        Ok(ptr) if !ptr.is_null() => unsafe {
+            let ns_window = &*(ptr as *mut AnyObject);
+            let _: () = msg_send![ns_window, orderBack: std::ptr::null_mut::<AnyObject>()];
+        },
+        Ok(_) => log::error!("Main window has no NSWindow"),
+        Err(e) => log::error!("Failed to get NSWindow: {}", e),
+    }
+}
+
 fn show_main_window(app: &AppHandle) {
     if try_show_main_window(app) {
         return;
@@ -268,7 +322,7 @@ fn initialize_core_logic(app_handle: &AppHandle) {
             )
             .unwrap(),
         )
-        .tooltip(tray::tray_tooltip())
+        .tooltip(tray::tray_tooltip(app_handle))
         .show_menu_on_left_click(true)
         .icon_as_template(true)
         .on_menu_event(|app, event| match event.id.as_ref() {
@@ -277,7 +331,9 @@ fn initialize_core_logic(app_handle: &AppHandle) {
             }
             "check_updates" => {
                 let settings = settings::get_settings(app);
-                if settings.update_checks_enabled {
+                if settings.update_checks_enabled
+                    && !app_identity::is_dev_identity(&app.config().identifier)
+                {
                     show_main_window(app);
                     let _ = app.emit("check-for-updates", ());
                 }
@@ -369,7 +425,7 @@ fn initialize_core_logic(app_handle: &AppHandle) {
 #[specta::specta]
 fn trigger_update_check(app: AppHandle) -> Result<(), String> {
     let settings = settings::get_settings(&app);
-    if !settings.update_checks_enabled {
+    if !settings.update_checks_enabled || app_identity::is_dev_identity(&app.config().identifier) {
         return Ok(());
     }
     app.emit("check-for-updates", ())
@@ -380,7 +436,7 @@ fn trigger_update_check(app: AppHandle) -> Result<(), String> {
 #[tauri::command]
 #[specta::specta]
 fn show_main_window_command(app: AppHandle) -> Result<(), String> {
-    show_main_window(&app);
+    reveal_main_window(&app);
     Ok(())
 }
 
@@ -393,25 +449,16 @@ pub fn run(cli_args: CliArgs) {
     // when the variable is unset
     let console_filter = build_console_filter();
 
-    // Clean up stale single-instance socket from a previous crash.
-    // The socket path mirrors the derivation in tauri-plugin-single-instance.
+    // Generated once: the identity it carries (release `tauri.conf.json`, or
+    // merged with `tauri.dev.conf.json` for dev/debug builds) drives every
+    // per-identity path, including the single-instance socket below.
+    let context = tauri::generate_context!();
+
+    // Clean up stale single-instance socket from a previous crash of this
+    // identity. Never touches another identity's socket (e.g. the installed
+    // release app while a dev build starts).
     #[cfg(unix)]
-    {
-        let socket_path = format!(
-            "/tmp/{}_si.sock",
-            "com.dictus.desktop".replace(['.', '-'], "_")
-        );
-        let socket = std::path::Path::new(&socket_path);
-        if socket.exists() {
-            match std::os::unix::net::UnixStream::connect(socket) {
-                Ok(_) => {} // Another instance is actually running; plugin will handle it
-                Err(_) => {
-                    eprintln!("Removing stale single-instance socket: {}", socket_path);
-                    let _ = std::fs::remove_file(socket);
-                }
-            }
-        }
-    }
+    app_identity::remove_stale_single_instance_socket(&context.config().identifier);
 
     let specta_builder = Builder::<tauri::Wry>::new()
         .commands(collect_commands![
@@ -604,7 +651,9 @@ pub fn run(cli_args: CliArgs) {
             } else if args.iter().any(|a| a == "--cancel") {
                 crate::utils::cancel_current_operation(app);
             } else {
-                show_main_window(app);
+                // A relaunch (script, `tauri dev` restart, Finder) is not an
+                // explicit "raise the window": no focus grab in dev no-focus mode.
+                reveal_main_window(app);
             }
         }))
         .plugin(tauri_plugin_fs::init())
@@ -628,12 +677,13 @@ pub fn run(cli_args: CliArgs) {
             // for portable mode (redirects WebView2 cache to portable Data dir)
             let mut win_builder =
                 tauri::WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App("/".into()))
-                    .title("Dictus")
+                    .title(&app.package_info().name)
                     .inner_size(680.0, 570.0)
                     .min_inner_size(680.0, 570.0)
                     .resizable(true)
                     .maximizable(false)
-                    .visible(false);
+                    .visible(false)
+                    .focused(!dev_no_focus(app.handle()));
 
             if let Some(data_dir) = portable::data_dir() {
                 win_builder = win_builder.data_directory(data_dir.join("webview"));
@@ -689,7 +739,7 @@ pub fn run(cli_args: CliArgs) {
             // anyway. Without a tray icon, the dock is the only way back in.
             let tray_available = settings.show_tray_icon && !cli_args.no_tray;
             if should_force_show || !should_hide || !tray_available {
-                show_main_window(&app_handle);
+                reveal_main_window(&app_handle);
             }
 
             Ok(())
@@ -731,7 +781,7 @@ pub fn run(cli_args: CliArgs) {
             _ => {}
         })
         .invoke_handler(invoke_handler)
-        .build(tauri::generate_context!())
+        .build(context)
         .expect("error while building tauri application")
         .run(|app, event| {
             #[cfg(target_os = "macos")]
