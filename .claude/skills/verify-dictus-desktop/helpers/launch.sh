@@ -1,17 +1,19 @@
 #!/usr/bin/env bash
 # Tier 1: build the debug .deb under the shared lock, extract it, start it on a private Xvfb with a
 # private D-Bus and an empty HOME/XDG tree. Any failure runs cleanup.sh before exiting.
-#   launch.sh [--no-build] [--deb <file.deb>] [--model <id>] [--mic] [label]
+#   launch.sh [--no-build] [--release] [--deb <file.deb>] [--model <id>] [--mic] [label]
+#   --release     build (or with --no-build, reuse) the release .deb instead of the debug one
 #   --model <id>  put that catalogue model (from model-cache.sh) in the isolated data dir before the app starts
 #   --mic         private PipeWire with a virtual source in the scratch dir (mic.py), started before the app
 # Last line on success: READY run=<dir> display=:<n> pid=<pid> window=<id> geometry=<WxH+X+Y>
 set -euo pipefail
 source "$(dirname "$0")/env.sh"
 
-build=1 deb="" label="launch" model="" mic=0
+build=1 deb="" label="launch" model="" mic=0 profile=debug
 while [ $# -gt 0 ]; do
   case "$1" in
     --no-build) build=0 ;;
+    --release) profile=release ;;
     --deb) deb="$2"; build=0; shift ;;
     --model) model="$2"; shift ;;
     --mic) mic=1 ;;
@@ -25,13 +27,15 @@ trap 'rc=$?; if [ $rc -ne 0 ]; then echo "LAUNCH FAILED (exit $rc): cleaning up"
 
 if [ "$build" = 1 ]; then
   echo "building under $DICTUS_LOCK, released when the build ends (log: $run/build.log)"
-  out="$("$DICTUS_HELPERS/build.sh" "$run/build.log" | tail -1)"
+  build_args=("$run/build.log")
+  [ "$profile" = release ] && build_args=(--release "$run/build.log")
+  out="$("$DICTUS_HELPERS/build.sh" "${build_args[@]}" | tail -1)"
   report "$run" "BUILD $out"
   [ "${out%% *}" = DEB ] || die "$out: see $run/build.log"
   deb="${out#DEB }"
 elif [ -z "$deb" ]; then
-  deb="$(find "$DICTUS_TARGET_DIR/debug/bundle/deb" -maxdepth 1 -name '*.deb' -printf '%T@ %p\n' 2>/dev/null | sort -n | tail -1 | cut -d' ' -f2-)"
-  [ -n "$deb" ] || die "no .deb in $DICTUS_TARGET_DIR/debug/bundle/deb: run build.sh first"
+  deb="$(find "$DICTUS_TARGET_DIR/$profile/bundle/deb" -maxdepth 1 -name '*.deb' -printf '%T@ %p\n' 2>/dev/null | sort -n | tail -1 | cut -d' ' -f2-)"
+  [ -n "$deb" ] || die "no .deb in $DICTUS_TARGET_DIR/$profile/bundle/deb: run build.sh first"
 fi
 ledger_set "$run" DEB "$deb"
 ledger_set "$run" DEB_SHA "$(sha256sum "$deb" | cut -c1-16)"
@@ -58,7 +62,12 @@ mkdir -p "$home"/{.config,.cache,.local/share,.local/state} "$scratch/runtime"
 chmod 700 "$scratch/runtime"
 data="$(run_data "$run")"
 
-if [ -n "$model" ]; then
+if [ -n "$model" ] && [ "${archive%.tar.gz}" = "$archive" ]; then
+  mkdir -p "$data/models"
+  cp "$archive" "$data/models/$model_dir"
+  ledger_set "$run" MODEL "$model"
+  report "$run" "MODEL $model seeded from $(basename "$archive") (sha256 verified)"
+elif [ -n "$model" ]; then
   # Same layout as the app's own extraction (model.rs): a single top directory becomes models/<filename>.
   mkdir -p "$data/models/$model_dir.seeding"
   tar --warning=no-unknown-keyword -xzf "$archive" -C "$data/models/$model_dir.seeding"
