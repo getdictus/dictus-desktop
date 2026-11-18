@@ -2,7 +2,8 @@
 # A catalogue model's archive in a cache shared by every run, verified by SHA256 like the app does
 # (url and sha256 read from src-tauri/src/managers/model.rs, so the cache follows the catalogue).
 #   model-cache.sh <model-id>
-# Last line: MODEL <id> <archive> <dir-name> (exit 0), or error: ... (exit 1).
+# Last line: MODEL <id> <file> <name> (exit 0), or error: ... (exit 1). <file> is a .tar.gz for a directory
+# model (Parakeet, Moonshine), extracted to models/<name>; a single file (Whisper) is copied to models/<name>.
 # The cache lives outside any isolated HOME ($DICTUS_MODEL_CACHE) and is never deleted by cleanup.sh.
 set -euo pipefail
 source "$(dirname "$0")/env.sh"
@@ -17,8 +18,8 @@ block = m.group(1)
 url = re.search(r'url: Some\("([^"]+)"', block)
 sha = re.search(r'sha256: Some\(\s*"([0-9a-f]{64})"', block)
 name = re.search(r'filename: "([^"]+)"', block)
-if not (url and sha and name) or "is_directory: true" not in block:
-    sys.exit(f"error: model {mid} has no url/sha256/filename or is not a directory model")
+if not (url and sha and name):
+    sys.exit(f"error: model {mid} has no url/sha256/filename")
 print(url.group(1), sha.group(1), name.group(1))
 EOF
 )
@@ -29,7 +30,7 @@ if [ -f "$archive" ] && [ "$(sha256sum "$archive" | cut -c1-64)" = "$sha" ]; the
   echo "cache hit: $archive (sha256 verified)" >&2
 else
   echo "downloading $url into $DICTUS_MODEL_CACHE" >&2
-  curl -fL --retry 2 -o "$archive.part" "$url" >&2
+  curl -fL --no-progress-meter --retry 2 -o "$archive.part" "$url" >&2
   [ "$(sha256sum "$archive.part" | cut -c1-64)" = "$sha" ] || die "sha256 mismatch for $url (kept $archive.part)"
   mv "$archive.part" "$archive"
 fi

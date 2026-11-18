@@ -4,7 +4,7 @@ The Models page lists the downloaded models (the active one marked « Active »)
 
 - **ID:** `models.transcription`
 - **Desktop status:** present
-- **Tiers:** 1 (catalogue, download of Moonshine V2 Tiny, select, delete), 4 (quality, speed on real voice)
+- **Tiers:** 1 (catalogue, download of Moonshine V2 Tiny, select, delete; load time, WER and latency per model with `helpers/bench.sh`, see `../SKILL.md` → Dictation benchmark), 4 (quality, speed on real voice)
 - **Screens:** `app.settings.models`, `app.settings.general` (footer) — see [screens.md](screens.md)
 
 ## Sub-features
@@ -37,4 +37,5 @@ Preconditions: `READY`, `journey-onboarding.sh` → `PASS` (Moonshine V2 Tiny ac
 ## Gotchas
 
 - Every download is real and comes from `blob.handy.computer`. Stay with Moonshine V2 Tiny unless the change needs another model.
-- Whisper models need the Whisper accelerator path (Vulkan/OpenBLAS on Linux); not exercised on Xvfb.
+- Whisper models use whisper.cpp with Vulkan on Linux. On this machine the user `pierre` cannot open `/dev/dri/renderD128` (group `render`), so the app logs `ggml_vulkan: No devices found.` and Whisper runs on the CPU (measured 2026-11-18 by `bench.sh`). A Whisper timing from tier 1 is a CPU timing.
+- With several models on disk and none selected, the app auto-selects the first downloaded one of a `HashMap`: not deterministic. Seed one model per launch to choose it (`launch.sh --model`).

@@ -46,6 +46,7 @@ H=.claude/skills/verify-dictus-desktop/helpers
 $H/doctor.sh                       # read-only: lock, displays, RAM, tools, real-data fingerprint, VM
 $H/launch.sh                       # build.sh (lock for the build only), then lock + app on Xvfb
 $H/launch.sh --no-build            # reuse the newest src-tauri/target/debug/bundle/deb/*.deb
+$H/launch.sh --no-build --release  # the same from target/release (build.sh --release)
 $H/launch.sh --deb <file.deb>      # a given .deb (e.g. a CI artifact)
 $H/launch.sh --model <id>          # seed a catalogue model from the shared cache before the app starts
 $H/launch.sh --mic                 # private PipeWire + virtual microphone in the scratch dir
@@ -205,6 +206,54 @@ The run passes when every clip passes and the leak check is clean.
 
 The long clip is ungated because of a model finding, measured on 2026-11-18. Parakeet V3 transcribes the 72 s French/English clip `fr-long-01` to 54–96 of 244 words (WER 0.83–0.93 over three runs). Every matched word falls in the first 60 % of the text. The recording is complete: steady level over the full 75 s, `recorded_ms` ≥ clip length. The short clips score 0.000–0.071 through the same path. A tier-1 PR cannot fix that, so the journey shows the number and does not turn red on it. Gate it once the model or the app handles long code-switched dictation.
 
+## Dictation benchmark (tier 1)
+
+`bench.sh` turns the dictation journey into a baseline to compare before and after a performance change: per model and clip, WER, stop → text, transcription time, the cold model load, and the first dictation after launch against the following ones.
+
+```bash
+H=.claude/skills/verify-dictus-desktop/helpers
+$H/build.sh --release <log>                 # once per app commit; a timing on the debug .deb means nothing
+$H/bench.sh                                 # parakeet-tdt-0.6b-v3 + turbo on all-fr, moonshine-base on all-en, 3 reps
+$H/bench.sh --models turbo --clips fr-03-shopping --reps 5
+$H/bench.py compare <before>/bench.csv <after>/bench.csv
+```
+
+**Release build only.** `bench.sh` uses the newest `src-tauri/target/release/bundle/deb/*.deb` (`--deb <f>` for another, `--debug` to opt out). The debug .deb compiles whisper.cpp without optimisation (the `cmake` crate follows the Rust profile), so its timings do not describe what users run. The release .deb is the production identity `com.dictus.desktop`; it runs in the same isolated HOME, and the fingerprint check guards Pierre's real data as for any run.
+
+**One launch per model.** For each model `bench.sh` runs `launch.sh --no-build --release --model <id> --mic`, Doctor, `journey-dictation.sh --reps N <clips>`, then `cleanup.sh`, which releases the lock before the next model. Nothing holds the lock between models, and an interrupted bench cleans up its current run (trap).
+
+**Model switching.** Seed exactly one model per launch and let the app select it. With one model on disk and none selected, `auto_select_model_if_needed` (`managers/model.rs`) selects it at startup, and the journey asserts `selected_model` before the first clip. This is the reliable way, for three reasons:
+
+- With several models on disk, auto-selection takes the first downloaded model of a `HashMap`, so which one wins is not defined.
+- Writing `selected_model` into `settings_store.json` before launch means writing the app's whole settings schema by hand: `get_settings` replaces a store that does not deserialize with the defaults.
+- Switching in the UI (Models page or footer) was not used: each switch needs a capture to prove it, and the bench wants a cold launch per model anyway to measure the load.
+
+**Models.** Catalogue ids and URLs come from `managers/model.rs` through `model-cache.sh`, which keeps them in `~/.cache/verify-dictus-desktop/models/` and checks the SHA256 on every run. A directory model (Parakeet, Moonshine) is a `.tar.gz` extracted into `models/<filename>`. A Whisper model is a single file (`turbo` is `ggml-large-v3-turbo.bin`, 1.5 GB) copied there. Moonshine Base is English only: the bench gives it the English clips.
+
+**Order and repetitions.** `--reps N` plays the short clips in N rounds (every clip, then every clip again), so warm-up and drift do not favour one clip. The long clip plays once, in round 1. The first dictation after launch is `seq=1`.
+
+**Measures**, per dictation in `bench.csv` (one row each, ids and numbers only):
+
+- `wer`, `wer_sp`: the journey's two normalisations (see "WER" above).
+- `stop_to_text_ms`: stop command issued → History row readable. It includes `cli_stop_ms`, the second instance's hand-off, which a shortcut does not pay.
+- `transcribe_ms`: the app's "Transcription completed in" duration.
+- `load_ms`: the app's `Successfully loaded transcription model … (took Nms)`, cold, once per launch. The load starts with the first recording; the journey waits for it before playing the first clip, so no dictation timing includes it.
+- `seq`, `rep`: the dictation's rank since launch, and its round.
+
+`bench.md` has two tables. Per model and clip: n, WER median (min–max), stop → text and transcription median (min–max) over the warm dictations (`seq` > 1). Per model: the cold load, the first dictation's stop → text and transcription, next to the median of the same clip's later dictations. `machine.txt` records CPU, threads, RAM, GPU, kernel, load at start, the commit and the last commit touching app code, the .deb hash, the language setting, and the accelerator lines from the app log (Whisper Vulkan or CPU, ORT). `runs.txt` lists the per-model run dirs, each with its own report and leak check.
+
+**Comparing two runs.** Run `bench.sh` on the base commit and on the change, with the same `--models`, `--clips` and `--reps`, on a quiet machine (check `load at start` in both `machine.txt`). `bench.py compare before.csv after.csv` prints, per model, clip and metric, both medians with their ranges, the median delta, and `within noise` when the ranges overlap. A delta inside overlapping ranges is no measured difference: add reps, or interleave the two builds (`--deb`), before claiming one.
+
+**Verdict.** `failed=N` counts the models whose journey failed a gate, or whose launch or leak check failed. The numbers are recorded either way: a gate failure is a finding to read in the table, not a broken bench.
+
+**Baseline**, 2026-11-18, release .deb of app code `main` `2132175`, 3 reps, 18 min of app runtime for the three models: bench dir `20261118-163127-tier1-bench-b69c0a8`, report `/home/pierre/OpenBot/Shared/pilotage/dictus-desktop/preuves/2026-11-18-bench-baseline.md`. What limits the numbers on this machine:
+
+- Whisper runs on the CPU. The user cannot open `/dev/dri/renderD128` (group `render`), so `ggml_vulkan: No devices found.` and `whisper_backend_init_gpu: no GPU found`. The process holds a flat 400 % CPU while transcribing: 4 threads of 16. Whisper pads every clip to its 30 s window, so Turbo takes ~40 s for a 4 s clip and ~87 s for the 72 s one. A Whisper timing from tier 1 is a 4-thread CPU timing, not what a user with a GPU sees.
+- Moonshine Base rejects audio over 64 s (`Audio duration must be between 0.1s and 64s`, in the app's debug log). The app then saves an empty History entry in ~200 ms, so the long English clip scores WER 1.000 and fails the capture gate. It is a product limit, not a bench fault.
+- Parakeet V3 gives two different outputs for `fr-02-appointment-numbers` across reps (14 or 16 words, WER 0.071 to 0.357), with the same recording length. Its other short clips are stable at 0.000.
+
+**Corpus rules.** The journey's rules apply unchanged: each run clones the corpus into its own 700 temp dir, deleted by Cleanup, and runs its leak check. `bench.py` parses every field against a fixed schema (a number or an `[A-Za-z0-9._-]` id), so no text can reach the bench files. `bench.sh` ends with a leak check of the bench dir against a fresh clone, deleted at once.
+
 ## Evidence
 
 ```bash
@@ -264,12 +313,14 @@ All executable, run from the repository root, all read `helpers/env.sh` (overrid
 | Script                  | Invocation                                                                  | Ends with                                                                    |
 | ----------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
 | `doctor.sh`             | `doctor.sh [run-dir]`                                                       | `DOCTOR OK` / `DOCTOR FAIL <n>`                                              |
-| `build.sh`              | `build.sh [log]`                                                            | `DEB <path>` / `BUILD FAILED: …`                                             |
-| `launch.sh`             | `launch.sh [--no-build] [--deb f] [--model id] [--mic] [label]`             | `READY run=… display=… pid=… window=… geometry=…`                            |
+| `build.sh`              | `build.sh [--release] [log]`                                                | `DEB <path>` / `BUILD FAILED: …`                                             |
+| `launch.sh`             | `launch.sh [--no-build] [--release] [--deb f] [--model id] [--mic] [label]` | `READY run=… display=… pid=… window=… geometry=…`                            |
 | `run.sh`                | `run.sh <journey> [launch options] [-- journey args]`                       | journey verdict, then `CLEANUP OK …`                                         |
 | `journey-onboarding.sh` | `journey-onboarding.sh [run-dir]`                                           | `JOURNEY onboarding PASS in Ns` / `… FAIL: <step>`                           |
-| `journey-dictation.sh`  | `journey-dictation.sh [<clip-id>\|all-<lang>]`                              | per clip `JOURNEY dictation <id> PASS\|FAIL wer=…`, then `… all-fr PASS n/n` |
-| `model-cache.sh`        | `model-cache.sh <model-id>`                                                 | `MODEL <id> <archive> <dir>`                                                 |
+| `journey-dictation.sh`  | `journey-dictation.sh [--reps N] [<clip-id>\|all-<lang>]`                   | per clip `JOURNEY dictation <id> PASS\|FAIL wer=…`, then `… all-fr PASS n/n` |
+| `model-cache.sh`        | `model-cache.sh <model-id>`                                                 | `MODEL <id> <file> <name>`                                                   |
+| `bench.sh`              | `bench.sh [--models a,b] [--clips sel] [--reps N] [--deb f\|--debug]`       | `BENCH <dir> models=N failed=N`                                              |
+| `bench.py`              | `bench.py collect <bench-dir> <run>…` · `compare <a.csv> <b.csv>`           | `BENCH TABLES …` / a Markdown table                                          |
 | `mic.py`                | `mic.py <scratch> conf\|check\|link [s]\|play <wav>`                        | `MIC OK …`, `MIC LINKED …`, `MIC PLAYED …`                                   |
 | `cli.sh`                | `cli.sh <dictus flags>`                                                     | `CLI <flags> exit=N in Nms`                                                  |
 | `dictation.py`          | `dictation.py clips\|last-id\|wait-row\|score\|transcribe-ms\|leak-check …` | ids, scores, timings; never a text                                           |
