@@ -208,3 +208,22 @@ The five canonical triage roles, each using its default label string: `needs-tri
 ### Domain docs
 
 Single-context: `CONTEXT.md` and `docs/adr/` at the repo root, both created lazily by `/domain-modeling`. See `docs/agents/domain.md`.
+
+### Verification and test tiers
+
+Use the `verify-dictus-desktop` skill (`.claude/skills/verify-dictus-desktop/`) for any change with a user-visible effect, before opening the PR. It builds the debug `.deb` under the shared lock `/tmp/dictus-gradle.lock`, runs it on a private Xvfb with a private D-Bus and an empty HOME, drives it, captures evidence outside the repository and cleans up, checking that Pierre's real data is untouched.
+
+A PR that adds or changes a user-facing feature or screen MUST update the skill's `features/` and `features/screens.md` in the same PR, with the same IDs as the iOS and Android maps (`getdictus/dictus-ios`, `getdictus/dictus-android`, `.claude/skills/verify-dictus-*/features/`). The PR body names the tier used and what was left to the next tier.
+
+Four test tiers, detailed in the skill's `SKILL.md` → Test tiers:
+
+1. Linux on Xvfb: the default for every PR. Build, package, launch from an empty data dir, UI, onboarding, model download, settings. No audio device.
+2. Windows VM `dictus-win` on the same Linux host: the CI installer of `pr-test-build.yml`, installed and launched as user `dictus`, then reverted to its clean snapshot. Short runs only (expired evaluation ISO).
+3. macOS on Pierre's Mac, from a T3 thread on the Mac, for macOS-specific behaviour only, never stealing focus.
+4. Pierre: real voice, transcription quality, feel. Batch test; nothing is merged before his OK.
+
+The machine is shared: hold the lock only while a build or the app runs, never leave anything running, and never put destructive commands (`rm`, `kill`, `virsh destroy`) inside `bash -c` strings or loops; use the skill's helpers.
+
+### pstack
+
+pstack (<https://github.com/cursor/plugins/tree/main/pstack>) is the reference toolbox for agent workflows. It provides `create-verification-skill` and `maintain-verification-skill` (both user-invoked only), `unslop` for prose, `tdd`, `poteto-mode` and a set of engineering principle skills. It is enabled for this repo through `.claude/settings.json`; Claude Code asks you to trust the `cursor-plugins` marketplace on first use.
