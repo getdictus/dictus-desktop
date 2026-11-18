@@ -9,7 +9,7 @@ name="${1:?usage: evidence.sh <name> [run-dir]}"
 run="$(resolve_run "${2:-}")" || die "no run of this session"
 "$DICTUS_HELPERS/shot.sh" "$name" "$run"
 if [ "$(ledger_get "$run" TIER)" = tier1 ]; then
-  data="$(ledger_get "$run" SCRATCH)/home/.local/share/$DICTUS_IDENTIFIER"
+  data="$(run_data "$run")"
   {
     echo "# $name $(ts)"
     echo "## app alive: $(ref_alive "$(ledger_get "$run" APP)" && echo yes || echo no)"

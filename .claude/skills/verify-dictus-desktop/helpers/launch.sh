@@ -1,16 +1,20 @@
 #!/usr/bin/env bash
 # Tier 1: build the debug .deb under the shared lock, extract it, start it on a private Xvfb with a
 # private D-Bus and an empty HOME/XDG tree. Any failure runs cleanup.sh before exiting.
-#   launch.sh [--no-build] [--deb <file.deb>] [label]
+#   launch.sh [--no-build] [--deb <file.deb>] [--model <id>] [--mic] [label]
+#   --model <id>  put that catalogue model (from model-cache.sh) in the isolated data dir before the app starts
+#   --mic         private PipeWire with a virtual source in the scratch dir (mic.py), started before the app
 # Last line on success: READY run=<dir> display=:<n> pid=<pid> window=<id> geometry=<WxH+X+Y>
 set -euo pipefail
 source "$(dirname "$0")/env.sh"
 
-build=1 deb="" label="launch"
+build=1 deb="" label="launch" model="" mic=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --no-build) build=0 ;;
     --deb) deb="$2"; build=0; shift ;;
+    --model) model="$2"; shift ;;
+    --mic) mic=1 ;;
     *) label="$1" ;;
   esac
   shift
@@ -31,6 +35,16 @@ elif [ -z "$deb" ]; then
 fi
 ledger_set "$run" DEB "$deb"
 ledger_set "$run" DEB_SHA "$(sha256sum "$deb" | cut -c1-16)"
+# Debug builds since #75 are "Dictus Dev" (package dictus-dev, com.dictus.desktop.dev); release is dictus.
+case "$(dpkg-deb -f "$deb" Package)" in
+  dictus-dev) ledger_set "$run" IDENTIFIER com.dictus.desktop.dev ;;
+  dictus) ledger_set "$run" IDENTIFIER com.dictus.desktop ;;
+  *) die "unknown package $(dpkg-deb -f "$deb" Package) in $deb" ;;
+esac
+if [ -n "$model" ]; then
+  read -r _ _ archive model_dir < <("$DICTUS_HELPERS/model-cache.sh" "$model" | tail -1)
+  [ -n "${model_dir:-}" ] || die "model-cache.sh $model failed"
+fi
 
 run_hold "$run"
 scratch="$(mktemp -d /tmp/verify-dictus-desktop.XXXXXX)"
@@ -42,6 +56,34 @@ bin="$scratch/pkg/usr/bin/dictus"
 home="$scratch/home"
 mkdir -p "$home"/{.config,.cache,.local/share,.local/state} "$scratch/runtime"
 chmod 700 "$scratch/runtime"
+data="$(run_data "$run")"
+
+if [ -n "$model" ]; then
+  # Same layout as the app's own extraction (model.rs): a single top directory becomes models/<filename>.
+  mkdir -p "$data/models/$model_dir.seeding"
+  tar --warning=no-unknown-keyword -xzf "$archive" -C "$data/models/$model_dir.seeding"
+  top="$(find "$data/models/$model_dir.seeding" -mindepth 1 -maxdepth 1)"
+  if [ "$(wc -l <<< "$top")" = 1 ] && [ -d "$top" ]; then
+    mv "$top" "$data/models/$model_dir" && rmdir "$data/models/$model_dir.seeding"
+  else
+    mv "$data/models/$model_dir.seeding" "$data/models/$model_dir"
+  fi
+  ledger_set "$run" MODEL "$model"
+  report "$run" "MODEL $model seeded from $(basename "$archive") (sha256 verified)"
+fi
+
+if [ "$mic" = 1 ]; then
+  mkfifo -m 600 "$scratch/mic.fifo"
+  python3 -I "$DICTUS_HELPERS/mic.py" "$scratch" conf > "$scratch/pipewire.conf"
+  setsid env -i PATH=/usr/bin:/bin HOME="$home" XDG_RUNTIME_DIR="$scratch/runtime" \
+    pipewire -c "$scratch/pipewire.conf" < /dev/null > "$run/pipewire.log" 2>&1 &
+  ledger_set "$run" PIPEWIRE "$(pid_ref $!)"
+  for _ in $(seq 50); do [ -S "$scratch/runtime/pipewire-0" ] && break; sleep 0.1; done
+  [ -S "$scratch/runtime/pipewire-0" ] || die "private pipewire did not start: see $run/pipewire.log"
+  out="$(python3 -I "$DICTUS_HELPERS/mic.py" "$scratch" check)" || die "virtual mic check failed"
+  ledger_set "$run" MIC 1
+  report "$run" "$out"
+fi
 
 n="$(free_display)" || die "no free display in :120-:199"
 setsid Xvfb ":$n" -screen 0 1280x900x24 -nolisten tcp < /dev/null > "$run/xvfb.log" 2>&1 &
@@ -59,8 +101,10 @@ app_env=(env -i PATH="/usr/local/bin:/usr/bin:/bin" HOME="$home" USER="$USER" LA
   XDG_CONFIG_HOME="$home/.config" XDG_CACHE_HOME="$home/.cache" XDG_DATA_HOME="$home/.local/share"
   XDG_STATE_HOME="$home/.local/state" XDG_RUNTIME_DIR="$scratch/runtime" XDG_SESSION_TYPE=x11
   DISPLAY=":$n" GDK_BACKEND=x11 DBUS_SESSION_BUS_ADDRESS="$dbus_addr"
-  WEBKIT_DISABLE_DMABUF_RENDERER=1)
+  WEBKIT_DISABLE_DMABUF_RENDERER=1
+  RUST_LOG=info,dictus_app_lib::managers::transcription=warn)
 printf '%s\n' "${app_env[@]:1}" | grep -v '^DBUS' > "$run/app.env"
+printf '%s\n' "${app_env[@]:1}" > "$scratch/app.env"
 launched="$(date +%s)"
 setsid "${app_env[@]}" "$bin" < /dev/null > "$run/app.log" 2>&1 &
 app=$!

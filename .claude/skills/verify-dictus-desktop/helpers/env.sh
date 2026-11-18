@@ -14,6 +14,9 @@ DICTUS_TTL_MIN="${DICTUS_TTL_MIN:-20}"
 DICTUS_VM="${DICTUS_VM:-dictus-win}"
 DICTUS_VM_CLEAN_SNAPSHOT="${DICTUS_VM_CLEAN_SNAPSHOT:-clean-no-vcredist}"
 DICTUS_HTTP_HOST="192.168.122.1"
+DICTUS_MODEL_CACHE="${DICTUS_MODEL_CACHE:-$HOME/.cache/verify-dictus-desktop/models}"
+# The private test-voices corpus is cloned per run into /tmp/verify-dictus-corpus.XXXXXX (mode 700).
+DICTUS_CORPUS_REPO="${DICTUS_CORPUS_REPO:-getdictus/dictus-test-voices}"
 VIRSH=(virsh -c qemu:///system)
 
 # A session is this checkout, or DICTUS_VERIFY_SESSION when two agents share one checkout.
@@ -21,6 +24,9 @@ DICTUS_SESSION="${DICTUS_VERIFY_SESSION:-$(basename "$REPO_ROOT")-$(printf '%s' 
 DICTUS_SESSION_PTR="$DICTUS_EVIDENCE_ROOT/sessions/$DICTUS_SESSION.run"
 
 ts() { date '+%Y-%m-%d %H:%M:%S'; }
+# The identifier of the run's build (launch.sh reads it from the .deb), else DICTUS_IDENTIFIER.
+run_identifier() { local i; i="$(ledger_get "$1" IDENTIFIER)"; echo "${i:-$DICTUS_IDENTIFIER}"; }
+run_data() { echo "$(ledger_get "$1" SCRATCH)/home/.local/share/$(run_identifier "$1")"; }
 die() { echo "error: $*" >&2; exit 1; }
 
 # The run ledger is <run-dir>/run.env: one KEY=VALUE per line, appended as resources start.

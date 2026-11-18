@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Undo exactly what the run ledger (<run-dir>/run.env) lists, keep the evidence. Safe to run twice.
 #   cleanup.sh [run-dir]
-# Order: app, D-Bus, Xvfb, HTTP server, VM (destroy + revert to the clean snapshot), scratch dir
-# (isolated HOME/XDG, extracted .deb, downloaded models and installers), watchdog, lock.
+# Order: app, private PipeWire, D-Bus, Xvfb, HTTP server, VM (destroy + revert to the clean snapshot),
+# test-voices corpus clone, scratch dir (isolated HOME/XDG, extracted .deb, models, history, recordings,
+# installers), watchdog, lock. Also deletes any corpus clone left by a run that died without cleanup.
 # Kills only the process groups this run started, checked by pid AND start time. Never by name.
 # Prints CLEANUP OK run=<dir> evidence=<n files> (exit 0), CLEANUP INCOMPLETE: <what is left> (exit 1),
 # or CLEANUP OK then ALARM when the real-data fingerprint changed (exit 2).
@@ -27,6 +28,7 @@ kill_group() {
 }
 
 kill_group APP
+kill_group PIPEWIRE
 dbus="$(ledger_get "$run" DBUS)"
 if [ -n "$dbus" ] && ref_alive "$dbus"; then
   kill -TERM "${dbus%%:*}"; sleep 0.5
@@ -49,6 +51,21 @@ if [ "$(ledger_get "$run" VM_STARTED)" = 1 ] && [ -z "$(ledger_get "$run" VM_REV
   fi
   "${VIRSH[@]}" domstate "$DICTUS_VM" 2>/dev/null | grep -q 'shut off' || left+=("VM $DICTUS_VM still running")
 fi
+
+# The corpus is private (internal testing only): no clone may outlive its run.
+remove_corpus() {
+  case "$1" in
+    /tmp/verify-dictus-corpus.*) rm -rf "$1" && echo "removed corpus $1" ;;
+    *) left+=("corpus $1 not under /tmp/verify-dictus-corpus.*, not removed") ;;
+  esac
+  [ -e "$1" ] && left+=("corpus $1 still present")
+}
+corpus="$(ledger_get "$run" CORPUS)"
+[ -n "$corpus" ] && [ -d "$corpus" ] && remove_corpus "$corpus"
+# Another session's live run keeps its clone: only those older than any run can live (the watchdog TTL) go.
+for stale in $(find /tmp -maxdepth 1 -name 'verify-dictus-corpus.*' -user "$(id -u)" -mmin +"$((DICTUS_TTL_MIN + 5))" 2>/dev/null); do
+  remove_corpus "$stale"
+done
 
 scratch="$(ledger_get "$run" SCRATCH)"
 if [ -n "$scratch" ] && [ -d "$scratch" ]; then
