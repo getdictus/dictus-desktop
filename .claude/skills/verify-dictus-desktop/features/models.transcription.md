@@ -16,6 +16,7 @@ The Models page lists the downloaded models (the active one marked « Active »)
 - `models.delete`: « Delete » on a downloaded card. — present
 - `models.languages`: « All Languages » filter. — present
 - `models.preparation`: the model loads on selection (`Successfully loaded transcription model`). — present
+- `models.long-audio` _(desktop-only)_: a recording longer than the engine's window (Parakeet V3 6 s, Moonshine Base 20 s) is transcribed in windows cut at pauses and joined (`audio_toolkit/long_audio.rs`, #82). Proof: `Transcribing Ns of audio in N windows` in the app's log, and the long clips' WER in `bench.sh`. Shorter recordings and other engines take one call. — present
 - `models.custom` _(desktop-only)_: models not in the catalogue show « Not officially supported ». — present
 
 ## How to get to it (user POV)
