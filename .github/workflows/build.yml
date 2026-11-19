@@ -196,7 +196,8 @@ jobs:
 
       - name: Install trusted-signing-cli
         if: contains(inputs.platform, 'windows') && inputs.sign-binaries && steps.cache-tsc.outputs.cache-hit != 'true'
-        run: cargo install trusted-signing-cli@${{ env.TSC_VERSION }}
+        # --force: the Rust cache can already have restored the binary into ~/.cargo/bin
+        run: cargo install --force trusted-signing-cli@${{ env.TSC_VERSION }}
 
       - name: Prepare Vulkan SDK for Ubuntu 24.04
         if: contains(inputs.platform, 'ubuntu-24.04') && !contains(inputs.platform, 'arm')
