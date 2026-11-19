@@ -284,7 +284,7 @@
       },
       "audioFeedback": {
         "label": "Sesli Geri Bildirim",
-        "description": "Kayıt başladığında ve bittiğinde ses çalar"
+        "description": "Kayıt başladığında ve metniniz eklendiğinde ses çal"
       },
       "outputDevice": {
         "title": "Çıkış Cihazı",
@@ -295,6 +295,19 @@
       "volume": {
         "title": "Ses Seviyesi",
         "description": "Sesli geri bildirimlerin ses seviyesini ayarlayın"
+      },
+      "pack": {
+        "title": "Ses paketi",
+        "description": "Kayıt başladığında ve metniniz eklendiğinde çalınacak sesleri seçin",
+        "preview": "{{pack}} dinle",
+        "packs": {
+          "bois": "Ahşap",
+          "synthe": "Synth",
+          "minimal": "Minimal",
+          "marimba": "Marimba",
+          "pop": "Pop",
+          "custom": "Özel"
+        }
       }
     },
     "advanced": {

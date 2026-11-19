@@ -1,104 +1,129 @@
-use crate::settings::SoundTheme;
-use crate::settings::{self, AppSettings};
+use crate::settings::{self, SoundTheme};
 use cpal::traits::{DeviceTrait, HostTrait};
-use log::{debug, error, warn};
-use rodio::OutputStreamBuilder;
+use log::{debug, error, info, warn};
+use rodio::{Decoder, OutputStreamBuilder, Sink, Source};
 use std::fs::File;
 use std::io::BufReader;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::thread;
+use std::time::Duration;
 use tauri::{AppHandle, Manager};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SoundType {
+    /// Played when recording starts.
     Start,
-    Stop,
+    /// Played once the transcribed text has been inserted.
+    End,
 }
 
-fn resolve_sound_path(
+/// Where the sound for a pack lives on disk.
+#[derive(Debug, PartialEq, Eq)]
+enum SoundFile {
+    /// Bundled with the app, relative to the resource directory.
+    Resource(String),
+    /// Dropped by the user into the app data folder.
+    AppData(&'static str),
+}
+
+fn sound_file(theme: SoundTheme, sound: SoundType) -> SoundFile {
+    let pack = match theme {
+        SoundTheme::Custom => {
+            return SoundFile::AppData(match sound {
+                SoundType::Start => "custom_start.wav",
+                SoundType::End => "custom_stop.wav",
+            })
+        }
+        SoundTheme::Bois => "bois",
+        SoundTheme::Synthe => "synthe",
+        SoundTheme::Minimal => "minimal",
+        SoundTheme::Marimba => "marimba",
+        SoundTheme::Pop => "pop",
+    };
+    let name = match sound {
+        SoundType::Start => "start",
+        SoundType::End => "end",
+    };
+    SoundFile::Resource(format!("resources/sounds/{pack}/{name}.wav"))
+}
+
+fn resolve_sound_path(app: &AppHandle, theme: SoundTheme, sound: SoundType) -> Option<PathBuf> {
+    let resolved = match sound_file(theme, sound) {
+        SoundFile::Resource(path) => app
+            .path()
+            .resolve(&path, tauri::path::BaseDirectory::Resource)
+            .map_err(|e| e.to_string()),
+        SoundFile::AppData(name) => {
+            crate::portable::resolve_app_data(app, name).map_err(|e| e.to_string())
+        }
+    };
+    match resolved {
+        Ok(path) => Some(path),
+        Err(e) => {
+            error!("Cannot resolve {:?} sound of {:?}: {}", sound, theme, e);
+            None
+        }
+    }
+}
+
+/// Plays a recording sound on its own thread, if audio feedback is on.
+pub fn play_feedback_sound(app: &AppHandle, sound: SoundType) {
+    let app = app.clone();
+    thread::spawn(move || play_feedback_sound_blocking(&app, sound, |_| {}));
+}
+
+/// Plays a recording sound and returns when it has finished, if audio feedback
+/// is on. `on_playback` runs just before the first sample is queued, with the
+/// sound's length.
+pub fn play_feedback_sound_blocking(
     app: &AppHandle,
-    settings: &AppSettings,
-    sound_type: SoundType,
-) -> Option<PathBuf> {
-    let sound_file = get_sound_path(settings, sound_type);
-    let base_dir = get_sound_base_dir(settings);
-    match base_dir {
-        tauri::path::BaseDirectory::AppData => {
-            crate::portable::resolve_app_data(app, &sound_file).ok()
-        }
-        _ => app.path().resolve(&sound_file, base_dir).ok(),
-    }
-}
-
-fn get_sound_path(settings: &AppSettings, sound_type: SoundType) -> String {
-    match (settings.sound_theme, sound_type) {
-        (SoundTheme::Custom, SoundType::Start) => "custom_start.wav".to_string(),
-        (SoundTheme::Custom, SoundType::Stop) => "custom_stop.wav".to_string(),
-        (_, SoundType::Start) => settings.sound_theme.to_start_path(),
-        (_, SoundType::Stop) => settings.sound_theme.to_stop_path(),
-    }
-}
-
-fn get_sound_base_dir(settings: &AppSettings) -> tauri::path::BaseDirectory {
-    match settings.sound_theme {
-        SoundTheme::Custom => tauri::path::BaseDirectory::AppData,
-        _ => tauri::path::BaseDirectory::Resource,
-    }
-}
-
-pub fn play_feedback_sound(app: &AppHandle, sound_type: SoundType) {
+    sound: SoundType,
+    on_playback: impl FnOnce(Duration),
+) {
     let settings = settings::get_settings(app);
     if !settings.audio_feedback {
         return;
     }
-    if let Some(path) = resolve_sound_path(app, &settings, sound_type) {
-        play_sound_async(app, path);
-    }
+    play_theme_sound(app, settings.sound_theme, sound, on_playback);
 }
 
-pub fn play_feedback_sound_blocking(app: &AppHandle, sound_type: SoundType) {
-    let settings = settings::get_settings(app);
-    if !settings.audio_feedback {
+/// Plays a pack's start sound then its end sound, whatever the audio feedback
+/// toggle says, so the user can hear a pack before choosing it.
+pub fn preview_sound_pack(app: &AppHandle, theme: SoundTheme) {
+    play_theme_sound(app, theme, SoundType::Start, |_| {});
+    play_theme_sound(app, theme, SoundType::End, |_| {});
+}
+
+fn play_theme_sound(
+    app: &AppHandle,
+    theme: SoundTheme,
+    sound: SoundType,
+    on_playback: impl FnOnce(Duration),
+) {
+    let Some(path) = resolve_sound_path(app, theme, sound) else {
         return;
-    }
-    if let Some(path) = resolve_sound_path(app, &settings, sound_type) {
-        play_sound_blocking(app, &path);
-    }
-}
-
-pub fn play_test_sound(app: &AppHandle, sound_type: SoundType) {
-    let settings = settings::get_settings(app);
-    if let Some(path) = resolve_sound_path(app, &settings, sound_type) {
-        play_sound_blocking(app, &path);
-    }
-}
-
-fn play_sound_async(app: &AppHandle, path: PathBuf) {
-    let app_handle = app.clone();
-    thread::spawn(move || {
-        if let Err(e) = play_sound_at_path(&app_handle, path.as_path()) {
-            error!("Failed to play sound '{}': {}", path.display(), e);
-        }
-    });
-}
-
-fn play_sound_blocking(app: &AppHandle, path: &Path) {
-    if let Err(e) = play_sound_at_path(app, path) {
-        error!("Failed to play sound '{}': {}", path.display(), e);
-    }
-}
-
-fn play_sound_at_path(app: &AppHandle, path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    };
     let settings = settings::get_settings(app);
     let volume = settings.audio_feedback_volume;
-    let selected_device = settings.selected_output_device.clone();
-    play_audio_file(path, selected_device, volume)
+    match play_audio_file(&path, settings.selected_output_device, volume, on_playback) {
+        Ok(duration) => info!(
+            "Played {:?} sound of {:?} ({}, {} ms, volume {:.2})",
+            sound,
+            theme,
+            path.display(),
+            duration.as_millis(),
+            volume
+        ),
+        Err(e) => error!("Failed to play sound '{}': {}", path.display(), e),
+    }
 }
 
 fn play_audio_file(
     path: &std::path::Path,
     selected_device: Option<String>,
     volume: f32,
-) -> Result<(), Box<dyn std::error::Error>> {
+    on_playback: impl FnOnce(Duration),
+) -> Result<Duration, Box<dyn std::error::Error>> {
     let stream_builder = if let Some(device_name) = selected_device {
         if device_name == "Default" {
             debug!("Using default device");
@@ -129,14 +154,71 @@ fn play_audio_file(
     };
 
     let stream_handle = stream_builder.open_stream()?;
-    let mixer = stream_handle.mixer();
+    let source = Decoder::new(BufReader::new(File::open(path)?))?;
+    let duration = source.total_duration().unwrap_or_default();
 
-    let file = File::open(path)?;
-    let buf_reader = BufReader::new(file);
-
-    let sink = rodio::play(mixer, buf_reader)?;
+    let sink = Sink::connect_new(stream_handle.mixer());
     sink.set_volume(volume);
+    on_playback(duration);
+    sink.append(source);
     sink.sleep_until_end();
 
-    Ok(())
+    Ok(duration)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const BUNDLED: [SoundTheme; 5] = [
+        SoundTheme::Bois,
+        SoundTheme::Synthe,
+        SoundTheme::Minimal,
+        SoundTheme::Marimba,
+        SoundTheme::Pop,
+    ];
+
+    #[test]
+    fn bundled_packs_resolve_to_their_folder() {
+        assert_eq!(
+            sound_file(SoundTheme::Bois, SoundType::Start),
+            SoundFile::Resource("resources/sounds/bois/start.wav".into())
+        );
+        assert_eq!(
+            sound_file(SoundTheme::Synthe, SoundType::End),
+            SoundFile::Resource("resources/sounds/synthe/end.wav".into())
+        );
+    }
+
+    #[test]
+    fn custom_pack_reads_the_user_files() {
+        assert_eq!(
+            sound_file(SoundTheme::Custom, SoundType::Start),
+            SoundFile::AppData("custom_start.wav")
+        );
+        assert_eq!(
+            sound_file(SoundTheme::Custom, SoundType::End),
+            SoundFile::AppData("custom_stop.wav")
+        );
+    }
+
+    #[test]
+    fn every_bundled_sound_exists_and_decodes() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        for theme in BUNDLED {
+            for sound in [SoundType::Start, SoundType::End] {
+                let SoundFile::Resource(rel) = sound_file(theme, sound) else {
+                    panic!("{theme:?} must be bundled");
+                };
+                let file = File::open(root.join(&rel)).unwrap_or_else(|e| panic!("{rel}: {e}"));
+                let decoder = Decoder::new(BufReader::new(file))
+                    .unwrap_or_else(|e| panic!("{rel} does not decode: {e}"));
+                let duration = decoder.total_duration().expect("WAV has a length");
+                assert!(
+                    duration > Duration::ZERO && duration < Duration::from_secs(1),
+                    "{rel} lasts {duration:?}"
+                );
+            }
+        }
+    }
 }

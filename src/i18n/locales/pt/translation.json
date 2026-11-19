@@ -284,7 +284,7 @@
       },
       "audioFeedback": {
         "label": "Feedback de Áudio",
-        "description": "Reproduzir som quando a gravação iniciar e parar"
+        "description": "Tocar um som ao iniciar a gravação e quando o seu texto é inserido"
       },
       "outputDevice": {
         "title": "Dispositivo de Saída",
@@ -295,6 +295,19 @@
       "volume": {
         "title": "Volume",
         "description": "Ajustar o volume dos sons de feedback de áudio"
+      },
+      "pack": {
+        "title": "Pacote de sons",
+        "description": "Escolha os sons tocados ao iniciar a gravação e quando o seu texto é inserido",
+        "preview": "Ouvir {{pack}}",
+        "packs": {
+          "bois": "Madeira",
+          "synthe": "Sintetizador",
+          "minimal": "Minimalista",
+          "marimba": "Marimba",
+          "pop": "Pop",
+          "custom": "Personalizado"
+        }
       }
     },
     "advanced": {

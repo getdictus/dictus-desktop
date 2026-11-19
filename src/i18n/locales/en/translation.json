@@ -284,7 +284,7 @@
       },
       "audioFeedback": {
         "label": "Audio Feedback",
-        "description": "Play sound when recording starts and stops"
+        "description": "Play a sound when recording starts and when your text is inserted"
       },
       "outputDevice": {
         "title": "Output Device",
@@ -295,6 +295,19 @@
       "volume": {
         "title": "Volume",
         "description": "Adjust the volume of audio feedback sounds"
+      },
+      "pack": {
+        "title": "Sound Pack",
+        "description": "Choose the sounds played when recording starts and when your text is inserted",
+        "preview": "Preview {{pack}}",
+        "packs": {
+          "bois": "Wood",
+          "synthe": "Synth",
+          "minimal": "Minimal",
+          "marimba": "Marimba",
+          "pop": "Pop",
+          "custom": "Custom"
+        }
       }
     },
     "advanced": {
