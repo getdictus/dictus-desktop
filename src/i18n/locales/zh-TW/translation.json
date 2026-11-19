@@ -284,7 +284,7 @@
       },
       "audioFeedback": {
         "label": "聲音回饋",
-        "description": "錄製開始和停止時播放聲音"
+        "description": "在開始錄音和插入文字時播放聲音"
       },
       "outputDevice": {
         "title": "輸出裝置",
@@ -295,6 +295,19 @@
       "volume": {
         "title": "音量",
         "description": "調整聲音回饋的音量"
+      },
+      "pack": {
+        "title": "音效包",
+        "description": "選擇開始錄音和插入文字時播放的聲音",
+        "preview": "試聽 {{pack}}",
+        "packs": {
+          "bois": "木質",
+          "synthe": "合成器",
+          "minimal": "極簡",
+          "marimba": "Marimba",
+          "pop": "Pop",
+          "custom": "自訂"
+        }
       }
     },
     "advanced": {

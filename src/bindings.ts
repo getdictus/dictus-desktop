@@ -45,7 +45,7 @@ async changeAudioFeedbackVolumeSetting(volume: number) : Promise<Result<null, st
     else return { status: "error", error: e  as any };
 }
 },
-async changeSoundThemeSetting(theme: string) : Promise<Result<null, string>> {
+async changeSoundThemeSetting(theme: SoundTheme) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("change_sound_theme_setting", { theme }) };
 } catch (e) {
@@ -860,8 +860,12 @@ async getSelectedOutputDevice() : Promise<Result<string, string>> {
     else return { status: "error", error: e  as any };
 }
 },
-async playTestSound(soundType: string) : Promise<void> {
-    await TAURI_INVOKE("play_test_sound", { soundType });
+/**
+ * Plays a pack's start sound then its end sound, so the user can hear it
+ * before choosing it.
+ */
+async previewSoundPack(theme: SoundTheme) : Promise<void> {
+    await TAURI_INVOKE("preview_sound_pack", { theme });
 },
 async checkCustomSounds() : Promise<CustomSounds> {
     return await TAURI_INVOKE("check_custom_sounds");
@@ -1181,7 +1185,11 @@ export type SecretMap = Partial<{ [key in string]: string }>
 export type ShortcutBinding = { id: string; name: string; description: string; default_binding: string; current_binding: string }
 export type SmartMode = { id: string; name: string; kind: SmartModeKind; prompt: string; target_language?: TargetLanguage | null }
 export type SmartModeKind = "rewrite" | "translation"
-export type SoundTheme = "marimba" | "pop" | "custom"
+/**
+ * A pack of two recording sounds: `start.wav` and `end.wav`, bundled under
+ * `resources/sounds/<pack>/`, except `Custom`, read from the app data folder.
+ */
+export type SoundTheme = "bois" | "synthe" | "minimal" | "marimba" | "pop" | "custom"
 export type TargetLanguage = { code: string; label: string }
 export type TypingTool = "auto" | "wtype" | "kwtype" | "dotool" | "ydotool" | "xdotool"
 export type WhisperAcceleratorSetting = "auto" | "cpu" | "gpu"

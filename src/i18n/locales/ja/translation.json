@@ -284,7 +284,7 @@
       },
       "audioFeedback": {
         "label": "音声フィードバック",
-        "description": "録音の開始と停止時にサウンドを再生"
+        "description": "録音開始時とテキスト挿入時にサウンドを再生します"
       },
       "outputDevice": {
         "title": "出力デバイス",
@@ -295,6 +295,19 @@
       "volume": {
         "title": "音量",
         "description": "音声フィードバックの音量を調整"
+      },
+      "pack": {
+        "title": "サウンドパック",
+        "description": "録音開始時とテキスト挿入時に再生するサウンドを選択します",
+        "preview": "{{pack}} を試聴",
+        "packs": {
+          "bois": "ウッド",
+          "synthe": "シンセ",
+          "minimal": "ミニマル",
+          "marimba": "Marimba",
+          "pop": "Pop",
+          "custom": "カスタム"
+        }
       }
     },
     "advanced": {

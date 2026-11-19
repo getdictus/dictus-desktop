@@ -284,7 +284,7 @@
       },
       "audioFeedback": {
         "label": "Audio-Feedback",
-        "description": "Ton bei Start und Ende der Aufnahme abspielen"
+        "description": "Einen Ton beim Start der Aufnahme und beim Einfügen deines Textes abspielen"
       },
       "outputDevice": {
         "title": "Ausgabegerät",
@@ -295,6 +295,19 @@
       "volume": {
         "title": "Lautstärke",
         "description": "Lautstärke der Audio-Feedback-Töne anpassen"
+      },
+      "pack": {
+        "title": "Sound-Paket",
+        "description": "Wähle die Töne, die beim Start der Aufnahme und beim Einfügen deines Textes abgespielt werden",
+        "preview": "{{pack}} anhören",
+        "packs": {
+          "bois": "Holz",
+          "synthe": "Synth",
+          "minimal": "Minimal",
+          "marimba": "Marimba",
+          "pop": "Pop",
+          "custom": "Benutzerdefiniert"
+        }
       }
     },
     "advanced": {

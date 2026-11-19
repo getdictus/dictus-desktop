@@ -284,7 +284,7 @@
       },
       "audioFeedback": {
         "label": "משוב קולי",
-        "description": "נגן צליל כשההקלטה מתחילה ומסתיימת"
+        "description": "השמעת צליל בתחילת ההקלטה וכשהטקסט מוכנס"
       },
       "outputDevice": {
         "title": "התקן פלט",
@@ -295,6 +295,19 @@
       "volume": {
         "title": "עוצמת קול",
         "description": "כוונן את עוצמת צלילי המשוב"
+      },
+      "pack": {
+        "title": "ערכת צלילים",
+        "description": "בחרו את הצלילים שמושמעים בתחילת ההקלטה וכשהטקסט מוכנס",
+        "preview": "השמעת {{pack}}",
+        "packs": {
+          "bois": "עץ",
+          "synthe": "סינתי",
+          "minimal": "מינימלי",
+          "marimba": "Marimba",
+          "pop": "Pop",
+          "custom": "מותאם אישית"
+        }
       }
     },
     "advanced": {

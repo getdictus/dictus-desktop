@@ -4,7 +4,7 @@ use std::{
         atomic::{AtomicBool, Ordering},
         mpsc, Arc, Mutex,
     },
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use cpal::{
@@ -25,6 +25,29 @@ enum Cmd {
     Shutdown,
 }
 
+/// Silences microphone input until a deadline, so a sound the app plays while
+/// recording (the start sound) does not reach the transcription.
+#[derive(Clone, Default)]
+pub struct InputMask(Arc<Mutex<Option<Instant>>>);
+
+impl InputMask {
+    pub fn silence_until(&self, deadline: Instant) {
+        let mut current = self.0.lock().unwrap();
+        *current = Some(current.map_or(deadline, |d| d.max(deadline)));
+    }
+
+    fn apply(&self, chunk: &mut [f32], now: Instant) {
+        if self
+            .0
+            .lock()
+            .unwrap()
+            .is_some_and(|deadline| now < deadline)
+        {
+            chunk.fill(0.0);
+        }
+    }
+}
+
 enum AudioChunk {
     Samples(Vec<f32>),
     EndOfStream,
@@ -36,6 +59,7 @@ pub struct AudioRecorder {
     worker_handle: Option<std::thread::JoinHandle<()>>,
     vad: Option<Arc<Mutex<Box<dyn vad::VoiceActivityDetector>>>>,
     level_cb: Option<Arc<dyn Fn(Vec<f32>) + Send + Sync + 'static>>,
+    input_mask: InputMask,
 }
 
 impl AudioRecorder {
@@ -46,7 +70,13 @@ impl AudioRecorder {
             worker_handle: None,
             vad: None,
             level_cb: None,
+            input_mask: InputMask::default(),
         })
+    }
+
+    pub fn with_input_mask(mut self, mask: InputMask) -> Self {
+        self.input_mask = mask;
+        self
     }
 
     pub fn with_vad(mut self, vad: Box<dyn VoiceActivityDetector>) -> Self {
@@ -83,6 +113,7 @@ impl AudioRecorder {
         let vad = self.vad.clone();
         // Move the optional level callback into the worker thread
         let level_cb = self.level_cb.clone();
+        let input_mask = self.input_mask.clone();
 
         let worker = std::thread::spawn(move || {
             let stop_flag = Arc::new(AtomicBool::new(false));
@@ -159,7 +190,15 @@ impl AudioRecorder {
                 Ok((stream, sample_rate)) => {
                     let _ = init_tx.send(Ok(()));
                     // Keep the stream alive while we process samples.
-                    run_consumer(sample_rate, vad, sample_rx, cmd_rx, level_cb, stop_flag);
+                    run_consumer(
+                        sample_rate,
+                        vad,
+                        sample_rx,
+                        cmd_rx,
+                        level_cb,
+                        stop_flag,
+                        input_mask,
+                    );
                     drop(stream);
                 }
                 Err(error_message) => {
@@ -355,6 +394,7 @@ fn run_consumer(
     cmd_rx: mpsc::Receiver<Cmd>,
     level_cb: Option<Arc<dyn Fn(Vec<f32>) + Send + Sync + 'static>>,
     stop_flag: Arc<AtomicBool>,
+    input_mask: InputMask,
 ) {
     let mut frame_resampler = FrameResampler::new(
         in_sample_rate as usize,
@@ -398,10 +438,11 @@ fn run_consumer(
     }
 
     while let Ok(chunk) = sample_rx.recv() {
-        let raw = match chunk {
+        let mut raw = match chunk {
             AudioChunk::Samples(s) => s,
             AudioChunk::EndOfStream => continue,
         };
+        input_mask.apply(&mut raw, Instant::now());
 
         // ---------- spectrum processing ---------------------------------- //
         if let Some(buckets) = visualizer.feed(&raw) {
@@ -437,7 +478,8 @@ fn run_consumer(
                     // ahead of the sentinel.
                     loop {
                         match sample_rx.recv_timeout(Duration::from_secs(2)) {
-                            Ok(AudioChunk::Samples(remaining)) => {
+                            Ok(AudioChunk::Samples(mut remaining)) => {
+                                input_mask.apply(&mut remaining, Instant::now());
                                 frame_resampler.push(&remaining, &mut |frame: &[f32]| {
                                     handle_frame(frame, true, &vad, &mut processed_samples)
                                 });
@@ -471,7 +513,42 @@ fn run_consumer(
 
 #[cfg(test)]
 mod tests {
-    use super::{is_microphone_access_denied, is_no_input_device_error};
+    use super::{is_microphone_access_denied, is_no_input_device_error, InputMask};
+    use std::time::{Duration, Instant};
+
+    #[test]
+    fn input_is_silenced_while_the_start_sound_plays_then_passes_through() {
+        let mask = InputMask::default();
+        let now = Instant::now();
+        mask.silence_until(now + Duration::from_millis(600));
+
+        let mut during = vec![0.4_f32, -0.3, 0.2];
+        mask.apply(&mut during, now + Duration::from_millis(599));
+        assert_eq!(during, vec![0.0, 0.0, 0.0]);
+
+        let mut after = vec![0.4_f32, -0.3, 0.2];
+        mask.apply(&mut after, now + Duration::from_millis(600));
+        assert_eq!(after, vec![0.4, -0.3, 0.2]);
+    }
+
+    #[test]
+    fn input_passes_through_when_no_sound_was_played() {
+        let mut chunk = vec![0.4_f32, -0.3];
+        InputMask::default().apply(&mut chunk, Instant::now());
+        assert_eq!(chunk, vec![0.4, -0.3]);
+    }
+
+    #[test]
+    fn a_shorter_mask_never_cuts_a_longer_one() {
+        let mask = InputMask::default();
+        let now = Instant::now();
+        mask.silence_until(now + Duration::from_millis(600));
+        mask.silence_until(now + Duration::from_millis(100));
+
+        let mut chunk = vec![0.4_f32];
+        mask.apply(&mut chunk, now + Duration::from_millis(300));
+        assert_eq!(chunk, vec![0.0]);
+    }
 
     #[test]
     fn detects_access_is_denied() {

@@ -6,6 +6,7 @@ import type {
   AudioDevice,
   WhisperAcceleratorSetting,
   OrtAcceleratorSetting,
+  SoundTheme,
 } from "@/bindings";
 import { commands } from "@/bindings";
 
@@ -34,7 +35,7 @@ interface SettingsStore {
   resetBinding: (id: string) => Promise<void>;
   getSetting: <K extends keyof Settings>(key: K) => Settings[K] | undefined;
   isUpdatingKey: (key: string) => boolean;
-  playTestSound: (soundType: "start" | "stop") => Promise<void>;
+  previewSoundPack: (theme: SoundTheme) => Promise<void>;
   checkCustomSounds: () => Promise<void>;
   setPostProcessProvider: (providerId: string) => Promise<void>;
   updatePostProcessSetting: (
@@ -82,7 +83,7 @@ const settingUpdaters: {
     commands.changeAudioFeedbackSetting(value as boolean),
   audio_feedback_volume: (value) =>
     commands.changeAudioFeedbackVolumeSetting(value as number),
-  sound_theme: (value) => commands.changeSoundThemeSetting(value as string),
+  sound_theme: (value) => commands.changeSoundThemeSetting(value as SoundTheme),
   start_hidden: (value) => commands.changeStartHiddenSetting(value as boolean),
   autostart_enabled: (value) =>
     commands.changeAutostartSetting(value as boolean),
@@ -249,12 +250,11 @@ export const useSettingsStore = create<SettingsStore>()(
       }
     },
 
-    // Play a test sound
-    playTestSound: async (soundType: "start" | "stop") => {
+    previewSoundPack: async (theme: SoundTheme) => {
       try {
-        await commands.playTestSound(soundType);
+        await commands.previewSoundPack(theme);
       } catch (error) {
-        console.error(`Failed to play test sound (${soundType}):`, error);
+        console.error(`Failed to preview sound pack (${theme}):`, error);
       }
     },
 

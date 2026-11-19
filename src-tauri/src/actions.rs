@@ -18,7 +18,7 @@ use log::{debug, error, warn};
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use tauri::Manager;
 use tauri::{AppHandle, Emitter};
 
@@ -46,6 +46,10 @@ pub trait ShortcutAction: Send + Sync {
 }
 
 // Transcribe Action
+/// How long after the start sound's last sample the microphone input is still
+/// discarded: the output device's latency, longest on Bluetooth.
+const START_SOUND_OUTPUT_LATENCY: Duration = Duration::from_millis(150);
+
 struct TranscribeAction {
     post_process: bool,
 }
@@ -616,52 +620,34 @@ impl ShortcutAction for TranscribeAction {
         change_tray_icon(app, TrayIconState::Recording);
         show_recording_overlay(app);
 
-        // Get the microphone mode to determine audio feedback timing
+        // The start sound plays at the press, with the overlay, on its own
+        // thread. The microphone opens at the same time; whatever it hears
+        // until the sound has finished is discarded (`silence_input_for`), so
+        // the sound never reaches the transcription.
         let settings = get_settings(app);
-        let is_always_on = settings.always_on_microphone;
-        debug!("Microphone mode - always_on: {}", is_always_on);
-
-        let mut recording_error: Option<String> = None;
-        if is_always_on {
-            // Always-on mode: Play audio feedback immediately, then apply mute after sound finishes
-            debug!("Always-on mode: Playing audio feedback immediately");
-            let rm_clone = Arc::clone(&rm);
+        if settings.audio_feedback {
             let app_clone = app.clone();
-            // The blocking helper exits immediately if audio feedback is disabled,
-            // so we can always reuse this thread to ensure mute happens right after playback.
+            let rm_clone = Arc::clone(&rm);
             std::thread::spawn(move || {
-                play_feedback_sound_blocking(&app_clone, SoundType::Start);
+                play_feedback_sound_blocking(&app_clone, SoundType::Start, |duration| {
+                    rm_clone.silence_input_for(duration + START_SOUND_OUTPUT_LATENCY)
+                });
                 rm_clone.apply_mute();
             });
+        }
 
-            if let Err(e) = rm.try_start_recording(&binding_id) {
-                debug!("Recording failed: {}", e);
-                recording_error = Some(e);
+        let mut recording_error: Option<String> = None;
+        let recording_start_time = Instant::now();
+        match rm.try_start_recording(&binding_id) {
+            Ok(()) => {
+                debug!("Recording started in {:?}", recording_start_time.elapsed());
+                if !settings.audio_feedback {
+                    rm.apply_mute();
+                }
             }
-        } else {
-            // On-demand mode: Start recording first, then play audio feedback, then apply mute
-            // This allows the microphone to be activated before playing the sound
-            debug!("On-demand mode: Starting recording first, then audio feedback");
-            let recording_start_time = Instant::now();
-            match rm.try_start_recording(&binding_id) {
-                Ok(()) => {
-                    debug!("Recording started in {:?}", recording_start_time.elapsed());
-                    // Small delay to ensure microphone stream is active
-                    let app_clone = app.clone();
-                    let rm_clone = Arc::clone(&rm);
-                    std::thread::spawn(move || {
-                        std::thread::sleep(std::time::Duration::from_millis(100));
-                        debug!("Handling delayed audio feedback/mute sequence");
-                        // Helper handles disabled audio feedback by returning early, so we reuse it
-                        // to keep mute sequencing consistent in every mode.
-                        play_feedback_sound_blocking(&app_clone, SoundType::Start);
-                        rm_clone.apply_mute();
-                    });
-                }
-                Err(e) => {
-                    debug!("Failed to start recording: {}", e);
-                    recording_error = Some(e);
-                }
+            Err(e) => {
+                debug!("Failed to start recording: {}", e);
+                recording_error = Some(e);
             }
         }
 
@@ -731,11 +717,7 @@ fn spawn_transcription_task(
     change_tray_icon(app, TrayIconState::Transcribing);
     show_transcribing_overlay(app);
 
-    // Unmute before playing audio feedback so the stop sound is audible
     rm.remove_mute();
-
-    // Play audio feedback for recording stop
-    play_feedback_sound(app, SoundType::Stop);
 
     tauri::async_runtime::spawn(async move {
         let _guard = FinishGuard(ah.clone());
@@ -844,10 +826,13 @@ fn spawn_transcription_task(
                             let post_process_failed = processed.post_process_failed;
                             ah.run_on_main_thread(move || {
                                 match utils::paste(final_text, ah_clone.clone()) {
-                                    Ok(()) => debug!(
-                                        "Text pasted successfully in {:?}",
-                                        paste_time.elapsed()
-                                    ),
+                                    Ok(()) => {
+                                        debug!(
+                                            "Text pasted successfully in {:?}",
+                                            paste_time.elapsed()
+                                        );
+                                        play_feedback_sound(&ah_clone, SoundType::End);
+                                    }
                                     Err(e) => {
                                         error!("Failed to paste transcription: {}", e);
                                         let _ = ah_clone.emit("paste-error", ());
