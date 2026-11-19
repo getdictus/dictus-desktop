@@ -284,7 +284,7 @@
       },
       "audioFeedback": {
         "label": "Feedback Audio",
-        "description": "Riproduci un suono quando la registrazione inizia e finisce"
+        "description": "Riproduci un suono all'avvio della registrazione e quando il testo viene inserito"
       },
       "outputDevice": {
         "title": "Dispositivo di Output",
@@ -295,6 +295,19 @@
       "volume": {
         "title": "Volume",
         "description": "Regola il volume del feedback audio"
+      },
+      "pack": {
+        "title": "Pacchetto suoni",
+        "description": "Scegli i suoni riprodotti all'avvio della registrazione e quando il testo viene inserito",
+        "preview": "Ascolta {{pack}}",
+        "packs": {
+          "bois": "Legno",
+          "synthe": "Synth",
+          "minimal": "Minimal",
+          "marimba": "Marimba",
+          "pop": "Pop",
+          "custom": "Personalizzato"
+        }
       }
     },
     "advanced": {

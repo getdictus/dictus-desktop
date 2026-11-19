@@ -284,7 +284,7 @@
       },
       "audioFeedback": {
         "label": "Signal sonore",
-        "description": "Jouer un son au début et à la fin de l'enregistrement"
+        "description": "Jouer un son au début de l'enregistrement et quand votre texte est inséré"
       },
       "outputDevice": {
         "title": "Périphérique de sortie",
@@ -295,6 +295,19 @@
       "volume": {
         "title": "Volume",
         "description": "Ajuster le volume du signal sonore"
+      },
+      "pack": {
+        "title": "Pack de sons",
+        "description": "Choisissez les sons joués au début de l'enregistrement et quand votre texte est inséré",
+        "preview": "Écouter {{pack}}",
+        "packs": {
+          "bois": "Bois",
+          "synthe": "Synthé",
+          "minimal": "Minimal",
+          "marimba": "Marimba",
+          "pop": "Pop",
+          "custom": "Personnalisé"
+        }
       }
     },
     "advanced": {

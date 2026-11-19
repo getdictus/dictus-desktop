@@ -8,7 +8,7 @@ pub use audio::{
     decode_to_mono_16k, has_supported_extension, is_microphone_access_denied,
     is_no_input_device_error, list_input_devices, list_output_devices, probe_audio_file,
     read_wav_samples, save_wav_file, verify_wav_file, AudioFileInfo, AudioRecorder, CpalDeviceInfo,
-    DecodeError, SUPPORTED_EXTENSIONS, TARGET_SAMPLE_RATE,
+    DecodeError, InputMask, SUPPORTED_EXTENSIONS, TARGET_SAMPLE_RATE,
 };
 pub use text::{apply_custom_words, filter_transcription_output};
 pub use utils::get_cpal_host;

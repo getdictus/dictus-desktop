@@ -241,31 +241,21 @@ impl ModelUnloadTimeout {
     }
 }
 
+/// A pack of two recording sounds: `start.wav` and `end.wav`, bundled under
+/// `resources/sounds/<pack>/`, except `Custom`, read from the app data folder.
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Type)]
 #[serde(rename_all = "snake_case")]
 pub enum SoundTheme {
+    Bois,
+    Synthe,
+    Minimal,
     Marimba,
     Pop,
     Custom,
 }
 
-impl SoundTheme {
-    fn as_str(&self) -> &'static str {
-        match self {
-            SoundTheme::Marimba => "marimba",
-            SoundTheme::Pop => "pop",
-            SoundTheme::Custom => "custom",
-        }
-    }
-
-    pub fn to_start_path(self) -> String {
-        format!("resources/{}_start.wav", self.as_str())
-    }
-
-    pub fn to_stop_path(self) -> String {
-        format!("resources/{}_stop.wav", self.as_str())
-    }
-}
+/// The pack a new install starts with.
+pub const DEFAULT_SOUND_THEME: SoundTheme = SoundTheme::Bois;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Type, Default)]
 #[serde(rename_all = "snake_case")]
@@ -334,9 +324,9 @@ pub struct AppSettings {
     pub bindings: HashMap<String, ShortcutBinding>,
     pub push_to_talk: bool,
     pub audio_feedback: bool,
-    #[serde(default = "default_audio_feedback_volume")]
+    #[serde(default = "legacy_audio_feedback_volume")]
     pub audio_feedback_volume: f32,
-    #[serde(default = "default_sound_theme")]
+    #[serde(default = "legacy_sound_theme")]
     pub sound_theme: SoundTheme,
     #[serde(default = "default_start_hidden")]
     pub start_hidden: bool,
@@ -498,11 +488,14 @@ fn default_recording_retention_period() -> RecordingRetentionPeriod {
     RecordingRetentionPeriod::PreserveLimit
 }
 
-fn default_audio_feedback_volume() -> f32 {
+/// Serde defaults for a stored settings file that lacks the key: the values
+/// such an install was already getting, so an upgrade changes nothing. New
+/// installs get `get_default_settings()` instead.
+fn legacy_audio_feedback_volume() -> f32 {
     1.0
 }
 
-fn default_sound_theme() -> SoundTheme {
+fn legacy_sound_theme() -> SoundTheme {
     SoundTheme::Marimba
 }
 
@@ -963,9 +956,9 @@ pub fn get_default_settings() -> AppSettings {
     AppSettings {
         bindings,
         push_to_talk: true,
-        audio_feedback: false,
-        audio_feedback_volume: default_audio_feedback_volume(),
-        sound_theme: default_sound_theme(),
+        audio_feedback: true,
+        audio_feedback_volume: 0.5,
+        sound_theme: DEFAULT_SOUND_THEME,
         start_hidden: default_start_hidden(),
         autostart_enabled: default_autostart_enabled(),
         update_checks_enabled: default_update_checks_enabled(),
@@ -1165,6 +1158,74 @@ pub fn get_recording_retention_period(app: &AppHandle) -> RecordingRetentionPeri
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The steps `load_or_create_app_settings` runs on a stored settings value.
+    fn load_stored(value: serde_json::Value) -> AppSettings {
+        let mut settings: AppSettings =
+            serde_json::from_value(value).expect("stored settings must deserialize");
+        ensure_post_process_defaults(&mut settings);
+        migrate_settings_if_needed(&mut settings);
+        settings
+    }
+
+    #[test]
+    fn new_install_plays_bois_at_half_volume() {
+        let settings = get_default_settings();
+        assert!(settings.audio_feedback);
+        assert_eq!(settings.audio_feedback_volume, 0.5);
+        assert_eq!(settings.sound_theme, SoundTheme::Bois);
+        assert_eq!(settings.sound_theme, DEFAULT_SOUND_THEME);
+    }
+
+    #[test]
+    fn existing_install_keeps_its_stored_sound_settings() {
+        let stored = serde_json::json!({
+            "bindings": {},
+            "push_to_talk": true,
+            "audio_feedback": false,
+            "audio_feedback_volume": 0.8,
+            "sound_theme": "pop",
+            "external_script_path": null
+        });
+        let settings = load_stored(stored);
+        assert!(!settings.audio_feedback);
+        assert_eq!(settings.audio_feedback_volume, 0.8);
+        assert_eq!(settings.sound_theme, SoundTheme::Pop);
+    }
+
+    #[test]
+    fn existing_install_without_sound_keys_keeps_what_it_played() {
+        // Settings written before `audio_feedback_volume` and `sound_theme`
+        // existed played Marimba at full volume.
+        let stored = serde_json::json!({
+            "bindings": {},
+            "push_to_talk": true,
+            "audio_feedback": true,
+            "external_script_path": null
+        });
+        let settings = load_stored(stored);
+        assert!(settings.audio_feedback);
+        assert_eq!(settings.audio_feedback_volume, 1.0);
+        assert_eq!(settings.sound_theme, SoundTheme::Marimba);
+    }
+
+    #[test]
+    fn sound_theme_round_trips_with_stable_ids() {
+        for (theme, id) in [
+            (SoundTheme::Bois, "bois"),
+            (SoundTheme::Synthe, "synthe"),
+            (SoundTheme::Minimal, "minimal"),
+            (SoundTheme::Marimba, "marimba"),
+            (SoundTheme::Pop, "pop"),
+            (SoundTheme::Custom, "custom"),
+        ] {
+            assert_eq!(serde_json::to_value(theme).unwrap(), id);
+            assert_eq!(
+                serde_json::from_value::<SoundTheme>(serde_json::json!(id)).unwrap(),
+                theme
+            );
+        }
+    }
 
     #[test]
     fn default_settings_disable_auto_submit() {

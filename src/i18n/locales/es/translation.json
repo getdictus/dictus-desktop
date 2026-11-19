@@ -284,7 +284,7 @@
       },
       "audioFeedback": {
         "label": "Retroalimentación de Audio",
-        "description": "Reproducir sonido cuando la grabación inicia y se detiene"
+        "description": "Reproducir un sonido al empezar a grabar y al insertar tu texto"
       },
       "outputDevice": {
         "title": "Dispositivo de Salida",
@@ -295,6 +295,19 @@
       "volume": {
         "title": "Volumen",
         "description": "Ajusta el volumen de los sonidos de retroalimentación de audio"
+      },
+      "pack": {
+        "title": "Paquete de sonidos",
+        "description": "Elige los sonidos que se reproducen al empezar a grabar y al insertar tu texto",
+        "preview": "Escuchar {{pack}}",
+        "packs": {
+          "bois": "Madera",
+          "synthe": "Sintetizador",
+          "minimal": "Minimalista",
+          "marimba": "Marimba",
+          "pop": "Pop",
+          "custom": "Personalizado"
+        }
       }
     },
     "advanced": {

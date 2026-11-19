@@ -284,7 +284,7 @@
       },
       "audioFeedback": {
         "label": "Phản hồi âm thanh",
-        "description": "Phát âm thanh khi bắt đầu và kết thúc ghi âm"
+        "description": "Phát âm thanh khi bắt đầu ghi âm và khi văn bản được chèn"
       },
       "outputDevice": {
         "title": "Thiết bị đầu ra",
@@ -295,6 +295,19 @@
       "volume": {
         "title": "Âm lượng",
         "description": "Điều chỉnh âm lượng của âm thanh phản hồi"
+      },
+      "pack": {
+        "title": "Gói âm thanh",
+        "description": "Chọn âm thanh phát khi bắt đầu ghi âm và khi văn bản được chèn",
+        "preview": "Nghe thử {{pack}}",
+        "packs": {
+          "bois": "Gỗ",
+          "synthe": "Synth",
+          "minimal": "Tối giản",
+          "marimba": "Marimba",
+          "pop": "Pop",
+          "custom": "Tùy chỉnh"
+        }
       }
     },
     "advanced": {

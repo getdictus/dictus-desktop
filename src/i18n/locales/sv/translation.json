@@ -284,7 +284,7 @@
       },
       "audioFeedback": {
         "label": "Ljudåterkoppling",
-        "description": "Spela upp ljud när inspelningen startar och stoppar"
+        "description": "Spela ett ljud när inspelningen startar och när texten infogas"
       },
       "outputDevice": {
         "title": "Utmatningsenhet",
@@ -295,6 +295,19 @@
       "volume": {
         "title": "Volym",
         "description": "Justera volymen för ljudåterkopplingsljud"
+      },
+      "pack": {
+        "title": "Ljudpaket",
+        "description": "Välj ljuden som spelas när inspelningen startar och när texten infogas",
+        "preview": "Lyssna på {{pack}}",
+        "packs": {
+          "bois": "Trä",
+          "synthe": "Synt",
+          "minimal": "Minimal",
+          "marimba": "Marimba",
+          "pop": "Pop",
+          "custom": "Anpassad"
+        }
       }
     },
     "advanced": {
