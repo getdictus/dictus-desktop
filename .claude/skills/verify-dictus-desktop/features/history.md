@@ -14,6 +14,7 @@ Every transcription is saved with its audio: the History page lists entries newe
 - `history.copy` _(desktop-only)_: copy icon. — present
 - `history.save` _(desktop-only)_: star to keep an entry past the retention limit. — present
 - `history.retranscribe` _(desktop-only)_: ↻, re-runs the active model on the saved audio. — present
+- `history.failed` _(desktop-only)_: a dictation whose transcription fails keeps its recording as an entry reading « Transcription failed. You can re-transcribe using the retry icon. », and the app shows a « Transcription failed » toast (main window) and overlay pill (#85). Proof on tier 1: a debug .deb launched with `HANDY_FORCE_TRANSCRIPTION_FAILURE=1`, one CLI dictation, then `Transcription failed after` at ERROR in the log, the toast capture and the History capture. — present
 - `history.open-folder` _(desktop-only)_: « Open Recordings Folder ». — present
 - `history.retention` _(desktop-only)_: Advanced → History limit and recording retention. — present
 - `history.search`, `history.clear`, `history.detail`: — absent.

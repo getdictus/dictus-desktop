@@ -761,6 +761,8 @@
     "modelLoadFailedUnknown": "מודל לא ידוע",
     "pasteFailedTitle": "ההדבקה נכשלה",
     "pasteFailed": "לא ניתן היה להדביק את הטקסט ביישום הפעיל.",
+    "transcriptionFailedTitle": "התמלול נכשל",
+    "transcriptionFailed": "ההקלטה שלך נשמרה בהיסטוריה. תמלל אותה שוב משם או בחר מודל אחר.",
     "boundary": {
       "title": "משהו השתבש.",
       "reload": "טעינה מחדש"
@@ -775,7 +777,8 @@
   "overlay": {
     "transcribing": "מתמלל...",
     "processing": "מעבד...",
-    "postProcessUnavailable": "הגדר מודל לעיבוד שלאחר מכן"
+    "postProcessUnavailable": "הגדר מודל לעיבוד שלאחר מכן",
+    "transcriptionFailed": "התמלול נכשל"
   },
   "smartModes": {
     "sections": {

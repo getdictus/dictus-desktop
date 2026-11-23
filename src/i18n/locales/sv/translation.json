@@ -761,6 +761,8 @@
     "noInputDevice": "Ingen ljudenhet hittades. Anslut en mikrofon eller ett headset och försök igen.",
     "pasteFailedTitle": "Det gick inte att klistra in texten",
     "pasteFailed": "Texten kunde inte klistras in i det aktiva programmet.",
+    "transcriptionFailedTitle": "Transkriberingen misslyckades",
+    "transcriptionFailed": "Din inspelning finns sparad i historiken. Transkribera den igen därifrån eller välj en annan modell.",
     "boundary": {
       "title": "Något gick fel.",
       "reload": "Ladda om"
@@ -775,7 +777,8 @@
   "overlay": {
     "transcribing": "Transkriberar...",
     "processing": "Bearbetar...",
-    "postProcessUnavailable": "Konfigurera en modell för efterbearbetning"
+    "postProcessUnavailable": "Konfigurera en modell för efterbearbetning",
+    "transcriptionFailed": "Transkriberingen misslyckades"
   },
   "smartModes": {
     "sections": {

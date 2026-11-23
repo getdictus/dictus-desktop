@@ -761,6 +761,8 @@
     "modelLoadFailedUnknown": "modèle inconnu",
     "pasteFailedTitle": "Échec du collage du texte",
     "pasteFailed": "Le texte n'a pas pu être collé dans l'application active.",
+    "transcriptionFailedTitle": "Échec de la transcription",
+    "transcriptionFailed": "Votre enregistrement est conservé dans l'historique. Relancez la transcription depuis l'historique, ou choisissez un autre modèle.",
     "boundary": {
       "title": "Une erreur est survenue.",
       "reload": "Recharger"
@@ -775,7 +777,8 @@
   "overlay": {
     "transcribing": "Transcription...",
     "processing": "Traitement...",
-    "postProcessUnavailable": "Configurez un modèle pour le post-traitement"
+    "postProcessUnavailable": "Configurez un modèle pour le post-traitement",
+    "transcriptionFailed": "Échec de la transcription"
   },
   "smartModes": {
     "sections": {

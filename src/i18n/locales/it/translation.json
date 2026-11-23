@@ -761,6 +761,8 @@
     "modelLoadFailedUnknown": "modello sconosciuto",
     "pasteFailedTitle": "Impossibile incollare il testo",
     "pasteFailed": "Non è stato possibile incollare il testo nell'applicazione attiva.",
+    "transcriptionFailedTitle": "Trascrizione non riuscita",
+    "transcriptionFailed": "La registrazione è salvata nella cronologia. Trascrivila di nuovo da lì o scegli un altro modello.",
     "boundary": {
       "title": "Si è verificato un errore.",
       "reload": "Ricarica"
@@ -775,7 +777,8 @@
   "overlay": {
     "transcribing": "Trascrizione...",
     "processing": "Elaborazione...",
-    "postProcessUnavailable": "Configura un modello per la post-elaborazione"
+    "postProcessUnavailable": "Configura un modello per la post-elaborazione",
+    "transcriptionFailed": "Trascrizione non riuscita"
   },
   "smartModes": {
     "sections": {

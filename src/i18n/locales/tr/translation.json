@@ -761,6 +761,8 @@
     "modelLoadFailedUnknown": "bilinmeyen model",
     "pasteFailedTitle": "Metin yapıştırılamadı",
     "pasteFailed": "Metin etkin uygulamaya yapıştırılamadı.",
+    "transcriptionFailedTitle": "Yazıya dökme başarısız oldu",
+    "transcriptionFailed": "Kaydınız geçmişte saklandı. Oradan yeniden yazıya dökün veya başka bir model seçin.",
     "boundary": {
       "title": "Bir şeyler ters gitti.",
       "reload": "Yenile"
@@ -775,7 +777,8 @@
   "overlay": {
     "transcribing": "Transkribe ediliyor...",
     "processing": "İşleniyor...",
-    "postProcessUnavailable": "Son işleme için bir model ayarlayın"
+    "postProcessUnavailable": "Son işleme için bir model ayarlayın",
+    "transcriptionFailed": "Yazıya dökme başarısız"
   },
   "smartModes": {
     "sections": {

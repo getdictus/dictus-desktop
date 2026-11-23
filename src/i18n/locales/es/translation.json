@@ -761,6 +761,8 @@
     "modelLoadFailedUnknown": "modelo desconocido",
     "pasteFailedTitle": "Error al pegar el texto",
     "pasteFailed": "No se pudo pegar el texto en la aplicación activa.",
+    "transcriptionFailedTitle": "Error en la transcripción",
+    "transcriptionFailed": "Tu grabación se ha guardado en el historial. Vuelve a transcribirla desde allí o elige otro modelo.",
     "boundary": {
       "title": "Algo salió mal.",
       "reload": "Recargar"
@@ -775,7 +777,8 @@
   "overlay": {
     "transcribing": "Transcribiendo...",
     "processing": "Procesando...",
-    "postProcessUnavailable": "Configura un modelo para el posprocesamiento"
+    "postProcessUnavailable": "Configura un modelo para el posprocesamiento",
+    "transcriptionFailed": "Error en la transcripción"
   },
   "smartModes": {
     "sections": {

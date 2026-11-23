@@ -153,6 +153,19 @@ function App() {
     };
   }, [t]);
 
+  // Listen for transcription failures and show a toast. The engine error is
+  // logged on the Rust side; the recording stays in History for a retry.
+  useEffect(() => {
+    const unlisten = listen("transcription-error", () => {
+      toast.error(t("errors.transcriptionFailedTitle"), {
+        description: t("errors.transcriptionFailed"),
+      });
+    });
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, [t]);
+
   // Listen for model loading failures and show a toast
   useEffect(() => {
     const unlisten = listen<ModelStateEvent>("model-state-changed", (event) => {

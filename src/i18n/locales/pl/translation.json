@@ -761,6 +761,8 @@
     "modelLoadFailedUnknown": "nieznany model",
     "pasteFailedTitle": "Nie udało się wkleić tekstu",
     "pasteFailed": "Nie można było wkleić tekstu do aktywnej aplikacji.",
+    "transcriptionFailedTitle": "Transkrypcja nie powiodła się",
+    "transcriptionFailed": "Nagranie zostało zapisane w historii. Transkrybuj je ponownie stamtąd lub wybierz inny model.",
     "boundary": {
       "title": "Coś poszło nie tak.",
       "reload": "Przeładuj"
@@ -775,7 +777,8 @@
   "overlay": {
     "transcribing": "Transkrypcja...",
     "processing": "Przetwarzanie...",
-    "postProcessUnavailable": "Skonfiguruj model do przetwarzania końcowego"
+    "postProcessUnavailable": "Skonfiguruj model do przetwarzania końcowego",
+    "transcriptionFailed": "Transkrypcja nie powiodła się"
   },
   "smartModes": {
     "sections": {

@@ -632,11 +632,16 @@ impl LoadedEngine {
     /// The longest audio one call of this engine gets, or `None` to give it the whole
     /// recording. Measured on the shared test corpus (#82, #85): Parakeet V3 drifts
     /// into English on French past ~7 s windows, Moonshine rejects calls over 64 s and
-    /// degrades at 60 s. Whisper windows internally; the others were not measured.
+    /// degrades at 60 s; streaming Moonshine and Canary silently stop decoding part way
+    /// through a 73 s English recording (about half of its 248 words). SenseVoice
+    /// handles it whole and Whisper windows internally; GigaAM and Cohere were not
+    /// measured.
     fn max_window_secs(&self) -> Option<f32> {
         match self {
             LoadedEngine::Parakeet(_) => Some(6.0),
-            LoadedEngine::Moonshine(_) => Some(20.0),
+            LoadedEngine::Moonshine(_)
+            | LoadedEngine::MoonshineStreaming(_)
+            | LoadedEngine::Canary(_) => Some(20.0),
             _ => None,
         }
     }

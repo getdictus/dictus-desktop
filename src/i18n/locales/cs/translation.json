@@ -761,6 +761,8 @@
     "modelLoadFailedUnknown": "neznámý model",
     "pasteFailedTitle": "Vložení textu se nezdařilo",
     "pasteFailed": "Text nebylo možné vložit do aktivní aplikace.",
+    "transcriptionFailedTitle": "Přepis se nezdařil",
+    "transcriptionFailed": "Nahrávka je uložena v historii. Přepište ji znovu odtud nebo zvolte jiný model.",
     "boundary": {
       "title": "Něco se pokazilo.",
       "reload": "Znovu načíst"
@@ -775,7 +777,8 @@
   "overlay": {
     "transcribing": "Přepisuji...",
     "processing": "Zpracovávám...",
-    "postProcessUnavailable": "Nastavte model pro následné zpracování"
+    "postProcessUnavailable": "Nastavte model pro následné zpracování",
+    "transcriptionFailed": "Přepis se nezdařil"
   },
   "smartModes": {
     "sections": {

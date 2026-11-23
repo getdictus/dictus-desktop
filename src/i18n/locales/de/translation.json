@@ -761,6 +761,8 @@
     "modelLoadFailedUnknown": "unbekanntes Modell",
     "pasteFailedTitle": "Text konnte nicht eingefügt werden",
     "pasteFailed": "Der Text konnte nicht in die aktive Anwendung eingefügt werden.",
+    "transcriptionFailedTitle": "Transkription fehlgeschlagen",
+    "transcriptionFailed": "Deine Aufnahme ist im Verlauf gespeichert. Transkribiere sie dort erneut oder wähle ein anderes Modell.",
     "boundary": {
       "title": "Etwas ist schiefgelaufen.",
       "reload": "Neu laden"
@@ -775,7 +777,8 @@
   "overlay": {
     "transcribing": "Transkribiere...",
     "processing": "Verarbeite...",
-    "postProcessUnavailable": "Modell für die Nachbearbeitung einrichten"
+    "postProcessUnavailable": "Modell für die Nachbearbeitung einrichten",
+    "transcriptionFailed": "Transkription fehlgeschlagen"
   },
   "smartModes": {
     "sections": {

@@ -9,8 +9,8 @@ use crate::settings::{get_settings, AppSettings, APPLE_INTELLIGENCE_PROVIDER_ID}
 use crate::shortcut;
 use crate::tray::{change_tray_icon, TrayIconState};
 use crate::utils::{
-    self, show_error_overlay, show_processing_overlay, show_recording_overlay,
-    show_transcribing_overlay,
+    self, flash_error_overlay, show_processing_overlay, show_recording_overlay,
+    show_transcribing_overlay, OverlayError,
 };
 use crate::TranscriptionCoordinator;
 use ferrous_opencc::{config::BuiltinConfig, OpenCC};
@@ -854,14 +854,10 @@ fn spawn_transcription_task(
                                     }
                                 }
                                 if post_process_failed {
-                                    // Hint pill in the always-on-top overlay (visible
-                                    // even when Dictus isn't focused), then dismiss.
-                                    show_error_overlay(&ah_clone);
-                                    let ah_err = ah_clone.clone();
-                                    std::thread::spawn(move || {
-                                        std::thread::sleep(std::time::Duration::from_millis(2500));
-                                        utils::hide_recording_overlay(&ah_err);
-                                    });
+                                    flash_error_overlay(
+                                        &ah_clone,
+                                        OverlayError::PostProcessUnavailable,
+                                    );
                                 } else {
                                     utils::hide_recording_overlay(&ah_clone);
                                 }
@@ -875,8 +871,14 @@ fn spawn_transcription_task(
                         }
                     }
                     Err(err) => {
-                        debug!("Global Shortcut Transcription error: {}", err);
-                        // Save entry with empty text so user can retry
+                        error!(
+                            "Transcription failed after {:?} ({} samples): {}",
+                            transcription_time.elapsed(),
+                            sample_count,
+                            err
+                        );
+                        // The entry keeps the recording with no text: History shows
+                        // it as failed, with Re-transcribe (e.g. after a model switch).
                         if wav_saved {
                             if let Err(save_err) = hm.save_entry(
                                 file_name,
@@ -891,7 +893,8 @@ fn spawn_transcription_task(
                                 error!("Failed to save failed history entry: {}", save_err);
                             }
                         }
-                        utils::hide_recording_overlay(&ah);
+                        let _ = ah.emit("transcription-error", ());
+                        flash_error_overlay(&ah, OverlayError::TranscriptionFailed);
                         change_tray_icon(&ah, TrayIconState::Idle);
                     }
                 }
