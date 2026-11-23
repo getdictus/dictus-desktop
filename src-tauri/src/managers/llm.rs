@@ -970,9 +970,9 @@ impl LlmManager {
                 if hit_eog { "eog" } else { "max_tokens" }
             );
             let trimmed = output.trim();
-            debug!(
-                "LLM output ({} chars): {}",
-                trimmed.len(),
+            debug!("LLM output: {} chars", trimmed.chars().count());
+            crate::debug_user_text!(
+                "LLM output: {}",
                 trimmed.chars().take(300).collect::<String>()
             );
 

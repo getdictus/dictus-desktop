@@ -582,6 +582,10 @@
         "title": "Nível de Log",
         "description": "Definir a verbosidade do registro"
       },
+      "logTranscripts": {
+        "label": "Registar transcrições",
+        "description": "Escreve o texto ditado no ficheiro de registo no nível Debug. Desativado por predefinição: ative-o apenas para depurar uma transcrição e depois desative-o."
+      },
       "updateChecks": {
         "label": "Verificar Atualizações",
         "description": "Verificar automaticamente novas versões do Dictus"

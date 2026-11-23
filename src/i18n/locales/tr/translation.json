@@ -582,6 +582,10 @@
         "title": "Log Seviyesi",
         "description": "Loglamanın ayrıntı düzeyini ayarla"
       },
+      "logTranscripts": {
+        "label": "Dökümleri günlüğe yaz",
+        "description": "Dikte edilen metni Debug günlük düzeyinde günlük dosyasına yazar. Varsayılan olarak kapalıdır: yalnızca bir dökümde hata ayıklamak için açın, sonra yeniden kapatın."
+      },
       "updateChecks": {
         "label": "Güncellemeleri Kontrol Et",
         "description": "Dictus için yeni sürümleri otomatik olarak kontrol eder"

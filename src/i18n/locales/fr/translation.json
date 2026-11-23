@@ -582,6 +582,10 @@
         "title": "Niveau de journalisation",
         "description": "Définir le niveau de détail de la journalisation"
       },
+      "logTranscripts": {
+        "label": "Journaliser les transcriptions",
+        "description": "Écrit le texte dicté dans le fichier journal au niveau Debug. Désactivé par défaut : activez-le seulement pour déboguer une transcription, puis désactivez-le."
+      },
       "updateChecks": {
         "label": "Vérifier les mises à jour",
         "description": "Vérifier automatiquement les nouvelles versions de Dictus"

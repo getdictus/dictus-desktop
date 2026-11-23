@@ -582,6 +582,10 @@
         "title": "Poziom logów",
         "description": "Ustaw poziom szczegółowości logowania"
       },
+      "logTranscripts": {
+        "label": "Zapisuj transkrypcje w logu",
+        "description": "Zapisuje dyktowany tekst w pliku logu na poziomie Debug. Domyślnie wyłączone: włącz tylko do debugowania transkrypcji, a potem wyłącz."
+      },
       "updateChecks": {
         "label": "Sprawdzaj aktualizacje",
         "description": "Automatycznie sprawdzaj nowe wersje Dictus"

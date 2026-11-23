@@ -582,6 +582,10 @@
         "title": "Mức nhật ký",
         "description": "Đặt mức độ chi tiết của nhật ký"
       },
+      "logTranscripts": {
+        "label": "Ghi bản phiên âm vào nhật ký",
+        "description": "Ghi văn bản đọc chính tả vào tệp nhật ký ở mức Debug. Tắt theo mặc định: chỉ bật khi gỡ lỗi phiên âm, sau đó tắt lại."
+      },
       "updateChecks": {
         "label": "Kiểm tra cập nhật",
         "description": "Tự động kiểm tra phiên bản mới của Dictus"

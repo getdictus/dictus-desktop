@@ -582,6 +582,10 @@
         "title": "Log-Level",
         "description": "Ausführlichkeit der Protokollierung festlegen"
       },
+      "logTranscripts": {
+        "label": "Transkripte protokollieren",
+        "description": "Schreibt den diktierten Text auf Protokollebene Debug in die Logdatei. Standardmäßig aus: nur zum Debuggen einer Transkription einschalten und danach wieder aus."
+      },
       "updateChecks": {
         "label": "Nach Updates suchen",
         "description": "Automatisch nach neuen Versionen von Dictus suchen"

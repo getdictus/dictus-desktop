@@ -365,6 +365,8 @@ pub struct AppSettings {
     #[serde(default = "default_log_level")]
     pub log_level: LogLevel,
     #[serde(default)]
+    pub log_transcripts: bool,
+    #[serde(default)]
     pub custom_words: Vec<String>,
     #[serde(default)]
     pub model_unload_timeout: ModelUnloadTimeout,
@@ -979,6 +981,7 @@ pub fn get_default_settings() -> AppSettings {
         overlay_position: default_overlay_position(),
         debug_mode: false,
         log_level: default_log_level(),
+        log_transcripts: false,
         custom_words: Vec::new(),
         model_unload_timeout: ModelUnloadTimeout::default(),
         word_correction_threshold: default_word_correction_threshold(),
@@ -1050,7 +1053,7 @@ pub fn load_or_create_app_settings(app: &AppHandle) -> AppSettings {
         // Parse the entire settings object
         match serde_json::from_value::<AppSettings>(settings_value) {
             Ok(mut settings) => {
-                debug!("Found existing settings: {:?}", settings);
+                debug!("Found existing settings");
                 let default_settings = get_default_settings();
                 let mut updated = false;
 

@@ -582,6 +582,10 @@
         "title": "Log Level",
         "description": "Set the verbosity of logging"
       },
+      "logTranscripts": {
+        "label": "Log transcripts",
+        "description": "Write dictated text to the log file at Debug log level. Off by default: turn it on only to debug a transcription, then off again."
+      },
       "updateChecks": {
         "label": "Check for Updates",
         "description": "Automatically check for new versions of Dictus"

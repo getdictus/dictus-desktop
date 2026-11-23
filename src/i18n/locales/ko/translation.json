@@ -582,6 +582,10 @@
         "title": "로그 레벨",
         "description": "로깅의 상세도 설정"
       },
+      "logTranscripts": {
+        "label": "전사 내용 로그 기록",
+        "description": "받아쓴 텍스트를 Debug 로그 수준으로 로그 파일에 기록합니다. 기본값은 꺼짐입니다. 전사를 디버깅할 때만 켜고 끝나면 다시 끄세요."
+      },
       "updateChecks": {
         "label": "업데이트 확인",
         "description": "Dictus의 새 버전을 자동으로 확인합니다"

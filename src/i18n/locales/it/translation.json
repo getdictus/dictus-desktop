@@ -582,6 +582,10 @@
         "title": "Livello di Log",
         "description": "Scegli il livello di dettaglio dei log"
       },
+      "logTranscripts": {
+        "label": "Registra le trascrizioni",
+        "description": "Scrive il testo dettato nel file di log a livello Debug. Disattivato per impostazione predefinita: attivalo solo per il debug di una trascrizione, poi disattivalo."
+      },
       "updateChecks": {
         "label": "Controlla aggiornamenti",
         "description": "Controlla automaticamente la disponibilità di nuove versioni di Dictus"
