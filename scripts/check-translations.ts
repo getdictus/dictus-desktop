@@ -161,20 +161,8 @@ function isAllowlisted(dotKey: string): boolean {
     "settings.advanced.groups.app",
     "settings.advanced.groups.output",
     "settings.general.title",
-    // Pre-existing: EN source for modelsAndLocalProcessing uses French strings (historical bug)
-    // FR locale correctly matches EN source; other locales should have their own translations
-    "settings.postProcessing.modelsAndLocalProcessing.title",
-    "settings.postProcessing.modelsAndLocalProcessing.subtitle",
-    "settings.postProcessing.modelsAndLocalProcessing.learnMore",
-    "settings.postProcessing.modelsAndLocalProcessing.statusBadge.ready_one",
-    "settings.postProcessing.modelsAndLocalProcessing.statusBadge.ready_other",
-    "settings.postProcessing.modelsAndLocalProcessing.selectedModel.title",
-    "settings.postProcessing.modelsAndLocalProcessing.selectedModel.cloudSelectedNotice",
+    // "Local" is kept as-is in Spanish and Portuguese, like settings.postProcessing.tabs.local
     "settings.postProcessing.modelsAndLocalProcessing.selectedModel.tags.local",
-    "settings.postProcessing.modelsAndLocalProcessing.selectedModel.tags.private",
-    "settings.postProcessing.modelsAndLocalProcessing.selectedModel.tags.noDataSent",
-    "settings.postProcessing.modelsAndLocalProcessing.selectedModel.tags.offlineCapable",
-    "settings.postProcessing.modelsAndLocalProcessing.selectedModel.recommendedBadge",
   ];
   if (UNTRANSLATED_ALLOWLIST_EXACT.includes(dotKey)) return true;
 
@@ -256,6 +244,22 @@ function checkUntranslated(referenceData: TranslationData): boolean {
   return hasUntranslated;
 }
 
+// French markers in the English reference: accented letters, guillemets and
+// common French words. The English source once shipped a whole French block
+// (#88), which the key check cannot see because the keys exist everywhere.
+const FRENCH_MARKERS =
+  /[àâæçéèêëîïôœùûüÿ«»]|\b(?:le|la|les|des|du|une|et|est|pour|votre|vos|vous|avec|dans|sur|aucune?|hors|modèles?|savoir|ci-dessous)\b/iu;
+
+function findFrenchInReference(referenceData: TranslationData): string[] {
+  return getAllKeyPaths(referenceData)
+    .filter((keyPath) => {
+      let cur: unknown = referenceData;
+      for (const k of keyPath) cur = (cur as Record<string, unknown>)[k];
+      return typeof cur === "string" && FRENCH_MARKERS.test(cur);
+    })
+    .map((keyPath) => keyPath.join("."));
+}
+
 function validateTranslations(): void {
   console.log(colorize("\n🌍 Translation Consistency Check\n", "blue"));
 
@@ -273,6 +277,18 @@ function validateTranslations(): void {
   // Get all key paths from reference
   const referenceKeyPaths = getAllKeyPaths(referenceData);
   console.log(`Reference has ${referenceKeyPaths.length} keys\n`);
+
+  const frenchInReference = findFrenchInReference(referenceData);
+  if (frenchInReference.length > 0) {
+    console.log(
+      colorize(
+        `✗ ${REFERENCE_LANG.toUpperCase()}: ${frenchInReference.length} value(s) look French:`,
+        "red",
+      ),
+    );
+    frenchInReference.forEach((k) => console.log(`    - ${k}`));
+    console.log("");
+  }
 
   // Track validation results
   let hasErrors = false;
@@ -368,13 +384,21 @@ function validateTranslations(): void {
   const validCount = Object.values(results).filter((r) => r.valid).length;
   const totalCount = LANGUAGES.length;
 
-  if (hasErrors) {
+  if (hasErrors || frenchInReference.length > 0) {
     console.log(
       colorize(
         `\n✗ Validation failed: ${validCount}/${totalCount} languages passed`,
         "red",
       ),
     );
+    if (frenchInReference.length > 0) {
+      console.log(
+        colorize(
+          `✗ ${REFERENCE_LANG.toUpperCase()} reference has ${frenchInReference.length} French value(s)`,
+          "red",
+        ),
+      );
+    }
     process.exit(1);
   } else {
     console.log(
