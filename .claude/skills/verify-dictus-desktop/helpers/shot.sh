@@ -12,7 +12,8 @@ if [ "$(ledger_get "$run" TIER)" = tier2 ]; then
   ffmpeg -loglevel error -y -i "$run/$name.ppm" "$out" && rm -f "$run/$name.ppm"
 else
   export DISPLAY="$(ledger_get "$run" DISPLAY)"
-  read -r _ geo < <("$DICTUS_HELPERS/x.py" window)
+  finder=x.py; [ "$(ledger_get "$run" WM_KIND)" = gnome-wayland ] && finder=wm.py
+  read -r _ geo < <(DICTUS_VERIFY_RUN="$run" "$DICTUS_HELPERS/$finder" window)
   size="${geo%%+*}"; off="${geo#*+}"
   ffmpeg -loglevel error -y -f x11grab -draw_mouse 0 -video_size "$size" -i "$DISPLAY+${off/+/,}" -frames:v 1 "$out"
 fi

@@ -1,16 +1,19 @@
 #!/usr/bin/env bash
 # Tier 1: build the debug .deb under the shared lock, extract it, start it on a private Xvfb with a
 # private D-Bus and an empty HOME/XDG tree. Any failure runs cleanup.sh before exiting.
-#   launch.sh [--no-build] [--release] [--deb <file.deb>] [--model <id>] [--mic] [label]
+#   launch.sh [--no-build] [--release] [--deb <file.deb>] [--model <id>] [--mic] [--wm <wm>] [--env K=V] [label]
 #   --release     build (or with --no-build, reuse) the release .deb instead of the debug one
 #   --model <id>  put that catalogue model (from model-cache.sh) in the isolated data dir before the app starts
 #   --mic         private PipeWire with a virtual source in the scratch dir (mic.py), started before the app
+#   --wm <wm>     a real desktop on the Xvfb before the app: openbox (X11, server-side title bar) or
+#                 gnome-wayland (GNOME Shell nested as a Wayland compositor; the app runs as a Wayland client)
+#   --env K=V     add K=V to the app's environment (repeatable), e.g. GTK_CSD=1, DICTUS_DEV_NO_FOCUS=0
 #   DICTUS_APP_LANG=fr_FR.UTF-8 starts the app in another locale (default en_US.UTF-8)
 # Last line on success: READY run=<dir> display=:<n> pid=<pid> window=<id> geometry=<WxH+X+Y>
 set -euo pipefail
 source "$(dirname "$0")/env.sh"
 
-build=1 deb="" label="launch" model="" mic=0 profile=debug
+build=1 deb="" label="launch" model="" mic=0 profile=debug wm="" extra_env=()
 while [ $# -gt 0 ]; do
   case "$1" in
     --no-build) build=0 ;;
@@ -18,6 +21,8 @@ while [ $# -gt 0 ]; do
     --deb) deb="$2"; build=0; shift ;;
     --model) model="$2"; shift ;;
     --mic) mic=1 ;;
+    --wm) wm="$2"; shift ;;
+    --env) extra_env+=("$2"); shift ;;
     *) label="$1" ;;
   esac
   shift
@@ -102,35 +107,90 @@ ledger_set "$run" DISPLAY ":$n"
 for _ in $(seq 50); do [ -S "/tmp/.X11-unix/X$n" ] && break; sleep 0.2; done
 [ -S "/tmp/.X11-unix/X$n" ] || die "Xvfb :$n did not start: see $run/xvfb.log"
 
+dbus_args=(--session)
+if [ "$wm" = gnome-wayland ]; then
+  # No service activation: GNOME Shell would start some 25 services (portals, evolution, goa, gvfs,
+  # keyring) that outlive the bus and that Cleanup could not tie to this run.
+  cat > "$scratch/dbus.conf" <<'EOF'
+<!DOCTYPE busconfig PUBLIC "-//freedesktop//DTD D-Bus Bus Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">
+<busconfig>
+  <type>session</type>
+  <keep_umask/>
+  <listen>unix:tmpdir=/tmp</listen>
+  <auth>EXTERNAL</auth>
+  <policy context="default">
+    <allow send_destination="*" eavesdrop="true"/>
+    <allow eavesdrop="true"/>
+    <allow own="*"/>
+  </policy>
+</busconfig>
+EOF
+  dbus_args=(--config-file="$scratch/dbus.conf")
+fi
 dbus_out="$(env -i PATH="$PATH" HOME="$home" XDG_RUNTIME_DIR="$scratch/runtime" \
-  dbus-daemon --session --fork --nopidfile --print-address=1 --print-pid=1)"
+  dbus-daemon "${dbus_args[@]}" --fork --nopidfile --print-address=1 --print-pid=1)"
 dbus_addr="$(sed -n 1p <<< "$dbus_out")"
 ledger_set "$run" DBUS "$(pid_ref "$(sed -n 2p <<< "$dbus_out")")"
 
+wm_env=()
+[ "$wm" = gnome-wayland ] && wm_env=(GDK_BACKEND=wayland XDG_SESSION_TYPE=wayland WAYLAND_DISPLAY=wl-verify)
 app_env=(env -i PATH="/usr/local/bin:/usr/bin:/bin" HOME="$home" USER="$USER" LANG="${DICTUS_APP_LANG:-en_US.UTF-8}"
   XDG_CONFIG_HOME="$home/.config" XDG_CACHE_HOME="$home/.cache" XDG_DATA_HOME="$home/.local/share"
   XDG_STATE_HOME="$home/.local/state" XDG_RUNTIME_DIR="$scratch/runtime" XDG_SESSION_TYPE=x11
   DISPLAY=":$n" GDK_BACKEND=x11 DBUS_SESSION_BUS_ADDRESS="$dbus_addr"
-  WEBKIT_DISABLE_DMABUF_RENDERER=1)
+  WEBKIT_DISABLE_DMABUF_RENDERER=1 "${wm_env[@]}" "${extra_env[@]}")
 printf '%s\n' "${app_env[@]:1}" | grep -v '^DBUS' > "$run/app.env"
 printf '%s\n' "${app_env[@]:1}" > "$scratch/app.env"
+
+wm_base=(env -i PATH=/usr/bin:/bin HOME="$home" XDG_CONFIG_HOME="$home/.config" XDG_DATA_HOME="$home/.local/share"
+  XDG_CACHE_HOME="$home/.cache" XDG_RUNTIME_DIR="$scratch/runtime" DISPLAY=":$n" DBUS_SESSION_BUS_ADDRESS="$dbus_addr")
+[ -n "$wm" ] && ledger_set "$run" WM_KIND "$wm"
+case "$wm" in
+  "") ;;
+  openbox)
+    setsid "${wm_base[@]}" openbox < /dev/null > "$run/wm.log" 2>&1 &
+    ledger_set "$run" WM "$(pid_ref $!)"
+    sleep 1 ;;
+  gnome-wayland)
+    # GNOME Shell nested in the Xvfb as a Wayland compositor: XTEST input on the Xvfb reaches its
+    # Wayland clients. A test-only extension turns on unsafe mode so wm.py can read window state
+    # through org.gnome.Shell.Eval. GSettings come from a keyfile: there is no dconf service.
+    ext="$home/.local/share/gnome-shell/extensions/verify-dictus@local"
+    mkdir -p "$ext" "$home/.config/glib-2.0/settings"
+    printf '%s\n' '{"uuid": "verify-dictus@local", "name": "verify-dictus", "description": "Test only: allow Eval", "shell-version": ["46"]}' > "$ext/metadata.json"
+    printf '%s\n' 'export default class { enable() { global.context.unsafe_mode = true; } disable() {} }' > "$ext/extension.js"
+    printf '%s\n' "[org/gnome/shell]" "enabled-extensions=['verify-dictus@local']" "disable-user-extensions=false" \
+      "welcome-dialog-last-shown-version='999'" "[org/gnome/desktop/wm/preferences]" \
+      "button-layout='appmenu:${DICTUS_WM_BUTTONS:-minimize,maximize,close}'" > "$home/.config/glib-2.0/settings/keyfile"
+    setsid "${wm_base[@]}" GSETTINGS_BACKEND=keyfile XDG_SESSION_TYPE=wayland LIBGL_ALWAYS_SOFTWARE=1 \
+      MUTTER_DEBUG_DUMMY_MODE_SPECS=1280x900 gnome-shell --nested --wayland --wayland-display=wl-verify \
+      < /dev/null > "$run/wm.log" 2>&1 &
+    ledger_set "$run" WM "$(pid_ref $!)"
+    for _ in $(seq 60); do DICTUS_VERIFY_RUN="$run" "$DICTUS_HELPERS/wm.py" ping > /dev/null 2>&1 && break; sleep 0.5; done
+    DICTUS_VERIFY_RUN="$run" "$DICTUS_HELPERS/wm.py" ping > /dev/null || die "GNOME Shell did not start: see $run/wm.log"
+    DISPLAY=":$n" "$DICTUS_HELPERS/x.py" key Escape > /dev/null ;;
+  *) die "--wm: openbox or gnome-wayland, not $wm" ;;
+esac
+[ -n "$wm" ] && report "$run" "WM $wm $(ledger_get "$run" WM)"
 launched="$(date +%s)"
 setsid "${app_env[@]}" "$bin" < /dev/null > "$run/app.log" 2>&1 &
 app=$!
 ledger_set "$run" APP "$(pid_ref "$app")"
 report "$run" "LAUNCHED pid=$app display=:$n deb_sha=$(ledger_get "$run" DEB_SHA)"
 
-win=""
+win="" finder=x.py
+[ "$wm" = gnome-wayland ] && finder=wm.py
 for _ in $(seq 90); do
   ref_alive "$(ledger_get "$run" APP)" || die "dictus exited during startup: see $run/app.log"
-  win="$(DISPLAY=":$n" "$DICTUS_HELPERS/x.py" window 2>/dev/null | awk '{print $1}')" && [ -n "$win" ] && break
+  win="$(DISPLAY=":$n" DICTUS_VERIFY_RUN="$run" "$DICTUS_HELPERS/$finder" window 2>/dev/null | awk '{print $1}')" && [ -n "$win" ] && break
   sleep 1
 done
 [ -n "$win" ] || die "no Dictus window after 90 s: see $run/app.log"
 sleep 3
 ref_alive "$(ledger_get "$run" APP)" || die "dictus exited right after its window appeared: see $run/app.log"
 report "$run" "WINDOW after $(($(date +%s) - launched))s"
-geo="$(DISPLAY=":$n" "$DICTUS_HELPERS/x.py" window | awk '{print $2}')"
+geo="$(DISPLAY=":$n" DICTUS_VERIFY_RUN="$run" "$DICTUS_HELPERS/$finder" window | awk '{print $2}')"
 DICTUS_VERIFY_RUN="$run" "$DICTUS_HELPERS/shot.sh" 00-launch > /dev/null
 echo "READY run=$run display=:$n pid=$app window=$win geometry=$geo"
 report "$run" "READY display=:$n pid=$app window=$win geometry=$geo"

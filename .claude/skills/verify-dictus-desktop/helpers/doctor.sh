@@ -64,7 +64,8 @@ if [ -n "$run" ]; then
   if [ "$(ledger_get "$run" TIER)" = tier1 ]; then
     ref_alive "$(ledger_get "$run" XVFB)" && ok "Xvfb $(ledger_get "$run" DISPLAY) is this run's" || fail "Xvfb of this run is gone"
     ref_alive "$app_ref" && ok "dictus pid ${app_ref%%:*} is this run's (deb sha $(ledger_get "$run" DEB_SHA))" || fail "dictus of this run is not running: see $run/app.log"
-    w="$(DISPLAY="$(ledger_get "$run" DISPLAY)" "$DICTUS_HELPERS/x.py" window 2>/dev/null)" && ok "window $w" || fail "no mapped Dictus window"
+    finder=x.py; [ "$(ledger_get "$run" WM_KIND)" = gnome-wayland ] && finder=wm.py
+    w="$(DISPLAY="$(ledger_get "$run" DISPLAY)" DICTUS_VERIFY_RUN="$run" "$DICTUS_HELPERS/$finder" window 2>/dev/null)" && ok "window $w" || fail "no mapped Dictus window"
     home="$(sed -n 's/^HOME=//p' "$run/app.env")"
     case "$home" in /tmp/verify-dictus-desktop.*/home) ok "app HOME is isolated: $home" ;; *) fail "app HOME is not isolated: $home" ;; esac
     if [ -n "$(ledger_get "$run" PIPEWIRE)" ]; then

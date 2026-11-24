@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Undo exactly what the run ledger (<run-dir>/run.env) lists, keep the evidence. Safe to run twice.
 #   cleanup.sh [run-dir]
-# Order: app, private PipeWire, D-Bus, Xvfb, HTTP server, VM (destroy + revert to the clean snapshot),
+# Order: app, window manager, private PipeWire, D-Bus, Xvfb, HTTP server, VM (destroy + revert to the clean snapshot),
 # test-voices corpus clone, scratch dir (isolated HOME/XDG, extracted .deb, models, history, recordings,
 # installers), watchdog, lock. Also deletes any corpus clone left by a run that died without cleanup.
 # Kills only the process groups this run started, checked by pid AND start time. Never by name.
@@ -28,6 +28,7 @@ kill_group() {
 }
 
 kill_group APP
+kill_group WM
 kill_group PIPEWIRE
 dbus="$(ledger_get "$run" DBUS)"
 if [ -n "$dbus" ] && ref_alive "$dbus"; then
