@@ -211,7 +211,7 @@ Single-context: `CONTEXT.md` and `docs/adr/` at the repo root, both created lazi
 
 ### Verification and test tiers
 
-Use the `verify-dictus-desktop` skill (`.claude/skills/verify-dictus-desktop/`) for any change with a user-visible effect, before opening the PR. It builds the debug `.deb` under the shared lock `/tmp/dictus-gradle.lock`, runs it on a private Xvfb with a private D-Bus and an empty HOME, drives it, captures evidence outside the repository and cleans up, checking that Pierre's real data is untouched.
+Use the `verify-dictus-desktop` skill (`.claude/skills/verify-dictus-desktop/`) for any change with a user-visible effect, before opening the PR. It builds the debug `.deb`, holding the shared lock `/tmp/dictus-gradle.lock` around each compile command only, then runs it under its own run lock `/tmp/dictus-desktop-run.lock` on a private Xvfb with a private D-Bus and an empty HOME, drives it, captures evidence outside the repository and cleans up, checking that Pierre's real data is untouched.
 
 A PR that adds or changes a user-facing feature or screen MUST update the skill's `features/` and `features/screens.md` in the same PR, with the same IDs as the iOS and Android maps (`getdictus/dictus-ios`, `getdictus/dictus-android`, `.claude/skills/verify-dictus-*/features/`). The PR body names the tier used and what was left to the next tier.
 
@@ -222,7 +222,7 @@ Four test tiers, detailed in the skill's `SKILL.md` → Test tiers:
 3. macOS on Pierre's Mac, from a T3 thread on the Mac, for macOS-specific behaviour only, never stealing focus.
 4. Pierre: real voice, transcription quality, feel. Batch test; nothing is merged before his OK.
 
-The machine is shared: hold the lock only while a build or the app runs, never leave anything running, and never put destructive commands (`rm`, `kill`, `virsh destroy`) inside `bash -c` strings or loops; use the skill's helpers.
+The machine is shared: hold `/tmp/dictus-gradle.lock` only while a compile runs (never while the app or the VM runs), never leave anything running, and never put destructive commands (`rm`, `kill`, `virsh destroy`) inside `bash -c` strings or loops; use the skill's helpers.
 
 **Release gate:** `release.yml` only creates a draft. Nothing is published before the tiers run on the draft's own artifacts and Pierre gives a written OK; see `docs/RUNBOOK-updater-signing.md` §6.
 

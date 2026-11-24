@@ -14,7 +14,8 @@ case "${1:?section}" in
   transcribe-file) y=276 ;; post-process|debug) y=319 ;; about) y=${DICTUS_ABOUT_Y:-319} ;;
   *) die "unknown section $1" ;;
 esac
-"$DICTUS_HELPERS/x.py" click 70 "$y" > /dev/null
+s="${DICTUS_GDK_SCALE:-1}"
+"$DICTUS_HELPERS/x.py" click $((70 * s)) $((y * s)) > /dev/null
 sleep 1.5
 report "$run" "nav $1"
 echo "nav $1"

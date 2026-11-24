@@ -355,7 +355,7 @@ minisign -Vm "$f" -x "$f.minisig" -P "$PUBKEY"
 
 ### 6.7 Automated tests on the draft artifacts
 
-Run with the `verify-dictus-desktop` skill (`.claude/skills/verify-dictus-desktop/`, helpers in `helpers/`), from a checkout of `main`, **on files downloaded from the draft** with `dl`, never on a local build. Each tier writes its evidence under the skill's evidence root, outside the repository, and ends with a short report. The machine is shared: the helpers take and release `/tmp/dictus-gradle.lock`, and every run ends with `cleanup.sh`.
+Run with the `verify-dictus-desktop` skill (`.claude/skills/verify-dictus-desktop/`, helpers in `helpers/`), from a checkout of `main`, **on files downloaded from the draft** with `dl`, never on a local build. Each tier writes its evidence under the skill's evidence root, outside the repository, and ends with a short report. The machine is shared: the helpers hold the skill's run lock `/tmp/dictus-desktop-run.lock` while the app or the VM runs, never the shared build lock `/tmp/dictus-gradle.lock` (these runs build nothing), and every run ends with `cleanup.sh`.
 
 The target journey on each platform is: install → start → onboarding → one dictation of a reference audio file → the right version shown. Dictation is not automated on any tier yet (§6.11); it stays on the maintainer's checklist.
 
@@ -383,7 +383,7 @@ Then, in a session started with `$H/launch.sh --deb "$PWD/Dictus_${V}_amd64.deb"
 
 ```bash
 dl "Dictus_${V}_x64-setup.exe"; dl "Dictus_${V}_x64_en-US.msi"
-$H/vm.sh start                       # revert to clean-no-vcredist, lock, guest-ping. Ends: VM READY run=<run-dir> …
+$H/vm.sh start                       # revert to clean-no-vcredist, run lock, guest-ping. Ends: VM READY run=<run-dir> …
 RUN=<run-dir from VM READY>
 I="$(sed -n 's/^SCRATCH=//p' "$RUN/run.env" | tail -1)/installers"
 mkdir -p "$I" && cp "Dictus_${V}_x64-setup.exe" "Dictus_${V}_x64_en-US.msi" "$I/"
@@ -396,7 +396,7 @@ $H/vm.sh ps '(Get-Item C:\Users\dictus\AppData\Local\Dictus\dictus.exe).VersionI
 $H/vm.sh ps '(Get-Process dictus).Modules | ? ModuleName -match "^(vcruntime|msvcp)140" | % FileName'
 # expected: the runtime DLLs load from the Dictus install folder
 $H/shot.sh 01-vm-nsis                # the whole VM screen: check it shows nothing private
-$H/cleanup.sh                        # revert the snapshot, stop HTTP, delete installers, release the lock
+$H/cleanup.sh                        # revert the snapshot, stop HTTP, delete installers, release the run lock
 ```
 
 Then the MSI (per machine), in a new run from `vm.sh start`, with the same ledger step pointing at the `.msi`, `vm.sh serve`, and:
