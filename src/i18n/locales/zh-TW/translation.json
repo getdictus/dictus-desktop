@@ -767,6 +767,8 @@
     "pasteFailed": "無法將文字貼上至目前作用中的應用程式。",
     "transcriptionFailedTitle": "轉錄失敗",
     "transcriptionFailed": "錄音已儲存在歷史記錄中。請在歷史記錄中重新轉錄，或選擇其他模型。",
+    "microphoneStalledTitle": "麥克風沒有回應",
+    "microphoneStalled": "麥克風沒有傳來音訊，因此沒有錄到任何內容。使用藍牙耳機時可能發生這種情況。您現在可以重新錄音，或選擇其他麥克風。",
     "boundary": {
       "title": "發生錯誤。",
       "reload": "重新載入"
@@ -782,7 +784,8 @@
     "transcribing": "正在轉錄...",
     "processing": "處理中...",
     "postProcessUnavailable": "請設定用於後處理的模型",
-    "transcriptionFailed": "轉錄失敗"
+    "transcriptionFailed": "轉錄失敗",
+    "microphoneStalled": "麥克風沒有回應"
   },
   "smartModes": {
     "sections": {

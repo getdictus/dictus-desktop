@@ -767,6 +767,8 @@
     "pasteFailed": "تعذر لصق النص في التطبيق النشط.",
     "transcriptionFailedTitle": "فشل التفريغ النصي",
     "transcriptionFailed": "تم حفظ تسجيلك في السجل. أعد تفريغه من هناك أو اختر نموذجًا آخر.",
+    "microphoneStalledTitle": "توقف الميكروفون عن الاستجابة",
+    "microphoneStalled": "لم يصل أي صوت من الميكروفون، لذلك لم يُسجَّل شيء. قد يحدث هذا مع سماعات البلوتوث. يمكنك التسجيل مرة أخرى الآن أو اختيار ميكروفون آخر.",
     "boundary": {
       "title": "حدث خطأ ما.",
       "reload": "إعادة التحميل"
@@ -782,7 +784,8 @@
     "transcribing": "...جاري التفريغ",
     "processing": "...جاري المعالجة",
     "postProcessUnavailable": "قم بإعداد نموذج للمعالجة اللاحقة",
-    "transcriptionFailed": "فشل التفريغ النصي"
+    "transcriptionFailed": "فشل التفريغ النصي",
+    "microphoneStalled": "توقف الميكروفون عن الاستجابة"
   },
   "smartModes": {
     "sections": {

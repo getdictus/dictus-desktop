@@ -767,6 +767,8 @@
     "pasteFailed": "Nie można było wkleić tekstu do aktywnej aplikacji.",
     "transcriptionFailedTitle": "Transkrypcja nie powiodła się",
     "transcriptionFailed": "Nagranie zostało zapisane w historii. Transkrybuj je ponownie stamtąd lub wybierz inny model.",
+    "microphoneStalledTitle": "Mikrofon przestał odpowiadać",
+    "microphoneStalled": "Z mikrofonu nie dotarł żaden dźwięk, więc nic nie zostało nagrane. Może się to zdarzyć przy słuchawkach Bluetooth. Możesz od razu nagrać ponownie lub wybrać inny mikrofon.",
     "boundary": {
       "title": "Coś poszło nie tak.",
       "reload": "Przeładuj"
@@ -782,7 +784,8 @@
     "transcribing": "Transkrypcja...",
     "processing": "Przetwarzanie...",
     "postProcessUnavailable": "Skonfiguruj model do przetwarzania końcowego",
-    "transcriptionFailed": "Transkrypcja nie powiodła się"
+    "transcriptionFailed": "Transkrypcja nie powiodła się",
+    "microphoneStalled": "Mikrofon przestał odpowiadać"
   },
   "smartModes": {
     "sections": {

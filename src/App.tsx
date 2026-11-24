@@ -112,6 +112,10 @@ function App() {
         toast.error(t("errors.noInputDeviceTitle"), {
           description: t("errors.noInputDevice"),
         });
+      } else if (error_type === "microphone_stalled") {
+        toast.error(t("errors.microphoneStalledTitle"), {
+          description: t("errors.microphoneStalled"),
+        });
       } else {
         toast.error(
           t("errors.recordingFailed", { error: detail ?? "Unknown error" }),

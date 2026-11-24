@@ -767,6 +767,8 @@
     "pasteFailed": "无法将文本粘贴到当前活动的应用程序中。",
     "transcriptionFailedTitle": "转录失败",
     "transcriptionFailed": "录音已保存在历史记录中。请在历史记录中重新转录，或选择其他模型。",
+    "microphoneStalledTitle": "麦克风无响应",
+    "microphoneStalled": "麦克风没有传来音频，因此未录到任何内容。使用蓝牙耳机时可能出现这种情况。您现在可以重新录音，或选择其他麦克风。",
     "boundary": {
       "title": "出现错误。",
       "reload": "重新加载"
@@ -782,7 +784,8 @@
     "transcribing": "正在转录...",
     "processing": "处理中...",
     "postProcessUnavailable": "请配置用于后处理的模型",
-    "transcriptionFailed": "转录失败"
+    "transcriptionFailed": "转录失败",
+    "microphoneStalled": "麦克风无响应"
   },
   "smartModes": {
     "sections": {

@@ -1,6 +1,7 @@
 use crate::actions::ACTION_MAP;
 use crate::managers::audio::AudioRecordingManager;
 use log::{debug, error, warn};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::mpsc::{self, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -105,6 +106,90 @@ impl TranscriptionActivity {
 impl Default for TranscriptionActivity {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+/// Cancellation of the live dictation pipeline once recording has stopped
+/// (#27). The overlay's cancel button and the tray's Cancel stay available
+/// while the audio is transcribed and post-processed; cancelling then discards
+/// the result: nothing is pasted or saved, and a running post-processing
+/// request is dropped. The transcription engine call itself is not interrupted:
+/// it finishes in the background and its text is thrown away.
+///
+/// Each pipeline takes a [`CancelToken`] when it starts; [`cancel`] cancels
+/// every token taken so far.
+///
+/// [`cancel`]: DictationCancel::cancel
+pub struct DictationCancel {
+    epoch: tokio::sync::watch::Sender<u64>,
+    in_flight: Arc<AtomicUsize>,
+}
+
+impl DictationCancel {
+    pub fn new() -> Self {
+        Self {
+            epoch: tokio::sync::watch::Sender::new(0),
+            in_flight: Arc::new(AtomicUsize::new(0)),
+        }
+    }
+
+    /// A token for a pipeline starting now. The pipeline counts as in flight
+    /// until the token and all its clones are dropped.
+    pub fn token(&self) -> CancelToken {
+        self.in_flight.fetch_add(1, Ordering::SeqCst);
+        let rx = self.epoch.subscribe();
+        let start = *rx.borrow();
+        CancelToken {
+            rx,
+            start,
+            _in_flight: Arc::new(InFlight(self.in_flight.clone())),
+        }
+    }
+
+    /// Cancels every pipeline started so far. Returns whether one was running.
+    pub fn cancel(&self) -> bool {
+        self.epoch.send_modify(|e| *e += 1);
+        self.in_flight.load(Ordering::SeqCst) > 0
+    }
+}
+
+impl Default for DictationCancel {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+struct InFlight(Arc<AtomicUsize>);
+
+impl Drop for InFlight {
+    fn drop(&mut self) {
+        self.0.fetch_sub(1, Ordering::SeqCst);
+    }
+}
+
+#[derive(Clone)]
+pub struct CancelToken {
+    rx: tokio::sync::watch::Receiver<u64>,
+    start: u64,
+    _in_flight: Arc<InFlight>,
+}
+
+impl CancelToken {
+    pub fn is_cancelled(&self) -> bool {
+        *self.rx.borrow() != self.start
+    }
+
+    /// Runs `work` unless the pipeline is cancelled first, in which case
+    /// `work` is dropped (aborting it) and `None` is returned.
+    pub async fn run<F: std::future::Future>(&self, work: F) -> Option<F::Output> {
+        let mut rx = self.rx.clone();
+        let start = self.start;
+        tokio::select! {
+            biased;
+            // A closed channel (app shutting down) disables this branch.
+            Ok(_) = rx.wait_for(|e| *e != start) => None,
+            out = work => Some(out),
+        }
     }
 }
 
@@ -291,6 +376,98 @@ fn stop(app: &AppHandle, stage: &mut Stage, binding_id: &str, hotkey_string: &st
     };
     action.stop(app, binding_id, hotkey_string);
     *stage = Stage::Processing;
+}
+
+#[cfg(test)]
+mod cancel_tests {
+    //! #27: cancelling while the dictation is transcribed or post-processed
+    //! must keep its text from being pasted.
+    use super::DictationCancel;
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::Arc;
+    use std::time::Duration;
+
+    #[test]
+    fn cancel_reaches_a_running_pipeline_only() {
+        let cancel = DictationCancel::new();
+        assert!(!cancel.cancel(), "nothing in flight yet");
+
+        let token = cancel.token();
+        assert!(
+            !token.is_cancelled(),
+            "an earlier cancel must not reach a later pipeline"
+        );
+        assert!(cancel.cancel(), "a pipeline was in flight");
+        assert!(token.is_cancelled());
+        assert!(token.clone().is_cancelled());
+
+        drop(token);
+        assert!(!cancel.cancel(), "the pipeline has ended");
+        assert!(!cancel.token().is_cancelled());
+    }
+
+    #[test]
+    fn in_flight_lasts_until_every_clone_is_dropped() {
+        let cancel = DictationCancel::new();
+        let token = cancel.token();
+        let for_paste = token.clone();
+        drop(token);
+        assert!(cancel.cancel(), "the paste closure still holds a clone");
+        drop(for_paste);
+        assert!(!cancel.cancel());
+    }
+
+    #[tokio::test]
+    async fn cancel_during_post_processing_drops_the_work() {
+        let cancel = Arc::new(DictationCancel::new());
+        let token = cancel.token();
+        let pasted = Arc::new(AtomicBool::new(false));
+
+        // A post-processing step that takes a while, then "pastes".
+        let work = {
+            let pasted = pasted.clone();
+            async move {
+                tokio::time::sleep(Duration::from_millis(300)).await;
+                pasted.store(true, Ordering::SeqCst);
+                "processed text"
+            }
+        };
+        let canceller = {
+            let cancel = cancel.clone();
+            tokio::spawn(async move {
+                tokio::time::sleep(Duration::from_millis(50)).await;
+                cancel.cancel();
+            })
+        };
+
+        assert_eq!(token.run(work).await, None);
+        canceller.await.unwrap();
+        tokio::time::sleep(Duration::from_millis(400)).await;
+        assert!(
+            !pasted.load(Ordering::SeqCst),
+            "cancelled work must never paste"
+        );
+    }
+
+    #[tokio::test]
+    async fn cancel_before_post_processing_skips_it() {
+        let cancel = DictationCancel::new();
+        let token = cancel.token();
+        cancel.cancel();
+        let ran = AtomicBool::new(false);
+        assert_eq!(
+            token.run(async { ran.store(true, Ordering::SeqCst) }).await,
+            None
+        );
+        assert!(!ran.load(Ordering::SeqCst));
+    }
+
+    #[tokio::test]
+    async fn uncancelled_work_completes() {
+        let cancel = DictationCancel::new();
+        let token = cancel.token();
+        assert_eq!(token.run(async { 42 }).await, Some(42));
+    }
 }
 
 #[cfg(test)]

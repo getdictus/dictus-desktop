@@ -383,6 +383,8 @@ pub enum OverlayError {
     PostProcessUnavailable,
     /// The engine returned an error; the recording is kept in History.
     TranscriptionFailed,
+    /// The microphone stopped delivering audio (#27); nothing was recorded.
+    MicrophoneStalled,
 }
 
 impl OverlayError {
@@ -390,6 +392,7 @@ impl OverlayError {
         match self {
             OverlayError::PostProcessUnavailable => "post-process-unavailable",
             OverlayError::TranscriptionFailed => "transcription-failed",
+            OverlayError::MicrophoneStalled => "microphone-stalled",
         }
     }
 }
@@ -492,6 +495,7 @@ mod tests {
         for error in [
             OverlayError::PostProcessUnavailable,
             OverlayError::TranscriptionFailed,
+            OverlayError::MicrophoneStalled,
         ] {
             let entry = format!("\"{}\": \"", error.state());
             let key = overlay

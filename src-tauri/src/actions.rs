@@ -12,7 +12,7 @@ use crate::utils::{
     self, flash_error_overlay, show_processing_overlay, show_recording_overlay,
     show_transcribing_overlay, OverlayError,
 };
-use crate::TranscriptionCoordinator;
+use crate::{DictationCancel, TranscriptionCoordinator};
 use ferrous_opencc::{config::BuiltinConfig, OpenCC};
 use log::{debug, error, warn};
 use once_cell::sync::Lazy;
@@ -35,6 +35,16 @@ impl Drop for FinishGuard {
     fn drop(&mut self) {
         if let Some(c) = self.0.try_state::<TranscriptionCoordinator>() {
             c.notify_processing_finished();
+        }
+    }
+}
+
+/// A cancelled dictation leaves nothing behind, as a cancel during recording
+/// does: its recording is deleted and no History entry is written.
+fn discard_cancelled_recording(wav_saved: bool, wav_path: &std::path::Path) {
+    if wav_saved {
+        if let Err(e) = std::fs::remove_file(wav_path) {
+            warn!("Failed to delete the cancelled recording: {}", e);
         }
     }
 }
@@ -737,6 +747,10 @@ fn spawn_transcription_task(
     // Play audio feedback for recording stop
     play_feedback_sound(app, SoundType::Stop);
 
+    // Taken before the task starts, so a cancel that lands at any point after
+    // this stop reaches it.
+    let cancel = app.state::<DictationCancel>().token();
+
     tauri::async_runtime::spawn(async move {
         let _guard = FinishGuard(ah.clone());
         debug!(
@@ -745,7 +759,37 @@ fn spawn_transcription_task(
         );
 
         let stop_recording_time = Instant::now();
-        if let Some(samples) = rm.stop_recording(&binding_id) {
+        let stopped = rm.stop_recording(&binding_id);
+
+        if cancel.is_cancelled() {
+            // Cancelled while the recorder was stopping: the overlay and tray
+            // are already idle; drop the audio without transcribing it.
+            debug!("Dictation cancelled before transcription; discarding the audio");
+            tm.maybe_unload_immediately("cancellation");
+            return;
+        }
+
+        if let Some(Err(e)) = &stopped {
+            // The stream stalled (#27). The recorder has been discarded and the
+            // next recording opens a fresh stream.
+            warn!(
+                "Recording could not be retrieved after {:?}: {e}",
+                stop_recording_time.elapsed()
+            );
+            let _ = ah.emit(
+                "recording-error",
+                RecordingErrorEvent {
+                    error_type: "microphone_stalled".to_string(),
+                    detail: None,
+                },
+            );
+            flash_error_overlay(&ah, OverlayError::MicrophoneStalled);
+            change_tray_icon(&ah, TrayIconState::Idle);
+            tm.maybe_unload_immediately("stalled recording");
+            return;
+        }
+
+        if let Some(Ok(samples)) = stopped {
             debug!(
                 "Recording stopped and samples retrieved in {:?}, sample count: {}",
                 stop_recording_time.elapsed(),
@@ -795,6 +839,12 @@ fn spawn_transcription_task(
                     }
                 };
 
+                if cancel.is_cancelled() {
+                    debug!("Dictation cancelled during transcription; discarding the result");
+                    discard_cancelled_recording(wav_saved, &wav_path_for_verify);
+                    return;
+                }
+
                 match transcription_result {
                     Ok(transcription) => {
                         debug!(
@@ -807,13 +857,22 @@ fn spawn_transcription_task(
                             show_processing_overlay(&ah);
                         }
                         let mode_id_ref = mode_id_override.as_deref();
-                        let processed = process_transcription_output(
-                            &ah,
-                            &transcription,
-                            post_process,
-                            mode_id_ref,
-                        )
-                        .await;
+                        // Dropped mid-flight on cancel, which aborts an LLM request.
+                        let processed = cancel
+                            .run(process_transcription_output(
+                                &ah,
+                                &transcription,
+                                post_process,
+                                mode_id_ref,
+                            ))
+                            .await;
+                        let Some(processed) = processed.filter(|_| !cancel.is_cancelled()) else {
+                            debug!(
+                                "Dictation cancelled during post-processing; discarding the result"
+                            );
+                            discard_cancelled_recording(wav_saved, &wav_path_for_verify);
+                            return;
+                        };
 
                         // Save to history if WAV was saved
                         if wav_saved {
@@ -842,7 +901,14 @@ fn spawn_transcription_task(
                             // paste the raw transcription so the user keeps their text,
                             // then show a hint pill instead of a silent dismiss.
                             let post_process_failed = processed.post_process_failed;
+                            let cancel = cancel.clone();
                             ah.run_on_main_thread(move || {
+                                // Last check, on the thread that pastes: a cancel
+                                // clicked while the paste was being queued wins.
+                                if cancel.is_cancelled() {
+                                    debug!("Dictation cancelled before paste; not pasting");
+                                    return;
+                                }
                                 match utils::paste(final_text, ah_clone.clone()) {
                                     Ok(()) => debug!(
                                         "Text pasted successfully in {:?}",

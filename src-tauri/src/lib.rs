@@ -41,7 +41,9 @@ use signal_hook::iterator::Signals;
 use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::Arc;
 use tauri::image::Image;
-pub use transcription_coordinator::{TranscriptionActivity, TranscriptionCoordinator};
+pub use transcription_coordinator::{
+    DictationCancel, TranscriptionActivity, TranscriptionCoordinator,
+};
 
 use tauri::tray::TrayIconBuilder;
 use tauri::{AppHandle, Emitter, Listener, Manager};
@@ -716,6 +718,7 @@ pub fn run(cli_args: CliArgs) {
             // before initialize_core_logic so both the dictation pipeline and
             // the import commands can reach them.
             app.manage(Arc::new(TranscriptionActivity::new()));
+            app.manage(DictationCancel::new());
             app.manage(Arc::new(file_transcription::FileTranscriptionState::new()));
 
             initialize_core_logic(&app_handle);

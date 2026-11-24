@@ -767,6 +767,8 @@
     "pasteFailed": "Texten kunde inte klistras in i det aktiva programmet.",
     "transcriptionFailedTitle": "Transkriberingen misslyckades",
     "transcriptionFailed": "Din inspelning finns sparad i historiken. Transkribera den igen därifrån eller välj en annan modell.",
+    "microphoneStalledTitle": "Mikrofonen slutade svara",
+    "microphoneStalled": "Inget ljud kom från mikrofonen, så inget spelades in. Det kan hända med Bluetooth-headset. Du kan spela in igen nu eller välja en annan mikrofon.",
     "boundary": {
       "title": "Något gick fel.",
       "reload": "Ladda om"
@@ -782,7 +784,8 @@
     "transcribing": "Transkriberar...",
     "processing": "Bearbetar...",
     "postProcessUnavailable": "Konfigurera en modell för efterbearbetning",
-    "transcriptionFailed": "Transkriberingen misslyckades"
+    "transcriptionFailed": "Transkriberingen misslyckades",
+    "microphoneStalled": "Mikrofonen slutade svara"
   },
   "smartModes": {
     "sections": {

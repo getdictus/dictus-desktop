@@ -767,6 +767,8 @@
     "pasteFailed": "Non è stato possibile incollare il testo nell'applicazione attiva.",
     "transcriptionFailedTitle": "Trascrizione non riuscita",
     "transcriptionFailed": "La registrazione è salvata nella cronologia. Trascrivila di nuovo da lì o scegli un altro modello.",
+    "microphoneStalledTitle": "Il microfono non risponde più",
+    "microphoneStalled": "Dal microfono non è arrivato alcun audio, quindi non è stato registrato nulla. Può succedere con le cuffie Bluetooth. Puoi registrare di nuovo subito o scegliere un altro microfono.",
     "boundary": {
       "title": "Si è verificato un errore.",
       "reload": "Ricarica"
@@ -782,7 +784,8 @@
     "transcribing": "Trascrizione...",
     "processing": "Elaborazione...",
     "postProcessUnavailable": "Configura un modello per la post-elaborazione",
-    "transcriptionFailed": "Trascrizione non riuscita"
+    "transcriptionFailed": "Trascrizione non riuscita",
+    "microphoneStalled": "Il microfono non risponde più"
   },
   "smartModes": {
     "sections": {

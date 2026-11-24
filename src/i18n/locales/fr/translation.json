@@ -767,6 +767,8 @@
     "pasteFailed": "Le texte n'a pas pu être collé dans l'application active.",
     "transcriptionFailedTitle": "Échec de la transcription",
     "transcriptionFailed": "Votre enregistrement est conservé dans l'historique. Relancez la transcription depuis l'historique, ou choisissez un autre modèle.",
+    "microphoneStalledTitle": "Le micro ne répond plus",
+    "microphoneStalled": "Aucun son n'est arrivé du micro, rien n'a été enregistré. Cela peut arriver avec un casque Bluetooth. Vous pouvez enregistrer de nouveau dès maintenant, ou choisir un autre micro.",
     "boundary": {
       "title": "Une erreur est survenue.",
       "reload": "Recharger"
@@ -782,7 +784,8 @@
     "transcribing": "Transcription...",
     "processing": "Traitement...",
     "postProcessUnavailable": "Configurez un modèle pour le post-traitement",
-    "transcriptionFailed": "Échec de la transcription"
+    "transcriptionFailed": "Échec de la transcription",
+    "microphoneStalled": "Le micro ne répond plus"
   },
   "smartModes": {
     "sections": {

@@ -767,6 +767,8 @@
     "pasteFailed": "Text could not be pasted into the active application.",
     "transcriptionFailedTitle": "Transcription failed",
     "transcriptionFailed": "Your recording is saved in History. Re-transcribe it there, or choose another model.",
+    "microphoneStalledTitle": "Microphone stopped responding",
+    "microphoneStalled": "No audio came from the microphone, so nothing was recorded. This can happen with Bluetooth headsets. You can record again now, or choose another microphone.",
     "boundary": {
       "title": "Something went wrong.",
       "reload": "Reload"
@@ -782,7 +784,8 @@
     "transcribing": "Transcribing...",
     "processing": "Processing...",
     "postProcessUnavailable": "Set up a model for post-processing",
-    "transcriptionFailed": "Transcription failed"
+    "transcriptionFailed": "Transcription failed",
+    "microphoneStalled": "Microphone stopped responding"
   },
   "smartModes": {
     "sections": {

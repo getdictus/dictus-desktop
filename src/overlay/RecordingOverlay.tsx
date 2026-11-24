@@ -12,13 +12,23 @@ type OverlayState =
   | "transcribing"
   | "processing"
   | "post-process-unavailable"
-  | "transcription-failed";
+  | "transcription-failed"
+  | "microphone-stalled";
 
 // The error states render a static text pill instead of the bars.
 const ERROR_TEXT_KEYS: Partial<Record<OverlayState, string>> = {
   "post-process-unavailable": "overlay.postProcessUnavailable",
   "transcription-failed": "overlay.transcriptionFailed",
+  "microphone-stalled": "overlay.microphoneStalled",
 };
+
+// Cancel stays reachable until the text is pasted (#27): while recording, and
+// while the audio is transcribed and post-processed.
+const CANCELLABLE_STATES: ReadonlySet<OverlayState> = new Set([
+  "recording",
+  "transcribing",
+  "processing",
+]);
 
 const BAR_COUNT = 30;
 
@@ -411,7 +421,7 @@ const RecordingOverlay: React.FC = () => {
         </div>
       </div>
 
-      {state === "recording" && (
+      {CANCELLABLE_STATES.has(state) && (
         <div
           className="cancel-pill"
           onClick={() => {

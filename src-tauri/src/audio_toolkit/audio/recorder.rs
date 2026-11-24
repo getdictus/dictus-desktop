@@ -2,9 +2,10 @@ use std::{
     io::Error,
     sync::{
         atomic::{AtomicBool, Ordering},
-        mpsc, Arc, Mutex,
+        mpsc::{self, RecvTimeoutError, TryRecvError},
+        Arc, Mutex,
     },
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use cpal::{
@@ -19,9 +20,61 @@ use crate::audio_toolkit::{
     VoiceActivityDetector,
 };
 
+/// How often the worker checks for commands when the stream delivers nothing.
+/// Before #27 commands were read only after a chunk arrived, so a stream that
+/// went silent (a Bluetooth headset changing route) left `Cmd::Stop` unread
+/// forever.
+const COMMAND_POLL: Duration = Duration::from_millis(50);
+
+/// How long the worker waits, after a stop, for the audio callback to confirm
+/// end-of-stream. A healthy callback runs every 10–100 ms; two seconds without
+/// one means the stream has stalled.
+const STALL_TIMEOUT: Duration = Duration::from_secs(2);
+
+/// How long `stop()` waits for the worker's reply. It covers the worker's worst
+/// healthy path (one `COMMAND_POLL`, the `STALL_TIMEOUT` drain, then resampling
+/// and VAD on the tail, a few ms) with room for a loaded machine. A normal stop
+/// replies in tens of milliseconds; past four seconds the worker itself is stuck
+/// and the caller gets an error instead of hanging.
+const STOP_REPLY_TIMEOUT: Duration = Duration::from_secs(4);
+
+/// How long `close()` waits for the worker to exit. Dropping a stream on a
+/// device that has gone away can block inside the audio backend; past this the
+/// worker is left to finish on its own.
+const CLOSE_TIMEOUT: Duration = Duration::from_secs(1);
+
+/// Why `AudioRecorder::stop` returned no samples.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum StopError {
+    /// The audio callback stopped delivering: the stream is dead.
+    Stalled,
+    /// The worker did not answer within `STOP_REPLY_TIMEOUT`.
+    Unresponsive,
+    /// The worker has exited (stream gone, recorder closed).
+    Closed,
+}
+
+impl std::fmt::Display for StopError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            StopError::Stalled => write!(
+                f,
+                "audio stream stalled: no audio from the input device for {STALL_TIMEOUT:?}"
+            ),
+            StopError::Unresponsive => write!(
+                f,
+                "recorder worker did not answer within {STOP_REPLY_TIMEOUT:?}"
+            ),
+            StopError::Closed => write!(f, "recorder worker has exited"),
+        }
+    }
+}
+
+impl std::error::Error for StopError {}
+
 enum Cmd {
     Start,
-    Stop(mpsc::Sender<Vec<f32>>),
+    Stop(mpsc::Sender<Result<Vec<f32>, StopError>>),
     Shutdown,
 }
 
@@ -201,20 +254,44 @@ impl AudioRecorder {
         Ok(())
     }
 
-    pub fn stop(&self) -> Result<Vec<f32>, Box<dyn std::error::Error>> {
-        let (resp_tx, resp_rx) = mpsc::channel();
-        if let Some(tx) = &self.cmd_tx {
-            tx.send(Cmd::Stop(resp_tx))?;
-        }
-        Ok(resp_rx.recv()?) // wait for the samples
+    /// Stops recording and returns the samples. Never blocks longer than
+    /// `STOP_REPLY_TIMEOUT`: on any error the stream should be closed and
+    /// reopened before the next recording.
+    pub fn stop(&self) -> Result<Vec<f32>, StopError> {
+        self.stop_within(STOP_REPLY_TIMEOUT)
     }
 
+    fn stop_within(&self, timeout: Duration) -> Result<Vec<f32>, StopError> {
+        let (resp_tx, resp_rx) = mpsc::channel();
+        let tx = self.cmd_tx.as_ref().ok_or(StopError::Closed)?;
+        tx.send(Cmd::Stop(resp_tx)).map_err(|_| StopError::Closed)?;
+        match resp_rx.recv_timeout(timeout) {
+            Ok(result) => result,
+            Err(RecvTimeoutError::Timeout) => Err(StopError::Unresponsive),
+            Err(RecvTimeoutError::Disconnected) => Err(StopError::Closed),
+        }
+    }
+
+    /// Shuts the worker down and waits up to `CLOSE_TIMEOUT` for it to exit.
+    /// A worker still stuck after that (its stream blocked in the backend) is
+    /// detached rather than joined, so closing never hangs.
     pub fn close(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         if let Some(tx) = self.cmd_tx.take() {
             let _ = tx.send(Cmd::Shutdown);
         }
         if let Some(h) = self.worker_handle.take() {
-            let _ = h.join();
+            let deadline = Instant::now() + CLOSE_TIMEOUT;
+            while !h.is_finished() && Instant::now() < deadline {
+                std::thread::sleep(Duration::from_millis(10));
+            }
+            if h.is_finished() {
+                let _ = h.join();
+            } else {
+                log::warn!(
+                    "Recorder worker did not exit within {:?}; detaching it",
+                    CLOSE_TIMEOUT
+                );
+            }
         }
         self.device = None;
         Ok(())
@@ -397,26 +474,40 @@ fn run_consumer(
         }
     }
 
-    while let Ok(chunk) = sample_rx.recv() {
-        let raw = match chunk {
-            AudioChunk::Samples(s) => s,
-            AudioChunk::EndOfStream => continue,
-        };
+    loop {
+        // Wait for audio, but never longer than COMMAND_POLL: commands must be
+        // honoured even when the stream has gone silent (#27).
+        match sample_rx.recv_timeout(COMMAND_POLL) {
+            Ok(AudioChunk::Samples(raw)) => {
+                // ---------- spectrum processing -------------------------- //
+                if let Some(buckets) = visualizer.feed(&raw) {
+                    if let Some(cb) = &level_cb {
+                        cb(buckets);
+                    }
+                }
 
-        // ---------- spectrum processing ---------------------------------- //
-        if let Some(buckets) = visualizer.feed(&raw) {
-            if let Some(cb) = &level_cb {
-                cb(buckets);
+                // ---------- existing pipeline ---------------------------- //
+                frame_resampler.push(&raw, &mut |frame: &[f32]| {
+                    handle_frame(frame, recording, &vad, &mut processed_samples)
+                });
             }
+            Ok(AudioChunk::EndOfStream) | Err(RecvTimeoutError::Timeout) => {}
+            // The stream (which owns the sender) is gone. Pending and later
+            // stops see the closed channel and report `StopError::Closed`.
+            Err(RecvTimeoutError::Disconnected) => return,
         }
 
-        // ---------- existing pipeline ------------------------------------ //
-        frame_resampler.push(&raw, &mut |frame: &[f32]| {
-            handle_frame(frame, recording, &vad, &mut processed_samples)
-        });
-
         // non-blocking check for a command
-        while let Ok(cmd) = cmd_rx.try_recv() {
+        loop {
+            let cmd = match cmd_rx.try_recv() {
+                Ok(cmd) => cmd,
+                Err(TryRecvError::Empty) => break,
+                // The recorder was dropped without close(): stop the stream.
+                Err(TryRecvError::Disconnected) => {
+                    stop_flag.store(true, Ordering::Relaxed);
+                    return;
+                }
+            };
             match cmd {
                 Cmd::Start => {
                     stop_flag.store(false, Ordering::Relaxed);
@@ -435,8 +526,9 @@ fn run_consumer(
                     // The cpal callback sees the stop flag, sends EndOfStream, and goes
                     // silent — guaranteeing every captured sample is in the channel
                     // ahead of the sentinel.
+                    let mut stalled = false;
                     loop {
-                        match sample_rx.recv_timeout(Duration::from_secs(2)) {
+                        match sample_rx.recv_timeout(STALL_TIMEOUT) {
                             Ok(AudioChunk::Samples(remaining)) => {
                                 frame_resampler.push(&remaining, &mut |frame: &[f32]| {
                                     handle_frame(frame, true, &vad, &mut processed_samples)
@@ -444,17 +536,30 @@ fn run_consumer(
                             }
                             Ok(AudioChunk::EndOfStream) => break,
                             Err(_) => {
-                                log::warn!("Timed out waiting for EndOfStream from audio callback");
+                                stalled = true;
                                 break;
                             }
                         }
+                    }
+
+                    if stalled {
+                        // The callback has stopped running: this stream is
+                        // dead and the caller will reopen it. What was
+                        // captured before the stall is discarded with it.
+                        log::warn!(
+                            "No EndOfStream from the audio callback within {:?}: stream stalled",
+                            STALL_TIMEOUT
+                        );
+                        processed_samples.clear();
+                        let _ = reply_tx.send(Err(StopError::Stalled));
+                        continue;
                     }
 
                     frame_resampler.finish(&mut |frame: &[f32]| {
                         handle_frame(frame, true, &vad, &mut processed_samples)
                     });
 
-                    let _ = reply_tx.send(std::mem::take(&mut processed_samples));
+                    let _ = reply_tx.send(Ok(std::mem::take(&mut processed_samples)));
 
                     // Resume the audio callback so the consumer loop can continue
                     // receiving chunks (important for always-on microphone mode).
@@ -466,6 +571,165 @@ fn run_consumer(
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod stall_tests {
+    //! #27: a stream that stops delivering audio (a Bluetooth headset changing
+    //! route) must not hang `stop()`. These drive the real worker loop with a
+    //! fake audio callback in place of cpal.
+    use super::*;
+    use std::thread;
+
+    /// A recorder whose worker is the real `run_consumer`, fed by `sample_rx`.
+    fn recorder_on(
+        sample_rx: mpsc::Receiver<AudioChunk>,
+        stop_flag: Arc<AtomicBool>,
+    ) -> AudioRecorder {
+        let (cmd_tx, cmd_rx) = mpsc::channel();
+        let worker = thread::spawn(move || {
+            run_consumer(16_000, None, sample_rx, cmd_rx, None, stop_flag);
+        });
+        AudioRecorder {
+            device: None,
+            cmd_tx: Some(cmd_tx),
+            worker_handle: Some(worker),
+            vad: None,
+            level_cb: None,
+        }
+    }
+
+    /// Mimics the cpal callback of `build_stream`: 10 ms chunks, and one
+    /// EndOfStream once the stop flag is set. Ends when the worker is gone.
+    fn healthy_callback(tx: mpsc::Sender<AudioChunk>, stop_flag: Arc<AtomicBool>) {
+        thread::spawn(move || {
+            let mut eos_sent = false;
+            loop {
+                let sent = if stop_flag.load(Ordering::Relaxed) {
+                    if eos_sent {
+                        Ok(())
+                    } else {
+                        eos_sent = true;
+                        tx.send(AudioChunk::EndOfStream)
+                    }
+                } else {
+                    eos_sent = false;
+                    tx.send(AudioChunk::Samples(vec![0.1; 160]))
+                };
+                if sent.is_err() {
+                    return;
+                }
+                thread::sleep(Duration::from_millis(10));
+            }
+        });
+    }
+
+    #[test]
+    fn healthy_stream_returns_the_samples() {
+        let (tx, rx) = mpsc::channel();
+        let flag = Arc::new(AtomicBool::new(false));
+        healthy_callback(tx, flag.clone());
+        let mut rec = recorder_on(rx, flag);
+
+        rec.start().unwrap();
+        thread::sleep(Duration::from_millis(300));
+        let samples = rec.stop().expect("a healthy stream stops cleanly");
+        assert!(!samples.is_empty());
+
+        // And the stream keeps working for the next recording.
+        rec.start().unwrap();
+        thread::sleep(Duration::from_millis(100));
+        assert!(!rec.stop().unwrap().is_empty());
+        rec.close().unwrap();
+    }
+
+    #[test]
+    fn stalled_stream_stop_returns_within_the_timeout() {
+        // The callback delivers a little audio, then never runs again: the
+        // sender stays alive, so the worker sees silence, not a closed stream.
+        let (tx, rx) = mpsc::channel();
+        let flag = Arc::new(AtomicBool::new(false));
+        let mut rec = recorder_on(rx, flag);
+        rec.start().unwrap();
+        tx.send(AudioChunk::Samples(vec![0.1; 1600])).unwrap();
+        thread::sleep(Duration::from_millis(100));
+
+        let began = Instant::now();
+        let result = rec.stop();
+        let took = began.elapsed();
+
+        assert_eq!(result, Err(StopError::Stalled));
+        assert!(
+            took >= STALL_TIMEOUT,
+            "stopped before the stall was certain: {took:?}"
+        );
+        assert!(took < STOP_REPLY_TIMEOUT, "stop took {took:?}");
+
+        // The worker is still responsive: close() joins it at once and leaves
+        // the recorder closed, ready to be reopened.
+        let began = Instant::now();
+        rec.close().unwrap();
+        assert!(began.elapsed() < CLOSE_TIMEOUT);
+        assert!(rec.worker_handle.is_none() && rec.cmd_tx.is_none());
+        assert_eq!(rec.stop(), Err(StopError::Closed));
+        drop(tx);
+    }
+
+    #[test]
+    fn stream_that_never_delivered_does_not_block_commands() {
+        // Before #27 the worker read commands only after a chunk arrived, so
+        // this Stop was never read and stop() waited forever.
+        let (tx, rx) = mpsc::channel::<AudioChunk>();
+        let mut rec = recorder_on(rx, Arc::new(AtomicBool::new(false)));
+        rec.start().unwrap();
+        let began = Instant::now();
+        assert_eq!(rec.stop(), Err(StopError::Stalled));
+        assert!(began.elapsed() < STOP_REPLY_TIMEOUT);
+
+        // Shutdown is honoured without any audio either.
+        let began = Instant::now();
+        rec.close().unwrap();
+        assert!(began.elapsed() < CLOSE_TIMEOUT);
+        drop(tx);
+    }
+
+    #[test]
+    fn unresponsive_worker_does_not_hang_stop_or_close() {
+        // A worker that never reads its commands (stuck in the backend).
+        let (cmd_tx, cmd_rx) = mpsc::channel::<Cmd>();
+        let (release_tx, release_rx) = mpsc::channel::<()>();
+        let worker = thread::spawn(move || {
+            let _ = release_rx.recv();
+            drop(cmd_rx);
+        });
+        let mut rec = AudioRecorder {
+            device: None,
+            cmd_tx: Some(cmd_tx),
+            worker_handle: Some(worker),
+            vad: None,
+            level_cb: None,
+        };
+
+        let began = Instant::now();
+        assert_eq!(
+            rec.stop_within(Duration::from_millis(200)),
+            Err(StopError::Unresponsive)
+        );
+        assert!(began.elapsed() < Duration::from_secs(1));
+
+        let began = Instant::now();
+        rec.close().unwrap();
+        assert!(began.elapsed() < CLOSE_TIMEOUT + Duration::from_millis(500));
+        assert!(rec.worker_handle.is_none());
+        let _ = release_tx.send(());
+    }
+
+    #[test]
+    fn stop_timeout_covers_the_worker_stall_detection() {
+        // Otherwise stop() would report Unresponsive for a plain stall and the
+        // worker's own detection would never be seen.
+        assert!(STOP_REPLY_TIMEOUT > STALL_TIMEOUT + COMMAND_POLL + Duration::from_secs(1));
     }
 }
 

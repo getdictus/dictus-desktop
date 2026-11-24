@@ -767,6 +767,8 @@
     "pasteFailed": "アクティブなアプリケーションにテキストを貼り付けられませんでした。",
     "transcriptionFailedTitle": "文字起こしに失敗しました",
     "transcriptionFailed": "録音は履歴に保存されています。履歴から再度文字起こしするか、別のモデルを選択してください。",
+    "microphoneStalledTitle": "マイクが応答しなくなりました",
+    "microphoneStalled": "マイクから音声が届かなかったため、何も録音されませんでした。Bluetooth ヘッドセットで起こることがあります。今すぐもう一度録音するか、別のマイクを選んでください。",
     "boundary": {
       "title": "エラーが発生しました。",
       "reload": "再読み込み"
@@ -782,7 +784,8 @@
     "transcribing": "文字起こし中...",
     "processing": "処理中...",
     "postProcessUnavailable": "後処理用のモデルを設定してください",
-    "transcriptionFailed": "文字起こしに失敗しました"
+    "transcriptionFailed": "文字起こしに失敗しました",
+    "microphoneStalled": "マイクが応答しなくなりました"
   },
   "smartModes": {
     "sections": {
