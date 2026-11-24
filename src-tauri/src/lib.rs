@@ -287,6 +287,9 @@ fn initialize_core_logic(app_handle: &AppHandle) {
     app_handle.manage(history_manager.clone());
     app_handle.manage(llm_manager.clone());
 
+    // Opens the feedback output now, so the first start sound does not wait for it.
+    audio_feedback::sync_with_settings(app_handle);
+
     // Note: Shortcuts are NOT initialized here.
     // The frontend is responsible for calling the `initialize_shortcuts` command
     // after permissions are confirmed (on macOS) or after onboarding completes.
@@ -567,7 +570,7 @@ pub fn run(cli_args: CliArgs) {
             commands::audio::get_available_output_devices,
             commands::audio::set_selected_output_device,
             commands::audio::get_selected_output_device,
-            commands::audio::play_test_sound,
+            commands::audio::preview_sound_pack,
             commands::audio::check_custom_sounds,
             commands::audio::set_clamshell_microphone,
             commands::audio::get_clamshell_microphone,

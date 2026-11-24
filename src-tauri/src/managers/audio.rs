@@ -1,4 +1,6 @@
-use crate::audio_toolkit::{list_input_devices, vad::SmoothedVad, AudioRecorder, SileroVad};
+use crate::audio_toolkit::{
+    list_input_devices, vad::SmoothedVad, AudioRecorder, InputMask, SileroVad,
+};
 use crate::helpers::clamshell;
 use crate::settings::{get_settings, AppSettings};
 use crate::utils;
@@ -120,6 +122,7 @@ pub enum MicrophoneMode {
 fn create_audio_recorder(
     vad_path: &str,
     app_handle: &tauri::AppHandle,
+    input_mask: InputMask,
 ) -> Result<AudioRecorder, anyhow::Error> {
     let silero = SileroVad::new(vad_path, 0.3)
         .map_err(|e| anyhow::anyhow!("Failed to create SileroVad: {}", e))?;
@@ -130,6 +133,7 @@ fn create_audio_recorder(
     let recorder = AudioRecorder::new()
         .map_err(|e| anyhow::anyhow!("Failed to create AudioRecorder: {}", e))?
         .with_vad(Box::new(smoothed_vad))
+        .with_input_mask(input_mask)
         .with_level_callback({
             let app_handle = app_handle.clone();
             move |levels| {
@@ -153,6 +157,7 @@ pub struct AudioRecordingManager {
     is_recording: Arc<Mutex<bool>>,
     did_mute: Arc<Mutex<bool>>,
     close_generation: Arc<AtomicU64>,
+    input_mask: InputMask,
 }
 
 impl AudioRecordingManager {
@@ -176,6 +181,7 @@ impl AudioRecordingManager {
             is_recording: Arc::new(Mutex::new(false)),
             did_mute: Arc::new(Mutex::new(false)),
             close_generation: Arc::new(AtomicU64::new(0)),
+            input_mask: InputMask::default(),
         };
 
         // Always-on?  Open immediately.
@@ -253,6 +259,12 @@ impl AudioRecordingManager {
         }
     }
 
+    /// Discards microphone input for `duration` from now: the app is playing a
+    /// sound the microphone could pick up.
+    pub fn silence_input_for(&self, duration: Duration) {
+        self.input_mask.silence_until(Instant::now() + duration);
+    }
+
     /// Removes mute if it was applied
     pub fn remove_mute(&self) {
         let mut did_mute_guard = self.did_mute.lock().unwrap();
@@ -277,6 +289,7 @@ impl AudioRecordingManager {
             *recorder_opt = Some(create_audio_recorder(
                 vad_path.to_str().unwrap(),
                 &self.app_handle,
+                self.input_mask.clone(),
             )?);
         }
         Ok(())

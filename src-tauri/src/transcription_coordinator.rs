@@ -238,11 +238,13 @@ impl TranscriptionCoordinator {
     }
 }
 
-/// Release the dictation claim on the shared engine, if this app has one.
+/// Release the dictation claim on the shared engine, if this app has one, and
+/// let the feedback output close.
 fn release_dictation(app: &AppHandle) {
     if let Some(activity) = app.try_state::<Arc<TranscriptionActivity>>() {
         activity.end_dictation();
     }
+    crate::audio_feedback::end_session();
 }
 
 fn start(app: &AppHandle, stage: &mut Stage, binding_id: &str, hotkey_string: &str) {

@@ -262,7 +262,7 @@
       },
       "audioFeedback": {
         "label": "تنبيهات صوتية",
-        "description": "تشغيل صوت عند بدء التسجيل وتوقفه"
+        "description": "تشغيل صوت عند بدء التسجيل وعند إدراج النص"
       },
       "outputDevice": {
         "title": "جهاز الإخراج",
@@ -273,6 +273,19 @@
       "volume": {
         "title": "مستوى الصوت",
         "description": "ضبط مستوى صوت تنبيهات الصوت"
+      },
+      "pack": {
+        "title": "حزمة الأصوات",
+        "description": "اختر الأصوات التي تُشغَّل عند بدء التسجيل وعند إدراج النص",
+        "preview": "استمع إلى {{pack}}",
+        "packs": {
+          "bois": "خشب",
+          "synthe": "مُركِّب صوتي",
+          "minimal": "بسيط",
+          "marimba": "Marimba",
+          "pop": "Pop",
+          "custom": "مخصص"
+        }
       }
     },
     "advanced": {

@@ -284,7 +284,7 @@
       },
       "audioFeedback": {
         "label": "音频反馈",
-        "description": "录制开始和停止时播放声音"
+        "description": "在开始录音和插入文本时播放声音"
       },
       "outputDevice": {
         "title": "输出设备",
@@ -295,6 +295,19 @@
       "volume": {
         "title": "音量",
         "description": "调整音频反馈的音量"
+      },
+      "pack": {
+        "title": "音效包",
+        "description": "选择开始录音和插入文本时播放的声音",
+        "preview": "试听 {{pack}}",
+        "packs": {
+          "bois": "木质",
+          "synthe": "合成器",
+          "minimal": "极简",
+          "marimba": "Marimba",
+          "pop": "Pop",
+          "custom": "自定义"
+        }
       }
     },
     "advanced": {

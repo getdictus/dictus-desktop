@@ -1,6 +1,6 @@
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
 use crate::apple_intelligence;
-use crate::audio_feedback::{play_feedback_sound, play_feedback_sound_blocking, SoundType};
+use crate::audio_feedback::{self, play_feedback_sound, SoundType};
 use crate::audio_toolkit::{is_microphone_access_denied, is_no_input_device_error};
 use crate::managers::audio::AudioRecordingManager;
 use crate::managers::history::HistoryManager;
@@ -17,8 +17,9 @@ use ferrous_opencc::{config::BuiltinConfig, OpenCC};
 use log::{debug, error, warn};
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
-use std::sync::Arc;
-use std::time::Instant;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{Arc, Mutex, MutexGuard};
+use std::time::{Duration, Instant};
 use tauri::Manager;
 use tauri::{AppHandle, Emitter};
 
@@ -46,6 +47,49 @@ pub trait ShortcutAction: Send + Sync {
 }
 
 // Transcribe Action
+/// How long after the start sound's last sample the microphone input is still
+/// discarded: the output device's latency, longest on Bluetooth.
+const START_SOUND_OUTPUT_LATENCY: Duration = Duration::from_millis(150);
+
+/// How long the recording pill waits at the press for the feedback output to
+/// open, so the pill and the start sound come together. Opening took about
+/// 200 ms on a Mac; past this wait the pill shows without the start sound
+/// rather than look like the press did nothing.
+const START_FEEDBACK_MAX_WAIT: Duration = Duration::from_millis(300);
+
+/// The press whose recording pill (and start sound) is still to be shown. The
+/// pill waits for the feedback output, so a stop, a cancel or a failed start
+/// can come first: it clears this, and the late show is dropped instead of
+/// replacing their overlay. Shows and clears run under the lock.
+static PENDING_START: Mutex<Option<u64>> = Mutex::new(None);
+static NEXT_START: AtomicU64 = AtomicU64::new(0);
+
+fn pending_start() -> MutexGuard<'static, Option<u64>> {
+    PENDING_START.lock().unwrap_or_else(|e| e.into_inner())
+}
+
+fn begin_start_feedback() -> u64 {
+    let id = NEXT_START.fetch_add(1, Ordering::SeqCst);
+    *pending_start() = Some(id);
+    id
+}
+
+/// Runs `show` if press `id` is still pending.
+fn show_start_feedback<T>(id: u64, show: impl FnOnce() -> T) -> Option<T> {
+    let mut pending = pending_start();
+    if *pending != Some(id) {
+        return None;
+    }
+    *pending = None;
+    Some(show())
+}
+
+/// Drops a recording pill not shown yet. Call before showing another overlay
+/// state or hiding it.
+pub(crate) fn cancel_start_feedback() {
+    *pending_start() = None;
+}
+
 struct TranscribeAction {
     post_process: bool,
 }
@@ -614,54 +658,68 @@ impl ShortcutAction for TranscribeAction {
 
         let binding_id = binding_id.to_string();
         change_tray_icon(app, TrayIconState::Recording);
-        show_recording_overlay(app);
 
-        // Get the microphone mode to determine audio feedback timing
+        // The pill and the start sound come together: once the feedback output
+        // is open (opened at this press, closed again after the dictation), on
+        // their own thread, so the microphone opens at the same time. Whatever
+        // the microphone hears until the sound has finished is discarded
+        // (`silence_input_for`), so the sound never reaches the transcription.
         let settings = get_settings(app);
-        let is_always_on = settings.always_on_microphone;
-        debug!("Microphone mode - always_on: {}", is_always_on);
-
-        let mut recording_error: Option<String> = None;
-        if is_always_on {
-            // Always-on mode: Play audio feedback immediately, then apply mute after sound finishes
-            debug!("Always-on mode: Playing audio feedback immediately");
-            let rm_clone = Arc::clone(&rm);
+        let start_id = begin_start_feedback();
+        if settings.audio_feedback {
             let app_clone = app.clone();
-            // The blocking helper exits immediately if audio feedback is disabled,
-            // so we can always reuse this thread to ensure mute happens right after playback.
+            let rm_clone = Arc::clone(&rm);
             std::thread::spawn(move || {
-                play_feedback_sound_blocking(&app_clone, SoundType::Start);
+                let ready = audio_feedback::begin_session(&app_clone, START_FEEDBACK_MAX_WAIT);
+                let output_ready = start_time.elapsed();
+                let shown = show_start_feedback(start_id, || {
+                    show_recording_overlay(&app_clone);
+                    let overlay_shown = start_time.elapsed();
+                    let sound = ready
+                        .then(|| play_feedback_sound(&app_clone, SoundType::Start))
+                        .flatten();
+                    if let Some(duration) = sound {
+                        rm_clone.silence_input_for(duration + START_SOUND_OUTPUT_LATENCY);
+                    }
+                    (overlay_shown, sound.map(|d| (d, start_time.elapsed())))
+                });
+                let ms = |d: Duration| d.as_secs_f64() * 1000.0;
+                match shown {
+                    Some((overlay, Some((duration, queued)))) => {
+                        debug!(
+                            "Start feedback after press: overlay shown {:.1} ms, sound queued {:.1} ms, output ready {:.1} ms",
+                            ms(overlay),
+                            ms(queued),
+                            ms(output_ready)
+                        );
+                        std::thread::sleep(duration);
+                    }
+                    Some((overlay, None)) => debug!(
+                        "Start feedback after press: overlay shown {:.1} ms, no start sound (output ready: {}, {:.1} ms)",
+                        ms(overlay),
+                        ready,
+                        ms(output_ready)
+                    ),
+                    None => debug!("Start feedback dropped: the dictation ended first"),
+                }
                 rm_clone.apply_mute();
             });
-
-            if let Err(e) = rm.try_start_recording(&binding_id) {
-                debug!("Recording failed: {}", e);
-                recording_error = Some(e);
-            }
         } else {
-            // On-demand mode: Start recording first, then play audio feedback, then apply mute
-            // This allows the microphone to be activated before playing the sound
-            debug!("On-demand mode: Starting recording first, then audio feedback");
-            let recording_start_time = Instant::now();
-            match rm.try_start_recording(&binding_id) {
-                Ok(()) => {
-                    debug!("Recording started in {:?}", recording_start_time.elapsed());
-                    // Small delay to ensure microphone stream is active
-                    let app_clone = app.clone();
-                    let rm_clone = Arc::clone(&rm);
-                    std::thread::spawn(move || {
-                        std::thread::sleep(std::time::Duration::from_millis(100));
-                        debug!("Handling delayed audio feedback/mute sequence");
-                        // Helper handles disabled audio feedback by returning early, so we reuse it
-                        // to keep mute sequencing consistent in every mode.
-                        play_feedback_sound_blocking(&app_clone, SoundType::Start);
-                        rm_clone.apply_mute();
-                    });
+            show_start_feedback(start_id, || show_recording_overlay(app));
+        }
+
+        let mut recording_error: Option<String> = None;
+        let recording_start_time = Instant::now();
+        match rm.try_start_recording(&binding_id) {
+            Ok(()) => {
+                debug!("Recording started in {:?}", recording_start_time.elapsed());
+                if !settings.audio_feedback {
+                    rm.apply_mute();
                 }
-                Err(e) => {
-                    debug!("Failed to start recording: {}", e);
-                    recording_error = Some(e);
-                }
+            }
+            Err(e) => {
+                debug!("Failed to start recording: {}", e);
+                recording_error = Some(e);
             }
         }
 
@@ -671,6 +729,7 @@ impl ShortcutAction for TranscribeAction {
         } else {
             // Starting failed (for example due to blocked microphone permissions).
             // Revert UI state so we don't stay stuck in the recording overlay.
+            cancel_start_feedback();
             utils::hide_recording_overlay(app);
             change_tray_icon(app, TrayIconState::Idle);
             if let Some(err) = recording_error {
@@ -729,13 +788,10 @@ fn spawn_transcription_task(
     let hm = Arc::clone(&app.state::<Arc<HistoryManager>>());
 
     change_tray_icon(app, TrayIconState::Transcribing);
+    cancel_start_feedback();
     show_transcribing_overlay(app);
 
-    // Unmute before playing audio feedback so the stop sound is audible
     rm.remove_mute();
-
-    // Play audio feedback for recording stop
-    play_feedback_sound(app, SoundType::Stop);
 
     tauri::async_runtime::spawn(async move {
         let _guard = FinishGuard(ah.clone());
@@ -843,16 +899,31 @@ fn spawn_transcription_task(
                             // then show a hint pill instead of a silent dismiss.
                             let post_process_failed = processed.post_process_failed;
                             ah.run_on_main_thread(move || {
-                                match utils::paste(final_text, ah_clone.clone()) {
-                                    Ok(()) => debug!(
-                                        "Text pasted successfully in {:?}",
-                                        paste_time.elapsed()
-                                    ),
+                                let pasted = match utils::paste(final_text, ah_clone.clone()) {
+                                    Ok(()) => {
+                                        debug!(
+                                            "Text pasted successfully in {:?}",
+                                            paste_time.elapsed()
+                                        );
+                                        Some(Instant::now())
+                                    }
                                     Err(e) => {
                                         error!("Failed to paste transcription: {}", e);
                                         let _ = ah_clone.emit("paste-error", ());
+                                        None
                                     }
-                                }
+                                };
+                                // The end sound and the overlay's exit go together:
+                                // queue the sound (it does not wait), then hide.
+                                let sound_queued = match pasted {
+                                    Some(at)
+                                        if play_feedback_sound(&ah_clone, SoundType::End)
+                                            .is_some() =>
+                                    {
+                                        Some(at.elapsed())
+                                    }
+                                    _ => None,
+                                };
                                 if post_process_failed {
                                     flash_error_overlay(
                                         &ah_clone,
@@ -860,6 +931,13 @@ fn spawn_transcription_task(
                                     );
                                 } else {
                                     utils::hide_recording_overlay(&ah_clone);
+                                }
+                                if let (Some(at), Some(queued)) = (pasted, sound_queued) {
+                                    debug!(
+                                        "End feedback after paste: sound queued {:.1} ms, overlay hidden {:.1} ms",
+                                        queued.as_secs_f64() * 1000.0,
+                                        at.elapsed().as_secs_f64() * 1000.0
+                                    );
                                 }
                                 change_tray_icon(&ah_clone, TrayIconState::Idle);
                             })

@@ -27,6 +27,7 @@ pub fn cancel_current_operation(app: &AppHandle) {
 
     // Update tray icon and hide overlay
     change_tray_icon(app, crate::tray::TrayIconState::Idle);
+    crate::actions::cancel_start_feedback();
     hide_recording_overlay(app);
 
     // Unload model if immediate unload is enabled

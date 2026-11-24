@@ -284,7 +284,7 @@
       },
       "audioFeedback": {
         "label": "Informacja dźwiękowa",
-        "description": "Odtwarzaj dźwięk przy rozpoczęciu i zakończeniu nagrywania"
+        "description": "Odtwarzaj dźwięk na początku nagrywania i po wstawieniu tekstu"
       },
       "outputDevice": {
         "title": "Urządzenie wyjściowe",
@@ -295,6 +295,19 @@
       "volume": {
         "title": "Głośność",
         "description": "Dostosuj głośność dźwięków informacyjnych"
+      },
+      "pack": {
+        "title": "Pakiet dźwięków",
+        "description": "Wybierz dźwięki odtwarzane na początku nagrywania i po wstawieniu tekstu",
+        "preview": "Odsłuchaj: {{pack}}",
+        "packs": {
+          "bois": "Drewno",
+          "synthe": "Syntezator",
+          "minimal": "Minimalny",
+          "marimba": "Marimba",
+          "pop": "Pop",
+          "custom": "Własny"
+        }
       }
     },
     "advanced": {

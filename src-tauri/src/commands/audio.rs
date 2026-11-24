@@ -1,8 +1,7 @@
 use crate::audio_feedback;
 use crate::audio_toolkit::audio::{list_input_devices, list_output_devices};
 use crate::managers::audio::{AudioRecordingManager, MicrophoneMode};
-use crate::settings::{get_settings, write_settings};
-use log::warn;
+use crate::settings::{get_settings, write_settings, SoundTheme};
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use std::sync::Arc;
@@ -256,6 +255,7 @@ pub fn set_selected_output_device(app: AppHandle, device_name: String) -> Result
         Some(device_name)
     };
     write_settings(&app, settings);
+    audio_feedback::sync_with_settings(&app);
     Ok(())
 }
 
@@ -268,18 +268,12 @@ pub fn get_selected_output_device(app: AppHandle) -> Result<String, String> {
         .unwrap_or_else(|| "default".to_string()))
 }
 
+/// Plays a pack's start sound then its end sound, so the user can hear it
+/// before choosing it.
 #[tauri::command]
 #[specta::specta]
-pub async fn play_test_sound(app: AppHandle, sound_type: String) {
-    let sound = match sound_type.as_str() {
-        "start" => audio_feedback::SoundType::Start,
-        "stop" => audio_feedback::SoundType::Stop,
-        _ => {
-            warn!("Unknown sound type: {}", sound_type);
-            return;
-        }
-    };
-    audio_feedback::play_test_sound(&app, sound);
+pub async fn preview_sound_pack(app: AppHandle, theme: SoundTheme) {
+    audio_feedback::preview_sound_pack(&app, theme);
 }
 
 #[tauri::command]

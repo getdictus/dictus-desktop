@@ -2,8 +2,9 @@
 # Tier 2: the Windows VM dictus-win (libvirt, 4 GB) on this Linux host. Never the domain `windows`.
 #   vm.sh start [snapshot]   new tier-2 run, run lock + watchdog, revert to <snapshot> (default
 #                            clean-no-vcredist), start, wait for guest-ping (max 10 min). Ends: VM READY
-#   vm.sh fetch <pr>         download the Windows x64 installer of the latest successful
-#                            pr-test-build.yml run for <pr> into the run's scratch dir. Ends: INSTALLER <file>
+#   vm.sh fetch <pr> [run]   download the Windows x64 installer of the latest successful
+#                            pr-test-build.yml run for <pr> (or of workflow run <run>) into the run's
+#                            scratch dir. Ends: INSTALLER <file>
 #   vm.sh fetch-release <release-id> [nsis|msi]
 #                            download the Windows x64 installer (default NSIS) of a release, drafts
 #                            included, by asset id through the API into the same dir. Ends: INSTALLER <file>
@@ -13,6 +14,8 @@
 #                            Ends: INSTALLED <dictus.exe>
 #   vm.sh launch             as user dictus: start Dictus, wait 30 s, list its process. Ends: RUNNING pid=…
 #                            or an error with the launch task's state and result
+#   vm.sh app '<args>'       as user dictus: run the installed dictus.exe with <args> (e.g.
+#                            --toggle-transcription, handed to the running instance). Ends: APP <args>
 #   vm.sh ps '<powershell>'  run PowerShell in the guest as SYSTEM (vm-exec.py)
 # Screenshot: shot.sh <name> (virsh screenshot of the whole VM screen). Teardown: cleanup.sh
 # (destroy + revert to clean-no-vcredist, stop the HTTP server, delete the installers, release the run lock).
@@ -25,7 +28,7 @@ TASK_USER="dictus"
 NSIS_EXE='C:\Users\dictus\AppData\Local\Dictus\dictus.exe'
 MSI_EXE='C:\Program Files\Dictus\dictus.exe'
 REPO="getdictus/dictus-desktop"
-cmd="${1:?usage: vm.sh start|fetch|fetch-release|serve|install|launch|ps}"; shift
+cmd="${1:?usage: vm.sh start|fetch|fetch-release|serve|install|launch|app|ps}"; shift
 gexec() { "$DICTUS_HELPERS/vm-exec.py" "$DICTUS_VM" "$@"; }
 
 # Run a command line in the guest as user dictus on its desktop: a guest-agent process runs as
@@ -64,11 +67,11 @@ case "$cmd" in
     echo "VM READY run=$run snapshot=$snap boot=$(($(date +%s) - t0))s"
     ;;
   fetch)
-    pr="${1:?usage: vm.sh fetch <pr>}"
+    pr="${1:?usage: vm.sh fetch <pr> [run]}"
     run="$(resolve_run)" || die "no run: vm.sh start first"
     name="handy-pr-$pr-x86_64-pc-windows-msvc"
     id=""
-    for r in $(gh run list -R getdictus/dictus-desktop --workflow pr-test-build.yml --status success -L 30 --json databaseId --jq '.[].databaseId'); do
+    for r in ${2:-} $(gh run list -R getdictus/dictus-desktop --workflow pr-test-build.yml --status success -L 30 --json databaseId --jq '.[].databaseId'); do
       gh api "repos/getdictus/dictus-desktop/actions/runs/$r/artifacts" --jq '.artifacts[] | select(.expired | not) | .name' | grep -qx "$name" && { id="$r"; break; }
     done
     [ -n "$id" ] || die "no successful pr-test-build.yml run with artifact $name: dispatch the workflow for PR #$pr first"
@@ -170,6 +173,13 @@ case "$cmd" in
     fi
     report "$run" "RUNNING pid=$pid"
     echo "RUNNING pid=$pid ($run/vm-process.txt)"
+    ;;
+  app)
+    run="$(resolve_run)" || die "no run"
+    exe="$(ledger_get "$run" APP_EXE)"; [ -n "$exe" ] || die "vm.sh install first"
+    as_user DictusVerifyApp "$exe" "$1" > /dev/null
+    report "$run" "APP $1"
+    echo "APP $1"
     ;;
   ps) gexec "$1" "${2:-600}" ;;
   *) die "unknown command $cmd" ;;

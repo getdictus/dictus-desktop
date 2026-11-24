@@ -284,7 +284,7 @@
       },
       "audioFeedback": {
         "label": "Zvuková odezva",
-        "description": "Přehrát zvuk při zahájení a ukončení nahrávání"
+        "description": "Přehrát zvuk na začátku nahrávání a po vložení textu"
       },
       "outputDevice": {
         "title": "Výstupní zařízení",
@@ -295,6 +295,19 @@
       "volume": {
         "title": "Hlasitost",
         "description": "Upravte hlasitost zvukové odezvy"
+      },
+      "pack": {
+        "title": "Balíček zvuků",
+        "description": "Vyberte zvuky přehrávané na začátku nahrávání a po vložení textu",
+        "preview": "Přehrát {{pack}}",
+        "packs": {
+          "bois": "Dřevo",
+          "synthe": "Syntezátor",
+          "minimal": "Minimální",
+          "marimba": "Marimba",
+          "pop": "Pop",
+          "custom": "Vlastní"
+        }
       }
     },
     "advanced": {

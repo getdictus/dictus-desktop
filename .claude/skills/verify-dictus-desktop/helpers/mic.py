@@ -1,26 +1,35 @@
 #!/usr/bin/env python3
 """Virtual microphone of a tier-1 run: a private PipeWire in the run's scratch dir, no session manager.
 
-    mic.py <scratch> conf          print the daemon config (launch.sh writes it to <scratch>/pipewire.conf)
+    mic.py <scratch> conf [--sink] print the daemon config (launch.sh writes it to <scratch>/pipewire.conf)
     mic.py <scratch> check         the private graph has the virtual source and no hardware device
     mic.py <scratch> link [secs]   connect the virtual source to the app's capture stream
+    mic.py <scratch> autolink      link every new playback stream to the null sink, until the scratch dir goes
+    mic.py <scratch> streams       the app's playback streams now: STREAMS n [names]
     mic.py <scratch> play <wav>    write a 16 kHz mono s16 WAV into the source in real time
 
 The daemon loads no ALSA/Bluetooth/V4L2 SPA plugin, so it cannot open a sound card. Without a session
 manager nothing configures or links ports, so `link` does what WirePlumber would: PortConfig (dsp) on
-both nodes, then pw-link. Every pw-* call runs with the run's HOME and XDG_RUNTIME_DIR only, so it can
+both nodes, then pw-link. With --sink, a null sink takes the app's playback (the recording sounds). The
+PipeWire ALSA plugin does not finish opening a playback stream (hw_params) until it is linked, and the
+app's capture open waits behind it: autolink (started by launch.sh --sink) links each one as it
+appears, from `pw-dump --monitor`. The sink is opt-in: a build that opens a stream per sound stalled
+on it before autolink, and none of them was re-tested since. Without it, opening a playback stream fails at once. Every pw-* call runs with the run's HOME and XDG_RUNTIME_DIR only, so it can
 only ever reach the private daemon, never the machine's own PipeWire.
 """
 import json
 import os
+import select
 import subprocess
 import sys
 import time
 import wave
 
 SOURCE = "dictus-virtual-mic"
+SINK = "dictus-null-sink"
 RATE = 16000
 DSP_FORMAT = "format: { mediaType: audio, mediaSubtype: raw, format: F32P, rate: 48000, channels: 1, position: [ MONO ] }"
+DSP_STEREO = "format: { mediaType: audio, mediaSubtype: raw, format: F32P, rate: 48000, channels: 2, position: [ FL FR ] }"
 
 CONF = """context.properties = {
   core.daemon = true
@@ -54,11 +63,17 @@ context.modules = [
     }
   }
 ]
-context.objects = [
+context.objects = [%(sink_object)s
   { factory = spa-node-factory
     args = { factory.name = support.node.driver node.name = Dummy-Driver node.group = pipewire.dummy priority.driver = 20000 } }
 ]
 """
+
+
+SINK_OBJECT = """
+  { factory = adapter
+    args = { factory.name = support.null-audio-sink node.name = %s media.class = Audio/Sink
+             audio.position = [ FL FR ] node.group = pipewire.dummy } }"""
 
 
 def die(msg):
@@ -104,13 +119,25 @@ class Graph:
                 res.append(o["id"])
         return res
 
-    def port_config(self, node_id, direction):
+    def port_config(self, node_id, direction, fmt=DSP_FORMAT):
         self.run("pw-cli", "set-param", str(node_id), "PortConfig",
-                 "{ direction: %s, mode: dsp, monitor: false, control: false, %s }" % (direction, DSP_FORMAT))
+                 "{ direction: %s, mode: dsp, monitor: false, control: false, %s }" % (direction, fmt))
+
+    def node_id(self, media_class, name):
+        ids = [i for i, n in self.nodes(media_class) if n == name]
+        return ids[0] if ids else None
 
     def source_id(self):
-        ids = [i for i, name in self.nodes("Audio/Source") if name == SOURCE]
-        return ids[0] if ids else None
+        return self.node_id("Audio/Source", SOURCE)
+
+    def with_ports(self, node_id, direction, fmt, deadline):
+        if not self.ports(node_id, direction):
+            self.port_config(node_id, direction.capitalize(), fmt)
+        while not self.ports(node_id, direction):
+            if time.monotonic() > deadline:
+                die(f"node {node_id} got no {direction} ports")
+            time.sleep(0.05)
+        return self.ports(node_id, direction)
 
 
 def check(g):
@@ -126,7 +153,10 @@ def check(g):
             if g.ports(src, "output"):
                 break
             time.sleep(0.1)
-    print(f"MIC OK source={src} ports={len(g.ports(src, 'output'))} devices=0")
+    sink = g.node_id("Audio/Sink", SINK)
+    if sink is not None:
+        g.with_ports(sink, "input", DSP_STEREO, time.monotonic() + 2)
+    print(f"MIC OK source={src} ports={len(g.ports(src, 'output'))} sink={sink or 'none'} devices=0")
 
 
 def link(g, secs):
@@ -161,6 +191,59 @@ def link(g, secs):
     print(f"MIC LINKED {SOURCE} -> {app_name} (node {app_id}, new links {made})")
 
 
+def link_stream(g, sink, app_id, deadline):
+    sink_ports = g.with_ports(sink, "input", DSP_STEREO, deadline)
+    out_ports = g.with_ports(app_id, "output", DSP_STEREO, deadline)
+    made = 0
+    for out_port, in_port in zip(out_ports, sink_ports):
+        p = g.run("pw-link", str(out_port), str(in_port), check=False)
+        if p.returncode == 0:
+            made += 1
+        elif "File exists" not in p.stderr:
+            print(f"pw-link {out_port} {in_port}: {p.stderr.strip()[:200]}", flush=True)
+    return made
+
+
+def autolink(g, scratch):
+    sink = g.node_id("Audio/Sink", SINK)
+    if sink is None:
+        die(f"no {SINK} node")
+    mon = subprocess.Popen(["pw-dump", "--monitor", "--no-colors"], env=g.env, stdout=subprocess.PIPE)
+    fd = mon.stdout.fileno()
+    decoder, buf, linked = json.JSONDecoder(), "", set()
+    try:
+        while os.path.isdir(scratch) and mon.poll() is None:
+            if not select.select([fd], [], [], 0.2)[0]:
+                continue
+            chunk = os.read(fd, 1 << 16)
+            if not chunk:
+                break
+            buf += chunk.decode(errors="replace")
+            while True:
+                buf = buf.lstrip()
+                try:
+                    objs, end = decoder.raw_decode(buf)
+                except ValueError:
+                    break
+                buf = buf[end:]
+                for o in objs if isinstance(objs, list) else []:
+                    props = ((o or {}).get("info") or {}).get("props") or {}
+                    # Node ids are reused once a node is gone; serials never are.
+                    serial = props.get("object.serial", o.get("id"))
+                    if o.get("type") == "PipeWire:Interface:Node" and props.get("media.class") == "Stream/Output/Audio" and serial not in linked:
+                        linked.add(serial)
+                        t0 = time.monotonic()
+                        made = link_stream(g, sink, o["id"], t0 + 5)
+                        print(f"AUTOLINK {props.get('node.name', '')} (node {o['id']}) links={made} in {1000 * (time.monotonic() - t0):.0f} ms", flush=True)
+    finally:
+        mon.terminate()
+
+
+def streams(g):
+    names = [n for _, n in g.nodes("Stream/Output/Audio")]
+    print(f"STREAMS {len(names)} {' '.join(names)}".rstrip())
+
+
 def play(fifo, path):
     with wave.open(path) as w:
         if (w.getframerate(), w.getnchannels(), w.getsampwidth()) != (RATE, 1, 2):
@@ -191,11 +274,16 @@ def main():
     scratch, cmd = sys.argv[1], sys.argv[2]
     fifo = os.path.join(scratch, "mic.fifo")
     if cmd == "conf":
-        print(CONF % {"fifo": fifo, "rate": RATE, "source": SOURCE})
+        sink_object = SINK_OBJECT % SINK if "--sink" in sys.argv[3:] else ""
+        print(CONF % {"fifo": fifo, "rate": RATE, "source": SOURCE, "sink_object": sink_object})
     elif cmd == "check":
         check(Graph(scratch))
     elif cmd == "link":
         link(Graph(scratch), float(sys.argv[3]) if len(sys.argv) > 3 else 10)
+    elif cmd == "autolink":
+        autolink(Graph(scratch), scratch)
+    elif cmd == "streams":
+        streams(Graph(scratch))
     elif cmd == "play":
         play(fifo, sys.argv[3])
     else:
