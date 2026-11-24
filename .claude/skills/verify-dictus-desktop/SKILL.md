@@ -50,7 +50,7 @@ $H/launch.sh --no-build --release  # the same from target/release (build.sh --re
 $H/launch.sh --deb <file.deb>      # a given .deb (e.g. a CI artifact)
 $H/launch.sh --model <id>          # seed a catalogue model from the shared cache before the app starts
 $H/launch.sh --mic                 # private PipeWire + virtual microphone in the scratch dir
-$H/run.sh dictation --no-build --sink -- --reps 5 short-fr   # 20 short dictations, sounds into a null sink, gap timings
+$H/run.sh dictation --no-build --sink -- --reps 5 --idle 20 short-fr   # 20 short dictations, sounds into a null sink, gap timings, then the idle check
 $H/run.sh onboarding [--no-build]  # Launch + Doctor + journey-onboarding.sh + Cleanup, in one process
 $H/run.sh dictation --no-build -- all-fr   # the same for journey-dictation.sh (adds its --model and --mic)
 ```
@@ -164,7 +164,7 @@ JOURNEY dictation all-fr PASS 5/5 wer_max=0.25 model=parakeet-tdt-0.6b-v3
 - no session manager;
 - a dummy driver for the clock;
 - a `pipe-tunnel` source `dictus-virtual-mic` reading `<scratch>/mic.fifo` as 16 kHz mono s16;
-- with `--sink` only, a null sink `dictus-null-sink` for the app's playback. The PipeWire ALSA plugin does not finish opening a playback stream (`hw_params`) until it is linked, and the app's capture open waits behind it. The journey links the feedback output the app opens at startup (`mic.py link-output`). A build that opens a stream per sound (before the feedback player, `880a552` and earlier) stalls there from the second dictation: run those without `--sink`, where the playback open fails at once and the sounds are skipped.
+- with `--sink` only, a null sink `dictus-null-sink` for the app's playback. The PipeWire ALSA plugin does not finish opening a playback stream (`hw_params`) until it is linked, and the app's capture open waits behind it. So `launch.sh --sink` also starts `mic.py autolink`, which follows the graph (`pw-dump --monitor`) and links each new playback stream as it appears, in about 50 ms (measured with `aplay`, 2026-11-24). That 50 ms is in every cold open measured on tier 1. Node ids are reused, so streams are told apart by `object.serial`.
 
 `mic.py check` asserts the private graph has that source and zero devices, and Doctor runs it. With no session manager nothing configures or links ports. `mic.py link` does WirePlumber's job for the one stream: `PortConfig` (dsp) on both nodes, then `pw-link`. `mic.py play` writes the WAV into the FIFO at real time; the source outputs silence when the FIFO is empty. Every `pw-*` call runs with the run's `HOME` and `XDG_RUNTIME_DIR` only, so it cannot reach the machine's own PipeWire, which another agent uses. No package was installed: `pipewire`, `pw-cli`, `pw-link` and `pw-dump` were already there.
 
@@ -320,29 +320,29 @@ Proven on 2026-11-19 with the 0.3.1 draft (release 451105484) from `clean-no-vcr
 
 All executable, run from the repository root, all read `helpers/env.sh` (overrides: `DICTUS_EVIDENCE_ROOT`, `DICTUS_IDENTIFIER`, `DICTUS_TTL_MIN`, `DICTUS_LOCK_WAIT_S`, `DICTUS_VERIFY_SESSION`, `DICTUS_VERIFY_RUN`, `CARGO_TARGET_DIR`, `DICTUS_HTTP_PORT`, `DICTUS_MODEL_CACHE`, `DICTUS_CORPUS_REPO`, `DICTUS_WER_MAX`).
 
-| Script                  | Invocation                                                                           | Ends with                                                                    |
-| ----------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
-| `doctor.sh`             | `doctor.sh [run-dir]`                                                                | `DOCTOR OK` / `DOCTOR FAIL <n>`                                              |
-| `build.sh`              | `build.sh [--release] [log]`                                                         | `DEB <path>` / `BUILD FAILED: …`                                             |
-| `launch.sh`             | `launch.sh [--no-build] [--release] [--deb f] [--model id] [--mic [--sink]] [label]` | `READY run=… display=… pid=… window=… geometry=…`                            |
-| `run.sh`                | `run.sh <journey> [launch options] [-- journey args]`                                | journey verdict, then `CLEANUP OK …`                                         |
-| `journey-onboarding.sh` | `journey-onboarding.sh [run-dir]`                                                    | `JOURNEY onboarding PASS in Ns` / `… FAIL: <step>`                           |
-| `journey-dictation.sh`  | `journey-dictation.sh [--reps N] [<clip-id>\|all-<lang>]`                            | per clip `JOURNEY dictation <id> PASS\|FAIL wer=…`, then `… all-fr PASS n/n` |
-| `model-cache.sh`        | `model-cache.sh <model-id>`                                                          | `MODEL <id> <file> <name>`                                                   |
-| `bench.sh`              | `bench.sh [--models a,b] [--clips sel] [--reps N] [--deb f\|--debug]`                | `BENCH <dir> models=N failed=N`                                              |
-| `bench.py`              | `bench.py collect <bench-dir> <run>…` · `compare <a.csv> <b.csv>`                    | `BENCH TABLES …` / a Markdown table                                          |
-| `mic.py`                | `mic.py <scratch> conf [--sink]\|check\|link [s]\|link-output [s]\|play <wav>`       | `MIC OK …`, `MIC LINKED …`, `MIC OUTPUT LINKED …`, `MIC PLAYED …`            |
-| `cli.sh`                | `cli.sh <dictus flags>`                                                              | `CLI <flags> exit=N in Nms`                                                  |
-| `dictation.py`          | `dictation.py clips\|last-id\|wait-row\|score\|transcribe-ms\|leak-check …`          | ids, scores, timings; never a text                                           |
-| `x.py`                  | `x.py window\|click\|move\|scroll\|type\|key …`                                      | `click X,Y button=1`, …                                                      |
-| `nav.sh`                | `nav.sh <section> [run-dir]`                                                         | `nav <section>`                                                              |
-| `log.sh`                | `log.sh mark` · `wait '<re>' [s] [mark]` · `since <mark>`                            | `found: <line>` / `error: no log line …`                                     |
-| `shot.sh`               | `shot.sh <name> [run-dir]`                                                           | `shot <name>: <path>`                                                        |
-| `evidence.sh`           | `evidence.sh <name> [run-dir]`                                                       | `shot …`, `state <name>: <path>`                                             |
-| `screen.sh`             | `screen.sh <screen-id> [run-dir]`                                                    | `screen <id>: screens/<id>.png (N KB)`                                       |
-| `vm.sh`                 | `vm.sh start\|fetch\|fetch-release\|serve\|install\|launch\|ps`                      | `VM READY`, `INSTALLER`, `SERVING`, `INSTALLED`, `RUNNING`                   |
-| `vm-exec.py`            | `vm-exec.py dictus-win '<powershell>' [s]`                                           | guest output, `[exit N]`                                                     |
-| `cleanup.sh`            | `cleanup.sh [run-dir]`                                                               | `CLEANUP OK run=… evidence=N` / `CLEANUP INCOMPLETE: …` / `ALARM …`          |
+| Script                  | Invocation                                                                                   | Ends with                                                                    |
+| ----------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `doctor.sh`             | `doctor.sh [run-dir]`                                                                        | `DOCTOR OK` / `DOCTOR FAIL <n>`                                              |
+| `build.sh`              | `build.sh [--release] [log]`                                                                 | `DEB <path>` / `BUILD FAILED: …`                                             |
+| `launch.sh`             | `launch.sh [--no-build] [--release] [--deb f] [--model id] [--mic [--sink]] [label]`         | `READY run=… display=… pid=… window=… geometry=…`                            |
+| `run.sh`                | `run.sh <journey> [launch options] [-- journey args]`                                        | journey verdict, then `CLEANUP OK …`                                         |
+| `journey-onboarding.sh` | `journey-onboarding.sh [run-dir]`                                                            | `JOURNEY onboarding PASS in Ns` / `… FAIL: <step>`                           |
+| `journey-dictation.sh`  | `journey-dictation.sh [--reps N] [--gap S] [--idle S] [<clip-id>\|all-<lang>\|short-<lang>]` | per clip `JOURNEY dictation <id> PASS\|FAIL wer=…`, then `… all-fr PASS n/n` |
+| `model-cache.sh`        | `model-cache.sh <model-id>`                                                                  | `MODEL <id> <file> <name>`                                                   |
+| `bench.sh`              | `bench.sh [--models a,b] [--clips sel] [--reps N] [--deb f\|--debug]`                        | `BENCH <dir> models=N failed=N`                                              |
+| `bench.py`              | `bench.py collect <bench-dir> <run>…` · `compare <a.csv> <b.csv>`                            | `BENCH TABLES …` / a Markdown table                                          |
+| `mic.py`                | `mic.py <scratch> conf [--sink]\|check\|link [s]\|autolink\|streams\|play <wav>`             | `MIC OK …`, `MIC LINKED …`, `AUTOLINK …`, `STREAMS n …`, `MIC PLAYED …`      |
+| `cli.sh`                | `cli.sh <dictus flags>`                                                                      | `CLI <flags> exit=N in Nms`                                                  |
+| `dictation.py`          | `dictation.py clips\|last-id\|wait-row\|score\|transcribe-ms\|leak-check …`                  | ids, scores, timings; never a text                                           |
+| `x.py`                  | `x.py window\|click\|move\|scroll\|type\|key …`                                              | `click X,Y button=1`, …                                                      |
+| `nav.sh`                | `nav.sh <section> [run-dir]`                                                                 | `nav <section>`                                                              |
+| `log.sh`                | `log.sh mark` · `wait '<re>' [s] [mark]` · `since <mark>`                                    | `found: <line>` / `error: no log line …`                                     |
+| `shot.sh`               | `shot.sh <name> [run-dir]`                                                                   | `shot <name>: <path>`                                                        |
+| `evidence.sh`           | `evidence.sh <name> [run-dir]`                                                               | `shot …`, `state <name>: <path>`                                             |
+| `screen.sh`             | `screen.sh <screen-id> [run-dir]`                                                            | `screen <id>: screens/<id>.png (N KB)`                                       |
+| `vm.sh`                 | `vm.sh start\|fetch\|fetch-release\|serve\|install\|launch\|app\|ps`                         | `VM READY`, `INSTALLER`, `SERVING`, `INSTALLED`, `RUNNING`, `APP …`          |
+| `vm-exec.py`            | `vm-exec.py dictus-win '<powershell>' [s]`                                                   | guest output, `[exit N]`                                                     |
+| `cleanup.sh`            | `cleanup.sh [run-dir]`                                                                       | `CLEANUP OK run=… evidence=N` / `CLEANUP INCOMPLETE: …` / `ALARM …`          |
 
 ## Keeping the map current
 

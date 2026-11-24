@@ -6,7 +6,7 @@
     dictation.py wait-row <history.db> <after-id> <t_stop_ns> <secs>
     dictation.py score <corpus> <clip-file> <history.db> <row-id> <wer-max>
     dictation.py transcribe-ms <log-dir> <mark>
-    dictation.py feedback-ms <log-dir> <mark>         press -> overlay / start sound, paste -> end sound / hide
+    dictation.py feedback-ms <log-dir> <mark>         press -> output ready / overlay / start sound, paste -> end sound / hide
     dictation.py leak-check <corpus> <history.db> <run-dir>
 
 The corpus is internal-testing-only: expected texts and transcripts are read into memory and never
@@ -151,7 +151,10 @@ def log_lines(log_dir, mark):
 
 def cmd_feedback_ms(log_dir, mark):
     keys = {
-        r"Start feedback after press: overlay shown ([0-9.]+) ms, sound queued ([0-9.]+) ms": ("press_overlay_ms", "press_sound_ms"),
+        r"Start feedback after press: overlay shown ([0-9.]+) ms": ("press_overlay_ms",),
+        r"Start feedback after press: overlay shown [0-9.]+ ms, sound queued ([0-9.]+) ms": ("press_sound_ms",),
+        r"Start feedback after press: .*output ready(?:: \w+,)? ([0-9.]+) ms": ("press_ready_ms",),
+        r"Feedback output open on .* in ([0-9.]+) ms": ("output_open_ms",),
         r"End feedback after paste: sound queued ([0-9.]+) ms, overlay hidden ([0-9.]+) ms": ("paste_sound_ms", "paste_hide_ms"),
     }
     found = {k: "na" for pair in keys.values() for k in pair}

@@ -13,6 +13,8 @@
 #                            Ends: INSTALLED <dictus.exe>
 #   vm.sh launch             as user dictus: start Dictus, wait 30 s, list its process. Ends: RUNNING pid=…
 #                            or an error with the launch task's state and result
+#   vm.sh app '<args>'       as user dictus: run the installed dictus.exe with <args> (e.g.
+#                            --toggle-transcription, handed to the running instance). Ends: APP <args>
 #   vm.sh ps '<powershell>'  run PowerShell in the guest as SYSTEM (vm-exec.py)
 # Screenshot: shot.sh <name> (virsh screenshot of the whole VM screen). Teardown: cleanup.sh
 # (destroy + revert to clean-no-vcredist, stop the HTTP server, delete the installers, release the lock).
@@ -24,7 +26,7 @@ TASK_USER="dictus"
 NSIS_EXE='C:\Users\dictus\AppData\Local\Dictus\dictus.exe'
 MSI_EXE='C:\Program Files\Dictus\dictus.exe'
 REPO="getdictus/dictus-desktop"
-cmd="${1:?usage: vm.sh start|fetch|fetch-release|serve|install|launch|ps}"; shift
+cmd="${1:?usage: vm.sh start|fetch|fetch-release|serve|install|launch|app|ps}"; shift
 gexec() { "$DICTUS_HELPERS/vm-exec.py" "$DICTUS_VM" "$@"; }
 
 # Run a command line in the guest as user dictus on its desktop: a guest-agent process runs as
@@ -169,6 +171,13 @@ case "$cmd" in
     fi
     report "$run" "RUNNING pid=$pid"
     echo "RUNNING pid=$pid ($run/vm-process.txt)"
+    ;;
+  app)
+    run="$(resolve_run)" || die "no run"
+    exe="$(ledger_get "$run" APP_EXE)"; [ -n "$exe" ] || die "vm.sh install first"
+    as_user DictusVerifyApp "$exe" "$1" > /dev/null
+    report "$run" "APP $1"
+    echo "APP $1"
     ;;
   ps) gexec "$1" "${2:-600}" ;;
   *) die "unknown command $cmd" ;;

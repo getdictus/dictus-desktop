@@ -5,8 +5,8 @@
 #   --release     build (or with --no-build, reuse) the release .deb instead of the debug one
 #   --model <id>  put that catalogue model (from model-cache.sh) in the isolated data dir before the app starts
 #   --mic         private PipeWire with a virtual source in the scratch dir (mic.py), started before the app
-#   --sink        with --mic, also a null sink for the app's playback (recording sounds; see mic.py). Only for
-#                 builds that keep one feedback output open: a build that opens one per sound stalls on it
+#   --sink        with --mic, also a null sink for the app's playback (recording sounds), each playback
+#                 stream linked to it as it appears (mic.py autolink)
 #   DICTUS_APP_LANG=fr_FR.UTF-8 starts the app in another locale (default en_US.UTF-8)
 # Last line on success: READY run=<dir> display=:<n> pid=<pid> window=<id> geometry=<WxH+X+Y>
 set -euo pipefail
@@ -96,6 +96,10 @@ if [ "$mic" = 1 ]; then
   out="$(python3 -I "$DICTUS_HELPERS/mic.py" "$scratch" check)" || die "virtual mic check failed"
   ledger_set "$run" MIC 1
   ledger_set "$run" SINK "$sink"
+  if [ "$sink" = 1 ]; then
+    setsid python3 -I "$DICTUS_HELPERS/mic.py" "$scratch" autolink < /dev/null > "$run/autolink.log" 2>&1 &
+    ledger_set "$run" AUTOLINK "$(pid_ref $!)"
+  fi
   report "$run" "$out"
 fi
 

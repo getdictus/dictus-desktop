@@ -19,10 +19,10 @@ Dictus plays a start sound when recording starts, at the key press with the over
 
 ## Timing
 
-- One output stream stays open while Audio Feedback is on (`audio_feedback.rs`), opened at startup and when the toggle, the pack or the output device changes; the current pack is decoded in memory. Playing a sound queues it on that stream's mixer, without waiting. Log line at opening: `Feedback output open on <device> in <n> ms`.
-- Start: queued right after `show_recording_overlay`, on its own thread; the microphone opens at the same time. Microphone input is replaced by silence until the sound has finished plus 150 ms (`START_SOUND_OUTPUT_LATENCY` in `actions.rs`, `InputMask` in `recorder.rs`), so the sound never reaches VAD or the model. Debug log: `Start feedback after press: overlay shown <x> ms, sound queued <y> ms`.
+- The output stream is open only around dictations (`audio_feedback.rs`): opened at the press, in parallel with the microphone, closed `CLOSE_AFTER` (15 s) after the dictation's last sound. An open output stops automatic sleep on macOS and Windows; the press or release is user input and idle-sleep timers are at least a minute, so a close this soon never delays sleep. The current pack stays decoded in memory. Log lines: `Feedback output open on <device> in <n> ms`, `Feedback output closed`.
+- Start: the pill and the start sound come together, once the output is open, at most `START_FEEDBACK_MAX_WAIT` (300 ms) after the press; past that the pill shows without the sound. A stop, cancel or failed start that comes first drops them (`PENDING_START` in `actions.rs`). Microphone input is replaced by silence until the sound has finished plus 150 ms (`START_SOUND_OUTPUT_LATENCY`, `InputMask` in `recorder.rs`), so the sound never reaches VAD or the model. Debug log: `Start feedback after press: overlay shown <x> ms, sound queued <y> ms, output ready <z> ms`.
 - End: queued after `utils::paste` returns `Ok`, in the same main-thread block that hides the overlay, never on an empty transcript or a failed paste. Debug log: `End feedback after paste: sound queued <x> ms, overlay hidden <y> ms`.
-- `journey-dictation.sh` (with `launch.sh --sink`) reports those four numbers per dictation (`press_overlay_ms`, `press_sound_ms`, `paste_sound_ms`, `paste_hide_ms`). Target: both gaps under 30 ms.
+- `journey-dictation.sh` (with `launch.sh --sink`) reports per dictation `press_ready_ms`, `press_overlay_ms`, `press_sound_ms`, `output_open_ms` (when it opened), `paste_sound_ms`, `paste_hide_ms`. Target: pill and sound within 30 ms of each other. `--idle 20` then checks that no playback stream is left (`playback_streams=0`) and no sleep inhibitor is held.
 
 ## How to get to it (user POV)
 

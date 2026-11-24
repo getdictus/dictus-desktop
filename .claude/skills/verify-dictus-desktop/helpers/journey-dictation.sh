@@ -4,9 +4,12 @@
 # go through `dictus --toggle-transcription` (a second instance, cli.sh); the text is read from the
 # isolated history.db and scored by WER against the manifest. Needs a READY run launched with
 # the launch-args below (run.sh adds them).
-#   journey-dictation.sh [--reps N] [<clip-id>|all-<lang>|short-<lang>]   default all-fr, 1 rep
+#   journey-dictation.sh [--reps N] [--gap S] [--idle S] [<clip-id>|all-<lang>|short-<lang>]   default all-fr, 1 rep
 # all-<lang> takes every clip with a reference text; short-<lang> only the short ones.
 # --reps N plays every short clip N times, in rounds (all clips, then all again), the long clip once.
+# --gap S waits S seconds between dictations (e.g. past the feedback output's close delay).
+# --idle S, after the last dictation: waits S seconds, then reports the app's playback streams (with
+#   launch.sh --sink) and the sleep inhibitors held by dictus or PipeWire: JOURNEY dictation idle …
 # The model's load (it starts with the first recording) is awaited before the first clip plays:
 #   JOURNEY dictation load model=<id> load_ms=N
 # One line per dictation: JOURNEY dictation <id> PASS|FAIL wer=… wer_sp=… stop_to_text_ms=… … seq=N rep=N
@@ -15,8 +18,16 @@
 # launch-args: --model parakeet-tdt-0.6b-v3 --mic
 set -uo pipefail
 source "$(dirname "$0")/env.sh"
-reps=1
-[ "${1:-}" = --reps ] && { reps="$2"; shift 2; }
+reps=1 gap=0 idle=""
+while [ $# -gt 1 ]; do
+  case "$1" in
+    --reps) reps="$2" ;;
+    --gap) gap="$2" ;;
+    --idle) idle="$2" ;;
+    *) break ;;
+  esac
+  shift 2
+done
 [[ "$reps" =~ ^[1-9][0-9]*$ ]] || { echo "error: --reps needs a positive integer" >&2; exit 1; }
 sel="${1:-all-fr}"
 run="$(resolve_run "")" || die "no run of this session"
@@ -52,12 +63,6 @@ done
 for _ in $(seq 30); do [ "$(setting selected_model)" = "$model" ] && break; sleep 1; done
 [ "$(setting selected_model)" = "$model" ] || fail "the app did not auto-select the seeded model $model"
 "$H/evidence.sh" 20-dictation-ready > /dev/null
-# With launch.sh --sink the recording sounds go to the private null sink: link the feedback output
-# the app opens at startup.
-if [ "$(ledger_get "$run" SINK)" = 1 ]; then
-  out="$(py mic.py "$scratch" link-output 30 2>&1)" || fail "feedback output: $out"
-  report "$run" "$out"
-fi
 
 passed=0 n=0 loaded=""
 for entry in "${plan[@]}"; do
@@ -91,7 +96,19 @@ for entry in "${plan[@]}"; do
   line="JOURNEY dictation $id $score ${row#row=* } transcribe_ms=$tr_ms $fb cli_stop_ms=$cli_ms dur_s=$dur category=$category lang=$lang model=$model seq=$n rep=$rep"
   report "$run" "$line"
   echo "$line"
+  [ "$gap" = 0 ] || [ "$n" = "${#plan[@]}" ] || sleep "$gap"
 done
+
+if [ -n "$idle" ]; then
+  sleep "$idle"
+  streams="STREAMS na"
+  [ "$(ledger_get "$run" SINK)" = 1 ] && streams="$(py mic.py "$scratch" streams)"
+  inhibitors="$(systemd-inhibit --list --no-legend 2>/dev/null | grep -ciE 'dictus|pipewire')"
+  names="$(cut -d' ' -f3- -s <<< "$streams" | tr ' ' ,)"
+  line="JOURNEY dictation idle after_s=$idle playback_streams=$(cut -d' ' -f2 <<< "$streams") names=${names:-none} sleep_inhibitors=$inhibitors"
+  report "$run" "$line"
+  echo "$line"
+fi
 
 leak="$(py dictation.py leak-check "$corpus/repo" "$db" "$run")" || { report "$run" "$leak"; fail "$leak"; }
 report "$run" "$leak"

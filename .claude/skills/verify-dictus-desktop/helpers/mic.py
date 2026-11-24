@@ -4,19 +4,22 @@
     mic.py <scratch> conf [--sink] print the daemon config (launch.sh writes it to <scratch>/pipewire.conf)
     mic.py <scratch> check         the private graph has the virtual source and no hardware device
     mic.py <scratch> link [secs]   connect the virtual source to the app's capture stream
-    mic.py <scratch> link-output [secs]   connect the app's playback streams to the null sink
+    mic.py <scratch> autolink      link every new playback stream to the null sink, until the scratch dir goes
+    mic.py <scratch> streams       the app's playback streams now: STREAMS n [names]
     mic.py <scratch> play <wav>    write a 16 kHz mono s16 WAV into the source in real time
 
 The daemon loads no ALSA/Bluetooth/V4L2 SPA plugin, so it cannot open a sound card. Without a session
 manager nothing configures or links ports, so `link` does what WirePlumber would: PortConfig (dsp) on
 both nodes, then pw-link. With --sink, a null sink takes the app's playback (the recording sounds). The
 PipeWire ALSA plugin does not finish opening a playback stream (hw_params) until it is linked, and the
-app's capture open waits behind it: link-output links it. A build that opens a stream per sound stalls
-there, so the sink is opt-in. Without it, opening a playback stream fails at once. Every pw-* call runs with the run's HOME and XDG_RUNTIME_DIR only, so it can
+app's capture open waits behind it: autolink (started by launch.sh --sink) links each one as it
+appears, from `pw-dump --monitor`. The sink is opt-in: a build that opens a stream per sound stalled
+on it before autolink, and none of them was re-tested since. Without it, opening a playback stream fails at once. Every pw-* call runs with the run's HOME and XDG_RUNTIME_DIR only, so it can
 only ever reach the private daemon, never the machine's own PipeWire.
 """
 import json
 import os
+import select
 import subprocess
 import sys
 import time
@@ -188,26 +191,57 @@ def link(g, secs):
     print(f"MIC LINKED {SOURCE} -> {app_name} (node {app_id}, new links {made})")
 
 
-def link_output(g, secs):
+def link_stream(g, sink, app_id, deadline):
+    sink_ports = g.with_ports(sink, "input", DSP_STEREO, deadline)
+    out_ports = g.with_ports(app_id, "output", DSP_STEREO, deadline)
+    made = 0
+    for out_port, in_port in zip(out_ports, sink_ports):
+        p = g.run("pw-link", str(out_port), str(in_port), check=False)
+        if p.returncode == 0:
+            made += 1
+        elif "File exists" not in p.stderr:
+            print(f"pw-link {out_port} {in_port}: {p.stderr.strip()[:200]}", flush=True)
+    return made
+
+
+def autolink(g, scratch):
     sink = g.node_id("Audio/Sink", SINK)
     if sink is None:
         die(f"no {SINK} node")
-    deadline = time.monotonic() + secs
-    while not (streams := g.nodes("Stream/Output/Audio")):
-        if time.monotonic() > deadline:
-            die(f"no playback stream appeared within {secs}s")
-        time.sleep(0.05)
-    sink_ports = g.with_ports(sink, "input", DSP_STEREO, deadline)
-    made = 0
-    for app_id, _ in streams:
-        out_ports = g.with_ports(app_id, "output", DSP_STEREO, deadline)
-        for out_port, in_port in zip(out_ports, sink_ports):
-            p = g.run("pw-link", str(out_port), str(in_port), check=False)
-            if p.returncode == 0:
-                made += 1
-            elif "File exists" not in p.stderr:
-                die(f"pw-link {out_port} {in_port}: {p.stderr.strip()[:200]}")
-    print(f"MIC OUTPUT LINKED {len(streams)} playback stream(s) -> {SINK} (new links {made})")
+    mon = subprocess.Popen(["pw-dump", "--monitor", "--no-colors"], env=g.env, stdout=subprocess.PIPE)
+    fd = mon.stdout.fileno()
+    decoder, buf, linked = json.JSONDecoder(), "", set()
+    try:
+        while os.path.isdir(scratch) and mon.poll() is None:
+            if not select.select([fd], [], [], 0.2)[0]:
+                continue
+            chunk = os.read(fd, 1 << 16)
+            if not chunk:
+                break
+            buf += chunk.decode(errors="replace")
+            while True:
+                buf = buf.lstrip()
+                try:
+                    objs, end = decoder.raw_decode(buf)
+                except ValueError:
+                    break
+                buf = buf[end:]
+                for o in objs if isinstance(objs, list) else []:
+                    props = ((o or {}).get("info") or {}).get("props") or {}
+                    # Node ids are reused once a node is gone; serials never are.
+                    serial = props.get("object.serial", o.get("id"))
+                    if o.get("type") == "PipeWire:Interface:Node" and props.get("media.class") == "Stream/Output/Audio" and serial not in linked:
+                        linked.add(serial)
+                        t0 = time.monotonic()
+                        made = link_stream(g, sink, o["id"], t0 + 5)
+                        print(f"AUTOLINK {props.get('node.name', '')} (node {o['id']}) links={made} in {1000 * (time.monotonic() - t0):.0f} ms", flush=True)
+    finally:
+        mon.terminate()
+
+
+def streams(g):
+    names = [n for _, n in g.nodes("Stream/Output/Audio")]
+    print(f"STREAMS {len(names)} {' '.join(names)}".rstrip())
 
 
 def play(fifo, path):
@@ -246,8 +280,10 @@ def main():
         check(Graph(scratch))
     elif cmd == "link":
         link(Graph(scratch), float(sys.argv[3]) if len(sys.argv) > 3 else 10)
-    elif cmd == "link-output":
-        link_output(Graph(scratch), float(sys.argv[3]) if len(sys.argv) > 3 else 10)
+    elif cmd == "autolink":
+        autolink(Graph(scratch), scratch)
+    elif cmd == "streams":
+        streams(Graph(scratch))
     elif cmd == "play":
         play(fifo, sys.argv[3])
     else:

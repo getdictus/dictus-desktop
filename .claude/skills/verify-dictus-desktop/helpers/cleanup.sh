@@ -28,6 +28,7 @@ kill_group() {
 }
 
 kill_group APP
+kill_group AUTOLINK
 kill_group PIPEWIRE
 dbus="$(ledger_get "$run" DBUS)"
 if [ -n "$dbus" ] && ref_alive "$dbus"; then
