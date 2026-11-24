@@ -2,8 +2,9 @@
 # Tier 2: the Windows VM dictus-win (libvirt, 4 GB) on this Linux host. Never the domain `windows`.
 #   vm.sh start [snapshot]   new tier-2 run, run lock + watchdog, revert to <snapshot> (default
 #                            clean-no-vcredist), start, wait for guest-ping (max 10 min). Ends: VM READY
-#   vm.sh fetch <pr>         download the Windows x64 installer of the latest successful
-#                            pr-test-build.yml run for <pr> into the run's scratch dir. Ends: INSTALLER <file>
+#   vm.sh fetch <pr> [run]   download the Windows x64 installer of the latest successful
+#                            pr-test-build.yml run for <pr> (or of workflow run <run>) into the run's
+#                            scratch dir. Ends: INSTALLER <file>
 #   vm.sh fetch-release <release-id> [nsis|msi]
 #                            download the Windows x64 installer (default NSIS) of a release, drafts
 #                            included, by asset id through the API into the same dir. Ends: INSTALLER <file>
@@ -66,11 +67,11 @@ case "$cmd" in
     echo "VM READY run=$run snapshot=$snap boot=$(($(date +%s) - t0))s"
     ;;
   fetch)
-    pr="${1:?usage: vm.sh fetch <pr>}"
+    pr="${1:?usage: vm.sh fetch <pr> [run]}"
     run="$(resolve_run)" || die "no run: vm.sh start first"
     name="handy-pr-$pr-x86_64-pc-windows-msvc"
     id=""
-    for r in $(gh run list -R getdictus/dictus-desktop --workflow pr-test-build.yml --status success -L 30 --json databaseId --jq '.[].databaseId'); do
+    for r in ${2:-} $(gh run list -R getdictus/dictus-desktop --workflow pr-test-build.yml --status success -L 30 --json databaseId --jq '.[].databaseId'); do
       gh api "repos/getdictus/dictus-desktop/actions/runs/$r/artifacts" --jq '.artifacts[] | select(.expired | not) | .name' | grep -qx "$name" && { id="$r"; break; }
     done
     [ -n "$id" ] || die "no successful pr-test-build.yml run with artifact $name: dispatch the workflow for PR #$pr first"
