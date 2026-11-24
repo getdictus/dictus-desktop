@@ -428,7 +428,7 @@
           "sectionLocal": "Trên thiết bị của bạn",
           "sectionExternal": "Bên ngoài — dữ liệu rời khỏi thiết bị này",
           "labels": {
-            "custom": "Custom (cục bộ)"
+            "custom": "Tùy chỉnh (cục bộ)"
           },
           "descriptions": {
             "apple_intelligence": "Không cần tải xuống — macOS Apple Silicon",

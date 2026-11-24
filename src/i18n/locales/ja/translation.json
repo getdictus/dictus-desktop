@@ -428,7 +428,7 @@
           "sectionLocal": "お使いのデバイスで",
           "sectionExternal": "外部 — データはこのデバイスから出ます",
           "labels": {
-            "custom": "Custom (local)"
+            "custom": "カスタム (ローカル)"
           },
           "descriptions": {
             "apple_intelligence": "ダウンロード不要 — macOS Apple Silicon",

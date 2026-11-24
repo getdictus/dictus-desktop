@@ -428,7 +428,7 @@
           "sectionLocal": "En tu dispositivo",
           "sectionExternal": "Externo — los datos salen de este dispositivo",
           "labels": {
-            "custom": "Custom (local)"
+            "custom": "Personalizado (local)"
           },
           "descriptions": {
             "apple_intelligence": "Sin descarga requerida — macOS Apple Silicon",

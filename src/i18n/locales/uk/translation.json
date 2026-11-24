@@ -428,7 +428,7 @@
           "sectionLocal": "На вашому пристрої",
           "sectionExternal": "Зовнішні — дані залишають цей пристрій",
           "labels": {
-            "custom": "Custom (локально)"
+            "custom": "Власний (локально)"
           },
           "descriptions": {
             "apple_intelligence": "Не потребує завантаження — macOS Apple Silicon",

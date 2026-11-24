@@ -428,7 +428,7 @@
           "sectionLocal": "Na vašem zařízení",
           "sectionExternal": "Externí — data opouštějí toto zařízení",
           "labels": {
-            "custom": "Custom (lokálně)"
+            "custom": "Vlastní (lokálně)"
           },
           "descriptions": {
             "apple_intelligence": "Nevyžaduje stahování — macOS Apple Silicon",

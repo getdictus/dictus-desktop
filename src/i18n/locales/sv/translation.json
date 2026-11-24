@@ -428,7 +428,7 @@
           "sectionLocal": "På din enhet",
           "sectionExternal": "Externt — data lämnar denna enhet",
           "labels": {
-            "custom": "Custom (lokalt)"
+            "custom": "Anpassad (lokalt)"
           },
           "descriptions": {
             "apple_intelligence": "Ingen nedladdning krävs — macOS Apple Silicon",

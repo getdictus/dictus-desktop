@@ -428,7 +428,7 @@
           "sectionLocal": "Cihazında",
           "sectionExternal": "Harici — veriler bu cihazdan çıkar",
           "labels": {
-            "custom": "Custom (yerel)"
+            "custom": "Özel (yerel)"
           },
           "descriptions": {
             "apple_intelligence": "İndirme gerekmez — macOS Apple Silicon",

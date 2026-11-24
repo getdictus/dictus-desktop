@@ -20,7 +20,7 @@ import {
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { useSettings } from "@/hooks/useSettings";
-import { LANGUAGES } from "@/lib/constants/languages";
+import { capitalizeFirst, getLanguageName } from "@/lib/constants/languages";
 import { formatDuration, formatFileSize } from "@/lib/utils/format";
 import { useModelStore } from "@/stores/modelStore";
 import { useNavigationStore } from "@/stores/navigationStore";
@@ -85,7 +85,7 @@ const toTranscriptionError = (error: unknown): FileTranscriptionError => {
 };
 
 export const FileTranscription: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { settings } = useSettings();
   const setSection = useNavigationStore((state) => state.setSection);
   const models = useModelStore((state) => state.models);
@@ -289,10 +289,11 @@ export const FileTranscription: React.FC = () => {
   const languageName = useMemo(() => {
     const value = settings?.selected_language ?? "auto";
     if (value === "auto") return t("settings.general.language.auto");
-    return (
-      LANGUAGES.find((language) => language.value === value)?.label ?? value
+    return capitalizeFirst(
+      getLanguageName(value, i18n.language),
+      i18n.language,
     );
-  }, [settings?.selected_language, t]);
+  }, [settings?.selected_language, t, i18n.language]);
 
   const supportedFormats = useMemo(
     () => extensions.join(", ").toUpperCase(),

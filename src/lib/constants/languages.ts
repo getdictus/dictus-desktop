@@ -107,3 +107,21 @@ export const LANGUAGES: Language[] = [
   { value: "jw", label: "Javanese" },
   { value: "su", label: "Sundanese" },
 ];
+
+// Intl follows the locale's own casing ("anglais" in French). The English
+// label is the fallback for a code or locale the engine does not know.
+export const getLanguageName = (code: string, locale: string): string => {
+  try {
+    const name = new Intl.DisplayNames([locale], {
+      type: "language",
+      fallback: "none",
+    }).of(code);
+    if (name) return name;
+  } catch {
+    // RangeError on a malformed locale or code: use the English label.
+  }
+  return LANGUAGES.find((l) => l.value === code)?.label ?? code;
+};
+
+export const capitalizeFirst = (text: string, locale: string): string =>
+  text.charAt(0).toLocaleUpperCase(locale) + text.slice(1);

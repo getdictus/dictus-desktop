@@ -5,7 +5,7 @@ import { ChevronDown, Globe } from "lucide-react";
 import type { ModelCardStatus } from "@/components/onboarding";
 import { ModelCard } from "@/components/onboarding";
 import { useModelStore } from "@/stores/modelStore";
-import { LANGUAGES } from "@/lib/constants/languages.ts";
+import { useLanguages } from "@/hooks/useLanguages";
 import type { ModelInfo } from "@/bindings";
 
 // check if model supports a language based on its supported_languages list
@@ -15,6 +15,7 @@ const modelSupportsLanguage = (model: ModelInfo, langCode: string): boolean => {
 
 export const ModelsSettings: React.FC = () => {
   const { t } = useTranslation();
+  const languages = useLanguages();
   const [switchingModelId, setSwitchingModelId] = useState<string | null>(null);
   const [languageFilter, setLanguageFilter] = useState("all");
   const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
@@ -60,20 +61,20 @@ export const ModelsSettings: React.FC = () => {
 
   // filtered languages for dropdown (exclude "auto")
   const filteredLanguages = useMemo(() => {
-    return LANGUAGES.filter(
+    return languages.filter(
       (lang) =>
         lang.value !== "auto" &&
         lang.label.toLowerCase().includes(languageSearch.toLowerCase()),
     );
-  }, [languageSearch]);
+  }, [languages, languageSearch]);
 
   // Get selected language label
   const selectedLanguageLabel = useMemo(() => {
     if (languageFilter === "all") {
       return t("settings.models.filters.allLanguages");
     }
-    return LANGUAGES.find((lang) => lang.value === languageFilter)?.label || "";
-  }, [languageFilter, t]);
+    return languages.find((lang) => lang.value === languageFilter)?.label || "";
+  }, [languages, languageFilter, t]);
 
   const getModelStatus = (modelId: string): ModelCardStatus => {
     if (modelId in extractingModels) {
