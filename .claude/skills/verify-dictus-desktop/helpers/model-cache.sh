@@ -15,7 +15,7 @@ m = re.search(r'ModelInfo \{\s*id: "%s"\.to_string\(\),(.*?)\n\s*\},\n' % re.esc
 if not m:
     sys.exit(f"error: model {mid} not in model.rs")
 block = m.group(1)
-url = re.search(r'url: Some\("([^"]+)"', block)
+url = re.search(r'url: Some\(\s*"([^"]+)"', block)
 sha = re.search(r'sha256: Some\(\s*"([0-9a-f]{64})"', block)
 name = re.search(r'filename: "([^"]+)"', block)
 if not (url and sha and name):
