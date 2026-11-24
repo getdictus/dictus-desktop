@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
 # Tier 1: build the debug .deb under the shared lock, extract it, start it on a private Xvfb with a
 # private D-Bus and an empty HOME/XDG tree. Any failure runs cleanup.sh before exiting.
-#   launch.sh [--no-build] [--release] [--deb <file.deb>] [--model <id>] [--mic] [label]
+#   launch.sh [--no-build] [--release] [--deb <file.deb>] [--model <id>] [--mic [--sink]] [label]
 #   --release     build (or with --no-build, reuse) the release .deb instead of the debug one
 #   --model <id>  put that catalogue model (from model-cache.sh) in the isolated data dir before the app starts
 #   --mic         private PipeWire with a virtual source in the scratch dir (mic.py), started before the app
+#   --sink        with --mic, also a null sink for the app's playback (recording sounds; see mic.py). Only for
+#                 builds that keep one feedback output open: a build that opens one per sound stalls on it
 # Last line on success: READY run=<dir> display=:<n> pid=<pid> window=<id> geometry=<WxH+X+Y>
 set -euo pipefail
 source "$(dirname "$0")/env.sh"
 
-build=1 deb="" label="launch" model="" mic=0 profile=debug
+build=1 deb="" label="launch" model="" mic=0 sink=0 profile=debug
 while [ $# -gt 0 ]; do
   case "$1" in
     --no-build) build=0 ;;
@@ -17,6 +19,7 @@ while [ $# -gt 0 ]; do
     --deb) deb="$2"; build=0; shift ;;
     --model) model="$2"; shift ;;
     --mic) mic=1 ;;
+    --sink) sink=1 ;;
     *) label="$1" ;;
   esac
   shift
@@ -83,7 +86,7 @@ fi
 
 if [ "$mic" = 1 ]; then
   mkfifo -m 600 "$scratch/mic.fifo"
-  python3 -I "$DICTUS_HELPERS/mic.py" "$scratch" conf > "$scratch/pipewire.conf"
+  python3 -I "$DICTUS_HELPERS/mic.py" "$scratch" conf $([ "$sink" = 1 ] && echo --sink) > "$scratch/pipewire.conf"
   setsid env -i PATH=/usr/bin:/bin HOME="$home" XDG_RUNTIME_DIR="$scratch/runtime" \
     pipewire -c "$scratch/pipewire.conf" < /dev/null > "$run/pipewire.log" 2>&1 &
   ledger_set "$run" PIPEWIRE "$(pid_ref $!)"
@@ -91,6 +94,7 @@ if [ "$mic" = 1 ]; then
   [ -S "$scratch/runtime/pipewire-0" ] || die "private pipewire did not start: see $run/pipewire.log"
   out="$(python3 -I "$DICTUS_HELPERS/mic.py" "$scratch" check)" || die "virtual mic check failed"
   ledger_set "$run" MIC 1
+  ledger_set "$run" SINK "$sink"
   report "$run" "$out"
 fi
 

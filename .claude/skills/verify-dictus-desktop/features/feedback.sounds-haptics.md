@@ -4,7 +4,7 @@ Dictus plays a start sound when recording starts, at the key press with the over
 
 - **ID:** `feedback.sounds-haptics` (the iOS/Android ID; sounds only)
 - **Desktop status:** partial: sounds only
-- **Tiers:** 1 (settings), 3 (macOS playback), 4 (hearing the sounds)
+- **Tiers:** 1 (settings, timing into a null sink), 3 (macOS playback), 4 (hearing the sounds)
 - **Screens:** `app.settings.general`, `app.settings.debug` — see [screens.md](screens.md)
 
 ## Sub-features
@@ -19,8 +19,10 @@ Dictus plays a start sound when recording starts, at the key press with the over
 
 ## Timing
 
-- Start: the sound starts on its own thread at the press; the microphone opens at the same time. Microphone input is replaced by silence until the sound has finished plus 150 ms (`START_SOUND_OUTPUT_LATENCY` in `actions.rs`, `InputMask` in `recorder.rs`), so the sound never reaches VAD or the model. The app log has `Played Start sound of <Theme> (<path>, <n> ms, volume <v>)`.
-- End: played after `utils::paste` returns `Ok`, never on an empty transcript or a failed paste. Log line `Played End sound of …`.
+- One output stream stays open while Audio Feedback is on (`audio_feedback.rs`), opened at startup and when the toggle, the pack or the output device changes; the current pack is decoded in memory. Playing a sound queues it on that stream's mixer, without waiting. Log line at opening: `Feedback output open on <device> in <n> ms`.
+- Start: queued right after `show_recording_overlay`, on its own thread; the microphone opens at the same time. Microphone input is replaced by silence until the sound has finished plus 150 ms (`START_SOUND_OUTPUT_LATENCY` in `actions.rs`, `InputMask` in `recorder.rs`), so the sound never reaches VAD or the model. Debug log: `Start feedback after press: overlay shown <x> ms, sound queued <y> ms`.
+- End: queued after `utils::paste` returns `Ok`, in the same main-thread block that hides the overlay, never on an empty transcript or a failed paste. Debug log: `End feedback after paste: sound queued <x> ms, overlay hidden <y> ms`.
+- `journey-dictation.sh` (with `launch.sh --sink`) reports those four numbers per dictation (`press_overlay_ms`, `press_sound_ms`, `paste_sound_ms`, `paste_hide_ms`). Target: both gaps under 30 ms.
 
 ## How to get to it (user POV)
 
@@ -36,7 +38,7 @@ Preconditions: `READY`, `journey-onboarding.sh` → `PASS`.
 - **Defaults.** `helpers/nav.sh general`; capture: Audio Feedback on, Sound Pack « Wood » selected, Volume 50 %; `<name>.state.txt` shows `audio_feedback = true`, `sound_theme = bois`.
 - **Pick a pack.** Click « Synth » in Sound Pack; capture; the state shows `sound_theme = synthe`.
 - **Turn it off.** Click the Audio Feedback toggle; capture: Sound Pack, Output Device and Volume greyed.
-- **Hear it.** No audio device on tier 1: the log shows `Failed to play sound` for a preview. Tier 3 or 4.
+- **Hear it.** With `--sink`, tier 1 plays into a private null sink: the stream runs, nothing is audible. Tier 3 or 4.
 - **Proof.** Before/after captures and the setting.
 
 ## Gotchas

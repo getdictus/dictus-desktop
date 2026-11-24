@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Corpus selection, history polling, WER and the leak check of journey-dictation.sh.
 
-    dictation.py clips <corpus> <clip-id|all-<lang>>        file, id, language, duration (TSV)
+    dictation.py clips <corpus> <clip-id|all-<lang>|short-<lang>>   file, id, language, duration (TSV)
     dictation.py last-id <history.db>
     dictation.py wait-row <history.db> <after-id> <t_stop_ns> <secs>
     dictation.py score <corpus> <clip-file> <history.db> <row-id> <wer-max>
     dictation.py transcribe-ms <log-dir> <mark>
+    dictation.py feedback-ms <log-dir> <mark>         press -> overlay / start sound, paste -> end sound / hide
     dictation.py leak-check <corpus> <history.db> <run-dir>
 
 The corpus is internal-testing-only: expected texts and transcripts are read into memory and never
@@ -89,9 +90,12 @@ def last_id(db):
 
 
 def cmd_clips(corpus, sel):
-    clips = manifest(corpus)
+    # Clips with no reference text (category human-spontaneous) cannot be scored.
+    clips = [c for c in manifest(corpus) if c.get("text")]
     if sel.startswith("all-"):
         chosen = [c for c in clips if c["language"] == sel[4:]]
+    elif sel.startswith("short-"):
+        chosen = [c for c in clips if c["language"] == sel[6:] and c["category"] == "short"]
     else:
         chosen = [c for c in clips if clip_id(c) == sel]
     if not chosen:
@@ -137,13 +141,32 @@ def cmd_score(corpus, clip_file, db, row_id, wer_max):
           f"recorded_ms={row[1]} gate={gate.replace(' ', '_')}")
 
 
-def cmd_transcribe_ms(log_dir, mark):
+def log_lines(log_dir, mark):
     lines = []
     for name in sorted(os.listdir(log_dir)):
         if name.endswith(".log"):
             lines += open(os.path.join(log_dir, name), errors="replace").read().splitlines()
+    return lines[int(mark):]
+
+
+def cmd_feedback_ms(log_dir, mark):
+    keys = {
+        r"Start feedback after press: overlay shown ([0-9.]+) ms, sound queued ([0-9.]+) ms": ("press_overlay_ms", "press_sound_ms"),
+        r"End feedback after paste: sound queued ([0-9.]+) ms, overlay hidden ([0-9.]+) ms": ("paste_sound_ms", "paste_hide_ms"),
+    }
+    found = {k: "na" for pair in keys.values() for k in pair}
+    for line in log_lines(log_dir, mark):
+        for pattern, names in keys.items():
+            m = re.search(pattern, line)
+            if m:
+                found.update(zip(names, m.groups()))
+    print(" ".join(f"{k}={v}" for k, v in found.items()))
+
+
+def cmd_transcribe_ms(log_dir, mark):
+    lines = log_lines(log_dir, mark)
     unit = {"ns": 1e-6, "µs": 1e-3, "us": 1e-3, "ms": 1, "s": 1000}
-    for line in lines[int(mark):]:
+    for line in lines:
         m = re.search(r"Transcription completed in ([0-9.]+)(ns|µs|us|ms|s):", line)
         if m:
             print(round(float(m.group(1)) * unit[m.group(2)]))
@@ -152,7 +175,7 @@ def cmd_transcribe_ms(log_dir, mark):
 
 
 def cmd_leak_check(corpus, db, run_dir):
-    texts = [c["text"] for c in manifest(corpus)]
+    texts = [c["text"] for c in manifest(corpus) if c.get("text")]
     if os.path.exists(db):
         with db_connect(db) as con:
             texts += [r[0] for r in con.execute("SELECT transcription_text FROM transcription_history")]
@@ -193,6 +216,8 @@ def main():
         cmd_score(args[0], args[1], args[2], int(args[3]), float(args[4]))
     elif cmd == "transcribe-ms":
         cmd_transcribe_ms(args[0], args[1])
+    elif cmd == "feedback-ms":
+        cmd_feedback_ms(*args)
     elif cmd == "leak-check":
         cmd_leak_check(*args)
     else:

@@ -4,7 +4,8 @@
 # go through `dictus --toggle-transcription` (a second instance, cli.sh); the text is read from the
 # isolated history.db and scored by WER against the manifest. Needs a READY run launched with
 # the launch-args below (run.sh adds them).
-#   journey-dictation.sh [--reps N] [<clip-id>|all-<lang>]          default all-fr, 1 rep
+#   journey-dictation.sh [--reps N] [<clip-id>|all-<lang>|short-<lang>]   default all-fr, 1 rep
+# all-<lang> takes every clip with a reference text; short-<lang> only the short ones.
 # --reps N plays every short clip N times, in rounds (all clips, then all again), the long clip once.
 # The model's load (it starts with the first recording) is awaited before the first clip plays:
 #   JOURNEY dictation load model=<id> load_ms=N
@@ -51,6 +52,12 @@ done
 for _ in $(seq 30); do [ "$(setting selected_model)" = "$model" ] && break; sleep 1; done
 [ "$(setting selected_model)" = "$model" ] || fail "the app did not auto-select the seeded model $model"
 "$H/evidence.sh" 20-dictation-ready > /dev/null
+# With launch.sh --sink the recording sounds go to the private null sink: link the feedback output
+# the app opens at startup.
+if [ "$(ledger_get "$run" SINK)" = 1 ]; then
+  out="$(py mic.py "$scratch" link-output 30 2>&1)" || fail "feedback output: $out"
+  report "$run" "$out"
+fi
 
 passed=0 n=0 loaded=""
 for entry in "${plan[@]}"; do
@@ -78,11 +85,12 @@ for entry in "${plan[@]}"; do
   row_id="$(sed -n 's/^row=\([0-9]*\) .*/\1/p' <<< "$row")"
   score="$(py dictation.py score "$corpus/repo" "$file" "$db" "$row_id" "$WER_MAX")" || fail "$id: score"
   tr_ms="$(py dictation.py transcribe-ms "$data/logs" "$m")"
+  sleep 1
+  fb="$(py dictation.py feedback-ms "$data/logs" "$m")"
   [ "${score%% *}" = PASS ] && passed=$((passed + 1))
-  line="JOURNEY dictation $id $score ${row#row=* } transcribe_ms=$tr_ms cli_stop_ms=$cli_ms dur_s=$dur category=$category lang=$lang model=$model seq=$n rep=$rep"
+  line="JOURNEY dictation $id $score ${row#row=* } transcribe_ms=$tr_ms $fb cli_stop_ms=$cli_ms dur_s=$dur category=$category lang=$lang model=$model seq=$n rep=$rep"
   report "$run" "$line"
   echo "$line"
-  sleep 1
 done
 
 leak="$(py dictation.py leak-check "$corpus/repo" "$db" "$run")" || { report "$run" "$leak"; fail "$leak"; }
