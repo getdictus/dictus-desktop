@@ -1,6 +1,6 @@
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
 use crate::apple_intelligence;
-use crate::audio_feedback::{play_feedback_sound, SoundType};
+use crate::audio_feedback::{self, play_feedback_sound, SoundType};
 use crate::audio_toolkit::{is_microphone_access_denied, is_no_input_device_error};
 use crate::managers::audio::AudioRecordingManager;
 use crate::managers::history::HistoryManager;
@@ -17,7 +17,8 @@ use ferrous_opencc::{config::BuiltinConfig, OpenCC};
 use log::{debug, error, warn};
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
-use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::{Duration, Instant};
 use tauri::Manager;
 use tauri::{AppHandle, Emitter};
@@ -49,6 +50,45 @@ pub trait ShortcutAction: Send + Sync {
 /// How long after the start sound's last sample the microphone input is still
 /// discarded: the output device's latency, longest on Bluetooth.
 const START_SOUND_OUTPUT_LATENCY: Duration = Duration::from_millis(150);
+
+/// How long the recording pill waits at the press for the feedback output to
+/// open, so the pill and the start sound come together. Opening took about
+/// 200 ms on a Mac; past this wait the pill shows without the start sound
+/// rather than look like the press did nothing.
+const START_FEEDBACK_MAX_WAIT: Duration = Duration::from_millis(300);
+
+/// The press whose recording pill (and start sound) is still to be shown. The
+/// pill waits for the feedback output, so a stop, a cancel or a failed start
+/// can come first: it clears this, and the late show is dropped instead of
+/// replacing their overlay. Shows and clears run under the lock.
+static PENDING_START: Mutex<Option<u64>> = Mutex::new(None);
+static NEXT_START: AtomicU64 = AtomicU64::new(0);
+
+fn pending_start() -> MutexGuard<'static, Option<u64>> {
+    PENDING_START.lock().unwrap_or_else(|e| e.into_inner())
+}
+
+fn begin_start_feedback() -> u64 {
+    let id = NEXT_START.fetch_add(1, Ordering::SeqCst);
+    *pending_start() = Some(id);
+    id
+}
+
+/// Runs `show` if press `id` is still pending.
+fn show_start_feedback<T>(id: u64, show: impl FnOnce() -> T) -> Option<T> {
+    let mut pending = pending_start();
+    if *pending != Some(id) {
+        return None;
+    }
+    *pending = None;
+    Some(show())
+}
+
+/// Drops a recording pill not shown yet. Call before showing another overlay
+/// state or hiding it.
+pub(crate) fn cancel_start_feedback() {
+    *pending_start() = None;
+}
 
 struct TranscribeAction {
     post_process: bool,
@@ -618,30 +658,54 @@ impl ShortcutAction for TranscribeAction {
 
         let binding_id = binding_id.to_string();
         change_tray_icon(app, TrayIconState::Recording);
-        show_recording_overlay(app);
-        let overlay_shown = start_time.elapsed();
 
-        // The start sound is queued with the overlay, on its own thread so the
-        // microphone opens at the same time. Whatever the microphone hears
-        // until the sound has finished is discarded (`silence_input_for`), so
-        // the sound never reaches the transcription.
+        // The pill and the start sound come together: once the feedback output
+        // is open (opened at this press, closed again after the dictation), on
+        // their own thread, so the microphone opens at the same time. Whatever
+        // the microphone hears until the sound has finished is discarded
+        // (`silence_input_for`), so the sound never reaches the transcription.
         let settings = get_settings(app);
+        let start_id = begin_start_feedback();
         if settings.audio_feedback {
             let app_clone = app.clone();
             let rm_clone = Arc::clone(&rm);
             std::thread::spawn(move || {
-                if let Some(duration) = play_feedback_sound(&app_clone, SoundType::Start) {
-                    let queued = start_time.elapsed();
-                    rm_clone.silence_input_for(duration + START_SOUND_OUTPUT_LATENCY);
-                    debug!(
-                        "Start feedback after press: overlay shown {:.1} ms, sound queued {:.1} ms",
-                        overlay_shown.as_secs_f64() * 1000.0,
-                        queued.as_secs_f64() * 1000.0
-                    );
-                    std::thread::sleep(duration);
+                let ready = audio_feedback::begin_session(&app_clone, START_FEEDBACK_MAX_WAIT);
+                let output_ready = start_time.elapsed();
+                let shown = show_start_feedback(start_id, || {
+                    show_recording_overlay(&app_clone);
+                    let overlay_shown = start_time.elapsed();
+                    let sound = ready
+                        .then(|| play_feedback_sound(&app_clone, SoundType::Start))
+                        .flatten();
+                    if let Some(duration) = sound {
+                        rm_clone.silence_input_for(duration + START_SOUND_OUTPUT_LATENCY);
+                    }
+                    (overlay_shown, sound.map(|d| (d, start_time.elapsed())))
+                });
+                let ms = |d: Duration| d.as_secs_f64() * 1000.0;
+                match shown {
+                    Some((overlay, Some((duration, queued)))) => {
+                        debug!(
+                            "Start feedback after press: overlay shown {:.1} ms, sound queued {:.1} ms, output ready {:.1} ms",
+                            ms(overlay),
+                            ms(queued),
+                            ms(output_ready)
+                        );
+                        std::thread::sleep(duration);
+                    }
+                    Some((overlay, None)) => debug!(
+                        "Start feedback after press: overlay shown {:.1} ms, no start sound (output ready: {}, {:.1} ms)",
+                        ms(overlay),
+                        ready,
+                        ms(output_ready)
+                    ),
+                    None => debug!("Start feedback dropped: the dictation ended first"),
                 }
                 rm_clone.apply_mute();
             });
+        } else {
+            show_start_feedback(start_id, || show_recording_overlay(app));
         }
 
         let mut recording_error: Option<String> = None;
@@ -665,6 +729,7 @@ impl ShortcutAction for TranscribeAction {
         } else {
             // Starting failed (for example due to blocked microphone permissions).
             // Revert UI state so we don't stay stuck in the recording overlay.
+            cancel_start_feedback();
             utils::hide_recording_overlay(app);
             change_tray_icon(app, TrayIconState::Idle);
             if let Some(err) = recording_error {
@@ -723,6 +788,7 @@ fn spawn_transcription_task(
     let hm = Arc::clone(&app.state::<Arc<HistoryManager>>());
 
     change_tray_icon(app, TrayIconState::Transcribing);
+    cancel_start_feedback();
     show_transcribing_overlay(app);
 
     rm.remove_mute();

@@ -70,6 +70,53 @@ fn resolve_sound_path(app: &AppHandle, theme: SoundTheme, sound: SoundType) -> O
     }
 }
 
+/// How long the output stays open after a dictation, counted from the end of
+/// its last sound. An open output stops the system from sleeping on its own
+/// (macOS, Windows), so it is open only around dictations. The idle-sleep
+/// timers count from the last user input, at least a minute after it on macOS
+/// and Windows; the press or release that ends a dictation is such an input, so
+/// a close this soon after never delays sleep. Dictations within this delay of
+/// each other reuse the output and do not wait for it to open.
+pub const CLOSE_AFTER: Duration = Duration::from_secs(15);
+
+/// When the output may close: never while a dictation uses it, otherwise
+/// `CLOSE_AFTER` after its last activity (release, or end of the last sound).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct Lifetime {
+    in_use: bool,
+    last_activity: Option<Instant>,
+}
+
+impl Lifetime {
+    const IDLE: Lifetime = Lifetime {
+        in_use: false,
+        last_activity: None,
+    };
+
+    fn begin(&mut self) {
+        self.in_use = true;
+    }
+
+    fn end(&mut self, now: Instant) {
+        self.in_use = false;
+        self.touch(now);
+    }
+
+    /// A sound queued at `now` plays until `now + duration`.
+    fn played(&mut self, now: Instant, duration: Duration) {
+        self.touch(now + duration);
+    }
+
+    fn touch(&mut self, at: Instant) {
+        self.last_activity = Some(self.last_activity.map_or(at, |t| t.max(at)));
+    }
+
+    /// `None` while in use; an output never used closes at once.
+    fn close_at(&self, now: Instant) -> Option<Instant> {
+        (!self.in_use).then(|| self.last_activity.map_or(now, |t| t + CLOSE_AFTER))
+    }
+}
+
 /// A pack's two sounds, decoded once so playing one costs no disk read.
 struct PackSounds {
     theme: SoundTheme,
@@ -98,18 +145,29 @@ struct Output {
     _keep_open: mpsc::Sender<()>,
 }
 
-/// The feedback player: one output stream, kept open while audio feedback is
-/// on, and the current pack's sounds in memory. Opening a stream takes a
-/// variable time (hundreds of ms on CoreAudio), which made the sounds lag the
-/// overlay when it was done for every sound.
+impl Output {
+    fn usable(&self, selected: &Option<String>) -> bool {
+        !self.failed.load(Ordering::SeqCst)
+            && &self.selected == selected
+            && (selected.is_some() || self.default_name == default_device_name())
+    }
+}
+
+/// The feedback player: the current pack's sounds in memory, and an output
+/// stream open only from a dictation's press until `CLOSE_AFTER` after it.
 struct Player {
     output: Option<Output>,
     pack: Option<PackSounds>,
+    lifetime: Lifetime,
+    /// An output is being opened, without the lock.
+    opening: bool,
 }
 
 static PLAYER: Mutex<Player> = Mutex::new(Player {
     output: None,
     pack: None,
+    lifetime: Lifetime::IDLE,
+    opening: false,
 });
 
 fn player() -> MutexGuard<'static, Player> {
@@ -131,22 +189,8 @@ fn default_device_name() -> Option<String> {
 }
 
 impl Player {
-    /// The mixer of an output open on `selected`, opening one if needed.
-    fn mixer(&mut self, app: &AppHandle, selected: &Option<String>) -> Result<Mixer, String> {
-        let usable = self
-            .output
-            .as_ref()
-            .is_some_and(|o| !o.failed.load(Ordering::SeqCst) && &o.selected == selected);
-        if !usable {
-            self.output = None;
-            self.output = Some(open_output(app, selected.clone())?);
-        }
-        Ok(self
-            .output
-            .as_ref()
-            .expect("output just opened")
-            .mixer
-            .clone())
+    fn output_usable(&self, selected: &Option<String>) -> bool {
+        self.output.as_ref().is_some_and(|o| o.usable(selected))
     }
 
     fn pack(&mut self, app: &AppHandle, theme: SoundTheme) -> Result<&PackSounds, String> {
@@ -157,43 +201,30 @@ impl Player {
         Ok(self.pack.as_ref().expect("pack just loaded"))
     }
 
-    /// Brings the player in line with the settings: open on the selected
-    /// device with the current pack loaded while audio feedback is on, closed
-    /// otherwise. Reopens when the default device has changed under it.
-    fn sync(&mut self, app: &AppHandle, settings: &AppSettings) -> Result<(), String> {
-        if !settings.audio_feedback {
-            self.output = None;
-            self.pack = None;
-            return Ok(());
+    /// Closes the output once its `close_at` has passed. Returns when to check
+    /// again, if it is still open and not in use.
+    fn close_if_due(&mut self, now: Instant) -> Option<Instant> {
+        self.output.as_ref()?;
+        let close_at = self.lifetime.close_at(now)?;
+        if close_at > now {
+            return Some(close_at);
         }
-        let selected = selected_device(settings);
-        if let Some(output) = &self.output {
-            if selected.is_none()
-                && output.selected.is_none()
-                && output.default_name != default_device_name()
-            {
-                info!("Default output device changed, reopening the feedback output");
-                self.output = None;
-            }
-        }
-        self.mixer(app, &selected)?;
-        self.pack(app, settings.sound_theme)?;
-        Ok(())
+        self.output = None;
+        info!("Feedback output closed");
+        None
     }
 }
 
-fn open_output(app: &AppHandle, selected: Option<String>) -> Result<Output, String> {
+fn open_output(selected: Option<String>) -> Result<Output, String> {
     let opened_at = Instant::now();
     let failed = Arc::new(AtomicBool::new(false));
     let (ready_tx, ready_rx) = mpsc::channel();
     let (keep_open, closed) = mpsc::channel::<()>();
     let on_error = {
         let failed = Arc::clone(&failed);
-        let app = app.clone();
         move |e: cpal::StreamError| {
             if !failed.swap(true, Ordering::SeqCst) {
-                warn!("Feedback output failed ({e}), reopening it");
-                sync_with_settings(&app);
+                warn!("Feedback output failed ({e}); the next dictation reopens it");
             }
         }
     };
@@ -218,12 +249,12 @@ fn open_output(app: &AppHandle, selected: Option<String>) -> Result<Output, Stri
         None
     };
     info!(
-        "Feedback output open on {} in {} ms",
+        "Feedback output open on {} in {:.1} ms",
         selected
             .as_deref()
             .or(default_name.as_deref())
             .unwrap_or("default device"),
-        opened_at.elapsed().as_millis()
+        opened_at.elapsed().as_secs_f64() * 1000.0
     );
     Ok(Output {
         mixer,
@@ -287,37 +318,114 @@ fn load_pack(app: &AppHandle, theme: SoundTheme) -> Result<PackSounds, String> {
     })
 }
 
-/// Opens or closes the feedback output to match the settings, off the
-/// calling thread. Called at startup and whenever a sound setting changes,
-/// so the first sound after that does not wait for the device.
+/// Brings the player in line with the settings, off the calling thread: the
+/// selected pack decoded in memory, the output closed if audio feedback is
+/// off. Never opens the output. Called at startup and when a sound setting
+/// changes.
 pub fn sync_with_settings(app: &AppHandle) {
     let app = app.clone();
     thread::spawn(move || {
         let settings = settings::get_settings(&app);
-        if let Err(e) = player().sync(&app, &settings) {
-            error!("Cannot prepare the feedback sounds: {}", e);
+        let mut player = player();
+        if !settings.audio_feedback {
+            player.output = None;
+            return;
+        }
+        if player
+            .output
+            .as_ref()
+            .is_some_and(|o| o.selected != selected_device(&settings))
+        {
+            player.output = None;
+        }
+        if let Err(e) = player.pack(&app, settings.sound_theme) {
+            error!("Cannot load the feedback sounds: {}", e);
         }
     });
 }
 
-/// Queues a recording sound on the feedback output and returns its length,
-/// if audio feedback is on. Does not wait for the sound to play.
+/// Called at a dictation's press: marks the output in use and, if it is
+/// closed, opens it in the background. Returns `true` once it is open, `false`
+/// if it is not open after `max_wait` (it keeps opening, for the end sound) or
+/// cannot open.
+pub fn begin_session(app: &AppHandle, max_wait: Duration) -> bool {
+    let selected = selected_device(&settings::get_settings(app));
+    let (tx, rx) = mpsc::channel();
+    {
+        let mut player = player();
+        player.lifetime.begin();
+        if player.output_usable(&selected) {
+            return true;
+        }
+        if !player.opening {
+            player.opening = true;
+            thread::spawn(move || open_for_session(selected, tx));
+        }
+    }
+    rx.recv_timeout(max_wait).unwrap_or_else(|_| {
+        // Timed out, or another press is already opening it (its sender was
+        // not ours): the pill then shows without the start sound.
+        let ready = player().output.is_some();
+        if !ready {
+            warn!("Feedback output not open after {} ms", max_wait.as_millis());
+        }
+        ready
+    })
+}
+
+fn open_for_session(selected: Option<String>, ready: mpsc::Sender<bool>) {
+    // Opening can take hundreds of ms: not under the lock, so a sound or the
+    // end of a dictation never waits for it.
+    let opened = open_output(selected);
+    let mut player = player();
+    player.opening = false;
+    let ok = match opened {
+        Ok(output) => {
+            player.output = Some(output);
+            true
+        }
+        Err(e) => {
+            error!("Cannot open the feedback output: {}", e);
+            false
+        }
+    };
+    // The dictation may have ended while the output opened.
+    if let Some(check_at) = player.close_if_due(Instant::now()) {
+        schedule_close(check_at);
+    }
+    let _ = ready.send(ok);
+}
+
+/// Called when a dictation is over, whatever its outcome: the output closes
+/// `CLOSE_AFTER` after its last sound ends.
+pub fn end_session() {
+    let now = Instant::now();
+    let mut player = player();
+    player.lifetime.end(now);
+    if let Some(check_at) = player.close_if_due(now) {
+        schedule_close(check_at);
+    }
+}
+
+fn schedule_close(mut check_at: Instant) {
+    thread::spawn(move || loop {
+        thread::sleep(check_at.saturating_duration_since(Instant::now()));
+        match player().close_if_due(Instant::now()) {
+            Some(next) => check_at = next,
+            None => break,
+        }
+    });
+}
+
+/// Queues a recording sound on the open feedback output and returns its
+/// length, if audio feedback is on. Never opens the output (see
+/// `begin_session`) and never waits for the sound to play.
 pub fn play_feedback_sound(app: &AppHandle, sound: SoundType) -> Option<Duration> {
     let settings = settings::get_settings(app);
     if !settings.audio_feedback {
         return None;
     }
-    let played = queue_sound(app, &settings, settings.sound_theme, sound);
-    if let Some(duration) = played {
-        // Picks up a change of default device for the next sound, once this
-        // one has finished: reopening the output now would cut it.
-        let app = app.clone();
-        thread::spawn(move || {
-            thread::sleep(duration);
-            sync_with_settings(&app);
-        });
-    }
-    played
+    queue_sound(app, &settings, settings.sound_theme, sound)
 }
 
 fn queue_sound(
@@ -330,11 +438,16 @@ fn queue_sound(
     let volume = settings.audio_feedback_volume.clamp(0.0, 1.0);
     let mut player = player();
     let queued = player
-        .mixer(app, &selected_device(settings))
-        .and_then(|mixer| {
-            let buffer = player.pack(app, theme)?.get(sound);
+        .pack(app, theme)
+        .map(|p| p.get(sound))
+        .and_then(|buffer| {
+            let output = player
+                .output
+                .as_ref()
+                .ok_or_else(|| "the output is not open".to_string())?;
             let duration = buffer.total_duration().unwrap_or_default();
-            mixer.add(buffer.amplify(volume));
+            output.mixer.add(buffer.amplify(volume));
+            player.lifetime.played(Instant::now(), duration);
             Ok(duration)
         });
     match queued {
@@ -360,12 +473,14 @@ fn queue_sound(
 /// both have played.
 pub fn preview_sound_pack(app: &AppHandle, theme: SoundTheme) {
     let settings = settings::get_settings(app);
-    for sound in [SoundType::Start, SoundType::End] {
-        if let Some(duration) = queue_sound(app, &settings, theme, sound) {
-            thread::sleep(duration);
+    if begin_session(app, Duration::from_secs(5)) {
+        for sound in [SoundType::Start, SoundType::End] {
+            if let Some(duration) = queue_sound(app, &settings, theme, sound) {
+                thread::sleep(duration);
+            }
         }
     }
-    // Back to the selected pack, and closed again if audio feedback is off.
+    end_session();
     sync_with_settings(app);
 }
 
@@ -380,6 +495,64 @@ mod tests {
         SoundTheme::Marimba,
         SoundTheme::Pop,
     ];
+
+    fn at(t0: Instant, ms: u64) -> Instant {
+        t0 + Duration::from_millis(ms)
+    }
+
+    #[test]
+    fn output_in_use_never_closes() {
+        let t0 = Instant::now();
+        let mut life = Lifetime::IDLE;
+        life.begin();
+        life.played(t0, Duration::from_millis(450));
+        assert_eq!(life.close_at(at(t0, 600_000)), None);
+    }
+
+    #[test]
+    fn output_closes_close_after_past_the_end_sound() {
+        let t0 = Instant::now();
+        let mut life = Lifetime::IDLE;
+        life.begin();
+        life.played(at(t0, 5_000), Duration::from_millis(600));
+        life.end(at(t0, 5_001));
+        assert_eq!(
+            life.close_at(at(t0, 5_001)),
+            Some(at(t0, 5_600) + CLOSE_AFTER)
+        );
+    }
+
+    #[test]
+    fn end_sound_queued_after_the_release_pushes_the_close_back() {
+        let t0 = Instant::now();
+        let mut life = Lifetime::IDLE;
+        life.begin();
+        life.end(t0);
+        life.played(at(t0, 200), Duration::from_millis(600));
+        assert_eq!(life.close_at(at(t0, 200)), Some(at(t0, 800) + CLOSE_AFTER));
+    }
+
+    #[test]
+    fn a_press_before_the_close_keeps_the_output_open() {
+        let t0 = Instant::now();
+        let mut life = Lifetime::IDLE;
+        life.begin();
+        life.end(t0);
+        life.begin();
+        assert_eq!(life.close_at(t0 + CLOSE_AFTER), None);
+    }
+
+    #[test]
+    fn an_output_never_used_closes_at_once() {
+        let t0 = Instant::now();
+        assert_eq!(Lifetime::IDLE.close_at(t0), Some(t0));
+    }
+
+    #[test]
+    fn close_after_stays_well_under_the_shortest_idle_sleep_timer() {
+        // macOS and Windows let a user set idle sleep down to one minute.
+        assert!(CLOSE_AFTER <= Duration::from_secs(30));
+    }
 
     #[test]
     fn bundled_packs_resolve_to_their_folder() {
