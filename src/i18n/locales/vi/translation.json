@@ -761,6 +761,8 @@
     "modelLoadFailedUnknown": "mô hình không xác định",
     "pasteFailedTitle": "Không thể dán văn bản",
     "pasteFailed": "Không thể dán văn bản vào ứng dụng đang hoạt động.",
+    "transcriptionFailedTitle": "Phiên âm thất bại",
+    "transcriptionFailed": "Bản ghi âm của bạn đã được lưu trong Lịch sử. Hãy phiên âm lại từ đó hoặc chọn mô hình khác.",
     "boundary": {
       "title": "Đã xảy ra lỗi.",
       "reload": "Tải lại"
@@ -775,7 +777,8 @@
   "overlay": {
     "transcribing": "Đang chuyển đổi...",
     "processing": "Đang xử lý...",
-    "postProcessUnavailable": "Thiết lập một mô hình để hậu xử lý"
+    "postProcessUnavailable": "Thiết lập một mô hình để hậu xử lý",
+    "transcriptionFailed": "Phiên âm thất bại"
   },
   "smartModes": {
     "sections": {

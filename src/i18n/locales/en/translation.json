@@ -761,6 +761,8 @@
     "modelLoadFailedUnknown": "unknown model",
     "pasteFailedTitle": "Failed to Paste Text",
     "pasteFailed": "Text could not be pasted into the active application.",
+    "transcriptionFailedTitle": "Transcription failed",
+    "transcriptionFailed": "Your recording is saved in History. Re-transcribe it there, or choose another model.",
     "boundary": {
       "title": "Something went wrong.",
       "reload": "Reload"
@@ -775,7 +777,8 @@
   "overlay": {
     "transcribing": "Transcribing...",
     "processing": "Processing...",
-    "postProcessUnavailable": "Set up a model for post-processing"
+    "postProcessUnavailable": "Set up a model for post-processing",
+    "transcriptionFailed": "Transcription failed"
   },
   "smartModes": {
     "sections": {

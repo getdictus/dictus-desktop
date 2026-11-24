@@ -761,6 +761,8 @@
     "modelLoadFailedUnknown": "неизвестная модель",
     "pasteFailedTitle": "Не удалось вставить текст",
     "pasteFailed": "Не удалось вставить текст в активное приложение.",
+    "transcriptionFailedTitle": "Не удалось распознать речь",
+    "transcriptionFailed": "Запись сохранена в истории. Повторите распознавание оттуда или выберите другую модель.",
     "boundary": {
       "title": "Что-то пошло не так.",
       "reload": "Перезагрузить"
@@ -775,7 +777,8 @@
   "overlay": {
     "transcribing": "Расшифровка...",
     "processing": "Обработка...",
-    "postProcessUnavailable": "Настройте модель для постобработки"
+    "postProcessUnavailable": "Настройте модель для постобработки",
+    "transcriptionFailed": "Не удалось распознать речь"
   },
   "smartModes": {
     "sections": {

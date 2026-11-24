@@ -761,6 +761,8 @@
     "modelLoadFailedUnknown": "невідома модель",
     "pasteFailedTitle": "Не вдалося вставити текст",
     "pasteFailed": "Не вдалося вставити текст до активної програми.",
+    "transcriptionFailedTitle": "Не вдалося розпізнати мовлення",
+    "transcriptionFailed": "Запис збережено в історії. Повторіть розпізнавання звідти або виберіть іншу модель.",
     "boundary": {
       "title": "Щось пішло не так.",
       "reload": "Перезавантажити"
@@ -775,7 +777,8 @@
   "overlay": {
     "transcribing": "Обробка...",
     "processing": "Постобробка...",
-    "postProcessUnavailable": "Налаштуйте модель для постобробки"
+    "postProcessUnavailable": "Налаштуйте модель для постобробки",
+    "transcriptionFailed": "Не вдалося розпізнати мовлення"
   },
   "smartModes": {
     "sections": {

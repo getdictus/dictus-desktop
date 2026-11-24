@@ -761,6 +761,8 @@
     "modelLoadFailedUnknown": "неизвестен модел",
     "pasteFailedTitle": "Неуспешно поставяне на текст",
     "pasteFailed": "Текстът не можа да бъде поставен в активното приложение.",
+    "transcriptionFailedTitle": "Транскрипцията е неуспешна",
+    "transcriptionFailed": "Записът е запазен в историята. Транскрибирайте го отново оттам или изберете друг модел.",
     "boundary": {
       "title": "Нещо се обърка.",
       "reload": "Презареди"
@@ -775,7 +777,8 @@
   "overlay": {
     "transcribing": "Транскрибиране...",
     "processing": "Обработка...",
-    "postProcessUnavailable": "Настройте модел за последваща обработка"
+    "postProcessUnavailable": "Настройте модел за последваща обработка",
+    "transcriptionFailed": "Транскрипцията е неуспешна"
   },
   "smartModes": {
     "sections": {

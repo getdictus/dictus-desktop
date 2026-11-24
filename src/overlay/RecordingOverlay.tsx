@@ -7,7 +7,18 @@ import { commands } from "@/bindings";
 import i18n, { syncLanguageFromSettings } from "@/i18n";
 import { getLanguageDirection } from "@/lib/utils/rtl";
 
-type OverlayState = "recording" | "transcribing" | "processing" | "error";
+type OverlayState =
+  | "recording"
+  | "transcribing"
+  | "processing"
+  | "post-process-unavailable"
+  | "transcription-failed";
+
+// The error states render a static text pill instead of the bars.
+const ERROR_TEXT_KEYS: Partial<Record<OverlayState, string>> = {
+  "post-process-unavailable": "overlay.postProcessUnavailable",
+  "transcription-failed": "overlay.transcriptionFailed",
+};
 
 const BAR_COUNT = 30;
 
@@ -265,8 +276,7 @@ const RecordingOverlay: React.FC = () => {
 
   useEffect(() => {
     if (!isVisible) return;
-    // The error state is a static text pill — no bar animation to drive.
-    if (state === "error") return;
+    if (ERROR_TEXT_KEYS[state]) return;
 
     const animate = (timestamp: number) => {
       const dt = lastTimeRef.current
@@ -352,6 +362,8 @@ const RecordingOverlay: React.FC = () => {
     };
   }, [isVisible, state]);
 
+  const errorTextKey = ERROR_TEXT_KEYS[state];
+
   return (
     <div dir={direction} style={{ display: "flex", alignItems: "center" }}>
       <div className={`recording-overlay ${isVisible ? "fade-in" : ""}`}>
@@ -375,7 +387,7 @@ const RecordingOverlay: React.FC = () => {
           {state === "processing" && reducedMotion && (
             <div className="transcribing-text">{t("overlay.processing")}</div>
           )}
-          {state === "error" && (
+          {errorTextKey && (
             <div className="overlay-error">
               <svg
                 className="overlay-error-icon"
@@ -393,9 +405,7 @@ const RecordingOverlay: React.FC = () => {
                   strokeLinejoin="round"
                 />
               </svg>
-              <span className="overlay-error-text">
-                {t("overlay.postProcessUnavailable")}
-              </span>
+              <span className="overlay-error-text">{t(errorTextKey)}</span>
             </div>
           )}
         </div>

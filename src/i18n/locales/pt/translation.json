@@ -761,6 +761,8 @@
     "modelLoadFailedUnknown": "modelo desconhecido",
     "pasteFailedTitle": "Falha ao colar o texto",
     "pasteFailed": "Não foi possível colar o texto no aplicativo ativo.",
+    "transcriptionFailedTitle": "Falha na transcrição",
+    "transcriptionFailed": "A sua gravação foi guardada no histórico. Transcreva-a novamente a partir daí ou escolha outro modelo.",
     "boundary": {
       "title": "Algo deu errado.",
       "reload": "Recarregar"
@@ -775,7 +777,8 @@
   "overlay": {
     "transcribing": "Transcrevendo...",
     "processing": "Processando...",
-    "postProcessUnavailable": "Configure um modelo para o pós-processamento"
+    "postProcessUnavailable": "Configure um modelo para o pós-processamento",
+    "transcriptionFailed": "Falha na transcrição"
   },
   "smartModes": {
     "sections": {

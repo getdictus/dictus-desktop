@@ -375,12 +375,38 @@ pub fn show_processing_overlay(app_handle: &AppHandle) {
     show_overlay_state(app_handle, "processing");
 }
 
-/// Shows the overlay in an error state (e.g. translation could not run because
-/// no engine is available). Visible even when Dictus isn't the focused app, so
-/// the user gets feedback during background dictation. The caller is responsible
-/// for hiding it after a short delay.
-pub fn show_error_overlay(app_handle: &AppHandle) {
-    show_overlay_state(app_handle, "error");
+/// Why the overlay shows its error pill. Each maps to an overlay state the
+/// frontend renders with its own message.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OverlayError {
+    /// Post-processing could not run (no model); the raw text was pasted.
+    PostProcessUnavailable,
+    /// The engine returned an error; the recording is kept in History.
+    TranscriptionFailed,
+}
+
+impl OverlayError {
+    fn state(self) -> &'static str {
+        match self {
+            OverlayError::PostProcessUnavailable => "post-process-unavailable",
+            OverlayError::TranscriptionFailed => "transcription-failed",
+        }
+    }
+}
+
+/// How long the error pill stays up before it fades out.
+const ERROR_OVERLAY_MS: u64 = 2500;
+
+/// Shows the overlay's error pill for a few seconds, then hides it. Visible even
+/// when Dictus isn't the focused app, so the user gets feedback during
+/// background dictation.
+pub fn flash_error_overlay(app_handle: &AppHandle, error: OverlayError) {
+    show_overlay_state(app_handle, error.state());
+    let app_handle = app_handle.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_millis(ERROR_OVERLAY_MS));
+        hide_recording_overlay(&app_handle);
+    });
 }
 
 /// Updates the overlay window position based on current settings
@@ -453,5 +479,32 @@ mod tests {
         // stale hide must be skipped (this is the bug being fixed).
         assert!(!delayed_hide_is_current(7, 8));
         assert!(!delayed_hide_is_current(0, 1));
+    }
+
+    // Issue #85: a failed transcription was silent. Every error the backend can
+    // flash must have a message in the overlay, and that message an English text.
+    #[test]
+    fn every_overlay_error_has_a_message() {
+        let overlay = include_str!("../../src/overlay/RecordingOverlay.tsx");
+        let en: serde_json::Value =
+            serde_json::from_str(include_str!("../../src/i18n/locales/en/translation.json"))
+                .unwrap();
+        for error in [
+            OverlayError::PostProcessUnavailable,
+            OverlayError::TranscriptionFailed,
+        ] {
+            let entry = format!("\"{}\": \"", error.state());
+            let key = overlay
+                .split_once(&entry)
+                .and_then(|(_, rest)| rest.split_once('"'))
+                .map(|(key, _)| key)
+                .unwrap_or_else(|| panic!("no overlay message for {:?}", error));
+            let text = key
+                .split('.')
+                .fold(&en, |node, part| &node[part])
+                .as_str()
+                .unwrap_or_else(|| panic!("no English text for {}", key));
+            assert!(!text.is_empty(), "empty English text for {}", key);
+        }
     }
 }

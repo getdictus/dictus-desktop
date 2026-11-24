@@ -761,6 +761,8 @@
     "modelLoadFailedUnknown": "نموذج غير معروف",
     "pasteFailedTitle": "فشل لصق النص",
     "pasteFailed": "تعذر لصق النص في التطبيق النشط.",
+    "transcriptionFailedTitle": "فشل التفريغ النصي",
+    "transcriptionFailed": "تم حفظ تسجيلك في السجل. أعد تفريغه من هناك أو اختر نموذجًا آخر.",
     "boundary": {
       "title": "حدث خطأ ما.",
       "reload": "إعادة التحميل"
@@ -775,7 +777,8 @@
   "overlay": {
     "transcribing": "...جاري التفريغ",
     "processing": "...جاري المعالجة",
-    "postProcessUnavailable": "قم بإعداد نموذج للمعالجة اللاحقة"
+    "postProcessUnavailable": "قم بإعداد نموذج للمعالجة اللاحقة",
+    "transcriptionFailed": "فشل التفريغ النصي"
   },
   "smartModes": {
     "sections": {

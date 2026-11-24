@@ -761,6 +761,8 @@
     "modelLoadFailedUnknown": "未知模型",
     "pasteFailedTitle": "貼上文字失敗",
     "pasteFailed": "無法將文字貼上至目前作用中的應用程式。",
+    "transcriptionFailedTitle": "轉錄失敗",
+    "transcriptionFailed": "錄音已儲存在歷史記錄中。請在歷史記錄中重新轉錄，或選擇其他模型。",
     "boundary": {
       "title": "發生錯誤。",
       "reload": "重新載入"
@@ -775,7 +777,8 @@
   "overlay": {
     "transcribing": "正在轉錄...",
     "processing": "處理中...",
-    "postProcessUnavailable": "請設定用於後處理的模型"
+    "postProcessUnavailable": "請設定用於後處理的模型",
+    "transcriptionFailed": "轉錄失敗"
   },
   "smartModes": {
     "sections": {
