@@ -1,6 +1,6 @@
 ---
 name: verify-dictus-desktop
-description: Verify Dictus Desktop (Tauri 2, com.dictus.desktop) the way a user does. Tier 1 builds the debug .deb on this shared Linux machine under /tmp/dictus-gradle.lock and runs it on a private Xvfb with a private D-Bus and an empty HOME, driven by an XTEST helper. Tier 2 is the Windows VM dictus-win, tier 3 Pierre's Mac (no focus stealing), tier 4 Pierre. Use when a change to src/ or src-tauri/ has to be seen working in the real app rather than in unit tests, when a feature of features/README.md must be exercised, or when the screen map needs new captures.
+description: Verify Dictus Desktop (Tauri 2, com.dictus.desktop) the way a user does. Tier 1 builds the debug .deb on this shared Linux machine (the shared /tmp/dictus-gradle.lock held around each compile only) and runs it on a private Xvfb with a private D-Bus and an empty HOME, driven by an XTEST helper. Tier 2 is the Windows VM dictus-win, tier 3 Pierre's Mac (no focus stealing), tier 4 Pierre. Use when a change to src/ or src-tauri/ has to be seen working in the real app rather than in unit tests, when a feature of features/README.md must be exercised, or when the screen map needs new captures.
 ---
 
 # Verify Dictus Desktop
@@ -9,9 +9,9 @@ Five steps, always in this order: **Launch → Doctor → Drive → Evidence →
 
 This Linux machine is shared: Andy's Android builds, OpenBot (Xvfb `:99` and `:100`) and Pierre's own Dictus data live here. Three rules follow from that, and every helper enforces them:
 
-- **The shared lock `/tmp/dictus-gradle.lock` is held only while work runs.** `build.sh` holds it for the build alone (`flock` releases it when the build ends). `launch.sh` takes it again only while the app runs, and `cleanup.sh` releases it. A watchdog armed by Launch runs Cleanup after `DICTUS_TTL_MIN` minutes (default 20), so a run never holds the lock idle. Never wait on anything (a question, an approval, a long think) while a run is up: run `cleanup.sh` first, then wait.
+- **The shared lock `/tmp/dictus-gradle.lock` is held only while a compile runs.** Andy's Gradle and npm builds take it too. `build.sh` wraps each compile command (`bun install`, `bun run tauri build`) in its own `flock`, which releases it when that command ends. Any other compile you run by hand (`cargo build`/`test`/`clippy`, `bun run build`) gets the same: `flock /tmp/dictus-gradle.lock <command>`. Never hold it with a background holder, never across the app phase, never wait on it outside a compile. The app phase (Xvfb, D-Bus, PipeWire, the app, journeys, bench, the VM) takes the skill's own run lock `/tmp/dictus-desktop-run.lock` instead, which Gradle never takes: `launch.sh` and `vm.sh start` take it, `cleanup.sh` releases it, and a watchdog armed with it runs Cleanup after `DICTUS_TTL_MIN` minutes (default 20). Never wait on anything (a question, an approval, a long think) while a run is up: run `cleanup.sh` first, then wait.
 - **Pierre's real data is never touched.** Each run records a sha256 fingerprint of `~/.local/share/com.dictus.desktop/{history.db,settings_store.json}` (and the `.dev` identity's) before it starts and checks it again in Cleanup and Doctor.
-- **Nothing destructive goes inside `bash -c` / `sh -c` strings, loops or one-off pipelines.** `rm`, `kill`, `virsh destroy` and `snapshot-revert` live only in the committed helpers (mostly `cleanup.sh`) or run as plain top-level commands. A hand-written loop that deletes or kills something can stall on a permission prompt while the run holds the lock. If any command needs an approval, run `cleanup.sh`, stop and report. Never answer a T3 permission request yourself.
+- **Nothing destructive goes inside `bash -c` / `sh -c` strings, loops or one-off pipelines.** `rm`, `kill`, `virsh destroy` and `snapshot-revert` live only in the committed helpers (mostly `cleanup.sh`) or run as plain top-level commands. A hand-written loop that deletes or kills something can stall on a permission prompt while the run holds the run lock. If any command needs an approval, run `cleanup.sh`, stop and report. Never answer a T3 permission request yourself.
 
 ## Test tiers
 
@@ -26,7 +26,7 @@ Pick the lowest tier that can prove the change. The PR body names the tier used 
 
 **1. Linux on Xvfb.** The default for every PR. Launch, Doctor, Drive, Evidence and Cleanup below are this tier.
 
-**2. Windows VM.** Only after a green tier 1, and only when the lock is free. See "Tier 2: Windows VM" below. Target under 20 minutes per run.
+**2. Windows VM.** Only after a green tier 1. `vm.sh start` waits for the run lock, so it never overlaps a tier 1 run. See "Tier 2: Windows VM" below. Target under 20 minutes per run.
 
 **3. macOS on Pierre's Mac.** Driven from a T3 thread on the Mac, for what only macOS has. These rules are Pierre's, word for word:
 
@@ -43,8 +43,8 @@ Pick the lowest tier that can prove the change. The PR body names the tier used 
 
 ```bash
 H=.claude/skills/verify-dictus-desktop/helpers
-$H/doctor.sh                       # read-only: lock, displays, RAM, tools, real-data fingerprint, VM
-$H/launch.sh                       # build.sh (lock for the build only), then lock + app on Xvfb
+$H/doctor.sh                       # read-only: both locks, displays, RAM, tools, real-data fingerprint, VM
+$H/launch.sh                       # build.sh (build lock per compile only), then run lock + app on Xvfb
 $H/launch.sh --no-build            # reuse the newest src-tauri/target/debug/bundle/deb/*.deb
 $H/launch.sh --no-build --release  # the same from target/release (build.sh --release)
 $H/launch.sh --deb <file.deb>      # a given .deb (e.g. a CI artifact)
@@ -57,11 +57,11 @@ $H/run.sh dictation --no-build -- all-fr   # the same for journey-dictation.sh (
 `launch.sh`, in order:
 
 1. Creates the run dir `/home/pierre/OpenBot/Shared/pilotage/dictus-desktop/preuves/verify-dictus-desktop/<YYYYMMDD-HHMMSS>-tier1-<label>-<sha>/`, its ledger `run.env`, and `fingerprint-before.txt`. Refuses if this session has a run not yet cleaned up.
-2. Unless `--no-build`/`--deb`: `build.sh` runs `bun install --frozen-lockfile` (if `node_modules` is missing) and `bun run tauri build --debug --bundles deb` under `flock /tmp/dictus-gradle.lock`, log in `build.log`. Measured on 2026-11-17: 294 s cold in a fresh worktree. The command then exits 1 on the updater signing step (`A public key has been found, but no private key`): expected without `TAURI_SIGNING_PRIVATE_KEY`, never add a key. A .deb newer than the build start is the success criterion.
-3. Takes the lock for the app phase (waits up to 30 min; `DICTUS_LOCK_WAIT_S`), arms the watchdog.
+2. Unless `--no-build`/`--deb`: `build.sh` runs `bun install --frozen-lockfile` (if `node_modules` is missing) and `bun run tauri build --debug --bundles deb`, each under its own `flock /tmp/dictus-gradle.lock`, log in `build.log`. Between and after them the build lock is free. Measured on 2026-11-17: 294 s cold in a fresh worktree. The command then exits 1 on the updater signing step (`A public key has been found, but no private key`): expected without `TAURI_SIGNING_PRIVATE_KEY`, never add a key. A .deb newer than the build start is the success criterion.
+3. Takes the run lock `/tmp/dictus-desktop-run.lock` for the app phase (waits up to 30 min; `DICTUS_LOCK_WAIT_S`), arms the watchdog. The shared build lock stays free from here to Cleanup.
 4. `dpkg-deb -x` into `/tmp/verify-dictus-desktop.XXXXXX/pkg` and runs `pkg/usr/bin/dictus`. The raw `target/debug/dictus` panics on missing resources (#71).
-5. Starts `Xvfb :N` (first free in `:120`–`:199`, never `:99`/`:100`, 1280x900), a private `dbus-daemon --session`, then Dictus with `env -i`: `HOME` and every `XDG_*` dir under the scratch dir, `LANG=en_US.UTF-8` (English labels), `GDK_BACKEND=x11`, `WEBKIT_DISABLE_DMABUF_RENDERER=1`. The private D-Bus also isolates the single-instance check (D-Bus on Linux), so a running Dictus of Pierre's is never handed the launch. The app's full environment, D-Bus address included, is kept in `<scratch>/app.env` for `cli.sh`.
-6. With `--model <id>`, before the app starts: `model-cache.sh` (before the lock) returns the archive, then it is extracted into the isolated `models/` the way the app does it. With `--mic`: the private PipeWire (see "Dictation with the test-voices corpus").
+5. Starts `Xvfb :N` (first free in `:120`–`:199`, never `:99`/`:100`, 1280x900, or `DICTUS_XVFB_SIZE`), a private `dbus-daemon --session`, then Dictus with `env -i`: `HOME` and every `XDG_*` dir under the scratch dir, `LANG=en_US.UTF-8` (English labels), `GDK_BACKEND=x11`, `WEBKIT_DISABLE_DMABUF_RENDERER=1`, plus `GDK_SCALE` with `DICTUS_GDK_SCALE` (see "Scale 2"). The private D-Bus also isolates the single-instance check (D-Bus on Linux), so a running Dictus of Pierre's is never handed the launch. The app's full environment, D-Bus address included, is kept in `<scratch>/app.env` for `cli.sh`.
+6. With `--model <id>`, before the app starts: `model-cache.sh` (before the run lock) returns the archive, then it is extracted into the isolated `models/` the way the app does it. With `--mic`: the private PipeWire (see "Dictation with the test-voices corpus").
 
 **Ready means** the `Dictus` window is mapped and the process is still alive 3 s later. The window appears in about 4 s (the ~25 s seen in #71 did not happen with the private D-Bus). Last line, the only one to rely on:
 
@@ -83,7 +83,7 @@ Every helper after Launch finds the run on its own (session pointer under `…/v
 Read-only. One `OK` / `WARN` / `FAIL` line per check, then `DOCTOR OK` or `DOCTOR FAIL <n>` (exit 1):
 
 - Tools: bun, cargo, Xvfb, dbus-daemon, ffmpeg, xwininfo, dpkg-deb, lslocks, flock, python3, libXtst; virsh and gh (tier 2).
-- The lock: free, held by this run, or held by another process (pid, command, working directory, from `lslocks`).
+- Both locks, each free or held (pid, command, age, working directory, from `lslocks`): the run lock must be held by this run while a run is up; the shared build lock is only reported (WARN when a build holds it).
 - Displays in use and the next free one; RAM available and heavy processes (java, cargo, rustc, qemu) running: Andy's Android builds share this machine.
 - The real-data fingerprint, and whether a Dictus not started by this run is running (it would change the fingerprint legitimately).
 - `dictus-win` state and snapshots (WARN when running and not started by this run).
@@ -108,6 +108,8 @@ M=$($H/log.sh mark)                      # assert only on log lines after the ma
 $H/log.sh wait 'SHA256 verified for model' 120 "$M"
 $H/log.sh since "$M"
 ```
+
+**Scale 2.** For HiDPI captures, launch with `DICTUS_XVFB_SIZE=3840x2400 DICTUS_GDK_SCALE=2`. The app renders at 2x, so window coordinates double: `nav.sh` multiplies its own by `DICTUS_GDK_SCALE`, and every other `x.py click` must be read from a capture of that run. `x.py resize W H` sets the window size in device pixels (no window manager on Xvfb).
 
 **Logs that prove an action** (the app's own log, `logs/*.log` in the isolated data dir, UTC timestamps):
 
@@ -241,7 +243,7 @@ $H/bench.py compare <before>/bench.csv <after>/bench.csv
 
 **Release build only.** `bench.sh` uses the newest `src-tauri/target/release/bundle/deb/*.deb` (`--deb <f>` for another, `--debug` to opt out). The debug .deb compiles whisper.cpp without optimisation (the `cmake` crate follows the Rust profile), so its timings do not describe what users run. The release .deb is the production identity `com.dictus.desktop`; it runs in the same isolated HOME, and the fingerprint check guards Pierre's real data as for any run.
 
-**One launch per model.** For each model `bench.sh` runs `launch.sh --no-build --release --model <id> --mic`, Doctor, `journey-dictation.sh --reps N <clips>`, then `cleanup.sh`, which releases the lock before the next model. Nothing holds the lock between models, and an interrupted bench cleans up its current run (trap).
+**One launch per model.** For each model `bench.sh` runs `launch.sh --no-build --release --model <id> --mic`, Doctor, `journey-dictation.sh --reps N <clips>`, then `cleanup.sh`, which releases the run lock before the next model. Nothing holds the run lock between models, and no bench step holds the build lock, and an interrupted bench cleans up its current run (trap).
 
 **Model switching.** Seed exactly one model per launch and let the app select it. With one model on disk and none selected, `auto_select_model_if_needed` (`managers/model.rs`) selects it at startup, and the journey asserts `selected_model` before the first clip. This is the reliable way, for three reasons:
 
@@ -304,24 +306,24 @@ Proof standards: drive the real user path (clicks and keys on the window), not a
 .claude/skills/verify-dictus-desktop/helpers/cleanup.sh <run-dir>
 ```
 
-Undoes exactly what the ledger lists, in order: the app's process group, the window manager (`--wm`), the private PipeWire, the private D-Bus, Xvfb, the HTTP server, the VM (destroy, then revert to `clean-no-vcredist`), the test-voices corpus clone (plus any clone older than the TTL left by a dead run), the scratch dir (isolated HOME/XDG, extracted .deb, models, `history.db`, recordings, installers), the watchdog, and last the lock holder. A process is killed only if its pid still has the start time recorded when the run started it: never by name, never another holder of the lock. It then compares the fingerprint and prints `CLEANUP OK run=<dir> evidence=<n>` (exit 0), `CLEANUP INCOMPLETE: <what is left>` (exit 1), or `CLEANUP OK` then `ALARM: real data changed` (exit 2: stop and report to Pierre). Safe to run twice. `launch.sh` runs it on any failure (trap), `run.sh` on every exit, the watchdog after the TTL.
+Undoes exactly what the ledger lists, in order: the app's process group, the window manager (`--wm`), the private PipeWire, the private D-Bus, Xvfb, the HTTP server, the VM (destroy, then revert to `clean-no-vcredist`), the test-voices corpus clone (plus any clone older than the TTL left by a dead run), the scratch dir (isolated HOME/XDG, extracted .deb, models, `history.db`, recordings, installers), the watchdog, and last the run lock holder. A process is killed only if its pid still has the start time recorded when the run started it: never by name, never another holder of a lock. It then compares the fingerprint and prints `CLEANUP OK run=<dir> evidence=<n>` (exit 0), `CLEANUP INCOMPLETE: <what is left>` (exit 1), or `CLEANUP OK` then `ALARM: real data changed` (exit 2: stop and report to Pierre). Safe to run twice. `launch.sh` runs it on any failure (trap), `run.sh` on every exit, the watchdog after the TTL.
 
-Then check: `flock -n /tmp/dictus-gradle.lock true && echo free` (unless someone else took it since), and `ls /tmp/.X*-lock` shows no display of yours.
+It prints both locks. Then check: `flock -n /tmp/dictus-desktop-run.lock true && echo free` (unless another run took it since), and `ls /tmp/.X*-lock` shows no display of yours.
 
 ## Tier 2: Windows VM
 
-Domain `dictus-win` (4 GB) on `qemu:///system`, snapshots `clean-no-vcredist` (clean Windows 11, no Visual C++ runtime) and `dictus-0.3.0-ready` (with Dictus 0.3.0). **Never touch the domain `windows`.** Only after a green tier 1, only with the lock free, under 20 min. The guest agent runs as SYSTEM: a silent NSIS install as SYSTEM lands in the system profile and a SYSTEM process has no desktop, so the NSIS install and every launch go through a scheduled task running as user `dictus`, interactive. The MSI is the exception: it installs per machine into `C:\Program Files\Dictus`, which needs admin rights that a task as `dictus` does not have (limited token), so `msiexec /i … /qn /norestart` runs as SYSTEM through the guest agent and Dictus is then launched as `dictus`.
+Domain `dictus-win` (4 GB) on `qemu:///system`, snapshots `clean-no-vcredist` (clean Windows 11, no Visual C++ runtime) and `dictus-0.3.0-ready` (with Dictus 0.3.0). **Never touch the domain `windows`.** Only after a green tier 1, under 20 min. It holds the run lock, never the build lock. Tier 1 and tier 2 share that lock on purpose: the VM takes a fixed 4 GB, a tier 1 app run about 0.75 GB (measured on 2026-11-24, after onboarding), and this 12.6 GB machine had 2 to 5 GB available beside Andy's builds, swap full. The guest agent runs as SYSTEM: a silent NSIS install as SYSTEM lands in the system profile and a SYSTEM process has no desktop, so the NSIS install and every launch go through a scheduled task running as user `dictus`, interactive. The MSI is the exception: it installs per machine into `C:\Program Files\Dictus`, which needs admin rights that a task as `dictus` does not have (limited token), so `msiexec /i … /qn /norestart` runs as SYSTEM through the guest agent and Dictus is then launched as `dictus`.
 
 ```bash
 H=.claude/skills/verify-dictus-desktop/helpers
-$H/vm.sh start                  # new tier-2 run, lock + watchdog, revert clean-no-vcredist, start, guest-ping
+$H/vm.sh start                  # new tier-2 run, run lock + watchdog, revert clean-no-vcredist, start, guest-ping
 $H/vm.sh fetch 74               # NSIS installer of PR #74 from pr-test-build.yml (gh run download)
 #   or: $H/vm.sh fetch-release <release-id> [nsis|msi]   # a draft's x64 installer, by asset id
 $H/vm.sh serve                  # http.server bound to 192.168.122.1 only
 $H/vm.sh install                # download in the guest; NSIS /S as dictus or msiexec /qn as SYSTEM; wait for the end
 $H/vm.sh launch                 # start as dictus, wait 30 s, Get-Process dictus
 $H/shot.sh 01-vm-dictus         # virsh screenshot (the whole VM screen: check it shows nothing private)
-$H/cleanup.sh                   # destroy + revert to clean-no-vcredist, stop HTTP, delete installers, lock
+$H/cleanup.sh                   # destroy + revert to clean-no-vcredist, stop HTTP, delete installers, run lock
 ```
 
 `pr-test-build.yml` is `workflow_dispatch` with a PR number; its Windows x64 artifact is `handy-pr-<pr>-x86_64-pc-windows-msvc` (NSIS `*-setup.exe` and MSI), kept 30 days. `vm.sh fetch` refuses when no successful run has that artifact: dispatching the workflow is a CI action, ask first. `vm.sh ps '<powershell>'` runs any check in the guest (`vm-exec.py`, from Pierre's `gexec.py`).
@@ -336,7 +338,7 @@ Proven on 2026-11-19 with the 0.3.1 draft (release 451105484) from `clean-no-vcr
 
 ## Helpers
 
-All executable, run from the repository root, all read `helpers/env.sh` (overrides: `DICTUS_EVIDENCE_ROOT`, `DICTUS_IDENTIFIER`, `DICTUS_TTL_MIN`, `DICTUS_LOCK_WAIT_S`, `DICTUS_VERIFY_SESSION`, `DICTUS_VERIFY_RUN`, `CARGO_TARGET_DIR`, `DICTUS_HTTP_PORT`, `DICTUS_MODEL_CACHE`, `DICTUS_CORPUS_REPO`, `DICTUS_WER_MAX`).
+All executable, run from the repository root, all read `helpers/env.sh` (overrides: `DICTUS_LOCK`, `DICTUS_RUN_LOCK`, `DICTUS_EVIDENCE_ROOT`, `DICTUS_IDENTIFIER`, `DICTUS_TTL_MIN`, `DICTUS_LOCK_WAIT_S`, `DICTUS_VERIFY_SESSION`, `DICTUS_VERIFY_RUN`, `CARGO_TARGET_DIR`, `DICTUS_HTTP_PORT`, `DICTUS_MODEL_CACHE`, `DICTUS_CORPUS_REPO`, `DICTUS_WER_MAX`, `DICTUS_XVFB_SIZE`, `DICTUS_GDK_SCALE`).
 
 | Script                  | Invocation                                                                  | Ends with                                                                    |
 | ----------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
@@ -353,7 +355,7 @@ All executable, run from the repository root, all read `helpers/env.sh` (overrid
 | `cli.sh`                | `cli.sh <dictus flags>`                                                     | `CLI <flags> exit=N in Nms`                                                  |
 | `dictation.py`          | `dictation.py clips\|last-id\|wait-row\|score\|transcribe-ms\|leak-check …` | ids, scores, timings; never a text                                           |
 | `wm.py`                 | `wm.py ping\|window\|state\|press\|clicks …` (runs launched with `--wm`)      | `WMCLICKS <button> first_click=<hits>/<N> clicks=…`                         |
-| `x.py`                  | `x.py window\|click\|move\|scroll\|type\|key …`                             | `click X,Y button=1`, …                                                      |
+| `x.py`                  | `x.py window\|click\|move\|scroll\|type\|key\|resize …`                     | `click X,Y button=1`, `resized <id> WxH+X+Y`, …                              |
 | `nav.sh`                | `nav.sh <section> [run-dir]`                                                | `nav <section>`                                                              |
 | `log.sh`                | `log.sh mark` · `wait '<re>' [s] [mark]` · `since <mark>`                   | `found: <line>` / `error: no log line …`                                     |
 | `shot.sh`               | `shot.sh <name> [run-dir]`                                                  | `shot <name>: <path>`                                                        |

@@ -3,13 +3,13 @@
 #   cleanup.sh [run-dir]
 # Order: app, window manager, private PipeWire, D-Bus, Xvfb, HTTP server, VM (destroy + revert to the clean snapshot),
 # test-voices corpus clone, scratch dir (isolated HOME/XDG, extracted .deb, models, history, recordings,
-# installers), watchdog, lock. Also deletes any corpus clone left by a run that died without cleanup.
+# installers), watchdog, run lock. Also deletes any corpus clone left by a run that died without cleanup.
 # Kills only the process groups this run started, checked by pid AND start time. Never by name.
 # Prints CLEANUP OK run=<dir> evidence=<n files> (exit 0), CLEANUP INCOMPLETE: <what is left> (exit 1),
 # or CLEANUP OK then ALARM when the real-data fingerprint changed (exit 2).
 set -u
 source "$(dirname "$0")/env.sh"
-run="$(resolve_run "${1:-}")" || { echo "no run of this session: nothing to clean (the lock is released only by the run that holds it)"; exit 0; }
+run="$(resolve_run "${1:-}")" || { echo "no run of this session: nothing to clean (the run lock is released only by the run that holds it)"; exit 0; }
 left=()
 alarm=0
 
@@ -88,8 +88,8 @@ fi
 
 [ "${DICTUS_FROM_WATCHDOG:-}" = 1 ] && report "$run" "cleanup started by the watchdog after ${DICTUS_TTL_MIN} min" || kill_group WATCHDOG
 kill_group LOCK_HOLDER
-lock_now="$(lock_describe)"
-echo "lock: $lock_now"
+echo "run lock $DICTUS_RUN_LOCK: $(lock_describe "$DICTUS_RUN_LOCK")"
+echo "build lock $DICTUS_LOCK: $(lock_describe "$DICTUS_LOCK")"
 
 if [ ${#left[@]} -eq 0 ]; then
   ledger_set "$run" CLEANED "$(date +%s)"
