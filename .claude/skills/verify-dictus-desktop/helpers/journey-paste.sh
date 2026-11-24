@@ -74,8 +74,8 @@ for target in terminal gui; do
   read -r _ wh <<< "$geo"
   IFS='x+' read -r w h x y <<< "$wh"
   "$H/x.py" move $((x + w / 2)) $((y + h / 2)) --abs > /dev/null
-  printf %s "$SENTINEL_CLIPBOARD" | "${xenv[@]}" xclip -selection clipboard -i
-  printf %s "$SENTINEL_PRIMARY" | "${xenv[@]}" xclip -selection primary -i
+  printf %s "$SENTINEL_CLIPBOARD" | "${xenv[@]}" xclip -selection clipboard -i > /dev/null 2>&1
+  printf %s "$SENTINEL_PRIMARY" | "${xenv[@]}" xclip -selection primary -i > /dev/null 2>&1
 
   m="$("$H/log.sh" mark)"
   before="$(py dictation.py last-id "$db")"

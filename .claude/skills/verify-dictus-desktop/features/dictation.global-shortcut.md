@@ -4,7 +4,7 @@ The desktop's way to dictate: a global shortcut (default Ctrl+Space on Linux and
 
 - **ID:** `dictation.global-shortcut` _(desktop-only; the desktop counterpart of the mobile `dictation.keyboard` / `dictation.in-app`)_
 - **Desktop status:** present
-- **Tiers:** 1 (settings, shortcut editing, and a real dictation through the CLI and a virtual microphone: journey `dictation.corpus`), 3 (macOS paste and accessibility), 4 (real voice, paste feel)
+- **Tiers:** 1 (settings, shortcut editing, a real dictation through the CLI and a virtual microphone: journey `dictation.corpus`, and its paste into a terminal and a GTK field on X11: journey `dictation.paste`), 3 (macOS paste and accessibility), 4 (real voice, paste feel)
 - **Screens:** `app.settings.general`, `app.recording-overlay` (not captured) — see [screens.md](screens.md)
 
 ## Sub-features
@@ -14,7 +14,7 @@ The desktop's way to dictate: a global shortcut (default Ctrl+Space on Linux and
 - `dictation.push-to-talk` _(desktop-only)_: « Push To Talk » (on by default) records while the keys are held. — present
 - `dictation.shortcut-edit` _(desktop-only)_: click the shortcut chip, « Press keys… », the new chord is saved; the ↻ button resets it. — present
 - `dictation.status`: the recording overlay (« Overlay Position » in Advanced; off by default on Linux). — present
-- `dictation.paste` _(desktop-only)_: « Paste Method », « Typing Tool », « Clipboard Handling », « Auto Submit » in Advanced → Output. — present
+- `dictation.paste` _(desktop-only)_: « Paste Method », « Typing Tool » (shown for Direct only), « Clipboard Handling », « Auto Submit » in Advanced → Output. A new install pastes with « Clipboard (Shift+Insert) » on X11 (#95), with « Direct » on Wayland, with Ctrl+V/Cmd+V on Windows and macOS; a stored method is never changed. — present
 - `dictation.cli` _(desktop-only)_: `--toggle-transcription`, `--toggle-post-process`, `--cancel` on a running instance. — present
 - `dictation.transcribe` _(desktop-only)_: the recording goes through VAD and the active model, the text lands in History. — present
 
@@ -36,6 +36,18 @@ Preconditions: network for `gh` (private repo `getdictus/dictus-test-voices`) an
 - **Stop.** `helpers/cli.sh --toggle-transcription` again; a new row in the isolated `history.db`.
 - **Proof.** One line per clip, `JOURNEY dictation <id> PASS wer=… wer_sp=… … gate=… stop_to_text_ms=… transcribe_ms=…` (a `short` clip is gated on WER ≤ 0.25, every clip on a complete capture; the long code-switched clip reports its WER only, see `../SKILL.md`), the summary `JOURNEY dictation all-fr PASS 5/5 …`, `LEAK CHECK OK` in `report.txt`, and `20-dictation-ready.png` (General page, the seeded model in the footer, before any dictation).
 
+**Paste, journey `dictation.paste`** (proven 2026-11-24 on `fix/95-x11-long-paste`, #95). One corpus dictation pasted into an xterm, one into a `zenity --entry` (GTK), with the paste method the install has. While each insertion runs, a second recording is started and then cancelled.
+
+Preconditions: as `dictation.corpus`; `xterm`, `zenity` and `xclip` on the machine (already there). `run.sh` launches with `--model parakeet-tdt-0.6b-v3 --mic`.
+
+- **Run it.** `helpers/run.sh paste --no-build` (default clip `en-long-01-workday-retry-fix`, 248 words), or `--deb <file>` to compare two builds.
+- **Targets.** The xterm (`-T dictus-paste-terminal`, right of the Dictus window) runs `helpers/paste.py counter`, which reads its tty raw and records only the character count and the first and last arrival times. The zenity entry prints its text to `wc -m`. `x.py move` puts the pointer on the target: with no window manager, keys go to the window under the pointer.
+- **Clipboard.** Sentinels go on the clipboard and the primary selection (`xclip`) before the dictation and are read back 1 s after the paste.
+- **Another paste method.** Change it in the UI first: `launch.sh --deb <f> --model parakeet-tdt-0.6b-v3 --mic <label>`, `nav.sh advanced`, `x.py click 528 326` (Paste Method), `x.py click 449 385` (« Direct »), check `paste_method` in the isolated `settings_store.json`, then `journey-paste.sh` and `cleanup.sh`.
+- **Proof.** Per target `JOURNEY paste <terminal|gui> <clip> method=… chars_expected=N chars_received=N insert_ms=N arrive_ms=N next_rec_ms=N clipboard=… primary=…`, then `JOURNEY paste <clip> PASS 2/2` (every character arrived in both targets), `LEAK CHECK OK`, and `app-file.log` (the app's own log, no transcript since #83) with the timings.
+
+Measured 2026-11-24, debug .deb, 1317 characters: `main` (Direct) 19.5 s to type, next recording after 19.4 s; Shift+Insert 0.26 s, next recording after 0.17 s, clipboard and primary restored; Direct on the fix 19.5 s to type, next recording after 0.18 s.
+
 **Settings and the shortcut.** Not yet run end to end (2026-11-17): coordinates come from the tier-1 captures in `../screens/`; the first run that drives this recipe confirms or fixes them.
 
 Preconditions: `READY`, then `journey-onboarding.sh` → `PASS` (a model is needed). Log `Shortcuts initialized successfully`.
@@ -48,7 +60,9 @@ Preconditions: `READY`, then `journey-onboarding.sh` → `PASS` (a model is need
 ## Gotchas
 
 - Without `--mic` the isolated session has no PipeWire: recording fails with no input device, and the microphone list shows « Default » only. With `--mic` the app records from ALSA `default`, which reaches the run's private PipeWire.
-- Never capture the History page, the clipboard or the window after a corpus dictation: the transcript of a private clip would land in the evidence. The app logs the transcript at debug level in its own log (scratch dir, deleted by Cleanup); never copy that log into the run dir.
+- Never capture the History page, the clipboard or the window after a corpus dictation: the transcript of a private clip would land in the evidence. Since #83 the app's log holds only the transcript's length, unless Debug → « Log transcripts » is on; `journey-paste.sh` copies it into the run dir and the leak check reads it. The paste videos are pixelated for the same reason, and the terminal counter does not echo.
 - The first clip of a run waits for the model to load (Parakeet V3: a few seconds, `MODEL LOADED (took Nms)` in `report.txt`), so its `stop_to_text_ms` is not inflated by the load.
 - Never send the shortcut to a display other than the run's: on Pierre's desktop it would start his real Dictus.
-- Paste needs a target app; there is none on the Xvfb display.
+- Paste needs a target window under the pointer: `journey-paste.sh` opens an xterm and a zenity entry on the run's display. The Dictus window itself has no focused field.
+- In the private PipeWire a second capture stream stays in `AudioRecorder::open` until `mic.py link` connects it (no session manager). `journey-paste.sh` links the next recording too; without that, `Recording started` never comes.
+- Pipe `xclip -i` to `/dev/null`: it forks a server that keeps the caller's stdout open until the display dies.
