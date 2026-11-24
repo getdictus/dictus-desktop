@@ -209,11 +209,26 @@ impl Default for KeyboardImplementation {
 
 impl Default for PasteMethod {
     fn default() -> Self {
-        // Default to CtrlV for macOS and Windows, Direct for Linux
         #[cfg(target_os = "linux")]
-        return PasteMethod::Direct;
+        return linux_default_paste_method(crate::utils::is_wayland());
         #[cfg(not(target_os = "linux"))]
         return PasteMethod::CtrlV;
+    }
+}
+
+/// The paste method a new Linux install starts with. Only a store without a
+/// `paste_method` gets it: a stored value, chosen or not, is kept.
+///
+/// X11 pastes with Shift+Insert: GUI apps read the clipboard and terminals
+/// read the primary selection, and both hold the text. Typing it with Direct
+/// takes about 15 ms per character (#95). Wayland keeps Direct, which goes
+/// through wtype, kwtype, dotool or ydotool there.
+#[cfg(any(target_os = "linux", test))]
+fn linux_default_paste_method(wayland: bool) -> PasteMethod {
+    if wayland {
+        PasteMethod::Direct
+    } else {
+        PasteMethod::ShiftInsert
     }
 }
 
@@ -1265,6 +1280,24 @@ mod tests {
 
         assert!(!repaired);
         assert_eq!(serde_json::to_value(settings).unwrap(), stored);
+    }
+
+    #[test]
+    fn new_linux_installs_paste_with_shift_insert_on_x11_and_type_on_wayland() {
+        assert_eq!(linux_default_paste_method(false), PasteMethod::ShiftInsert);
+        assert_eq!(linux_default_paste_method(true), PasteMethod::Direct);
+    }
+
+    #[test]
+    fn stored_paste_method_is_kept() {
+        for method in ["direct", "ctrl_v", "ctrl_shift_v", "shift_insert", "none"] {
+            let stored = stored_settings_with(serde_json::json!({ "paste_method": method }));
+
+            let (settings, repaired) = settings_from_stored(stored);
+
+            assert!(!repaired);
+            assert_eq!(serde_json::to_value(settings.paste_method).unwrap(), method);
+        }
     }
 
     #[test]

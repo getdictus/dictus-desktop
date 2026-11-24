@@ -15,6 +15,8 @@ pub mod logging;
 mod managers;
 mod overlay;
 pub mod portable;
+#[cfg(target_os = "linux")]
+mod primary_selection;
 mod settings;
 mod shortcut;
 mod signal_handle;
