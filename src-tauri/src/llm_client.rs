@@ -292,3 +292,159 @@ pub async fn fetch_models(
 
     Ok(models)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::{BufRead, BufReader, Read, Write};
+    use std::net::TcpListener;
+    use std::sync::Mutex;
+
+    const DICTATED: &str = "meet Camille at the pharmacy at nine";
+
+    struct Capture(Mutex<Vec<(log::Level, String)>>);
+
+    impl log::Log for Capture {
+        fn enabled(&self, _: &log::Metadata) -> bool {
+            true
+        }
+        fn log(&self, record: &log::Record) {
+            self.0
+                .lock()
+                .unwrap()
+                .push((record.level(), record.args().to_string()));
+        }
+        fn flush(&self) {}
+    }
+
+    static CAPTURE: Capture = Capture(Mutex::new(Vec::new()));
+
+    fn lines_with_dictated_text() -> Vec<(log::Level, String)> {
+        CAPTURE
+            .0
+            .lock()
+            .unwrap()
+            .drain(..)
+            .filter(|(_, line)| line.contains(DICTATED))
+            .collect()
+    }
+
+    /// A provider that answers one request with `status` and a body built from
+    /// the request body, the way validation and content-filter errors echo it.
+    fn mock_provider(status: &'static str, reply: fn(&str) -> String) -> PostProcessProvider {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+        std::thread::spawn(move || {
+            let (mut stream, _) = listener.accept().unwrap();
+            let mut reader = BufReader::new(stream.try_clone().unwrap());
+            let mut length = 0;
+            loop {
+                let mut line = String::new();
+                reader.read_line(&mut line).unwrap();
+                if line == "\r\n" {
+                    break;
+                }
+                if let Some(value) = line.to_ascii_lowercase().strip_prefix("content-length:") {
+                    length = value.trim().parse().unwrap();
+                }
+            }
+            let mut request = vec![0; length];
+            reader.read_exact(&mut request).unwrap();
+            let body = reply(&String::from_utf8(request).unwrap());
+            write!(
+                stream,
+                "HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                body.len()
+            )
+            .unwrap();
+        });
+        PostProcessProvider {
+            id: "mock".to_string(),
+            label: "Mock".to_string(),
+            base_url: format!("http://127.0.0.1:{port}/v1"),
+            allow_base_url_edit: true,
+            models_endpoint: None,
+            supports_structured_output: true,
+        }
+    }
+
+    fn openai_echo(request: &str) -> String {
+        serde_json::json!({
+            "error": {
+                "message": format!("Invalid request: {request}"),
+                "type": "invalid_request_error",
+                "code": "context_length_exceeded",
+            }
+        })
+        .to_string()
+    }
+
+    fn prose_code_echo(request: &str) -> String {
+        serde_json::json!({ "error": { "type": 400, "code": format!("bad input {request}") } })
+            .to_string()
+    }
+
+    fn plain_echo(request: &str) -> String {
+        format!("rejected: {request} {DICTATED}")
+    }
+
+    fn chat(provider: PostProcessProvider) -> String {
+        tauri::async_runtime::block_on(send_chat_completion_with_schema(ChatCompletionParams {
+            provider,
+            api_key: "key".to_string(),
+            model: "m".to_string(),
+            user_content: DICTATED.to_string(),
+            system_prompt: Some("Clean up the transcript.".to_string()),
+            ..Default::default()
+        }))
+        .unwrap_err()
+    }
+
+    #[test]
+    fn http_error_bodies_stay_out_of_errors_and_logs() {
+        let _ = log::set_logger(&CAPTURE);
+        log::set_max_level(log::LevelFilter::Trace);
+
+        crate::logging::set_log_transcripts(false);
+        let err = chat(mock_provider("400 Bad Request", openai_echo));
+        assert!(
+            !err.contains(DICTATED),
+            "chat error carries the body: {err}"
+        );
+        assert!(err.contains("400"), "{err}");
+        assert!(err.contains("'mock'"), "{err}");
+        assert!(err.contains("bytes"), "{err}");
+        assert!(err.contains("invalid_request_error"), "{err}");
+        assert!(err.contains("context_length_exceeded"), "{err}");
+        assert_eq!(lines_with_dictated_text(), vec![]);
+
+        let err = chat(mock_provider("400 Bad Request", prose_code_echo));
+        assert!(!err.contains(DICTATED), "prose error code kept: {err}");
+        assert!(!err.contains("bad input"), "prose error code kept: {err}");
+
+        let err = tauri::async_runtime::block_on(fetch_models(
+            &mock_provider("401 Unauthorized", plain_echo),
+            "key".to_string(),
+        ))
+        .unwrap_err();
+        assert!(
+            !err.contains(DICTATED),
+            "models error carries the body: {err}"
+        );
+        assert!(err.contains("401"), "{err}");
+        assert_eq!(lines_with_dictated_text(), vec![]);
+
+        crate::logging::set_log_transcripts(true);
+        chat(mock_provider("400 Bad Request", openai_echo));
+        crate::logging::set_log_transcripts(false);
+        let lines = lines_with_dictated_text();
+        assert!(
+            !lines.is_empty(),
+            "Log transcripts on: body logged at Debug"
+        );
+        assert!(
+            lines.iter().all(|(level, _)| *level == log::Level::Debug),
+            "{lines:?}"
+        );
+    }
+}
