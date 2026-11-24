@@ -17,6 +17,7 @@ use ferrous_opencc::{config::BuiltinConfig, OpenCC};
 use log::{debug, error, warn};
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
 use tauri::Manager;
@@ -36,6 +37,38 @@ impl Drop for FinishGuard {
         if let Some(c) = self.0.try_state::<TranscriptionCoordinator>() {
             c.notify_processing_finished();
         }
+    }
+}
+
+/// Counts recording starts. A paste that finishes after a newer recording
+/// started leaves the overlay and tray icon to that recording.
+static RECORDING_SESSION: AtomicU64 = AtomicU64::new(0);
+
+/// Runs pastes one at a time and in order, off the main thread. The next
+/// recording's start waits on the main thread (the tray icon update), so a
+/// paste typed there kept the microphone closed until it ended (#95).
+#[cfg(target_os = "linux")]
+fn queue_paste(job: impl FnOnce() + Send + 'static) {
+    type Job = Box<dyn FnOnce() + Send>;
+    static QUEUE: std::sync::OnceLock<std::sync::mpsc::Sender<Job>> = std::sync::OnceLock::new();
+    let queue = QUEUE.get_or_init(|| {
+        let (tx, rx) = std::sync::mpsc::channel::<Job>();
+        let spawned = std::thread::Builder::new()
+            .name("paste".into())
+            .spawn(move || {
+                for job in rx {
+                    if std::panic::catch_unwind(std::panic::AssertUnwindSafe(job)).is_err() {
+                        error!("Paste job panicked");
+                    }
+                }
+            });
+        if let Err(e) = spawned {
+            error!("Failed to start the paste thread: {e}");
+        }
+        tx
+    });
+    if queue.send(Box::new(job)).is_err() {
+        error!("Paste thread is not running; the text was not pasted");
     }
 }
 
@@ -598,6 +631,7 @@ impl ShortcutAction for TranscribeAction {
     fn start(&self, app: &AppHandle, binding_id: &str, _shortcut_str: &str) {
         let start_time = Instant::now();
         debug!("TranscribeAction::start called for binding: {}", binding_id);
+        RECORDING_SESSION.fetch_add(1, Ordering::SeqCst);
 
         // Load model in the background
         let tm = app.state::<Arc<TranscriptionManager>>();
@@ -842,7 +876,8 @@ fn spawn_transcription_task(
                             // paste the raw transcription so the user keeps their text,
                             // then show a hint pill instead of a silent dismiss.
                             let post_process_failed = processed.post_process_failed;
-                            ah.run_on_main_thread(move || {
+                            let session = RECORDING_SESSION.load(Ordering::SeqCst);
+                            let paste_job = move || {
                                 match utils::paste(final_text, ah_clone.clone()) {
                                     Ok(()) => debug!(
                                         "Text pasted successfully in {:?}",
@@ -853,6 +888,9 @@ fn spawn_transcription_task(
                                         let _ = ah_clone.emit("paste-error", ());
                                     }
                                 }
+                                if RECORDING_SESSION.load(Ordering::SeqCst) != session {
+                                    return;
+                                }
                                 if post_process_failed {
                                     flash_error_overlay(
                                         &ah_clone,
@@ -862,8 +900,11 @@ fn spawn_transcription_task(
                                     utils::hide_recording_overlay(&ah_clone);
                                 }
                                 change_tray_icon(&ah_clone, TrayIconState::Idle);
-                            })
-                            .unwrap_or_else(|e| {
+                            };
+                            #[cfg(target_os = "linux")]
+                            queue_paste(paste_job);
+                            #[cfg(not(target_os = "linux"))]
+                            ah.run_on_main_thread(paste_job).unwrap_or_else(|e| {
                                 error!("Failed to run paste on main thread: {:?}", e);
                                 utils::hide_recording_overlay(&ah);
                                 change_tray_icon(&ah, TrayIconState::Idle);

@@ -3,7 +3,7 @@ use crate::input::{self, EnigoState};
 use crate::settings::TypingTool;
 use crate::settings::{get_settings, AutoSubmitKey, ClipboardHandling, PasteMethod};
 use enigo::{Direction, Enigo, Key, Keyboard};
-use log::info;
+use log::{info, warn};
 use std::process::Command;
 use std::time::Duration;
 use tauri::{AppHandle, Manager};
@@ -42,6 +42,23 @@ fn paste_via_clipboard(
 
     write_result?;
 
+    // Shift+Insert reads PRIMARY in terminals and the clipboard in GUI apps,
+    // so on X11 the text goes on both. Only for Shift+Insert: Ctrl+V never
+    // reads PRIMARY, and writing it replaces the user's highlighted text.
+    #[cfg(target_os = "linux")]
+    let saved_primary = if *paste_method == PasteMethod::ShiftInsert && !is_wayland() {
+        let saved = crate::primary_selection::read();
+        match crate::primary_selection::write(text) {
+            Ok(()) => Some(saved),
+            Err(e) => {
+                warn!("Could not put the text on the primary selection: {e}");
+                None
+            }
+        }
+    } else {
+        None
+    };
+
     std::thread::sleep(Duration::from_millis(paste_delay_ms));
 
     // Send paste key combo
@@ -70,6 +87,10 @@ fn paste_via_clipboard(
         let _ = write_clipboard_via_wl_copy(&clipboard_content);
     } else {
         let _ = clipboard.write_text(&clipboard_content);
+    }
+    #[cfg(target_os = "linux")]
+    if let Some(saved) = saved_primary {
+        crate::primary_selection::restore(saved);
     }
 
     #[cfg(not(target_os = "linux"))]
