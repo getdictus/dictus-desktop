@@ -767,6 +767,8 @@
     "pasteFailed": "Không thể dán văn bản vào ứng dụng đang hoạt động.",
     "transcriptionFailedTitle": "Phiên âm thất bại",
     "transcriptionFailed": "Bản ghi âm của bạn đã được lưu trong Lịch sử. Hãy phiên âm lại từ đó hoặc chọn mô hình khác.",
+    "microphoneStalledTitle": "Micrô đã ngừng phản hồi",
+    "microphoneStalled": "Không nhận được âm thanh từ micrô nên không có gì được ghi lại. Điều này có thể xảy ra với tai nghe Bluetooth. Bạn có thể ghi âm lại ngay hoặc chọn micrô khác.",
     "boundary": {
       "title": "Đã xảy ra lỗi.",
       "reload": "Tải lại"
@@ -782,7 +784,8 @@
     "transcribing": "Đang chuyển đổi...",
     "processing": "Đang xử lý...",
     "postProcessUnavailable": "Thiết lập một mô hình để hậu xử lý",
-    "transcriptionFailed": "Phiên âm thất bại"
+    "transcriptionFailed": "Phiên âm thất bại",
+    "microphoneStalled": "Micrô đã ngừng phản hồi"
   },
   "smartModes": {
     "sections": {

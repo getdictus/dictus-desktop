@@ -767,6 +767,8 @@
     "pasteFailed": "Text nebylo možné vložit do aktivní aplikace.",
     "transcriptionFailedTitle": "Přepis se nezdařil",
     "transcriptionFailed": "Nahrávka je uložena v historii. Přepište ji znovu odtud nebo zvolte jiný model.",
+    "microphoneStalledTitle": "Mikrofon přestal reagovat",
+    "microphoneStalled": "Z mikrofonu nepřišel žádný zvuk, takže se nic nenahrálo. To se může stát u sluchátek Bluetooth. Můžete hned nahrávat znovu nebo zvolit jiný mikrofon.",
     "boundary": {
       "title": "Něco se pokazilo.",
       "reload": "Znovu načíst"
@@ -782,7 +784,8 @@
     "transcribing": "Přepisuji...",
     "processing": "Zpracovávám...",
     "postProcessUnavailable": "Nastavte model pro následné zpracování",
-    "transcriptionFailed": "Přepis se nezdařil"
+    "transcriptionFailed": "Přepis se nezdařil",
+    "microphoneStalled": "Mikrofon přestal reagovat"
   },
   "smartModes": {
     "sections": {

@@ -767,6 +767,8 @@
     "pasteFailed": "Metin etkin uygulamaya yapıştırılamadı.",
     "transcriptionFailedTitle": "Yazıya dökme başarısız oldu",
     "transcriptionFailed": "Kaydınız geçmişte saklandı. Oradan yeniden yazıya dökün veya başka bir model seçin.",
+    "microphoneStalledTitle": "Mikrofon yanıt vermiyor",
+    "microphoneStalled": "Mikrofondan ses gelmediği için hiçbir şey kaydedilmedi. Bu, Bluetooth kulaklıklarda olabilir. Şimdi yeniden kayıt yapabilir veya başka bir mikrofon seçebilirsiniz.",
     "boundary": {
       "title": "Bir şeyler ters gitti.",
       "reload": "Yenile"
@@ -782,7 +784,8 @@
     "transcribing": "Transkribe ediliyor...",
     "processing": "İşleniyor...",
     "postProcessUnavailable": "Son işleme için bir model ayarlayın",
-    "transcriptionFailed": "Yazıya dökme başarısız"
+    "transcriptionFailed": "Yazıya dökme başarısız",
+    "microphoneStalled": "Mikrofon yanıt vermiyor"
   },
   "smartModes": {
     "sections": {

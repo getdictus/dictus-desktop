@@ -767,6 +767,8 @@
     "pasteFailed": "Der Text konnte nicht in die aktive Anwendung eingefügt werden.",
     "transcriptionFailedTitle": "Transkription fehlgeschlagen",
     "transcriptionFailed": "Deine Aufnahme ist im Verlauf gespeichert. Transkribiere sie dort erneut oder wähle ein anderes Modell.",
+    "microphoneStalledTitle": "Mikrofon reagiert nicht mehr",
+    "microphoneStalled": "Vom Mikrofon kam kein Ton, daher wurde nichts aufgenommen. Das kann bei Bluetooth-Headsets passieren. Du kannst jetzt erneut aufnehmen oder ein anderes Mikrofon wählen.",
     "boundary": {
       "title": "Etwas ist schiefgelaufen.",
       "reload": "Neu laden"
@@ -782,7 +784,8 @@
     "transcribing": "Transkribiere...",
     "processing": "Verarbeite...",
     "postProcessUnavailable": "Modell für die Nachbearbeitung einrichten",
-    "transcriptionFailed": "Transkription fehlgeschlagen"
+    "transcriptionFailed": "Transkription fehlgeschlagen",
+    "microphoneStalled": "Mikrofon reagiert nicht mehr"
   },
   "smartModes": {
     "sections": {

@@ -767,6 +767,8 @@
     "pasteFailed": "לא ניתן היה להדביק את הטקסט ביישום הפעיל.",
     "transcriptionFailedTitle": "התמלול נכשל",
     "transcriptionFailed": "ההקלטה שלך נשמרה בהיסטוריה. תמלל אותה שוב משם או בחר מודל אחר.",
+    "microphoneStalledTitle": "המיקרופון הפסיק להגיב",
+    "microphoneStalled": "לא התקבל שמע מהמיקרופון, ולכן שום דבר לא הוקלט. זה יכול לקרות עם אוזניות Bluetooth. אפשר להקליט שוב עכשיו או לבחור מיקרופון אחר.",
     "boundary": {
       "title": "משהו השתבש.",
       "reload": "טעינה מחדש"
@@ -782,7 +784,8 @@
     "transcribing": "מתמלל...",
     "processing": "מעבד...",
     "postProcessUnavailable": "הגדר מודל לעיבוד שלאחר מכן",
-    "transcriptionFailed": "התמלול נכשל"
+    "transcriptionFailed": "התמלול נכשל",
+    "microphoneStalled": "המיקרופון הפסיק להגיב"
   },
   "smartModes": {
     "sections": {

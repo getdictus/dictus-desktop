@@ -1,7 +1,7 @@
 use crate::managers::audio::AudioRecordingManager;
 use crate::managers::transcription::TranscriptionManager;
 use crate::shortcut;
-use crate::TranscriptionCoordinator;
+use crate::{DictationCancel, TranscriptionCoordinator};
 use log::info;
 use std::sync::Arc;
 use tauri::{AppHandle, Manager};
@@ -25,13 +25,23 @@ pub fn cancel_current_operation(app: &AppHandle) {
     let recording_was_active = audio_manager.is_recording();
     audio_manager.cancel_recording();
 
+    // Discard the result of a pipeline already transcribing or post-processing
+    // (#27): it will neither paste nor touch the overlay again.
+    let pipeline_was_running = app
+        .try_state::<DictationCancel>()
+        .is_some_and(|c| c.cancel());
+
     // Update tray icon and hide overlay
     change_tray_icon(app, crate::tray::TrayIconState::Idle);
     hide_recording_overlay(app);
 
-    // Unload model if immediate unload is enabled
-    let tm = app.state::<Arc<TranscriptionManager>>();
-    tm.maybe_unload_immediately("cancellation");
+    // Unload model if immediate unload is enabled. Not while a pipeline runs:
+    // the engine is busy transcribing (the unload would block this thread until
+    // it finishes), and the pipeline applies the same setting when it ends.
+    if !pipeline_was_running {
+        let tm = app.state::<Arc<TranscriptionManager>>();
+        tm.maybe_unload_immediately("cancellation");
+    }
 
     // Notify coordinator so it can keep lifecycle state coherent.
     if let Some(coordinator) = app.try_state::<TranscriptionCoordinator>() {

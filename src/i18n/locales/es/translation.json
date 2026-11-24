@@ -767,6 +767,8 @@
     "pasteFailed": "No se pudo pegar el texto en la aplicación activa.",
     "transcriptionFailedTitle": "Error en la transcripción",
     "transcriptionFailed": "Tu grabación se ha guardado en el historial. Vuelve a transcribirla desde allí o elige otro modelo.",
+    "microphoneStalledTitle": "El micrófono dejó de responder",
+    "microphoneStalled": "No llegó audio del micrófono, así que no se grabó nada. Puede pasar con auriculares Bluetooth. Ya puedes volver a grabar o elegir otro micrófono.",
     "boundary": {
       "title": "Algo salió mal.",
       "reload": "Recargar"
@@ -782,7 +784,8 @@
     "transcribing": "Transcribiendo...",
     "processing": "Procesando...",
     "postProcessUnavailable": "Configura un modelo para el posprocesamiento",
-    "transcriptionFailed": "Error en la transcripción"
+    "transcriptionFailed": "Error en la transcripción",
+    "microphoneStalled": "El micrófono dejó de responder"
   },
   "smartModes": {
     "sections": {

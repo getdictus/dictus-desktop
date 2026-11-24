@@ -1,8 +1,10 @@
-use crate::audio_toolkit::{list_input_devices, vad::SmoothedVad, AudioRecorder, SileroVad};
+use crate::audio_toolkit::{
+    list_input_devices, vad::SmoothedVad, AudioRecorder, SileroVad, StopError,
+};
 use crate::helpers::clamshell;
 use crate::settings::{get_settings, AppSettings};
 use crate::utils;
-use log::{debug, error, info};
+use log::{debug, error, info, warn};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -387,15 +389,17 @@ impl AudioRecordingManager {
         let mut state = self.state.lock().unwrap();
 
         if let RecordingState::Idle = *state {
-            // Ensure microphone is open in on-demand mode
             if matches!(*self.mode.lock().unwrap(), MicrophoneMode::OnDemand) {
                 // Cancel any pending lazy close
                 self.close_generation.fetch_add(1, Ordering::SeqCst);
-                if let Err(e) = self.start_microphone_stream() {
-                    let msg = format!("{e}");
-                    error!("Failed to open microphone stream: {msg}");
-                    return Err(msg);
-                }
+            }
+            // Ensure the microphone is open: always the case in on-demand mode,
+            // and in always-on mode after a stalled stream was discarded. A
+            // no-op when the stream is already open.
+            if let Err(e) = self.start_microphone_stream() {
+                let msg = format!("{e}");
+                error!("Failed to open microphone stream: {msg}");
+                return Err(msg);
             }
 
             if let Some(rec) = self.recorder.lock().unwrap().as_ref() {
@@ -424,7 +428,31 @@ impl AudioRecordingManager {
         Ok(())
     }
 
-    pub fn stop_recording(&self, binding_id: &str) -> Option<Vec<f32>> {
+    /// Stops the recorder and returns its samples. On a stall (#27) the
+    /// recorder is dropped and the stream marked closed, so the next recording
+    /// opens a fresh one instead of reusing the dead stream.
+    fn stop_recorder(&self) -> Result<Vec<f32>, StopError> {
+        let mut recorder_opt = self.recorder.lock().unwrap();
+        let Some(rec) = recorder_opt.as_ref() else {
+            error!("Recorder not available");
+            return Ok(Vec::new());
+        };
+        let result = rec.stop();
+        if let Err(e) = result {
+            warn!("Recorder stop failed ({e}); discarding the audio stream");
+            if let Some(mut stuck) = recorder_opt.take() {
+                let _ = stuck.close();
+            }
+            drop(recorder_opt);
+            *self.is_open.lock().unwrap() = false;
+        }
+        result
+    }
+
+    /// Stops the recording for `binding_id`. `None` when that binding was not
+    /// recording; `Some(Err)` when the audio stream stalled and nothing could
+    /// be retrieved. Bounded: never waits on a dead stream (#27).
+    pub fn stop_recording(&self, binding_id: &str) -> Option<Result<Vec<f32>, StopError>> {
         let mut state = self.state.lock().unwrap();
 
         match *state {
@@ -444,18 +472,7 @@ impl AudioRecordingManager {
                     std::thread::sleep(Duration::from_millis(settings.extra_recording_buffer_ms));
                 }
 
-                let samples = if let Some(rec) = self.recorder.lock().unwrap().as_ref() {
-                    match rec.stop() {
-                        Ok(buf) => buf,
-                        Err(e) => {
-                            error!("stop() failed: {e}");
-                            Vec::new()
-                        }
-                    }
-                } else {
-                    error!("Recorder not available");
-                    Vec::new()
-                };
+                let result = self.stop_recorder();
 
                 *self.is_recording.lock().unwrap() = false;
 
@@ -468,15 +485,20 @@ impl AudioRecordingManager {
                     }
                 }
 
+                let samples = match result {
+                    Ok(samples) => samples,
+                    Err(e) => return Some(Err(e)),
+                };
+
                 // Pad if very short
                 let s_len = samples.len();
                 // debug!("Got {} samples", s_len);
                 if s_len < WHISPER_SAMPLE_RATE && s_len > 0 {
                     let mut padded = samples;
                     padded.resize(WHISPER_SAMPLE_RATE * 5 / 4, 0.0);
-                    Some(padded)
+                    Some(Ok(padded))
                 } else {
-                    Some(samples)
+                    Some(Ok(samples))
                 }
             }
             _ => None,
@@ -497,9 +519,7 @@ impl AudioRecordingManager {
             *state = RecordingState::Idle;
             drop(state);
 
-            if let Some(rec) = self.recorder.lock().unwrap().as_ref() {
-                let _ = rec.stop(); // Discard the result
-            }
+            let _ = self.stop_recorder(); // Discard the samples
 
             *self.is_recording.lock().unwrap() = false;
 
