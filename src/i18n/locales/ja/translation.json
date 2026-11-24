@@ -582,6 +582,10 @@
         "title": "ログレベル",
         "description": "ログの詳細度を設定"
       },
+      "logTranscripts": {
+        "label": "文字起こしをログに記録",
+        "description": "口述したテキストを Debug レベルでログファイルに書き込みます。既定ではオフです。文字起こしのデバッグ時のみオンにし、終わったらオフに戻してください。"
+      },
       "updateChecks": {
         "label": "アップデートを確認",
         "description": "Dictusの新しいバージョンを自動的にチェック"

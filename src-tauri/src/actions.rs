@@ -798,9 +798,9 @@ fn spawn_transcription_task(
                 match transcription_result {
                     Ok(transcription) => {
                         debug!(
-                            "Transcription completed in {:?}: '{}'",
+                            "Transcription completed in {:?} ({} chars)",
                             transcription_time.elapsed(),
-                            transcription
+                            transcription.chars().count()
                         );
 
                         if post_process {

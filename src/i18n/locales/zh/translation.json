@@ -582,6 +582,10 @@
         "title": "日志级别",
         "description": "设置日志的详细程度"
       },
+      "logTranscripts": {
+        "label": "在日志中记录转录内容",
+        "description": "以 Debug 日志级别将听写文本写入日志文件。默认关闭：仅在调试转录时开启，之后请关闭。"
+      },
       "updateChecks": {
         "label": "检查更新",
         "description": "自动检查 Dictus 的新版本"

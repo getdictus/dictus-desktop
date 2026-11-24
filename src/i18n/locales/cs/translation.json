@@ -582,6 +582,10 @@
         "title": "Úroveň logování",
         "description": "Nastavte úroveň podrobnosti logování"
       },
+      "logTranscripts": {
+        "label": "Zapisovat přepisy do logu",
+        "description": "Zapisuje diktovaný text do souboru logu na úrovni Debug. Ve výchozím stavu vypnuto: zapněte jen pro ladění přepisu a pak zase vypněte."
+      },
       "updateChecks": {
         "label": "Kontrolovat aktualizace",
         "description": "Automaticky kontrolovat nové verze Dictus"

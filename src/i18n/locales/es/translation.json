@@ -582,6 +582,10 @@
         "title": "Nivel de Registro",
         "description": "Establece el nivel de detalle del registro"
       },
+      "logTranscripts": {
+        "label": "Registrar transcripciones",
+        "description": "Escribe el texto dictado en el archivo de registro con el nivel Debug. Desactivado por defecto: actívalo solo para depurar una transcripción y luego desactívalo."
+      },
       "updateChecks": {
         "label": "Buscar Actualizaciones",
         "description": "Buscar automáticamente nuevas versiones de Dictus"

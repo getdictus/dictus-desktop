@@ -136,6 +136,8 @@ const settingUpdaters: {
   append_trailing_space: (value) =>
     commands.changeAppendTrailingSpaceSetting(value as boolean),
   log_level: (value) => commands.setLogLevel(value as any),
+  log_transcripts: (value) =>
+    commands.changeLogTranscriptsSetting(value as boolean),
   app_language: (value) => commands.changeAppLanguageSetting(value as string),
   enable_cloud_providers: (value) =>
     commands.changeEnableCloudProvidersSetting(value as boolean),

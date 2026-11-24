@@ -110,8 +110,7 @@ app_env=(env -i PATH="/usr/local/bin:/usr/bin:/bin" HOME="$home" USER="$USER" LA
   XDG_CONFIG_HOME="$home/.config" XDG_CACHE_HOME="$home/.cache" XDG_DATA_HOME="$home/.local/share"
   XDG_STATE_HOME="$home/.local/state" XDG_RUNTIME_DIR="$scratch/runtime" XDG_SESSION_TYPE=x11
   DISPLAY=":$n" GDK_BACKEND=x11 DBUS_SESSION_BUS_ADDRESS="$dbus_addr"
-  WEBKIT_DISABLE_DMABUF_RENDERER=1
-  RUST_LOG=info,dictus_app_lib::managers::transcription=warn)
+  WEBKIT_DISABLE_DMABUF_RENDERER=1)
 printf '%s\n' "${app_env[@]:1}" | grep -v '^DBUS' > "$run/app.env"
 printf '%s\n' "${app_env[@]:1}" > "$scratch/app.env"
 launched="$(date +%s)"

@@ -582,6 +582,10 @@
         "title": "日誌等級",
         "description": "設定日誌的詳細程度"
       },
+      "logTranscripts": {
+        "label": "在日誌中記錄轉錄內容",
+        "description": "以 Debug 日誌層級將聽寫文字寫入日誌檔。預設關閉：僅在除錯轉錄時開啟，之後請關閉。"
+      },
       "updateChecks": {
         "label": "檢查更新",
         "description": "自動檢查 Dictus 的新版本"

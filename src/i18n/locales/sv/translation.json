@@ -582,6 +582,10 @@
         "title": "Loggnivå",
         "description": "Ställ in loggningens detaljrikedom"
       },
+      "logTranscripts": {
+        "label": "Logga transkriptioner",
+        "description": "Skriver den dikterade texten till loggfilen på loggnivån Debug. Av som standard: slå på bara för att felsöka en transkribering och sedan av igen."
+      },
       "updateChecks": {
         "label": "Sök efter uppdateringar",
         "description": "Sök automatiskt efter nya versioner av Dictus"

@@ -619,7 +619,11 @@ impl TranscriptionManager {
         if final_result.is_empty() {
             info!("Transcription result is empty");
         } else {
-            info!("Transcription result: {}", final_result);
+            info!(
+                "Transcription result: {} chars",
+                final_result.chars().count()
+            );
+            crate::debug_user_text!("Transcription result: {}", final_result);
         }
 
         self.maybe_unload_immediately("transcription");

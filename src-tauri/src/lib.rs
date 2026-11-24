@@ -11,6 +11,7 @@ mod file_transcription;
 mod helpers;
 mod input;
 mod llm_client;
+pub mod logging;
 mod managers;
 mod overlay;
 pub mod portable;
@@ -509,6 +510,7 @@ pub fn run(cli_args: CliArgs) {
             shortcut::resume_all_shortcuts,
             shortcut::change_mute_while_recording_setting,
             shortcut::change_append_trailing_space_setting,
+            shortcut::change_log_transcripts_setting,
             shortcut::change_lazy_stream_close_setting,
             shortcut::change_app_language_setting,
             shortcut::change_update_checks_setting,
@@ -607,7 +609,11 @@ pub fn run(cli_args: CliArgs) {
         .device_event_filter(tauri::DeviceEventFilter::Always)
         .plugin(tauri_plugin_dialog::init())
         .plugin(
-            LogBuilder::new()
+            logging::TEXT_ECHOING_TARGETS
+                .iter()
+                .fold(LogBuilder::new(), |log, &(target, level)| {
+                    log.level_for(target, level)
+                })
                 .level(log::LevelFilter::Trace) // Set to most verbose level globally
                 .max_file_size(500_000)
                 .rotation_strategy(RotationStrategy::KeepOne)
@@ -703,6 +709,7 @@ pub fn run(cli_args: CliArgs) {
             let file_log_level: log::Level = tauri_log_level.into();
             // Store the file log level in the atomic for the filter to use
             FILE_LOG_LEVEL.store(file_log_level.to_level_filter() as u8, Ordering::Relaxed);
+            logging::set_log_transcripts(settings.log_transcripts);
             let app_handle = app.handle().clone();
             app.manage(TranscriptionCoordinator::new(app_handle.clone()));
             // Shared-engine arbiter and the imported-file job slot. Registered

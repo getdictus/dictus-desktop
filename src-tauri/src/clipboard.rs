@@ -510,14 +510,18 @@ fn paste_via_external_script(text: &str, script_path: &str) -> Result<(), String
         .map_err(|e| format!("Failed to execute external script '{}': {}", script_path, e))?;
 
     if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        let stdout = String::from_utf8_lossy(&output.stdout);
+        // The script gets the text as its argument and may echo it back.
+        crate::debug_user_text!(
+            "External script stderr: {}, stdout: {}",
+            String::from_utf8_lossy(&output.stderr).trim(),
+            String::from_utf8_lossy(&output.stdout).trim()
+        );
         return Err(format!(
-            "External script '{}' failed with exit code {:?}. stderr: {}, stdout: {}",
+            "External script '{}' failed with exit code {:?} ({} bytes on stderr, {} on stdout)",
             script_path,
             output.status.code(),
-            stderr.trim(),
-            stdout.trim()
+            output.stderr.len(),
+            output.stdout.len()
         ));
     }
 
