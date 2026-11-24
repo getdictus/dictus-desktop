@@ -7,6 +7,7 @@
 #   --mic         private PipeWire with a virtual source in the scratch dir (mic.py), started before the app
 #   --sink        with --mic, also a null sink for the app's playback (recording sounds; see mic.py). Only for
 #                 builds that keep one feedback output open: a build that opens one per sound stalls on it
+#   DICTUS_APP_LANG=fr_FR.UTF-8 starts the app in another locale (default en_US.UTF-8)
 # Last line on success: READY run=<dir> display=:<n> pid=<pid> window=<id> geometry=<WxH+X+Y>
 set -euo pipefail
 source "$(dirname "$0")/env.sh"
@@ -74,9 +75,9 @@ elif [ -n "$model" ]; then
   # Same layout as the app's own extraction (model.rs): a single top directory becomes models/<filename>.
   mkdir -p "$data/models/$model_dir.seeding"
   tar --warning=no-unknown-keyword -xzf "$archive" -C "$data/models/$model_dir.seeding"
-  top="$(find "$data/models/$model_dir.seeding" -mindepth 1 -maxdepth 1)"
+  top="$(find "$data/models/$model_dir.seeding" -mindepth 1 -maxdepth 1 -type d)"
   if [ "$(wc -l <<< "$top")" = 1 ] && [ -d "$top" ]; then
-    mv "$top" "$data/models/$model_dir" && rmdir "$data/models/$model_dir.seeding"
+    mv "$top" "$data/models/$model_dir" && rm -rf "$data/models/$model_dir.seeding"
   else
     mv "$data/models/$model_dir.seeding" "$data/models/$model_dir"
   fi
@@ -110,7 +111,7 @@ dbus_out="$(env -i PATH="$PATH" HOME="$home" XDG_RUNTIME_DIR="$scratch/runtime" 
 dbus_addr="$(sed -n 1p <<< "$dbus_out")"
 ledger_set "$run" DBUS "$(pid_ref "$(sed -n 2p <<< "$dbus_out")")"
 
-app_env=(env -i PATH="/usr/local/bin:/usr/bin:/bin" HOME="$home" USER="$USER" LANG=en_US.UTF-8
+app_env=(env -i PATH="/usr/local/bin:/usr/bin:/bin" HOME="$home" USER="$USER" LANG="${DICTUS_APP_LANG:-en_US.UTF-8}"
   XDG_CONFIG_HOME="$home/.config" XDG_CACHE_HOME="$home/.cache" XDG_DATA_HOME="$home/.local/share"
   XDG_STATE_HOME="$home/.local/state" XDG_RUNTIME_DIR="$scratch/runtime" XDG_SESSION_TYPE=x11
   DISPLAY=":$n" GDK_BACKEND=x11 DBUS_SESSION_BUS_ADDRESS="$dbus_addr"

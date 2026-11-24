@@ -181,6 +181,8 @@ def cmd_leak_check(corpus, db, run_dir):
             texts += [r[0] for r in con.execute("SELECT transcription_text FROM transcription_history")]
     needles = set()
     for t in texts:
+        if not t:
+            continue
         ws = words(t)
         if len(ws) <= LEAK_NGRAM:
             if len(" ".join(ws)) >= 12:

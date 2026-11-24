@@ -1036,6 +1036,52 @@ impl AppSettings {
     }
 }
 
+/// Parses the stored settings, keeping every valid field when some are not.
+///
+/// A field written by a newer version (an unknown enum variant, a changed
+/// type) falls back to its default instead of resetting every setting.
+/// Returns `true` when the stored value had to be repaired.
+fn settings_from_stored(stored: serde_json::Value) -> (AppSettings, bool) {
+    if let Ok(settings) = serde_json::from_value::<AppSettings>(stored.clone()) {
+        return (settings, false);
+    }
+    // The serde error can quote the stored value, so it is not logged.
+    warn!("Failed to parse settings, repairing them field by field");
+
+    let serde_json::Value::Object(mut stored) = stored else {
+        return (get_default_settings(), true);
+    };
+    let Ok(serde_json::Value::Object(defaults)) = serde_json::to_value(get_default_settings())
+    else {
+        return (get_default_settings(), true);
+    };
+
+    // Each key is checked against the defaults alone, so one bad field cannot
+    // hide another. Keys absent from the store stay absent: their serde
+    // defaults differ from get_default_settings() (settings_schema_version).
+    let keys: Vec<String> = stored.keys().cloned().collect();
+    for key in keys {
+        let mut candidate = defaults.clone();
+        candidate.insert(key.clone(), stored[&key].clone());
+        if serde_json::from_value::<AppSettings>(candidate.into()).is_err() {
+            warn!(
+                "Dropping invalid stored setting '{}', using its default",
+                key
+            );
+            match defaults.get(&key) {
+                Some(default) => stored.insert(key, default.clone()),
+                None => stored.remove(&key),
+            };
+        }
+    }
+
+    let settings = serde_json::from_value(stored.into()).unwrap_or_else(|_| {
+        warn!("Failed to repair settings, using defaults");
+        get_default_settings()
+    });
+    (settings, true)
+}
+
 pub fn load_or_create_app_settings(app: &AppHandle) -> AppSettings {
     // Initialize store
     let store = app
@@ -1043,39 +1089,28 @@ pub fn load_or_create_app_settings(app: &AppHandle) -> AppSettings {
         .expect("Failed to initialize store");
 
     let mut settings = if let Some(settings_value) = store.get("settings") {
-        // Parse the entire settings object
-        match serde_json::from_value::<AppSettings>(settings_value) {
-            Ok(mut settings) => {
-                debug!("Found existing settings");
-                let default_settings = get_default_settings();
-                let mut updated = false;
+        let (mut settings, repaired) = settings_from_stored(settings_value);
+        debug!("Found existing settings");
+        let default_settings = get_default_settings();
+        let mut updated = repaired;
 
-                // Merge default bindings into existing settings
-                for (key, value) in default_settings.bindings {
-                    if let std::collections::hash_map::Entry::Vacant(e) =
-                        settings.bindings.entry(key.clone())
-                    {
-                        debug!("Adding missing binding: {}", key);
-                        e.insert(value);
-                        updated = true;
-                    }
-                }
-
-                if updated {
-                    debug!("Settings updated with new bindings");
-                    store.set("settings", serde_json::to_value(&settings).unwrap());
-                }
-
-                settings
-            }
-            Err(e) => {
-                warn!("Failed to parse settings: {}", e);
-                // Fall back to default settings if parsing fails
-                let default_settings = get_default_settings();
-                store.set("settings", serde_json::to_value(&default_settings).unwrap());
-                default_settings
+        // Merge default bindings into existing settings
+        for (key, value) in default_settings.bindings {
+            if let std::collections::hash_map::Entry::Vacant(e) =
+                settings.bindings.entry(key.clone())
+            {
+                debug!("Adding missing binding: {}", key);
+                e.insert(value);
+                updated = true;
             }
         }
+
+        if updated {
+            debug!("Settings updated with new bindings");
+            store.set("settings", serde_json::to_value(&settings).unwrap());
+        }
+
+        settings
     } else {
         let default_settings = get_default_settings();
         store.set("settings", serde_json::to_value(&default_settings).unwrap());
@@ -1104,11 +1139,11 @@ pub fn get_settings(app: &AppHandle) -> AppSettings {
         .expect("Failed to initialize store");
 
     let mut settings = if let Some(settings_value) = store.get("settings") {
-        serde_json::from_value::<AppSettings>(settings_value).unwrap_or_else(|_| {
-            let default_settings = get_default_settings();
-            store.set("settings", serde_json::to_value(&default_settings).unwrap());
-            default_settings
-        })
+        let (settings, repaired) = settings_from_stored(settings_value);
+        if repaired {
+            store.set("settings", serde_json::to_value(&settings).unwrap());
+        }
+        settings
     } else {
         let default_settings = get_default_settings();
         store.set("settings", serde_json::to_value(&default_settings).unwrap());
@@ -1164,8 +1199,8 @@ mod tests {
 
     /// The steps `load_or_create_app_settings` runs on a stored settings value.
     fn load_stored(value: serde_json::Value) -> AppSettings {
-        let mut settings: AppSettings =
-            serde_json::from_value(value).expect("stored settings must deserialize");
+        let (mut settings, repaired) = settings_from_stored(value);
+        assert!(!repaired, "stored settings must deserialize");
         ensure_post_process_defaults(&mut settings);
         migrate_settings_if_needed(&mut settings);
         settings
@@ -1228,6 +1263,82 @@ mod tests {
                 theme
             );
         }
+    }
+
+    fn stored_settings_with(overrides: serde_json::Value) -> serde_json::Value {
+        let mut stored = serde_json::to_value(get_default_settings()).unwrap();
+        for (key, value) in overrides.as_object().unwrap() {
+            stored[key] = value.clone();
+        }
+        stored
+    }
+
+    #[test]
+    fn unknown_enum_value_resets_only_that_setting() {
+        let mut stored = stored_settings_with(serde_json::json!({
+            "sound_theme": "future_pack",
+            "push_to_talk": false,
+            "selected_model": "parakeet-tdt-0.6b-v3",
+            "audio_feedback_volume": 0.25,
+        }));
+        stored["bindings"]["transcribe"]["current_binding"] = "ctrl+alt+k".into();
+
+        let (settings, repaired) = settings_from_stored(stored);
+
+        assert!(repaired);
+        assert!(!settings.push_to_talk);
+        assert_eq!(settings.selected_model, "parakeet-tdt-0.6b-v3");
+        assert_eq!(settings.audio_feedback_volume, 0.25);
+        assert_eq!(
+            settings.bindings["transcribe"].current_binding,
+            "ctrl+alt+k"
+        );
+        assert_eq!(settings.sound_theme, get_default_settings().sound_theme);
+    }
+
+    #[test]
+    fn wrong_type_resets_only_that_setting() {
+        let stored = stored_settings_with(serde_json::json!({
+            "push_to_talk": "yes",
+            "sound_theme": "pop",
+            "selected_model": "parakeet-tdt-0.6b-v3",
+            "audio_feedback_volume": 0.25,
+        }));
+
+        let (settings, repaired) = settings_from_stored(stored);
+
+        assert!(repaired);
+        assert_eq!(settings.push_to_talk, get_default_settings().push_to_talk);
+        assert_eq!(settings.sound_theme, SoundTheme::Pop);
+        assert_eq!(settings.selected_model, "parakeet-tdt-0.6b-v3");
+        assert_eq!(settings.audio_feedback_volume, 0.25);
+    }
+
+    #[test]
+    fn valid_stored_settings_are_unchanged() {
+        let stored = stored_settings_with(serde_json::json!({
+            "push_to_talk": false,
+            "sound_theme": "pop",
+            "selected_model": "parakeet-tdt-0.6b-v3",
+        }));
+
+        let (settings, repaired) = settings_from_stored(stored.clone());
+
+        assert!(!repaired);
+        assert_eq!(serde_json::to_value(settings).unwrap(), stored);
+    }
+
+    #[test]
+    fn repair_keeps_missing_schema_version_so_migration_still_runs() {
+        let mut stored = stored_settings_with(serde_json::json!({ "sound_theme": "future_pack" }));
+        stored
+            .as_object_mut()
+            .unwrap()
+            .remove("settings_schema_version");
+
+        let (settings, _) = settings_from_stored(stored);
+
+        assert_eq!(settings.settings_schema_version, 0);
     }
 
     #[test]
