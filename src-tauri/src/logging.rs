@@ -68,6 +68,11 @@ mod tests {
     /// A text variable is fine when only its size or emptiness is logged.
     const SIZE_SUFFIXES: &[&str] = &[".len()", ".chars().count()", ".is_empty()"];
 
+    /// Calls that decode a response body and return serde_json's error, whose
+    /// message can quote a value from the body (#105). Bodies are decoded through
+    /// `llm_client::parse_body`, or with the error dropped by `.ok()`.
+    const BODY_DECODERS: &[&str] = &[".json", "from_str", "from_slice"];
+
     const LOG_MACROS: &[&str] = &["trace!", "debug!", "info!", "warn!", "error!"];
 
     fn rust_files(dir: &Path, out: &mut Vec<std::path::PathBuf>) {
@@ -203,6 +208,29 @@ mod tests {
                     let line = src[..at].matches('\n').count() + 1;
                     let rel = file.strip_prefix(&root).unwrap().display();
                     leaks.push(format!("src/{rel}:{line} format! formats `{var}`"));
+                }
+            }
+            for decoder in BODY_DECODERS {
+                for (at, _) in src.match_indices(decoder) {
+                    let rest = &src[at + decoder.len()..];
+                    let Some(open) = rest.find('(') else { continue };
+                    if !(rest[..open].is_empty() || rest.starts_with("::<")) {
+                        continue;
+                    }
+                    let args = macro_args(rest, open);
+                    let after = rest[open + args.len() + 2..].trim_start();
+                    let decodes_body = *decoder == ".json" && args.is_empty()
+                        || formats_any(&formatted_code(args), BODY_VARS).is_some();
+                    let in_parse_body = src[..at]
+                        .rfind("fn ")
+                        .is_some_and(|fn_at| src[fn_at..].starts_with("fn parse_body"));
+                    if decodes_body && !in_parse_body && !after.starts_with(".ok()") {
+                        let line = src[..at].matches('\n').count() + 1;
+                        let rel = file.strip_prefix(&root).unwrap().display();
+                        leaks.push(format!(
+                            "src/{rel}:{line} `{decoder}` decodes a response body outside parse_body"
+                        ));
+                    }
                 }
             }
         }

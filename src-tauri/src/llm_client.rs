@@ -354,6 +354,9 @@ mod tests {
 
     static CAPTURE: Capture = Capture(Mutex::new(Vec::new()));
 
+    /// The tests share the logger and the "Log transcripts" switch.
+    static SERIAL: Mutex<()> = Mutex::new(());
+
     fn lines_with_dictated_text() -> Vec<(log::Level, String)> {
         CAPTURE
             .0
@@ -423,6 +426,12 @@ mod tests {
         format!("rejected: {request} {DICTATED}")
     }
 
+    /// A 2xx chat completion whose `message` is a bare string instead of an
+    /// object, so serde's type error quotes the dictated text.
+    fn wrong_type_echo(_: &str) -> String {
+        serde_json::json!({ "choices": [{ "message": DICTATED }] }).to_string()
+    }
+
     fn chat(provider: PostProcessProvider) -> String {
         tauri::async_runtime::block_on(send_chat_completion_with_schema(ChatCompletionParams {
             provider,
@@ -437,6 +446,7 @@ mod tests {
 
     #[test]
     fn http_error_bodies_stay_out_of_errors_and_logs() {
+        let _serial = SERIAL.lock().unwrap_or_else(|e| e.into_inner());
         let _ = log::set_logger(&CAPTURE);
         log::set_max_level(log::LevelFilter::Trace);
 
@@ -476,6 +486,38 @@ mod tests {
         assert!(
             !lines.is_empty(),
             "Log transcripts on: body logged at Debug"
+        );
+        assert!(
+            lines.iter().all(|(level, _)| *level == log::Level::Debug),
+            "{lines:?}"
+        );
+    }
+
+    #[test]
+    fn unparseable_2xx_bodies_stay_out_of_errors_and_logs() {
+        let _serial = SERIAL.lock().unwrap_or_else(|e| e.into_inner());
+        let _ = log::set_logger(&CAPTURE);
+        log::set_max_level(log::LevelFilter::Trace);
+
+        crate::logging::set_log_transcripts(false);
+        let err = chat(mock_provider("200 OK", wrong_type_echo));
+        assert!(
+            !err.contains(DICTATED),
+            "parse error carries the body: {err}"
+        );
+        assert!(err.contains("200"), "{err}");
+        assert!(err.contains("'mock'"), "{err}");
+        assert!(err.contains("bytes"), "{err}");
+        assert!(err.contains("data error at line 1 column"), "{err}");
+        assert_eq!(lines_with_dictated_text(), vec![]);
+
+        crate::logging::set_log_transcripts(true);
+        chat(mock_provider("200 OK", wrong_type_echo));
+        crate::logging::set_log_transcripts(false);
+        let lines = lines_with_dictated_text();
+        assert!(
+            !lines.is_empty(),
+            "Log transcripts on: parse error logged at Debug"
         );
         assert!(
             lines.iter().all(|(level, _)| *level == log::Level::Debug),
