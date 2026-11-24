@@ -476,23 +476,23 @@
         "cloud": "Cloud"
       },
       "modelsAndLocalProcessing": {
-        "title": "Modèles et traitement local",
-        "subtitle": "Dictus privilégie les modèles locaux pour garantir votre confidentialité.",
-        "learnMore": "En savoir plus",
+        "title": "Models and local processing",
+        "subtitle": "Dictus favors local models to protect your privacy.",
+        "learnMore": "Learn more",
         "statusBadge": {
-          "ready_one": "{{count}} modèle prêt",
-          "ready_other": "{{count}} modèles prêts"
+          "ready_one": "{{count}} model ready",
+          "ready_other": "{{count}} models ready"
         },
         "selectedModel": {
-          "title": "Modèle de post-traitement",
-          "recommendedBadge": "Recommandé",
+          "title": "Post-processing model",
+          "recommendedBadge": "Recommended",
           "tags": {
             "local": "Local",
-            "private": "Privé",
-            "noDataSent": "Aucune donnée envoyée",
-            "offlineCapable": "Fonctionne hors ligne"
+            "private": "Private",
+            "noDataSent": "No data sent",
+            "offlineCapable": "Works offline"
           },
-          "cloudSelectedNotice": "Votre modèle sélectionné est un fournisseur cloud. Cliquez sur l'onglet « Cloud » ci-dessous pour le voir, ou choisissez un modèle local."
+          "cloudSelectedNotice": "Your selected model is a cloud provider. Click the \"Cloud\" tab below to see it, or choose a local model."
         },
         "library": {
           "title": "Local Model Library",
