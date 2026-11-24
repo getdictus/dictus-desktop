@@ -3,7 +3,7 @@ use crate::input::{self, EnigoState};
 use crate::settings::TypingTool;
 use crate::settings::{get_settings, AutoSubmitKey, ClipboardHandling, PasteMethod};
 use enigo::{Direction, Enigo, Key, Keyboard};
-use log::{info, warn};
+use log::info;
 use std::process::Command;
 use std::time::Duration;
 use tauri::{AppHandle, Manager};
@@ -51,7 +51,7 @@ fn paste_via_clipboard(
         match crate::primary_selection::write(text) {
             Ok(()) => Some(saved),
             Err(e) => {
-                warn!("Could not put the text on the primary selection: {e}");
+                log::warn!("Could not put the text on the primary selection: {e}");
                 None
             }
         }
