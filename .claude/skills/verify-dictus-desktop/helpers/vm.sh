@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Tier 2: the Windows VM dictus-win (libvirt, 4 GB) on this Linux host. Never the domain `windows`.
-#   vm.sh start [snapshot]   new tier-2 run, lock + watchdog, revert to <snapshot> (default
+#   vm.sh start [snapshot]   new tier-2 run, run lock + watchdog, revert to <snapshot> (default
 #                            clean-no-vcredist), start, wait for guest-ping (max 10 min). Ends: VM READY
 #   vm.sh fetch <pr>         download the Windows x64 installer of the latest successful
 #                            pr-test-build.yml run for <pr> into the run's scratch dir. Ends: INSTALLER <file>
@@ -15,7 +15,8 @@
 #                            or an error with the launch task's state and result
 #   vm.sh ps '<powershell>'  run PowerShell in the guest as SYSTEM (vm-exec.py)
 # Screenshot: shot.sh <name> (virsh screenshot of the whole VM screen). Teardown: cleanup.sh
-# (destroy + revert to clean-no-vcredist, stop the HTTP server, delete the installers, release the lock).
+# (destroy + revert to clean-no-vcredist, stop the HTTP server, delete the installers, release the run lock).
+# The VM takes the same run lock as tier 1 (DICTUS_RUN_LOCK), never the shared build lock.
 set -euo pipefail
 source "$(dirname "$0")/env.sh"
 [ "$DICTUS_VM" = dictus-win ] || die "this skill drives dictus-win only"

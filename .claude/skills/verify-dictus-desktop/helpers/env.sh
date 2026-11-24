@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
-# Sourced by every helper: paths, the run ledger, the shared lock, the real-data fingerprint.
+# Sourced by every helper: paths, the run ledger, the two locks, the real-data fingerprint.
 # Override any DICTUS_* variable from the environment before calling a helper.
 export PATH="$HOME/.bun/bin:$HOME/.cargo/bin:$PATH"
 
 REPO_ROOT="$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)"
 DICTUS_HELPERS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# The machine's shared build lock (Andy's Gradle and npm builds take it too): build.sh holds it around
+# each compile command only. The run lock is this skill's own; Gradle never takes it.
 DICTUS_LOCK="${DICTUS_LOCK:-/tmp/dictus-gradle.lock}"
+DICTUS_RUN_LOCK="${DICTUS_RUN_LOCK:-/tmp/dictus-desktop-run.lock}"
 DICTUS_EVIDENCE_ROOT="${DICTUS_EVIDENCE_ROOT:-/home/pierre/OpenBot/Shared/pilotage/dictus-desktop/preuves/verify-dictus-desktop}"
 DICTUS_IDENTIFIER="${DICTUS_IDENTIFIER:-com.dictus.desktop}"
 DICTUS_REAL_DATA="${DICTUS_REAL_DATA:-$HOME/.local/share/$DICTUS_IDENTIFIER}"
@@ -52,30 +55,31 @@ proc_start() { awk '{print $22}' "/proc/$1/stat" 2>/dev/null; }
 pid_ref() { echo "$1:$(proc_start "$1")"; }
 ref_alive() { local pid="${1%%:*}" st="${1##*:}"; [ -n "$pid" ] && [ "$(proc_start "$pid")" = "$st" ]; }
 
-# Lock holder: `flock -o LOCK sh -c 'touch ready; exec sleep infinity'` in its own process group.
-# Holding the lock = that group is alive; releasing = killing that group. Never touches other holders.
-lock_holders() { lslocks -n -o PID,COMMAND,PATH 2>/dev/null | awk -v p="$DICTUS_LOCK" '$3 == p {print $1, $2}'; }
+# Run lock holder: `flock -o DICTUS_RUN_LOCK sh -c 'touch ready; exec sleep infinity'` in its own process
+# group. Holding the run lock = that group is alive; releasing = killing that group. Never touches other
+# holders. The build lock is never held this way: build.sh takes it with a plain `flock <lock> <command>`.
+lock_holders() { lslocks -n -o PID,COMMAND,PATH 2>/dev/null | awk -v p="$1" '$3 == p {print $1, $2}'; }
 lock_describe() {
   local h pid
-  h="$(lock_holders)"
+  h="$(lock_holders "$1")"
   if [ -z "$h" ]; then echo "free"; return; fi
   while read -r pid comm; do
-    echo "held by pid=$pid comm=$comm cwd=$(readlink "/proc/$pid/cwd" 2>/dev/null || echo '?')"
+    echo "held by pid=$pid comm=$comm age=$(ps -o etimes= -p "$pid" 2>/dev/null | tr -d ' ')s cwd=$(readlink "/proc/$pid/cwd" 2>/dev/null || echo '?')"
   done <<< "$h"
 }
 lock_acquire() {
   local run="$1" wait_s="${2:-1800}" ready="$1/.lock-ready" pid i
   rm -f "$ready"
-  setsid flock -o "$DICTUS_LOCK" sh -c 'touch "$1"; exec sleep infinity' _ "$ready" < /dev/null > /dev/null 2>&1 &
+  setsid flock -o "$DICTUS_RUN_LOCK" sh -c 'touch "$1"; exec sleep infinity' _ "$ready" < /dev/null > /dev/null 2>&1 &
   pid=$!
   ledger_set "$run" LOCK_HOLDER "$(pid_ref "$pid")"
   for ((i = 0; i < wait_s; i++)); do
-    [ -e "$ready" ] && { report "$run" "LOCK ACQUIRED holder=$pid"; echo "LOCK ACQUIRED holder=$pid"; return 0; }
-    [ $((i % 60)) -eq 5 ] && echo "waiting for $DICTUS_LOCK: $(lock_describe)"
+    [ -e "$ready" ] && { report "$run" "RUN LOCK ACQUIRED $DICTUS_RUN_LOCK holder=$pid"; echo "RUN LOCK ACQUIRED holder=$pid"; return 0; }
+    [ $((i % 60)) -eq 5 ] && echo "waiting for $DICTUS_RUN_LOCK: $(lock_describe "$DICTUS_RUN_LOCK")"
     sleep 1
   done
   kill -- "-$pid" 2>/dev/null
-  echo "error: lock not acquired after ${wait_s}s: $(lock_describe)" >&2
+  echo "error: run lock not acquired after ${wait_s}s: $(lock_describe "$DICTUS_RUN_LOCK")" >&2
   return 1
 }
 
@@ -123,8 +127,9 @@ run_begin() {
   echo "$run"
 }
 
-# Take the shared lock for the part of the run where the app (or the VM) runs, and arm the watchdog:
-# after DICTUS_TTL_MIN minutes it runs cleanup.sh, so an idle or dead agent never keeps the lock.
+# Take the run lock for the part of the run where the app (or the VM) runs, and arm the watchdog:
+# after DICTUS_TTL_MIN minutes it runs cleanup.sh, so an idle or dead agent never keeps the run lock.
+# Tier 1 and tier 2 share it: the VM's 4 GB next to an app run does not fit in this machine's RAM.
 run_hold() {
   local run="$1" wd
   lock_acquire "$run" "${DICTUS_LOCK_WAIT_S:-1800}" >&2 || return 1
