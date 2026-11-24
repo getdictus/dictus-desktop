@@ -210,16 +210,8 @@ pub async fn send_chat_completion_with_schema(
         .await
         .map_err(|e| format!("HTTP request failed: {}", e))?;
 
-    let status = response.status();
-    if !status.is_success() {
-        let error_text = response
-            .text()
-            .await
-            .unwrap_or_else(|_| "Failed to read error response".to_string());
-        return Err(format!(
-            "API request failed with status {}: {}",
-            status, error_text
-        ));
+    if !response.status().is_success() {
+        return Err(http_error("API request", &provider.id, response).await);
     }
 
     let completion: ChatCompletionResponse = response
@@ -231,6 +223,57 @@ pub async fn send_chat_completion_with_schema(
         .choices
         .first()
         .and_then(|choice| choice.message.content.clone()))
+}
+
+/// The error for a non-2xx response, without the response body (#96).
+/// Providers echo the request in their error bodies, transcript included, so the
+/// body is logged only through `debug_user_text!`. The error keeps the status, the
+/// body size and the provider's error type and code when they are identifiers.
+async fn http_error(request: &str, provider_id: &str, response: reqwest::Response) -> String {
+    let status = response.status();
+    let body = response.text().await.unwrap_or_default();
+    crate::debug_user_text!(
+        "{} error body from provider '{}': {}",
+        request,
+        provider_id,
+        body
+    );
+    let mut error = format!(
+        "{} failed with status {} (provider '{}', {} bytes",
+        request,
+        status,
+        provider_id,
+        body.len()
+    );
+    let details = serde_json::from_str::<Value>(&body)
+        .ok()
+        .and_then(|json| json.get("error").cloned());
+    for field in ["type", "code"] {
+        if let Some(token) = details
+            .as_ref()
+            .and_then(|details| details.get(field))
+            .and_then(error_token)
+        {
+            error.push_str(&format!(", {} {}", field, token));
+        }
+    }
+    error.push(')');
+    error
+}
+
+/// A provider error type or code, kept only when it is an identifier, never prose.
+fn error_token(value: &Value) -> Option<String> {
+    let token = match value {
+        Value::String(s) => s.clone(),
+        Value::Number(n) => n.to_string(),
+        _ => return None,
+    };
+    let is_identifier = !token.is_empty()
+        && token.len() <= 64
+        && token
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | '-' | '.'));
+    is_identifier.then_some(token)
 }
 
 /// Fetch available models from an OpenAI-compatible API
@@ -252,16 +295,8 @@ pub async fn fetch_models(
         .await
         .map_err(|e| format!("Failed to fetch models: {}", e))?;
 
-    let status = response.status();
-    if !status.is_success() {
-        let error_text = response
-            .text()
-            .await
-            .unwrap_or_else(|_| "Unknown error".to_string());
-        return Err(format!(
-            "Model list request failed ({}): {}",
-            status, error_text
-        ));
+    if !response.status().is_success() {
+        return Err(http_error("Model list request", &provider.id, response).await);
     }
 
     let parsed: serde_json::Value = response
