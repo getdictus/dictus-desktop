@@ -7,6 +7,7 @@
   x.py scroll up|down [N] [--at X Y]    N wheel steps (default 3), over X,Y if given
   x.py type TEXT                   type ASCII text with the US keymap of Xvfb
   x.py key NAME[+NAME...]          e.g. Return, Tab, Escape, ctrl+a, shift+Tab
+  x.py resize W H                  resize the main window to WxH device pixels (no window manager on Xvfb)
 """
 import ctypes
 import os
@@ -48,6 +49,7 @@ x11.XKeycodeToKeysym.restype = ctypes.c_ulong
 x11.XKeycodeToKeysym.argtypes = [ctypes.c_void_p, ctypes.c_ubyte, ctypes.c_int]
 x11.XFlush.argtypes = [ctypes.c_void_p]
 x11.XSync.argtypes = [ctypes.c_void_p, ctypes.c_int]
+x11.XResizeWindow.argtypes = [ctypes.c_void_p, ctypes.c_ulong, ctypes.c_uint, ctypes.c_uint]
 for fn, args in {
     "XTestFakeMotionEvent": [ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_ulong],
     "XTestFakeButtonEvent": [ctypes.c_void_p, ctypes.c_uint, ctypes.c_int, ctypes.c_ulong],
@@ -168,6 +170,13 @@ def main(argv):
     elif cmd == "key":
         chord(rest[0].split("+"))
         print(f"key {rest[0]}")
+    elif cmd == "resize":
+        wid = main_window()[0]
+        x11.XResizeWindow(display(), int(wid, 16), int(rest[0]), int(rest[1]))
+        flush()
+        time.sleep(1)
+        wid, w, h, x, y = main_window()
+        print(f"resized {wid} {w}x{h}+{x}+{y}")
     else:
         sys.exit(__doc__)
 

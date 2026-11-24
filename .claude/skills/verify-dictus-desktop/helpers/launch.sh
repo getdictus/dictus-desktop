@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Tier 1: build the debug .deb under the shared lock, extract it, start it on a private Xvfb with a
-# private D-Bus and an empty HOME/XDG tree. Any failure runs cleanup.sh before exiting.
+# Tier 1: build the debug .deb (build.sh: the shared build lock for each compile only), then take the run
+# lock, extract the .deb, start it on a private Xvfb with a private D-Bus and an empty HOME/XDG tree.
+# The app phase never holds the shared build lock. Any failure runs cleanup.sh before exiting.
 #   launch.sh [--no-build] [--release] [--deb <file.deb>] [--model <id>] [--mic [--sink]] [label]
 #   --release     build (or with --no-build, reuse) the release .deb instead of the debug one
 #   --model <id>  put that catalogue model (from model-cache.sh) in the isolated data dir before the app starts
@@ -8,6 +9,7 @@
 #   --sink        with --mic, also a null sink for the app's playback (recording sounds), each playback
 #                 stream linked to it as it appears (mic.py autolink)
 #   DICTUS_APP_LANG=fr_FR.UTF-8 starts the app in another locale (default en_US.UTF-8)
+#   DICTUS_XVFB_SIZE=3840x2400 sets the Xvfb screen (default 1280x900); DICTUS_GDK_SCALE=2 renders the app at 2x
 # Last line on success: READY run=<dir> display=:<n> pid=<pid> window=<id> geometry=<WxH+X+Y>
 set -euo pipefail
 source "$(dirname "$0")/env.sh"
@@ -30,7 +32,7 @@ run="$(run_begin tier1 "$label" | tail -1)"
 trap 'rc=$?; if [ $rc -ne 0 ]; then echo "LAUNCH FAILED (exit $rc): cleaning up" >&2; report "$run" "LAUNCH FAILED exit=$rc"; bash "$DICTUS_HELPERS/cleanup.sh" "$run" >&2 || true; fi' EXIT
 
 if [ "$build" = 1 ]; then
-  echo "building under $DICTUS_LOCK, released when the build ends (log: $run/build.log)"
+  echo "building: $DICTUS_LOCK held around each compile command only (log: $run/build.log)"
   build_args=("$run/build.log")
   [ "$profile" = release ] && build_args=(--release "$run/build.log")
   out="$("$DICTUS_HELPERS/build.sh" "${build_args[@]}" | tail -1)"
@@ -104,7 +106,7 @@ if [ "$mic" = 1 ]; then
 fi
 
 n="$(free_display)" || die "no free display in :120-:199"
-setsid Xvfb ":$n" -screen 0 1280x900x24 -nolisten tcp < /dev/null > "$run/xvfb.log" 2>&1 &
+setsid Xvfb ":$n" -screen 0 "${DICTUS_XVFB_SIZE:-1280x900}x24" -nolisten tcp < /dev/null > "$run/xvfb.log" 2>&1 &
 ledger_set "$run" XVFB "$(pid_ref $!)"
 ledger_set "$run" DISPLAY ":$n"
 for _ in $(seq 50); do [ -S "/tmp/.X11-unix/X$n" ] && break; sleep 0.2; done
@@ -120,6 +122,7 @@ app_env=(env -i PATH="/usr/local/bin:/usr/bin:/bin" HOME="$home" USER="$USER" LA
   XDG_STATE_HOME="$home/.local/state" XDG_RUNTIME_DIR="$scratch/runtime" XDG_SESSION_TYPE=x11
   DISPLAY=":$n" GDK_BACKEND=x11 DBUS_SESSION_BUS_ADDRESS="$dbus_addr"
   WEBKIT_DISABLE_DMABUF_RENDERER=1)
+if [ -n "${DICTUS_GDK_SCALE:-}" ]; then app_env+=(GDK_SCALE="$DICTUS_GDK_SCALE" GDK_DPI_SCALE=1); fi
 printf '%s\n' "${app_env[@]:1}" | grep -v '^DBUS' > "$run/app.env"
 printf '%s\n' "${app_env[@]:1}" > "$scratch/app.env"
 launched="$(date +%s)"
