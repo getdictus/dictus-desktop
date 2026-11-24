@@ -60,6 +60,11 @@ mod tests {
         "stderr",
     ];
 
+    /// Variables that hold an HTTP response body. Providers echo the request in
+    /// their error bodies (#96), so these must not reach a log line or an error
+    /// string.
+    const BODY_VARS: &[&str] = &["body", "error_text"];
+
     /// A text variable is fine when only its size or emptiness is logged.
     const SIZE_SUFFIXES: &[&str] = &[".len()", ".chars().count()", ".is_empty()"];
 
@@ -143,8 +148,12 @@ mod tests {
     }
 
     fn logs_text(code: &str) -> Option<&'static str> {
+        formats_any(code, TEXT_VARS).or_else(|| formats_any(code, BODY_VARS))
+    }
+
+    fn formats_any(code: &str, vars: &[&'static str]) -> Option<&'static str> {
         let is_ident = |c: char| c.is_alphanumeric() || c == '_';
-        for var in TEXT_VARS {
+        for var in vars {
             for (at, _) in code.match_indices(var) {
                 let before = code[..at].chars().next_back();
                 let after = &code[at + var.len()..];
@@ -185,10 +194,21 @@ mod tests {
                     }
                 }
             }
+            for (at, _) in src.match_indices("format!(") {
+                if src[..at].ends_with('"') {
+                    continue;
+                }
+                let args = macro_args(&src, at + "format!".len());
+                if let Some(var) = formats_any(&formatted_code(args), BODY_VARS) {
+                    let line = src[..at].matches('\n').count() + 1;
+                    let rel = file.strip_prefix(&root).unwrap().display();
+                    leaks.push(format!("src/{rel}:{line} format! formats `{var}`"));
+                }
+            }
         }
         assert!(
             leaks.is_empty(),
-            "log macros that format user text; log its length, or use debug_user_text!:\n{}",
+            "log macros or error strings that format user text or a response body; log its length, or use debug_user_text!:\n{}",
             leaks.join("\n")
         );
     }
@@ -207,5 +227,10 @@ mod tests {
             None
         );
         assert_eq!(logs_text(&code(r#""{}", entry.text_len"#)), None);
+        assert_eq!(
+            logs_text(&code(r#""failed ({}): {}", status, error_text"#)),
+            Some("error_text")
+        );
+        assert_eq!(logs_text(&code(r#""{} bytes", body.len()"#)), None);
     }
 }
