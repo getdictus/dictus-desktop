@@ -1,6 +1,6 @@
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
 use crate::apple_intelligence;
-use crate::audio_feedback::{play_feedback_sound, play_feedback_sound_blocking, SoundType};
+use crate::audio_feedback::{play_feedback_sound, SoundType};
 use crate::audio_toolkit::{is_microphone_access_denied, is_no_input_device_error};
 use crate::managers::audio::AudioRecordingManager;
 use crate::managers::history::HistoryManager;
@@ -619,9 +619,10 @@ impl ShortcutAction for TranscribeAction {
         let binding_id = binding_id.to_string();
         change_tray_icon(app, TrayIconState::Recording);
         show_recording_overlay(app);
+        let overlay_shown = start_time.elapsed();
 
-        // The start sound plays at the press, with the overlay, on its own
-        // thread. The microphone opens at the same time; whatever it hears
+        // The start sound is queued with the overlay, on its own thread so the
+        // microphone opens at the same time. Whatever the microphone hears
         // until the sound has finished is discarded (`silence_input_for`), so
         // the sound never reaches the transcription.
         let settings = get_settings(app);
@@ -629,9 +630,16 @@ impl ShortcutAction for TranscribeAction {
             let app_clone = app.clone();
             let rm_clone = Arc::clone(&rm);
             std::thread::spawn(move || {
-                play_feedback_sound_blocking(&app_clone, SoundType::Start, |duration| {
-                    rm_clone.silence_input_for(duration + START_SOUND_OUTPUT_LATENCY)
-                });
+                if let Some(duration) = play_feedback_sound(&app_clone, SoundType::Start) {
+                    let queued = start_time.elapsed();
+                    rm_clone.silence_input_for(duration + START_SOUND_OUTPUT_LATENCY);
+                    debug!(
+                        "Start feedback after press: overlay shown {:.1} ms, sound queued {:.1} ms",
+                        overlay_shown.as_secs_f64() * 1000.0,
+                        queued.as_secs_f64() * 1000.0
+                    );
+                    std::thread::sleep(duration);
+                }
                 rm_clone.apply_mute();
             });
         }
@@ -825,19 +833,31 @@ fn spawn_transcription_task(
                             // then show a hint pill instead of a silent dismiss.
                             let post_process_failed = processed.post_process_failed;
                             ah.run_on_main_thread(move || {
-                                match utils::paste(final_text, ah_clone.clone()) {
+                                let pasted = match utils::paste(final_text, ah_clone.clone()) {
                                     Ok(()) => {
                                         debug!(
                                             "Text pasted successfully in {:?}",
                                             paste_time.elapsed()
                                         );
-                                        play_feedback_sound(&ah_clone, SoundType::End);
+                                        Some(Instant::now())
                                     }
                                     Err(e) => {
                                         error!("Failed to paste transcription: {}", e);
                                         let _ = ah_clone.emit("paste-error", ());
+                                        None
                                     }
-                                }
+                                };
+                                // The end sound and the overlay's exit go together:
+                                // queue the sound (it does not wait), then hide.
+                                let sound_queued = match pasted {
+                                    Some(at)
+                                        if play_feedback_sound(&ah_clone, SoundType::End)
+                                            .is_some() =>
+                                    {
+                                        Some(at.elapsed())
+                                    }
+                                    _ => None,
+                                };
                                 if post_process_failed {
                                     flash_error_overlay(
                                         &ah_clone,
@@ -845,6 +865,13 @@ fn spawn_transcription_task(
                                     );
                                 } else {
                                     utils::hide_recording_overlay(&ah_clone);
+                                }
+                                if let (Some(at), Some(queued)) = (pasted, sound_queued) {
+                                    debug!(
+                                        "End feedback after paste: sound queued {:.1} ms, overlay hidden {:.1} ms",
+                                        queued.as_secs_f64() * 1000.0,
+                                        at.elapsed().as_secs_f64() * 1000.0
+                                    );
                                 }
                                 change_tray_icon(&ah_clone, TrayIconState::Idle);
                             })

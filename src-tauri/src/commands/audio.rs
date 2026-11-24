@@ -255,6 +255,7 @@ pub fn set_selected_output_device(app: AppHandle, device_name: String) -> Result
         Some(device_name)
     };
     write_settings(&app, settings);
+    audio_feedback::sync_with_settings(&app);
     Ok(())
 }
 

@@ -528,6 +528,7 @@ pub fn change_audio_feedback_setting(app: AppHandle, enabled: bool) -> Result<()
     let mut settings = settings::get_settings(&app);
     settings.audio_feedback = enabled;
     settings::write_settings(&app, settings);
+    crate::audio_feedback::sync_with_settings(&app);
     Ok(())
 }
 
@@ -546,6 +547,7 @@ pub fn change_sound_theme_setting(app: AppHandle, theme: SoundTheme) -> Result<(
     let mut settings = settings::get_settings(&app);
     settings.sound_theme = theme;
     settings::write_settings(&app, settings);
+    crate::audio_feedback::sync_with_settings(&app);
     Ok(())
 }
 
