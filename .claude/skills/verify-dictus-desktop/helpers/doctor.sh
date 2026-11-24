@@ -22,15 +22,21 @@ corpora="$(find /tmp -maxdepth 1 -name 'verify-dictus-corpus.*' -user "$(id -u)"
 run="$(resolve_run "${1:-}" 2>/dev/null)" || run=""
 [ -n "$run" ] && [ -n "$(ledger_get "$run" CLEANED)" ] && run=""
 holder="$( [ -n "$run" ] && ledger_get "$run" LOCK_HOLDER)"
-lock="$(lock_describe)"
+lock="$(lock_describe "$DICTUS_RUN_LOCK")"
 if [ -n "$holder" ] && ref_alive "$holder"; then
-  ok "lock $DICTUS_LOCK held by this run (holder ${holder%%:*})"
+  ok "run lock $DICTUS_RUN_LOCK held by this run: $lock"
 elif [ -n "$run" ]; then
-  fail "lock $DICTUS_LOCK not held by this run: $lock"
+  fail "run lock $DICTUS_RUN_LOCK not held by this run: $lock"
 elif [ "$lock" = free ]; then
-  ok "lock $DICTUS_LOCK free"
+  ok "run lock $DICTUS_RUN_LOCK free"
 else
-  warn "lock $DICTUS_LOCK $lock (launch.sh will wait for it)"
+  warn "run lock $DICTUS_RUN_LOCK $lock (launch.sh and vm.sh start will wait for it)"
+fi
+build_lock="$(lock_describe "$DICTUS_LOCK")"
+if [ "$build_lock" = free ]; then
+  ok "build lock $DICTUS_LOCK free"
+else
+  warn "build lock $DICTUS_LOCK $build_lock (a build waits for it; the app phase does not)"
 fi
 
 used="$(ls /tmp/.X*-lock 2>/dev/null | sed 's|/tmp/.X\(.*\)-lock|:\1|' | paste -sd' ')"

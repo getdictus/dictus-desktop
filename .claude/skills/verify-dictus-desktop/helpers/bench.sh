@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Dictation benchmark on tier 1: for each model, a fresh launch with only that model on disk (the app
-# auto-selects it), then journey-dictation.sh --reps N, then cleanup.sh, which releases the lock before
+# auto-selects it), then journey-dictation.sh --reps N, then cleanup.sh, which releases the run lock before
 # the next model. Collects WER, stop → text, transcription time, the cold model load and the first
 # dictation after launch into a bench dir next to the runs.
 #   bench.sh [--models a,b] [--clips all-fr|all-en|<clip-id>] [--reps N] [--deb f | --debug]
