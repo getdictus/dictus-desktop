@@ -8,6 +8,7 @@ Each pack is a folder with `start.wav` (played when recording starts) and `end.w
 - Licence: commercial use permitted by the account's plan, confirmed by the maintainer on 2026-11-19.
 - Common parameters: `prompt_influence=0.7`, `loop=false`, `output_format=mp3_44100_192`. Three requests per prompt (v1, v2, v3); the maintainer listened to all of them and picked one per sound.
 - Post-processing (ffmpeg): leading silence trimmed (threshold -50 dB), cut to the target length, 80 ms linear fade-out, peak normalised to -14 dBFS, WAV 16-bit 48 kHz stereo.
+- Second pass on 2026-11-24, `scripts/feedback-sounds.py process` on the files above (commit `880a552`). The trim had cut into the attack of Bois and Synthé, which started at about 0.2 in their first millisecond: a click, heard as crackle on laptop speakers. Per file: 2-pole high-pass at 130 Hz, 6 ms raised-cosine fade-in, then one gain. Bois and Synthé are matched at -28.1 LUFS (BS.1770, ungated, over the whole sound); Minimal cannot reach it within the peak limit, so its two files share -37.3 LUFS. Peaks at or under -16 dBFS. Length, sample rate and pitch unchanged. `scripts/feedback-sounds.py measure` gives the numbers.
 
 | File                | Variant          | Requested `duration_seconds` | Cut to |
 | ------------------- | ---------------- | ---------------------------- | ------ |
