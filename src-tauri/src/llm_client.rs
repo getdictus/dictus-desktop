@@ -75,16 +75,18 @@ struct ChatMessageResponse {
     content: Option<String>,
 }
 
+const DICTUS_URL: &str = "https://getdictus.com";
+
 /// Build headers for API requests based on provider type
 fn build_headers(provider: &PostProcessProvider, api_key: &str) -> Result<HeaderMap, String> {
     let mut headers = HeaderMap::new();
 
     // Common headers
     headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
-    headers.insert(
-        REFERER,
-        HeaderValue::from_static("https://github.com/cjpais/Handy"),
-    );
+    // OpenRouter attributes usage to the app named by `HTTP-Referer`, not the
+    // standard `Referer`, and shows `X-Title` as its display name.
+    headers.insert(REFERER, HeaderValue::from_static(DICTUS_URL));
+    headers.insert("HTTP-Referer", HeaderValue::from_static(DICTUS_URL));
     headers.insert(
         USER_AGENT,
         HeaderValue::from_static("Dictus/1.0 (+https://github.com/getdictus/dictus-desktop)"),
@@ -372,7 +374,7 @@ mod tests {
     use super::*;
     use std::io::{BufRead, BufReader, Read, Write};
     use std::net::TcpListener;
-    use std::sync::Mutex;
+    use std::sync::{mpsc, Mutex};
 
     const DICTATED: &str = "meet Camille at the pharmacy at nine";
 
@@ -409,12 +411,22 @@ mod tests {
     /// A provider that answers one request with `status` and a body built from
     /// the request body, the way validation and content-filter errors echo it.
     fn mock_provider(status: &'static str, reply: fn(&str) -> String) -> PostProcessProvider {
+        mock_server(status, reply).0
+    }
+
+    /// Like `mock_provider`, and also hands back the request's header lines.
+    fn mock_server(
+        status: &'static str,
+        reply: fn(&str) -> String,
+    ) -> (PostProcessProvider, mpsc::Receiver<Vec<String>>) {
         let listener = TcpListener::bind("127.0.0.1:0").unwrap();
         let port = listener.local_addr().unwrap().port();
+        let (headers_tx, headers_rx) = mpsc::channel();
         std::thread::spawn(move || {
             let (mut stream, _) = listener.accept().unwrap();
             let mut reader = BufReader::new(stream.try_clone().unwrap());
             let mut length = 0;
+            let mut headers = Vec::new();
             loop {
                 let mut line = String::new();
                 reader.read_line(&mut line).unwrap();
@@ -424,7 +436,9 @@ mod tests {
                 if let Some(value) = line.to_ascii_lowercase().strip_prefix("content-length:") {
                     length = value.trim().parse().unwrap();
                 }
+                headers.push(line.trim_end().to_string());
             }
+            let _ = headers_tx.send(headers);
             let mut request = vec![0; length];
             reader.read_exact(&mut request).unwrap();
             let body = reply(&String::from_utf8(request).unwrap());
@@ -435,14 +449,15 @@ mod tests {
             )
             .unwrap();
         });
-        PostProcessProvider {
+        let provider = PostProcessProvider {
             id: "mock".to_string(),
             label: "Mock".to_string(),
             base_url: format!("http://127.0.0.1:{port}/v1"),
             allow_base_url_edit: true,
             models_endpoint: None,
             supports_structured_output: true,
-        }
+        };
+        (provider, headers_rx)
     }
 
     fn openai_echo(request: &str) -> String {
@@ -561,6 +576,61 @@ mod tests {
         assert!(
             lines.iter().all(|(level, _)| *level == log::Level::Debug),
             "{lines:?}"
+        );
+    }
+
+    fn ok_reply(_: &str) -> String {
+        serde_json::json!({ "choices": [{ "message": { "content": "ok" } }] }).to_string()
+    }
+
+    fn header<'a>(headers: &'a [String], name: &str) -> Option<&'a str> {
+        headers.iter().find_map(|line| {
+            let (key, value) = line.split_once(':')?;
+            key.eq_ignore_ascii_case(name).then(|| value.trim())
+        })
+    }
+
+    #[test]
+    fn attribution_headers_name_dictus() {
+        let headers = build_headers(&PostProcessProvider::default(), "").unwrap();
+        for name in ["referer", "http-referer"] {
+            assert_eq!(headers[name], "https://getdictus.com", "{name}");
+        }
+        assert_eq!(headers["x-title"], "Dictus");
+    }
+
+    #[test]
+    fn provider_receives_dictus_attribution() {
+        let (provider, headers) = mock_server("200 OK", ok_reply);
+        let reply = tauri::async_runtime::block_on(send_chat_completion(
+            &provider,
+            "key".to_string(),
+            "m",
+            "hello".to_string(),
+            None,
+            None,
+        ));
+        assert_eq!(reply, Ok(Some("ok".to_string())));
+
+        let headers = headers.recv().unwrap();
+        println!("headers received by the mock provider:");
+        for line in headers
+            .iter()
+            .filter(|line| !line.starts_with("authorization"))
+        {
+            println!("  {line}");
+        }
+        assert_eq!(header(&headers, "referer"), Some("https://getdictus.com"));
+        assert_eq!(
+            header(&headers, "http-referer"),
+            Some("https://getdictus.com")
+        );
+        assert_eq!(header(&headers, "x-title"), Some("Dictus"));
+        assert!(
+            !headers
+                .iter()
+                .any(|line| line.to_ascii_lowercase().contains("handy")),
+            "{headers:?}"
         );
     }
 }
