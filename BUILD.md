@@ -27,24 +27,25 @@ This guide covers how to set up the development environment and build Dictus Des
 
 - Build essentials
 - ALSA development libraries
+- libevdev (global shortcuts) and OpenBLAS, both installed by CI too
 - Install with:
 
   ```bash
   # Ubuntu/Debian
   sudo apt update
-  sudo apt install build-essential libasound2-dev pkg-config libssl-dev libvulkan-dev vulkan-tools glslc libgtk-3-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libgtk-layer-shell0 libgtk-layer-shell-dev patchelf cmake
+  sudo apt install build-essential libasound2-dev pkg-config libssl-dev libvulkan-dev vulkan-tools glslc libgtk-3-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libgtk-layer-shell0 libgtk-layer-shell-dev patchelf cmake libevdev-dev libopenblas-dev
 
   # Fedora/RHEL
   sudo dnf groupinstall "Development Tools"
   sudo dnf install alsa-lib-devel pkgconf openssl-devel vulkan-devel \
     gtk3-devel webkit2gtk4.1-devel libappindicator-gtk3-devel librsvg2-devel \
     gtk-layer-shell gtk-layer-shell-devel \
-    cmake
+    cmake libevdev-devel openblas-devel
 
   # Arch Linux
   sudo pacman -S base-devel alsa-lib pkgconf openssl vulkan-devel \
     gtk3 webkit2gtk-4.1 libappindicator-gtk3 librsvg gtk-layer-shell \
-    cmake
+    cmake libevdev openblas
   ```
 
 ## Setup Instructions
@@ -69,6 +70,19 @@ bun tauri dev
 ```
 
 Dev builds (`bun tauri dev`, `bun tauri build --debug`) run as **Dictus Dev** (`com.dictus.desktop.dev`), separate from an installed Dictus. See [Dev identity](#dev-identity).
+
+On Linux, `bun run tauri dev` currently panics at startup when built with cargo 1.100 or newer (tray icon not found, see [#111](https://github.com/getdictus/dictus-desktop/issues/111)). Run a debug build from its `.deb` instead:
+
+```bash
+bun run tauri build --debug --bundles deb
+# run it without installing
+dpkg-deb -x src-tauri/target/debug/bundle/deb/Dictus\ Dev_*_amd64.deb /tmp/dictus-dev
+/tmp/dictus-dev/usr/bin/dictus
+# or install it
+sudo apt install ./src-tauri/target/debug/bundle/deb/Dictus\ Dev_*_amd64.deb
+```
+
+Do not start `src-tauri/target/debug/dictus` directly: its resources (tray icons, sounds, VAD model) are not next to the binary, and it panics in `lib.rs` when it loads the tray icon.
 
 ### 4. Build for Production
 
