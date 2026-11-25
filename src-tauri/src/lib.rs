@@ -164,6 +164,26 @@ fn try_show_main_window(app: &AppHandle) -> bool {
     false
 }
 
+/// On Wayland, tao 0.34 (Tauri 2.10) puts its header bar inside an `EventBox`
+/// whose input window covers the minimize, maximize and close buttons. Once the
+/// window has been hidden (it starts hidden and hides to the tray on close), every
+/// click lands on that box and the buttons never react (#69, tauri-apps/tauri#11856).
+/// Let the buttons take their own clicks. tao 0.36 drops the box; remove this with
+/// the Tauri upgrade. On X11 there is no such title bar and this does nothing.
+#[cfg(target_os = "linux")]
+fn let_title_bar_buttons_take_clicks(window: &tauri::WebviewWindow) {
+    use gtk::prelude::*;
+    let Ok(gtk_window) = window.gtk_window() else {
+        return;
+    };
+    if let Some(event_box) = gtk_window
+        .titlebar()
+        .and_then(|title_bar| title_bar.downcast::<gtk::EventBox>().ok())
+    {
+        event_box.set_above_child(false);
+    }
+}
+
 /// No-focus mode for the dev identity, see `app_identity::no_focus_mode`.
 fn dev_no_focus(app: &AppHandle) -> bool {
     app_identity::no_focus_mode(
@@ -697,7 +717,10 @@ pub fn run(cli_args: CliArgs) {
                 win_builder = win_builder.data_directory(data_dir.join("webview"));
             }
 
-            win_builder.build()?;
+            #[cfg_attr(not(target_os = "linux"), allow(unused_variables))]
+            let main_window = win_builder.build()?;
+            #[cfg(target_os = "linux")]
+            let_title_bar_buttons_take_clicks(&main_window);
 
             let mut settings = get_settings(app.handle());
 
