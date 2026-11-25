@@ -1,7 +1,9 @@
 use crate::settings::PostProcessProvider;
 use log::debug;
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_TYPE, REFERER, USER_AGENT};
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
+use serde_json::error::Category;
 use serde_json::Value;
 
 #[derive(Debug, Serialize)]
@@ -216,10 +218,8 @@ pub async fn send_chat_completion_with_schema(
         return Err(http_error("API request", &provider.id, response).await);
     }
 
-    let completion: ChatCompletionResponse = response
-        .json()
-        .await
-        .map_err(|e| format!("Failed to parse API response: {}", e))?;
+    let completion: ChatCompletionResponse =
+        parse_body("API response", &provider.id, response).await?;
 
     Ok(completion
         .choices
@@ -263,6 +263,48 @@ async fn http_error(request: &str, provider_id: &str, response: reqwest::Respons
     error
 }
 
+/// Parse a 2xx response body, keeping the body out of the error (#105).
+/// serde_json's message can quote a value from the body (`invalid type: string
+/// "…"`) and a chat completion carries the dictated text, so the error keeps the
+/// status, the body size and the parse error's category and position. The full
+/// message is logged only through `debug_user_text!`.
+async fn parse_body<T: DeserializeOwned>(
+    response_name: &str,
+    provider_id: &str,
+    response: reqwest::Response,
+) -> Result<T, String> {
+    let status = response.status();
+    let body = response
+        .text()
+        .await
+        .map_err(|e| format!("Failed to read {}: {}", response_name, e))?;
+    serde_json::from_str(&body).map_err(|e| {
+        crate::debug_user_text!(
+            "{} from provider '{}' does not parse: {}. Body: {}",
+            response_name,
+            provider_id,
+            e,
+            body
+        );
+        let category = match e.classify() {
+            Category::Io => "I/O",
+            Category::Syntax => "syntax",
+            Category::Data => "data",
+            Category::Eof => "end of input",
+        };
+        format!(
+            "Failed to parse {} with status {} (provider '{}', {} bytes, {} error at line {} column {})",
+            response_name,
+            status,
+            provider_id,
+            body.len(),
+            category,
+            e.line(),
+            e.column()
+        )
+    })
+}
+
 /// A provider error type or code, kept only when it is an identifier, never prose.
 fn error_token(value: &Value) -> Option<String> {
     let token = match value {
@@ -301,10 +343,7 @@ pub async fn fetch_models(
         return Err(http_error("Model list request", &provider.id, response).await);
     }
 
-    let parsed: serde_json::Value = response
-        .json()
-        .await
-        .map_err(|e| format!("Failed to parse response: {}", e))?;
+    let parsed: Value = parse_body("Model list response", &provider.id, response).await?;
 
     let mut models = Vec::new();
 
@@ -355,6 +394,9 @@ mod tests {
     }
 
     static CAPTURE: Capture = Capture(Mutex::new(Vec::new()));
+
+    /// The tests share the logger and the "Log transcripts" switch.
+    static SERIAL: Mutex<()> = Mutex::new(());
 
     fn lines_with_dictated_text() -> Vec<(log::Level, String)> {
         CAPTURE
@@ -438,6 +480,12 @@ mod tests {
         format!("rejected: {request} {DICTATED}")
     }
 
+    /// A 2xx chat completion whose `message` is a bare string instead of an
+    /// object, so serde's type error quotes the dictated text.
+    fn wrong_type_echo(_: &str) -> String {
+        serde_json::json!({ "choices": [{ "message": DICTATED }] }).to_string()
+    }
+
     fn chat(provider: PostProcessProvider) -> String {
         tauri::async_runtime::block_on(send_chat_completion_with_schema(ChatCompletionParams {
             provider,
@@ -452,6 +500,7 @@ mod tests {
 
     #[test]
     fn http_error_bodies_stay_out_of_errors_and_logs() {
+        let _serial = SERIAL.lock().unwrap_or_else(|e| e.into_inner());
         let _ = log::set_logger(&CAPTURE);
         log::set_max_level(log::LevelFilter::Trace);
 
@@ -491,6 +540,38 @@ mod tests {
         assert!(
             !lines.is_empty(),
             "Log transcripts on: body logged at Debug"
+        );
+        assert!(
+            lines.iter().all(|(level, _)| *level == log::Level::Debug),
+            "{lines:?}"
+        );
+    }
+
+    #[test]
+    fn unparseable_2xx_bodies_stay_out_of_errors_and_logs() {
+        let _serial = SERIAL.lock().unwrap_or_else(|e| e.into_inner());
+        let _ = log::set_logger(&CAPTURE);
+        log::set_max_level(log::LevelFilter::Trace);
+
+        crate::logging::set_log_transcripts(false);
+        let err = chat(mock_provider("200 OK", wrong_type_echo));
+        assert!(
+            !err.contains(DICTATED),
+            "parse error carries the body: {err}"
+        );
+        assert!(err.contains("200"), "{err}");
+        assert!(err.contains("'mock'"), "{err}");
+        assert!(err.contains("bytes"), "{err}");
+        assert!(err.contains("data error at line 1 column"), "{err}");
+        assert_eq!(lines_with_dictated_text(), vec![]);
+
+        crate::logging::set_log_transcripts(true);
+        chat(mock_provider("200 OK", wrong_type_echo));
+        crate::logging::set_log_transcripts(false);
+        let lines = lines_with_dictated_text();
+        assert!(
+            !lines.is_empty(),
+            "Log transcripts on: parse error logged at Debug"
         );
         assert!(
             lines.iter().all(|(level, _)| *level == log::Level::Debug),
