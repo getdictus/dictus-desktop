@@ -141,6 +141,8 @@ transcribe-rs = { version = "0.3.3", features = ["whisper-metal"] }
 llama-cpp-2 = { version = "0.1.146", features = ["metal"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
+# The X11 primary selection for Shift+Insert paste (already in the tree via the clipboard plugin).
+arboard = { version = "3.6.1", default-features = false }
 gtk-layer-shell = { version = "0.8", features = ["v0_6"] }
 gtk = "0.18"
 transcribe-rs = { version = "0.3.3", features = ["whisper-vulkan"] }
