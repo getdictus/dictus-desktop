@@ -8,7 +8,68 @@ fn main() {
     // point at the staged DLLs.
     stage_vc_runtime();
 
-    tauri_build::build()
+    tauri_build::build();
+
+    copy_resources_for_new_build_dir_layout();
+}
+
+/// Put the bundle resources where `tauri dev` looks for them with cargo's new
+/// build-dir layout (cargo >= 1.100, #111).
+///
+/// tauri-build 2.5.5 takes the target dir as three parents up from `OUT_DIR`.
+/// That is `target/debug` with the old layout (`build/<pkg>-<hash>/out`) but
+/// `target/debug/build` with the new one (`build/<pkg>/<hash>/out`), so the
+/// resources land in `target/debug/build/resources/` while the dev binary
+/// resolves them from `target/debug/resources/` (tray icon panic, missing VAD
+/// model and sounds). Copy them to the real target dir, found the way
+/// tauri-build >= 2.7 does it (tauri-apps/tauri#15831). A no-op with the old
+/// layout. Release bundles take resources from the source tree, not from here.
+///
+/// Remove once tauri-build is >= 2.7, which needs a tauri / tauri-utils bump
+/// (the pinned cjpais fork provides tauri-utils 2.8.2, tauri-build 2.7 needs ~2.10).
+fn copy_resources_for_new_build_dir_layout() {
+    use std::ffi::OsStr;
+    use std::path::{Path, PathBuf};
+
+    let out_dir = PathBuf::from(std::env::var("OUT_DIR").expect("OUT_DIR not set"));
+    let Some(tauri_build_dir) = out_dir.ancestors().nth(3) else {
+        return;
+    };
+    let Some(target_dir) = out_dir
+        .ancestors()
+        .find(|p| p.file_name() == Some(OsStr::new("build")))
+        .and_then(Path::parent)
+    else {
+        return;
+    };
+    if tauri_build_dir == target_dir {
+        return;
+    }
+
+    let from = tauri_build_dir.join("resources");
+    if from.is_dir() {
+        copy_dir_all(&from, &target_dir.join("resources")).unwrap_or_else(|e| {
+            panic!(
+                "failed to copy {} to {}: {e}",
+                from.display(),
+                target_dir.display()
+            )
+        });
+    }
+}
+
+fn copy_dir_all(from: &std::path::Path, to: &std::path::Path) -> std::io::Result<()> {
+    std::fs::create_dir_all(to)?;
+    for entry in std::fs::read_dir(from)? {
+        let entry = entry?;
+        let dest = to.join(entry.file_name());
+        if entry.file_type()?.is_dir() {
+            copy_dir_all(&entry.path(), &dest)?;
+        } else {
+            std::fs::copy(entry.path(), dest)?;
+        }
+    }
+    Ok(())
 }
 
 /// Generate tray menu translations from frontend locale files.

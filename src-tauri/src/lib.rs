@@ -42,7 +42,6 @@ use signal_hook::consts::{SIGUSR1, SIGUSR2};
 use signal_hook::iterator::Signals;
 use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::Arc;
-use tauri::image::Image;
 pub use transcription_coordinator::{TranscriptionActivity, TranscriptionCoordinator};
 
 use tauri::tray::TrayIconBuilder;
@@ -335,16 +334,20 @@ fn initialize_core_logic(app_handle: &AppHandle) {
     // Choose the appropriate initial icon based on theme
     let initial_icon_path = tray::get_icon_path(initial_theme, tray::TrayIconState::Idle);
 
-    let tray = TrayIconBuilder::new()
-        .icon(
-            Image::from_path(
-                app_handle
-                    .path()
-                    .resolve(initial_icon_path, tauri::path::BaseDirectory::Resource)
-                    .unwrap(),
-            )
-            .unwrap(),
-        )
+    // A missing tray icon file must not panic (#111): fall back to the app
+    // icon embedded in the binary, or no icon at all.
+    let tray_icon = tray::load_tray_icon(app_handle, initial_icon_path).or_else(|| {
+        log::warn!("Using the embedded app icon for the tray instead");
+        app_handle
+            .default_window_icon()
+            .map(|icon| icon.clone().to_owned())
+    });
+    let mut tray_builder = TrayIconBuilder::new();
+    if let Some(icon) = tray_icon {
+        tray_builder = tray_builder.icon(icon);
+    }
+
+    let tray = tray_builder
         .tooltip(tray::tray_tooltip(app_handle))
         .show_menu_on_left_click(true)
         .icon_as_template(true)
