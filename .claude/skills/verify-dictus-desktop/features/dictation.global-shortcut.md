@@ -17,6 +17,7 @@ The desktop's way to dictate: a global shortcut (default Ctrl+Space on Linux and
 - `dictation.paste` _(desktop-only)_: « Paste Method », « Typing Tool » (shown for Direct only), « Clipboard Handling », « Auto Submit » in Advanced → Output. A new install pastes with « Clipboard (Shift+Insert) » on X11 (#95), with « Direct » on Wayland, with Ctrl+V/Cmd+V on Windows and macOS; a stored method is never changed. — present
 - `dictation.cli` _(desktop-only)_: `--toggle-transcription`, `--toggle-post-process`, `--cancel` on a running instance. — present
 - `dictation.transcribe` _(desktop-only)_: the recording goes through VAD and the active model, the text lands in History. — present
+- `dictation.empty-capture` _(desktop-only)_: a recording that keeps no audio tells why (#8). Only silence from the microphone (peak under -80 dBFS): toast « No audio captured ». Sound but no speech for 1 s or more: toast « No speech detected ». A tap stays silent. The log line `sample count: N` carries `raw_chunks`, `raw_ms`, `peak`, `rms`, `speech_frames`, `noise_frames`, and an empty recording logs a WARN with them. The toast is the main window's: with the window closed only the log shows it. — present
 
 ## How to get to it (user POV)
 
@@ -65,4 +66,5 @@ Preconditions: `READY`, then `journey-onboarding.sh` → `PASS` (a model is need
 - Never send the shortcut to a display other than the run's: on Pierre's desktop it would start his real Dictus.
 - Paste needs a target window under the pointer: `journey-paste.sh` opens an xterm and a zenity entry on the run's display. The Dictus window itself has no focused field.
 - In the private PipeWire a second capture stream stays in `AudioRecorder::open` until `mic.py link` connects it (no session manager). `journey-paste.sh` links the next recording too; without that, `Recording started` never comes.
+- Silence on tier 1: start a recording with `--mic` and play nothing; the private PipeWire source outputs zeros (« No audio captured »). On tier 2 the VM's line-in is QEMU's SPICE audio, which delivers zeros while no SPICE client sends audio; the endpoint mute and level are not applied by the emulated HDA (#8 diagnostic).
 - Pipe `xclip -i` to `/dev/null`: it forks a server that keeps the caller's stdout open until the display dies.

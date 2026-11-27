@@ -1,7 +1,9 @@
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
 use crate::apple_intelligence;
 use crate::audio_feedback::{play_feedback_sound, play_feedback_sound_blocking, SoundType};
-use crate::audio_toolkit::{is_microphone_access_denied, is_no_input_device_error};
+use crate::audio_toolkit::{
+    is_microphone_access_denied, is_no_input_device_error, CapturedAudio, EmptyCapture,
+};
 use crate::managers::audio::AudioRecordingManager;
 use crate::managers::history::HistoryManager;
 use crate::managers::transcription::TranscriptionManager;
@@ -742,6 +744,16 @@ impl ShortcutAction for TranscribeAction {
     }
 }
 
+/// The `recording-error` type to report for a recording that kept no
+/// samples. `None` for an accidental tap.
+fn empty_recording_notice(cause: EmptyCapture) -> Option<&'static str> {
+    match cause {
+        EmptyCapture::Silence => Some("no_audio_captured"),
+        EmptyCapture::NoSpeech => Some("no_speech_detected"),
+        EmptyCapture::NoBuffers | EmptyCapture::TooShort => None,
+    }
+}
+
 /// Shared async transcription pipeline spawned by both `TranscribeAction::stop`
 /// and `SmartModeAction::stop`.
 ///
@@ -779,15 +791,33 @@ fn spawn_transcription_task(
         );
 
         let stop_recording_time = Instant::now();
-        if let Some(samples) = rm.stop_recording(&binding_id) {
+        if let Some(CapturedAudio { samples, stats }) = rm.stop_recording(&binding_id) {
             debug!(
-                "Recording stopped and samples retrieved in {:?}, sample count: {}",
+                "Recording stopped and samples retrieved in {:?}, sample count: {}, {}",
                 stop_recording_time.elapsed(),
-                samples.len()
+                samples.len(),
+                stats
             );
 
             if samples.is_empty() {
-                debug!("Recording produced no audio samples; skipping persistence");
+                let cause = stats.empty_cause();
+                match empty_recording_notice(cause) {
+                    Some(error_type) => {
+                        warn!("Recording produced no audio samples ({cause:?}: {stats}); skipping persistence");
+                        let _ = ah.emit(
+                            "recording-error",
+                            RecordingErrorEvent {
+                                error_type: error_type.to_string(),
+                                detail: None,
+                            },
+                        );
+                    }
+                    None => {
+                        debug!(
+                            "Recording produced no audio samples ({cause:?}); skipping persistence"
+                        )
+                    }
+                }
                 utils::hide_recording_overlay(&ah);
                 change_tray_icon(&ah, TrayIconState::Idle);
             } else {
@@ -1169,5 +1199,27 @@ mod actions_tests {
             prompt.contains("${output}"),
             "Prompt must contain the ${{output}} placeholder for the legacy path"
         );
+    }
+
+    #[test]
+    fn silent_recording_tells_the_user_no_audio_was_captured() {
+        assert_eq!(
+            empty_recording_notice(EmptyCapture::Silence),
+            Some("no_audio_captured")
+        );
+    }
+
+    #[test]
+    fn recording_without_speech_says_so() {
+        assert_eq!(
+            empty_recording_notice(EmptyCapture::NoSpeech),
+            Some("no_speech_detected")
+        );
+    }
+
+    #[test]
+    fn accidental_taps_stay_silent() {
+        assert_eq!(empty_recording_notice(EmptyCapture::NoBuffers), None);
+        assert_eq!(empty_recording_notice(EmptyCapture::TooShort), None);
     }
 }

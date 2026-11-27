@@ -21,8 +21,109 @@ use crate::audio_toolkit::{
 
 enum Cmd {
     Start,
-    Stop(mpsc::Sender<Vec<f32>>),
+    Stop(mpsc::Sender<CapturedAudio>),
     Shutdown,
+}
+
+/// Below this peak (about -80 dBFS) a capture is digital silence, as a muted
+/// or disconnected input delivers.
+const SILENCE_PEAK: f32 = 1.0e-4;
+
+/// Recordings shorter than this that held no speech are treated as accidental taps.
+const MIN_NO_SPEECH_MS: u64 = 1000;
+
+/// What the input stream delivered between Start and Stop, before and after the VAD.
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub struct CaptureStats {
+    sample_rate: u32,
+    raw_chunks: u64,
+    raw_samples: u64,
+    peak: f32,
+    sum_squares: f64,
+    speech_frames: u64,
+    noise_frames: u64,
+}
+
+/// Why a recording kept no samples.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EmptyCapture {
+    /// Stopped before the device delivered a buffer: an instant tap.
+    NoBuffers,
+    /// The device delivered buffers of (near) zeros: muted or blocked microphone.
+    Silence,
+    /// The device delivered sound, but the VAD found no speech in it.
+    NoSpeech,
+    /// Under [`MIN_NO_SPEECH_MS`] with no speech: an accidental tap.
+    TooShort,
+}
+
+impl CaptureStats {
+    fn new(sample_rate: u32) -> Self {
+        Self {
+            sample_rate,
+            ..Self::default()
+        }
+    }
+
+    fn add_raw(&mut self, raw: &[f32]) {
+        self.raw_chunks += 1;
+        self.raw_samples += raw.len() as u64;
+        for &s in raw {
+            self.peak = self.peak.max(s.abs());
+            self.sum_squares += f64::from(s) * f64::from(s);
+        }
+    }
+
+    pub fn rms(&self) -> f32 {
+        if self.raw_samples == 0 {
+            0.0
+        } else {
+            (self.sum_squares / self.raw_samples as f64).sqrt() as f32
+        }
+    }
+
+    pub fn duration_ms(&self) -> u64 {
+        if self.sample_rate == 0 {
+            0
+        } else {
+            self.raw_samples * 1000 / u64::from(self.sample_rate)
+        }
+    }
+
+    /// Classifies a recording that kept no samples.
+    pub fn empty_cause(&self) -> EmptyCapture {
+        if self.raw_samples == 0 {
+            EmptyCapture::NoBuffers
+        } else if self.peak < SILENCE_PEAK {
+            EmptyCapture::Silence
+        } else if self.duration_ms() < MIN_NO_SPEECH_MS {
+            EmptyCapture::TooShort
+        } else {
+            EmptyCapture::NoSpeech
+        }
+    }
+}
+
+impl std::fmt::Display for CaptureStats {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "raw_chunks={} raw_ms={} peak={:.6} rms={:.6} speech_frames={} noise_frames={}",
+            self.raw_chunks,
+            self.duration_ms(),
+            self.peak,
+            self.rms(),
+            self.speech_frames,
+            self.noise_frames
+        )
+    }
+}
+
+/// The samples a recording kept after the VAD, and what the device delivered.
+#[derive(Default)]
+pub struct CapturedAudio {
+    pub samples: Vec<f32>,
+    pub stats: CaptureStats,
 }
 
 enum AudioChunk {
@@ -201,7 +302,7 @@ impl AudioRecorder {
         Ok(())
     }
 
-    pub fn stop(&self) -> Result<Vec<f32>, Box<dyn std::error::Error>> {
+    pub fn stop(&self) -> Result<CapturedAudio, Box<dyn std::error::Error>> {
         let (resp_tx, resp_rx) = mpsc::channel();
         if let Some(tx) = &self.cmd_tx {
             tx.send(Cmd::Stop(resp_tx))?;
@@ -363,6 +464,7 @@ fn run_consumer(
     );
 
     let mut processed_samples = Vec::<f32>::new();
+    let mut stats = CaptureStats::new(in_sample_rate);
     let mut recording = false;
 
     // ---------- spectrum visualisation setup ---------------------------- //
@@ -381,6 +483,7 @@ fn run_consumer(
         recording: bool,
         vad: &Option<Arc<Mutex<Box<dyn vad::VoiceActivityDetector>>>>,
         out_buf: &mut Vec<f32>,
+        stats: &mut CaptureStats,
     ) {
         if !recording {
             return;
@@ -389,10 +492,14 @@ fn run_consumer(
         if let Some(vad_arc) = vad {
             let mut det = vad_arc.lock().unwrap();
             match det.push_frame(samples).unwrap_or(VadFrame::Speech(samples)) {
-                VadFrame::Speech(buf) => out_buf.extend_from_slice(buf),
-                VadFrame::Noise => {}
+                VadFrame::Speech(buf) => {
+                    stats.speech_frames += 1;
+                    out_buf.extend_from_slice(buf)
+                }
+                VadFrame::Noise => stats.noise_frames += 1,
             }
         } else {
+            stats.speech_frames += 1;
             out_buf.extend_from_slice(samples);
         }
     }
@@ -411,8 +518,11 @@ fn run_consumer(
         }
 
         // ---------- existing pipeline ------------------------------------ //
+        if recording {
+            stats.add_raw(&raw);
+        }
         frame_resampler.push(&raw, &mut |frame: &[f32]| {
-            handle_frame(frame, recording, &vad, &mut processed_samples)
+            handle_frame(frame, recording, &vad, &mut processed_samples, &mut stats)
         });
 
         // non-blocking check for a command
@@ -421,6 +531,7 @@ fn run_consumer(
                 Cmd::Start => {
                     stop_flag.store(false, Ordering::Relaxed);
                     processed_samples.clear();
+                    stats = CaptureStats::new(in_sample_rate);
                     recording = true;
                     visualizer.reset();
                     if let Some(v) = &vad {
@@ -438,8 +549,15 @@ fn run_consumer(
                     loop {
                         match sample_rx.recv_timeout(Duration::from_secs(2)) {
                             Ok(AudioChunk::Samples(remaining)) => {
+                                stats.add_raw(&remaining);
                                 frame_resampler.push(&remaining, &mut |frame: &[f32]| {
-                                    handle_frame(frame, true, &vad, &mut processed_samples)
+                                    handle_frame(
+                                        frame,
+                                        true,
+                                        &vad,
+                                        &mut processed_samples,
+                                        &mut stats,
+                                    )
                                 });
                             }
                             Ok(AudioChunk::EndOfStream) => break,
@@ -451,10 +569,13 @@ fn run_consumer(
                     }
 
                     frame_resampler.finish(&mut |frame: &[f32]| {
-                        handle_frame(frame, true, &vad, &mut processed_samples)
+                        handle_frame(frame, true, &vad, &mut processed_samples, &mut stats)
                     });
 
-                    let _ = reply_tx.send(std::mem::take(&mut processed_samples));
+                    let _ = reply_tx.send(CapturedAudio {
+                        samples: std::mem::take(&mut processed_samples),
+                        stats: std::mem::take(&mut stats),
+                    });
 
                     // Resume the audio callback so the consumer loop can continue
                     // receiving chunks (important for always-on microphone mode).
@@ -471,7 +592,46 @@ fn run_consumer(
 
 #[cfg(test)]
 mod tests {
-    use super::{is_microphone_access_denied, is_no_input_device_error};
+    use super::{
+        is_microphone_access_denied, is_no_input_device_error, CaptureStats, EmptyCapture,
+    };
+
+    fn captured(ms: u64, level: f32) -> CaptureStats {
+        let mut stats = CaptureStats::new(48_000);
+        for _ in 0..ms / 10 {
+            stats.add_raw(&[level; 480]);
+        }
+        stats
+    }
+
+    #[test]
+    fn empty_capture_without_buffers_is_a_tap() {
+        assert_eq!(captured(0, 0.0).empty_cause(), EmptyCapture::NoBuffers);
+    }
+
+    #[test]
+    fn empty_capture_of_zeros_is_silence_at_any_length() {
+        assert_eq!(captured(50, 0.0).empty_cause(), EmptyCapture::Silence);
+        assert_eq!(captured(21_000, 0.0).empty_cause(), EmptyCapture::Silence);
+        assert_eq!(captured(3_000, 5.0e-5).empty_cause(), EmptyCapture::Silence);
+    }
+
+    #[test]
+    fn empty_capture_with_sound_is_no_speech_once_long_enough() {
+        assert_eq!(captured(300, 0.01).empty_cause(), EmptyCapture::TooShort);
+        assert_eq!(captured(3_000, 0.01).empty_cause(), EmptyCapture::NoSpeech);
+    }
+
+    #[test]
+    fn capture_stats_measure_level_and_length() {
+        let mut stats = CaptureStats::new(16_000);
+        stats.add_raw(&[0.5, -0.5, 0.5, -0.5]);
+        stats.add_raw(&[0.0; 15_996]);
+        assert_eq!(stats.raw_chunks, 2);
+        assert_eq!(stats.duration_ms(), 1000);
+        assert_eq!(stats.peak, 0.5);
+        assert!((stats.rms() - 0.0079).abs() < 1.0e-4);
+    }
 
     #[test]
     fn detects_access_is_denied() {

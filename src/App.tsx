@@ -112,6 +112,14 @@ function App() {
         toast.error(t("errors.noInputDeviceTitle"), {
           description: t("errors.noInputDevice"),
         });
+      } else if (error_type === "no_audio_captured") {
+        toast.error(t("errors.noAudioCapturedTitle"), {
+          description: t("errors.noAudioCaptured"),
+        });
+      } else if (error_type === "no_speech_detected") {
+        toast.error(t("errors.noSpeechDetectedTitle"), {
+          description: t("errors.noSpeechDetected"),
+        });
       } else {
         toast.error(
           t("errors.recordingFailed", { error: detail ?? "Unknown error" }),
