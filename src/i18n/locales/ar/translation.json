@@ -406,7 +406,7 @@
           "sectionLocal": "على جهازك",
           "sectionExternal": "خارجي — تغادر البيانات هذا الجهاز",
           "labels": {
-            "custom": "Custom (محلي)"
+            "custom": "مخصص (محلي)"
           },
           "descriptions": {
             "apple_intelligence": "لا يتطلب تنزيلاً — macOS Apple Silicon",

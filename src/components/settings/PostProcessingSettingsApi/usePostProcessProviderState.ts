@@ -55,8 +55,22 @@ export const usePostProcessProviderState = (): PostProcessProviderState => {
     postProcessModelOptions,
   } = useSettings();
 
-  // Settings are guaranteed to have providers after migration
-  const providers = settings?.post_process_providers || [];
+  // Settings are guaranteed to have providers after migration. The backend
+  // label is English; providers with a generic name get a translated one.
+  const storedProviders = settings?.post_process_providers;
+  const providers = useMemo(
+    () =>
+      (storedProviders ?? []).map((provider) => ({
+        ...provider,
+        label: t(
+          `settings.postProcessing.api.providers.labels.${provider.id}`,
+          {
+            defaultValue: provider.label,
+          },
+        ),
+      })),
+    [storedProviders, t],
+  );
 
   const selectedProviderId = useMemo(() => {
     return settings?.post_process_provider_id || providers[0]?.id || "openai";

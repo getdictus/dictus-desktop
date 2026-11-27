@@ -428,7 +428,7 @@
           "sectionLocal": "在你的裝置上",
           "sectionExternal": "外部 — 資料離開此裝置",
           "labels": {
-            "custom": "Custom (本機)"
+            "custom": "自訂 (本機)"
           },
           "descriptions": {
             "apple_intelligence": "無需下載 — macOS Apple Silicon",

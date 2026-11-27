@@ -64,7 +64,7 @@ export const ClamshellMicrophoneSelector: React.FC<ClamshellMicrophoneSelectorPr
 
     const microphoneOptions = audioDevices.map((device) => ({
       value: device.name,
-      label: device.name,
+      label: device.is_default ? t("common.default") : device.name,
     }));
 
     return (

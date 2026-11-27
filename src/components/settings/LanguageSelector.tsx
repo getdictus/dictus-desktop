@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { SettingContainer } from "../ui/SettingContainer";
 import { ResetButton } from "../ui/ResetButton";
 import { useSettings } from "../../hooks/useSettings";
-import { LANGUAGES } from "../../lib/constants/languages";
+import { useLanguages } from "../../hooks/useLanguages";
 
 interface LanguageSelectorProps {
   descriptionMode?: "inline" | "tooltip";
@@ -18,6 +18,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
 }) => {
   const { t } = useTranslation();
   const { getSetting, updateSetting, resetSetting, isUpdating } = useSettings();
+  const languages = useLanguages();
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -50,12 +51,12 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
 
   const availableLanguages = useMemo(() => {
     if (!supportedLanguages || supportedLanguages.length === 0)
-      return LANGUAGES;
-    return LANGUAGES.filter(
+      return languages;
+    return languages.filter(
       (lang) =>
         lang.value === "auto" || supportedLanguages.includes(lang.value),
     );
-  }, [supportedLanguages]);
+  }, [languages, supportedLanguages]);
 
   const filteredLanguages = useMemo(
     () =>
@@ -66,7 +67,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
   );
 
   const selectedLanguageName =
-    LANGUAGES.find((lang) => lang.value === selectedLanguage)?.label ||
+    languages.find((lang) => lang.value === selectedLanguage)?.label ||
     t("settings.general.language.auto");
 
   const handleLanguageSelect = async (languageCode: string) => {

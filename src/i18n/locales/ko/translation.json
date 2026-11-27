@@ -428,7 +428,7 @@
           "sectionLocal": "내 기기에서",
           "sectionExternal": "외부 — 데이터가 이 기기를 떠남",
           "labels": {
-            "custom": "Custom (local)"
+            "custom": "사용자 지정 (로컬)"
           },
           "descriptions": {
             "apple_intelligence": "다운로드 불필요 — macOS Apple Silicon",
