@@ -54,20 +54,41 @@ pub fn get_icon_path(theme: AppTheme, _state: TrayIconState) -> &'static str {
     }
 }
 
+/// Load a tray icon from the app resources (`icon_path` is relative to the
+/// resource dir, e.g. `resources/tray_idle.png`).
+///
+/// Returns `None`, with an error log naming the path, when the file cannot be
+/// resolved or read, so a missing resource never panics the app (#111).
+pub fn load_tray_icon(app: &AppHandle, icon_path: &str) -> Option<Image<'static>> {
+    let path = match app
+        .path()
+        .resolve(icon_path, tauri::path::BaseDirectory::Resource)
+    {
+        Ok(path) => path,
+        Err(e) => {
+            error!("Failed to resolve tray icon '{icon_path}': {e}");
+            return None;
+        }
+    };
+    match Image::from_path(&path) {
+        Ok(image) => Some(image),
+        Err(e) => {
+            error!("Failed to load tray icon {}: {e}", path.display());
+            None
+        }
+    }
+}
+
 pub fn change_tray_icon(app: &AppHandle, icon: TrayIconState) {
     let tray = app.state::<TrayIcon>();
     let theme = get_current_theme(app);
 
     let icon_path = get_icon_path(theme, icon.clone());
 
-    let _ = tray.set_icon(Some(
-        Image::from_path(
-            app.path()
-                .resolve(icon_path, tauri::path::BaseDirectory::Resource)
-                .expect("failed to resolve"),
-        )
-        .expect("failed to set icon"),
-    ));
+    // On failure the tray keeps its current icon; the menu is still updated.
+    if let Some(image) = load_tray_icon(app, icon_path) {
+        let _ = tray.set_icon(Some(image));
+    }
 
     // Update menu based on state
     update_tray_menu(app, &icon, None);
